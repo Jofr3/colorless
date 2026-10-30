@@ -221,8 +221,8 @@ describe("Lua deck builder", () => {
     await b.command("add\ta");
     await b.command("leave");
     await tick();
-    // Retried on its own at 2, 4 and 8 s, still "saving", before it is reported.
-    expect(b.saveStatus).toBe("saving");
+    // Retried on its own at 2, 4 and 8 s, "retrying", before it is reported.
+    expect(b.saveStatus).toBe("retrying");
     await vi.advanceTimersByTimeAsync(14_000);
     expect(api.patchDeck).toHaveBeenCalledTimes(MAX_TRANSIENT_RETRIES + 1);
     expect(b.saveStatus).toBe("failed");
@@ -278,6 +278,32 @@ describe("Lua deck builder", () => {
     expect(api.patchDeck).toHaveBeenCalledTimes(2);
     expect(vi.mocked(api.patchDeck).mock.lastCall?.[2]).toEqual({ keepalive: false });
     expect(b.hasUnsavedEdits()).toBe(false);
+  });
+  it("publishes saving, retrying through new edits after a failed attempt, then saved for 2.2 s", async () => {
+    vi.mocked(api.patchDeck).mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    const { b, publish } = await setup();
+    const status = () =>
+      String(publish.mock.lastCall?.[0]).split("\n")[0]?.split("\t")[
+        wireColumn(WIRE_ROWS.builder.header, "saveStatus")
+      ];
+    await b.command("add\ta");
+    expect(status()).toBe("pending");
+    await tick();
+    expect(status()).toBe("retrying");
+    // An edit made while the retry waits joins it, still retrying.
+    await b.command("add\tb");
+    expect(status()).toBe("retrying");
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(status()).toBe("saved");
+    expect(vi.mocked(api.patchDeck).mock.lastCall?.[1].cards).toEqual([
+      { cardId: "a", count: 1 },
+      { cardId: "b", count: 1 },
+    ]);
+    // It landed at 2.6 s, 50 ms ago, and says so until 4.8 s.
+    await vi.advanceTimersByTimeAsync(2_149);
+    expect(status()).toBe("saved");
+    await vi.advanceTimersByTimeAsync(1);
+    expect(status()).toBe("");
   });
   it("sends a failed save again when asked, as when the network returns", async () => {
     vi.mocked(api.patchDeck).mockRejectedValue(new TypeError("Failed to fetch"));
@@ -487,7 +513,8 @@ describe("Lua deck builder", () => {
     await b.command("add\ta");
     await tick();
     await b.command("remove\ta");
-    expect(b.saveStatus).toBe("pending");
+    // The undo joins the retry of the save whose response was lost.
+    expect(b.saveStatus).toBe("retrying");
     await b.command("leave");
     expect(back).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(2_000);
@@ -916,6 +943,121 @@ describe("deck cards before their details arrive", () => {
     await exported;
     expect(b.transfer).toContain("2 Pikachu");
     expect(b.message).toBe("");
+  });
+});
+
+describe("results while a search is out", () => {
+  type CardsPage = Awaited<ReturnType<typeof api.getCards>>;
+  const H = WIRE_ROWS.builder.header;
+  const rowsOf = (raw: unknown) =>
+    String(raw)
+      .split("\n")
+      .map((line) => line.split("\t").map(decodeURIComponent));
+  const shown = (raw: unknown) => ({
+    busy: rowsOf(raw)[0]?.[wireColumn(H, "busy")],
+    results: rowsOf(raw)
+      .filter((r) => r[0] === "C")
+      .map((r) => r[1]),
+  });
+  /** The next GET /cards, held until the test answers it. */
+  function holdNextPage() {
+    let settle!: { resolve: (page: CardsPage) => void; reject: (error: unknown) => void };
+    vi.mocked(api.getCards).mockImplementationOnce(
+      () =>
+        new Promise<CardsPage>((resolve, reject) => {
+          settle = { resolve, reject };
+        }),
+    );
+    return {
+      answer: (ids: string[]) =>
+        settle.resolve({
+          items: ids.map((id) => card(id)),
+          total: ids.length,
+          page: 1,
+          pageSize: 8,
+        }),
+      fail: () => settle.reject(new Error("offline")),
+    };
+  }
+
+  it("keeps the results on screen, marked busy, until the new page lands", async () => {
+    const { b, publish } = await setup();
+    await tick();
+    const held = holdNextPage();
+    publish.mockClear();
+    const searched = b.command("cycle\tsupertype\t1");
+    // A quick answer would replace them without a busy emit in between.
+    expect(publish).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(200);
+    expect(shown(publish.mock.lastCall?.[0])).toEqual({ busy: "1", results: ["a", "b"] });
+    for (const [raw] of publish.mock.calls) expect(shown(raw).results).toEqual(["a", "b"]);
+    held.answer(["x", "y"]);
+    await searched;
+    expect(shown(publish.mock.lastCall?.[0])).toEqual({ busy: "0", results: ["x", "y"] });
+  });
+
+  it("accepts an add from the results still shown while a search is out", async () => {
+    const { b } = await setup();
+    await tick();
+    holdNextPage();
+    void b.command("format");
+    await vi.advanceTimersByTimeAsync(200);
+    expect(b.busy).toBe(true);
+    await b.command("add\ta");
+    expect(b.entries.get("a")).toBe(1);
+  });
+
+  it("clears the results when the search fails or matches nothing", async () => {
+    const { b, publish } = await setup();
+    await tick();
+    const failing = holdNextPage();
+    const failed = b.command("sort");
+    failing.fail();
+    await failed;
+    expect(shown(publish.mock.lastCall?.[0])).toEqual({ busy: "0", results: [] });
+    expect(b.message).toBe("Card search failed. Try again.");
+    await b.command("retry");
+    await tick();
+    const empty = holdNextPage();
+    const searched = b.command("sort");
+    empty.answer([]);
+    await searched;
+    expect(shown(publish.mock.lastCall?.[0])).toEqual({ busy: "0", results: [] });
+  });
+
+  it("keeps only the results a smaller grid holds while its page loads", async () => {
+    vi.mocked(api.getCards).mockImplementation(catalogOf(() => 40));
+    const { b, publish } = await setup();
+    await tick();
+    expect(b.results).toHaveLength(8);
+    holdNextPage();
+    void b.command("size\t4");
+    await vi.advanceTimersByTimeAsync(200);
+    expect(shown(publish.mock.lastCall?.[0])).toEqual({ busy: "1", results: ids(0, 4) });
+  });
+
+  it("says loading at once when there are no results to keep", async () => {
+    const { b, publish } = await setup();
+    await tick();
+    const empty = holdNextPage();
+    const searched = b.command("sort");
+    empty.answer([]);
+    await searched;
+    holdNextPage();
+    publish.mockClear();
+    void b.command("sort");
+    expect(shown(publish.mock.lastCall?.[0])).toEqual({ busy: "1", results: [] });
+  });
+
+  it("publishes a search the card index answers once, with its results", async () => {
+    vi.mocked(api.getCards).mockImplementation(catalogOf(() => 40));
+    const { b, publish } = await setup();
+    await tick();
+    await b.command(encodeFields(["filter", "query", "abr"]));
+    publish.mockClear();
+    await vi.advanceTimersByTimeAsync(260);
+    expect(publish).toHaveBeenCalledTimes(1);
+    expect(shown(publish.mock.lastCall?.[0])).toEqual({ busy: "0", results: ids(0, 8) });
   });
 });
 

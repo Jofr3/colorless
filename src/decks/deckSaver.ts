@@ -3,7 +3,9 @@
 
 import { ApiError } from "../lib/api";
 
-export type SaveStatus = "saving" | "saved" | "failed";
+/** "retrying" from a failed attempt that will be sent again on its own until it lands ("saved") or
+    is reported ("failed"). */
+export type SaveStatus = "saving" | "retrying" | "saved" | "failed";
 
 /** Rate-limited saves retried before the save is reported failed. */
 export const MAX_RATE_LIMIT_RETRIES = 5;
@@ -132,7 +134,8 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
       return;
     }
     inFlight = true;
-    if (!disposed) options.onStatus?.("saving");
+    // A retry goes on saying "retrying", which its failed attempt reported.
+    if (!disposed && rejections === 0) options.onStatus?.("saving");
     options.save(snapshot).then(
       () => {
         inFlight = false;
@@ -165,11 +168,12 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
         if (pending === null) pending = { snapshot, key };
         const wait = retryDelay(error, ++rejections);
         if (wait !== undefined) {
-          // Retried: the edits stay pending and are sent again after the wait, still
-          // "saving", with newer edits coalescing into that one retry.
+          // Retried: the edits stay pending and are sent again after the wait, "retrying", with
+          // newer edits coalescing into that one retry.
           notBefore = Date.now() + wait;
           clearTimer();
           timer = setTimeout(fire, wait);
+          options.onStatus?.("retrying", error);
           return;
         }
         // Any other failure retries on the next schedule()/flush(); nothing hot-loops on its own.

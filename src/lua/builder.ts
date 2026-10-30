@@ -55,6 +55,9 @@ type Command = (a: string, b: string) => void | Promise<void>;
 /** Pages fetched on each side of the visible one, so paging never waits. */
 const PREFETCH_PAGES = 2;
 const SEARCH_DEBOUNCE_MS = 250;
+/** How long a search may take before the results on screen show as busy (Lua dims them). A page
+    that lands sooner, as every card-index search does, replaces them in one emit. */
+const SEARCH_BUSY_MS = 150;
 const MAX_IMPORT_COPIES = 99;
 const MAX_CACHED_PAGES = 40;
 /** Browser data adapter. Lua owns the editor, its dialogs, and card interaction. */
@@ -186,6 +189,7 @@ export class LuaBuilder {
   private saver?: DeckSaver<DeckSnapshot>;
   private savedTimer?: ReturnType<typeof setTimeout>;
   private searchTimer?: ReturnType<typeof setTimeout>;
+  private busyTimer?: ReturnType<typeof setTimeout>;
   private facets: CatalogFacets | null = null;
   private sets: { id: string; name: string; serie?: { id: string } }[] = [];
   private series: { id: string; name: string }[] = [];
@@ -218,6 +222,7 @@ export class LuaBuilder {
     this.epoch.invalidate();
     this.searches.invalidate();
     clearTimeout(this.searchTimer);
+    clearTimeout(this.busyTimer);
     clearTimeout(this.savedTimer);
     this.pendingExit = undefined;
     this.leaving = false;
@@ -503,6 +508,7 @@ export class LuaBuilder {
     }
     clearTimeout(this.savedTimer);
     clearTimeout(this.searchTimer);
+    clearTimeout(this.busyTimer);
     this.searches.invalidate();
     this.busy = false;
     this.previewIds = [];
@@ -702,15 +708,23 @@ export class LuaBuilder {
       }
     }
   }
+  /** The results on screen stay there while the next page loads, and are replaced when it lands;
+      only a failure or no match clears them. Their ids stay valid, so they still take adds and
+      details meanwhile. */
   async search() {
     clearTimeout(this.searchTimer);
+    clearTimeout(this.busyTimer);
     if (this.phase !== "ready") return;
     const live = this.epoch.current();
     const latest = this.searches.next();
     const current = () => live() && latest();
     this.busy = true;
-    this.results = [];
-    this.emit();
+    // An empty grid says it is loading at once; results on screen dim only for a slow answer.
+    if (this.results.length === 0) this.emit();
+    else
+      this.busyTimer = setTimeout(() => {
+        if (current() && this.busy) this.emit();
+      }, SEARCH_BUSY_MS);
     const catalog = this.catalog();
     try {
       const data = await this.fetchPage(catalog, this.page, true);
@@ -720,10 +734,14 @@ export class LuaBuilder {
       if (this.message === LOAD_FAILED.search) this.message = "";
     } catch (error) {
       reportError("search cards", error);
-      if (current()) this.message = LOAD_FAILED.search;
+      if (current()) {
+        this.results = [];
+        this.message = LOAD_FAILED.search;
+      }
     }
     if (current()) {
       this.busy = false;
+      clearTimeout(this.busyTimer);
       this.emit();
       this.prefetch(catalog);
     }
@@ -816,7 +834,8 @@ export class LuaBuilder {
     this.message = "";
     this.cover = this.snapshot().chosenCoverCardId;
     this.dirty = JSON.stringify(this.snapshot()) !== this.acknowledged;
-    this.saveStatus = this.dirty ? "pending" : "";
+    // An edit made while a failed save waits to be sent again joins that retry.
+    this.saveStatus = !this.dirty ? "" : this.saveStatus === "retrying" ? "retrying" : "pending";
     this.saver?.schedule(this.snapshot());
     this.emit();
   }
@@ -912,6 +931,8 @@ export class LuaBuilder {
   }
   private async onSize(size: string) {
     this.size = Number(size) === 4 ? 4 : 8;
+    // The results kept on screen while page 1 loads fit the grid they draw in.
+    this.results = this.results.slice(0, this.size);
     this.page = 1;
     await this.search();
   }
@@ -1011,6 +1032,7 @@ export class LuaBuilder {
       return;
     }
     clearTimeout(this.searchTimer);
+    clearTimeout(this.busyTimer);
     this.searches.invalidate();
     this.busy = false;
     this.results = cached.items;

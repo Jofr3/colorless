@@ -385,7 +385,7 @@ describe("a save that failed in passing", () => {
       await vi.advanceTimersByTimeAsync(1);
       expect(save).toHaveBeenCalledTimes(index + 2);
     }
-    expect(recorder.statuses).toEqual(["saving", "saving", "saving", "saving", "failed"]);
+    expect(recorder.statuses).toEqual(["saving", "retrying", "retrying", "retrying", "failed"]);
     await vi.advanceTimersByTimeAsync(120_000);
     expect(save).toHaveBeenCalledTimes(MAX_TRANSIENT_RETRIES + 1);
   });
@@ -400,7 +400,7 @@ describe("a save that failed in passing", () => {
     await vi.advanceTimersByTimeAsync(2_600);
 
     expect(save.mock.calls).toEqual([[{ v: 1 }], [{ v: 1 }]]);
-    expect(recorder.statuses).toEqual(["saving", "saving", "saved"]);
+    expect(recorder.statuses).toEqual(["saving", "retrying", "saved"]);
   });
 
   it("is told apart from the Worker's own failure and from a refusal", () => {
@@ -433,7 +433,7 @@ describe("a rate-limited save", () => {
     await vi.advanceTimersByTimeAsync(1);
     expect(save).toHaveBeenCalledTimes(2);
     expect(save).toHaveBeenLastCalledWith({ v: 1 });
-    expect(recorder.statuses).toEqual(["saving", "saving", "saved"]);
+    expect(recorder.statuses).toEqual(["saving", "retrying", "saved"]);
   });
 
   it("folds edits made while waiting into the one retry, which a flush cannot hurry", async () => {
