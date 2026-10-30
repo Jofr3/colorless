@@ -177,10 +177,6 @@ function Hud:sync(sim,time)
   if self.panelEntrance and not self.panelEntrance.colourStarted then
     self.pendingColour=colour
   else self:setColour(colour,time) end
-  if enteringSetup and sim.reduced then
-    self.turnText.popIn=nil
-    for _,letter in ipairs(self.turnText.letters) do letter.pop=1 end
-  end
 end
 -- Which seat is acting: the turn owner, else (setup / hot-seat prompts) the
 -- viewer. Before choosing the first player (or without a game), use neutral grey.
@@ -218,8 +214,6 @@ function Hud:update(dt,time,reduced)
     if reduced then
       self.panelMotion.T.y=0
       self.panelEntrance=nil;self.panelTitleHidden=false
-      self.turnText.popIn=nil
-      for _,letter in ipairs(self.turnText.letters) do letter.pop=1 end
       if not entrance.revealed then self:entranceFeedback(true) end
     else
       if time>=entrance.start+SETUP_PAUSE+0.05 then self.panelMotion.T.y=0 end

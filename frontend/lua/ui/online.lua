@@ -227,10 +227,9 @@ function Online:enter(step)
   self.step=step;self.focus=0;self.pressed=nil
   if step~='versus' then self.picker=false end
   if (step~='menu' and self.editing=='code') or (self.editing=='search' and not self.picker) then self:finish() end
-  local t,reduced=self.time,self.reduced
+  local t=self.time
   local function dyna(cfg)
     cfg.time=t;cfg.colours=cfg.colours or {T.white};cfg.shadow=true
-    if reduced then cfg.pop_in=nil end
     return Dyna.new(cfg)
   end
   self.dyna={}
@@ -271,7 +270,7 @@ function Online:tick()
   if self.vs then
     self.fx.time=self.time
     self.fx:attention({text=n>0 and tostring(n) or 'GO!',scale=2,hold=0.6,x=self.vs.x,y=self.vs.y+20,
-      backdrop=not self.reduced and (n>0 and T.orange or T.blue) or nil,sound=n>0 and 'generic1' or 'whoosh2',jiggle=n>0 and 1 or 2})
+      backdrop=n>0 and T.orange or T.blue,sound=n>0 and 'generic1' or 'whoosh2',jiggle=n>0 and 1 or 2})
   end
   return n>0 and tostring(n) or 'Go!'
 end
@@ -394,7 +393,6 @@ function Online:hit(x,y,hoverOnly)
 end
 function Online:update(dt,time,mx,my,reduced)
   self.time,self.reduced=time,reduced
-  self.markerTime=reduced and 12 or time
   self:sync(Mailbox.read('online'))
   self:input(Mailbox.read('onlineInput'))
   self.motion:update(dt,time,false,false,reduced)
@@ -680,7 +678,7 @@ function Online:draw()
       if item.disabled then item.colour=T.panel end
       Button.draw(item,active,pressed,lit and self.hover==0,self.width)
       item.colour=colour
-      if item.kind=='tab' and item.tab==self.tab then Button.chosen(item,self.markerTime or 12,pressed,self.width) end
+      if item.kind=='tab' and item.tab==self.tab then Button.chosen(item,self.time,pressed,self.width,self.reduced) end
     end
   end
   if step=='countdown' and not self.picker then

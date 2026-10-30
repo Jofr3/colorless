@@ -302,7 +302,9 @@ function Settings:slide(item,x)
   self:change(item,100*(x-item.x)/item.w)
 end
 function Settings:update(dt,time,mx,my,reduced)
-  self.markerTime=reduced and 12 or time
+  -- A text caret is not motion, but main.lua's redraw gate skips Settings frames under reduced
+  -- motion, so a blinking caret would stop wherever the gate caught it: it holds steady instead.
+  self.caretTime=reduced and 12 or time
   self.time,self.reduced=time,reduced
   self.motion:update(dt,time,false,false,reduced)
   self.deleteJuice:update(dt,time,false,false,reduced)
@@ -445,11 +447,11 @@ function Settings:draw()
       if juice then g.pop() end
       item.colour=colour
       if (not self.auth and item.tab==self.tab) or (self.auth and item.mode==self.auth.mode) then
-        Button.chosen(item,self.markerTime or 12,pressed,self.width)
+        Button.chosen(item,self.time or 12,pressed,self.width,self.reduced)
       end
     elseif item.kind=='auth-field' then
       local a=self.auth
-      Input.draw(item,a[item.field],a.editing==item.field,a.selectionStart,a.selectionEnd,self.markerTime,self.account.busy,active)
+      Input.draw(item,a[item.field],a.editing==item.field,a.selectionStart,a.selectionEnd,self.caretTime,self.account.busy,active)
     elseif item.kind=='slider' then
       local value=self:value(item)
       T.text(item.label,30,item.x-28,item.y-34,item.w+112)
@@ -485,7 +487,7 @@ function Settings:draw()
       local disabled=item.kind=='email'
       local editing=not disabled and self.account.editing
       Input.draw(item,disabled and self.account.email or self.account.draftName,editing,
-        self.account.selectionStart,self.account.selectionEnd,self.markerTime,disabled,active)
+        self.account.selectionStart,self.account.selectionEnd,self.caretTime,disabled,active)
     else
       local x=item.x+item.w+12
       T.text(item.label,27,item.x-12,item.y+5,item.w+12,T.white,'right')

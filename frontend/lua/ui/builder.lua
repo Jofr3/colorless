@@ -891,7 +891,7 @@ function Builder:drawControlFaces(controls,active)
         end
         g.pop()
       end
-      if (b.action=='deck-type' and b.arg==self.deckType) or (b.action=='filter-tab' and b.arg==self.filterPage) then Button.chosen(b,self.reduced and 12 or self.time,active and self.pressed==i,self.width)end
+      if (b.action=='deck-type' and b.arg==self.deckType) or (b.action=='filter-tab' and b.arg==self.filterPage) then Button.chosen(b,self.time,active and self.pressed==i,self.width,self.reduced)end
     end
   end
 end

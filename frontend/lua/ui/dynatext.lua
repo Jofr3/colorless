@@ -109,8 +109,12 @@ end
 function Dyna:update(time,reduced)
   local n=#self.letters
   local motion=reduced and 0 or 1
+  -- Reduced motion skips the pop-in and pop-out: letters show whole, and a
+  -- pop-in counts as done so it does not replay when motion returns.
+  if reduced then self.popIn=nil end
   for k,letter in ipairs(self.letters) do
-    if self.popOut then
+    if reduced then letter.pop=1
+    elseif self.popOut then
       letter.pop=math.min(1,math.max(1-(time-self.popOutTime)*self.popOut,0))
       letter.pop=letter.pop*letter.pop
     elseif self.popIn then

@@ -52,15 +52,16 @@ function Button.outline(x,y,w,h,colour,r)
   panel(x,y,w,h,colour,r,nil,'line')
 end
 
-function Button.chosen(b,time,pressed,roomWidth)
+function Button.chosen(b,time,pressed,roomWidth,reduced)
   -- UIElement:draw_self + get_chosen_triangle_from_rect, in screen pixels
-  -- (TILESIZE=20, TILESCALE=3). The marker bobs upward, with a gap below it.
+  -- (TILESIZE=20, TILESCALE=3). The marker bobs upward, with a gap below it;
+  -- under reduced motion it holds the offset it rests at between bobs.
   local sx=((b.x+b.w/2-roomWidth/2)/(roomWidth/2))*1.5
   local sy=-1.5
   local distance=pressed and 0 or 1.5
   local layer=0.4-(pressed and 1.5 or 0)
   local lx,ly=layer*sx/20,layer*sy/20
-  local bob=math.min(1.2*math.sin(time*9)+0.2,0)*3
+  local bob=reduced and 0 or math.min(1.2*math.sin(time*9)+0.2,0)*3
   local function triangle(scale,shadow)
     g.push()
     g.translate(b.x+b.w/2+lx*60,b.y+b.h/2+ly*60)

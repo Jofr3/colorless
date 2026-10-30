@@ -155,6 +155,7 @@ state.gamePhase='setup:chooseFirst';animated:sync(state,7)
 state.gamePhase='setup:place';state.reduced=true;animated:sync(state,8)
 near(animated.panelMotion.VT.y,0)
 assert(not animated.panelEntrance,'Reduced motion skips the entrance')
+animated:update(0,8,true)
 for _,letter in ipairs(animated.turnText.letters) do near(letter.pop,1) end
 assert(#sounds==6 and #impulses==1,'Reduced motion keeps sound but suppresses impact shakes')
 state.gamePhase='setup:chooseFirst';state.reduced=false;animated:sync(state,9)

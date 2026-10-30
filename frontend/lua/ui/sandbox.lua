@@ -256,7 +256,7 @@ function Sandbox:draw()
     local lit=Controls.lit(self.hover,self.focus,i)
     if b.input then Input.draw(b,self.query,self.editing,self.first,self.last,self.time,b.disabled,lit)
     elseif not b.card then Button.draw(b,not b.disabled and lit,self.pressed==i,lit and self.hover==0,self.width) end
-    if b.action=='tab'..self.tab then Button.chosen(b,self.time,self.pressed==i,self.width) end
+    if b.action=='tab'..self.tab then Button.chosen(b,self.time,self.pressed==i,self.width,self.reduced) end
   end
 end
 return Sandbox
