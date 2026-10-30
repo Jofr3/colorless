@@ -1,5 +1,4 @@
 import type { SimulationGap } from "@colorless/engine";
-type Engine = Pick<typeof import("@colorless/engine"), "simulationGaps">;
 import * as api from "../lib/api";
 import {
   type Card,
@@ -49,6 +48,8 @@ import type { AccountStatus } from "./account";
 import { epochGuard, sessionUser } from "./epochGuard";
 
 type Option = { key: string; label: string; values: string[]; labels?: string[] };
+/** The part of the rules engine the builder uses, a separate chunk loaded on first use. */
+type Engine = Pick<typeof import("@colorless/engine"), "simulationGaps">;
 type CatalogPage = { items: BuilderCard[]; total: number };
 type Catalog = { query: ReturnType<typeof filtersToCardsQuery>; size: number; key: string };
 type Command = (a: string, b: string) => void | Promise<void>;
