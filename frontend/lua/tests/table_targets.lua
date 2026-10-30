@@ -4,7 +4,7 @@
 -- 24 CSS px. A hit area never reaches a card or another control. A touch screen held sideways
 -- under 0.6 is told to turn upright, in the HUD's empty top band. Upright, the prompt keeps a
 -- scale of 0.24 at least and spills its note into a two-line strip over the table's top band,
--- and the HUD's small text is at least 11 CSS px.
+-- and the HUD's small text is at least 11 CSS px, a turn's long hint wrapping under the buttons.
 package.path='frontend/lua/?.lua;'..package.path
 local D=require('ui.card_dimensions')
 local function font()
@@ -108,7 +108,13 @@ end
 -- The rotate hint: a touch screen held sideways under 0.6 CSS px per board px.
 local drawn={}
 local static=Dyna.static
-Dyna.static=function(text,scale,x,y,w,h,...) drawn[#drawn+1]={text=text,scale=scale,x=x,y=y,w=w,h=h};return static(text,scale,x,y,w,h,...) end
+Dyna.static=function(text,scale,x,y,w,h,colour,opts) drawn[#drawn+1]={text=text,scale=scale,x=x,y=y,w=w,h=h,fit=opts and opts.fit};return static(text,scale,x,y,w,h,colour,opts) end
+-- The scale a string is drawn at once `fit` has shrunk it into its box.
+local function drawnScale(t)
+  if not t.fit then return t.scale end
+  local tw=Dyna.measure(t.text,t.scale)
+  return tw>t.w-4 and t.scale*(t.w-4)/tw or t.scale
+end
 local function hintShown()
   drawn={};sim:draw(shaders)
   for _,t in ipairs(drawn) do if t.text:find('upright') then return t end end
@@ -185,13 +191,45 @@ local DL=Layout.desktop()
 hud:drawPrompt({luaTargeting={title='Choose a Pokémon',note=long}},DL,30,200,260,154)
 for _,t in ipairs(drawn) do check(t.y<354,'Desktop prompts stay in their box') end
 
-T.font=narrowFont
--- The HUD's small text on the narrowest phones: at least 11 CSS px.
+-- The HUD's small text on the narrowest phones: at least 11 CSS px as drawn, the turn's long hint
+-- too (QA6: fitted into one 230 px line it came out at 4-5 CSS px), and inside the HUD.
+local HINT='Attach Energy, play Trainers and Pokémon, then attack or end your turn.'
 open(480,850,{scale=0.75,portrait=true,coarse=true})
+sim.hud.hint=HINT
 drawn={};sim:draw(shaders)
-local smallest=1
-for _,t in ipairs(drawn) do if t.y<L.hud.y+L.hud.h then smallest=math.min(smallest,t.scale) end end
+local smallest,hint=1,{}
+for _,t in ipairs(drawn) do
+  if t.y<L.hud.y+L.hud.h then smallest=math.min(smallest,drawnScale(t)) end
+  if HINT:find(t.text,1,true) and #t.text>3 then hint[#hint+1]=t end
+end
 check(smallest*60*0.75>=11-1e-9,'HUD text is at least 11 CSS px at 360 px wide ('..smallest*60*0.75 ..')')
+check(#hint>=2,'The long hint wraps ('..#hint..' lines)')
+local words=0
+for _,t in ipairs(hint) do
+  check(t.y>=L.hud.y and t.y+t.h<=L.hud.y+L.hud.h,'The hint stays inside the HUD ('..t.y..')')
+  for _ in t.text:gmatch('%S+') do words=words+1 end
+end
+check(words==select(2,HINT:gsub('%S+','')),'Every word of the hint is drawn')
+-- A longer warning in the hint's place shrinks to stay in the HUD (a portrait window at full size,
+-- where the floor is the prompt note's 0.192).
+local WARNING='Your Active Pokémon has no Energy attached, so it cannot attack this turn; attach one or retreat.'
+open(480,850,{scale=1,portrait=true,coarse=false})
+sim.hud.hint=HINT;sim.hud.warning=WARNING
+drawn={};sim:draw(shaders)
+local warned=0
+for _,t in ipairs(drawn) do
+  if WARNING:find(t.text,1,true) and #t.text>3 then
+    warned=warned+1
+    check(t.y>=L.hud.y and t.y+t.h<=L.hud.y+L.hud.h,'The warning stays inside the HUD ('..t.y+t.h..')')
+  end
+end
+check(warned>=3,'The warning wraps ('..warned..' lines)')
+sim.hud.warning=""
+-- A prompt takes the hint's place.
+sim.luaTargeting={title='Choose a Pokémon',note='Pick one.',actions={}};drawn={};sim:draw(shaders)
+for _,t in ipairs(drawn) do check(not (HINT:find(t.text,1,true) and #t.text>3),'A prompt replaces the hint') end
+sim.luaTargeting=nil
+T.font=narrowFont
 Dyna.static=static
 Display.set({scale=1,portrait=false,coarse=false})
-print('PASS: table targets on phones, the rotate hint, the portrait prompt strip and HUD text floor')
+print('PASS: table targets on phones, the rotate hint, the portrait prompt strip, HUD text floor and wrapped hint')

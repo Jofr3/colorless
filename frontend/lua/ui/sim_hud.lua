@@ -445,6 +445,30 @@ function Hud:draw(sim,L,time,reduced,hovered)
     end
   end
 end
+-- Upright, the hint (or a standing warning in its place) wraps in the prompt's box under the
+-- buttons, shrinking to fit no further than the prompt note's floor: on a phone that is
+-- Display.MIN_TEXT_CSS, where one 230 px line drew a turn's hint at 4-5 CSS px (QA6).
+function Hud:drawPortraitHint(sim,L,time,x,y,w,h)
+  local hint=self:hintText(sim,time)
+  local warn=hint==self.hint and (self.warning or '')~=''
+  local text=warn and self.warning or hint
+  local floor=Display.dyna(Hud.PORTRAIT_PROMPT_MIN*0.8)
+  local fit=self.hintFit
+  if not (fit and fit.text==text and fit.w==w and fit.h==h and fit.floor==floor) then
+    local scale,lines,lh=math.max(0.27,floor)
+    repeat
+      lines,lh=Dyna.wrap(text,scale,w)
+      if #lines*(lh+3)-3<=h or scale-0.01<floor then break end
+      scale=scale-0.01
+    until false
+    fit={text=text,w=w,h=h,floor=floor,scale=scale,lines=lines,lh=lh}
+    self.hintFit=fit
+  end
+  local yy=y+math.max(0,(h-(#fit.lines*(fit.lh+3)-3))/2)
+  for _,line in ipairs(fit.lines) do
+    Dyna.static(line,fit.scale,x,yy,w,fit.lh,warn and T.red or T.jokerGrey,{roomWidth=L.w,shadow=false,fit=true});yy=yy+fit.lh+3
+  end
+end
 function Hud:drawPortrait(sim,L,time,reduced,hovered)
   local x,y,w,h=L.hud.x,L.hud.y,L.hud.w,L.hud.h
   local rw=L.w
@@ -458,10 +482,7 @@ function Hud:drawPortrait(sim,L,time,reduced,hovered)
   end
   self.turnText.cfg.maxw=140
   self.turnText:draw(ix+75,y+30,rw)
-  local hint=self:hintText(sim,time)
-  local warn=hint==self.hint and (self.warning or '')~=''
-  -- On a phone, small HUD text is at least Display.MIN_TEXT_CSS (audit QA11).
-  Dyna.static(warn and self.warning or hint,Display.dyna(choosingFirst and 0.24 or 0.26),ix,y+56,230,14,warn and T.red or T.jokerGrey,{roomWidth=rw,fit=true,shadow=false})
+  if not (sim.targeting or sim.luaTargeting) then self:drawPortraitHint(sim,L,time,ix+246,y+58,w-266,h-64) end
   local function mini(xx,yy,label,text,colour)
     emboss(xx,yy,64,44,BOSS_MAIN,1.2)
     Dyna.static(label,Display.dyna(0.26),xx,yy+2,64,12,LIGHT,{roomWidth=rw,fit=true})
