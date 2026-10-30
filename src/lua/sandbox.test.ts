@@ -88,6 +88,20 @@ describe("Lua sandbox setup", () => {
     ).resolves.toBeUndefined();
     expect(publish).not.toHaveBeenCalled();
   });
+  it("warms the game table's code once the picker has its decks, not competing with them", async () => {
+    let answer: (response: Response) => void = () => {};
+    stubFetch({ ...reads, "GET /decks": () => new Promise<Response>((done) => (answer = done)) });
+    const warm = vi.fn();
+    const sandbox = new LuaSandbox(vi.fn(), async () => () => {}, warm);
+    sandbox.session("authenticated", "user");
+    const open = sandbox.command("open");
+    await new Promise((done) => setTimeout(done, 0));
+    expect(warm).not.toHaveBeenCalled();
+    answer(json(decks));
+    await open;
+    expect(sandbox.phase).toBe("ready");
+    expect(warm).toHaveBeenCalledTimes(1);
+  });
   it("loads decks across folders, escapes names and selects each player independently", async () => {
     const { calls } = stubFetch(reads);
     const { sandbox, publish } = await setup();

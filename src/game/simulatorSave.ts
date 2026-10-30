@@ -14,9 +14,7 @@ import {
   type HostState,
   type LocalAction,
 } from "./localHost";
-
-const SIMULATOR_SAVE_KEY = "colorless:simulator:game";
-const SAVE_VERSION = 2;
+import { SAVE_VERSION, SIMULATOR_SAVE_KEY } from "./simulatorSaveKey";
 
 /** The save is where the match began plus the accepted actions of its current
     line of play; loading replays them. The starting state carries the card

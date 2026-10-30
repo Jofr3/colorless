@@ -5,7 +5,9 @@ import { LuaBuilder } from "./builder";
 import { LuaLibrary } from "./library";
 import { LuaOnline } from "./online";
 import { LuaSandbox } from "./sandbox";
-import { LazyScreen, type Screen } from "./lazyScreen";
+import { LazyScreen, loadFailureHandler, type Screen } from "./lazyScreen";
+import { hasSimulatorSave } from "../game/simulatorSaveKey";
+import { decodeFields, encodeFields } from "./wire";
 import { setSessionRecoveryHandler } from "../lib/api";
 import { reportError } from "../lib/reportError";
 import { ArtworkCache } from "./artworkCache";
@@ -64,21 +66,49 @@ const builder = new LuaBuilder(
 );
 guardUnsavedEdits({ window, document }, builder);
 const library = new LuaLibrary(publishTo("library"), (id) => route("builder", id));
-const sandbox = new LuaSandbox(publishTo("sandbox"), async () => {
-  const { launchSandbox } = await import("./sandboxLaunch");
-  return (setup) => launchSandbox(setup, () => route("simulator"));
+const sandbox = new LuaSandbox(
+  publishTo("sandbox"),
+  async () => {
+    const { launchSandbox } = await import("./sandboxLaunch");
+    return (setup) => launchSandbox(setup, () => route("simulator"));
+  },
+  () => void simulator.warm(),
+);
+const online = new LuaOnline(publishTo("online"), route, {
+  user: () => account.user,
+  warmTable: () => void simulator.warm(),
 });
-const online = new LuaOnline(publishTo("online"), route, { user: () => account.user });
-// The game table and the rules engine behind it load when Lua first opens or asks about a table.
-const simulator = new LazyScreen(async () => {
-  const [{ LuaSimulator }, { LuaOnlineMatch }] = await Promise.all([
-    import("./simulator"),
-    import("./onlineTable"),
-  ]);
-  return new LuaSimulator(publishTo("simulator"), route, wantArt, (code) =>
-    online.matchSource(code, LuaOnlineMatch),
-  );
-}, screenLoadFailed);
+// The game table and the rules engine behind it load when Lua first opens a table, or when a page
+// heads for one (the sandbox picker, an online countdown). Resuming with no save stored needs
+// neither: it goes straight to the deck picker.
+const simulator = new LazyScreen(
+  async () => {
+    const [{ LuaSimulator }, { LuaOnlineMatch }] = await Promise.all([
+      import("./simulator"),
+      import("./onlineTable"),
+    ]);
+    return new LuaSimulator(publishTo("simulator"), route, wantArt, (code) =>
+      online.matchSource(code, LuaOnlineMatch),
+    );
+  },
+  loadFailureHandler({
+    offline: () => navigator.onLine === false,
+    reload: () =>
+      reloadUnlessRecent(
+        () => sessionStorage,
+        () => location.reload(),
+      ),
+    notice: showNotice,
+    report: (error) => reportError("load a screen", error),
+  }),
+  {
+    answer: (raw) => {
+      if (decodeFields(raw)?.[0] !== "resume" || hasSimulatorSave()) return false;
+      route("sandbox");
+      return true;
+    },
+  },
+);
 const account = new LuaAccount((snapshot) => {
   shell.accountChanged(snapshot);
   const status = account.status;
@@ -110,14 +140,10 @@ setSessionRecoveryHandler(async () => {
   return account.status === "authenticated";
 });
 
-/** A screen chunk that will not load most likely went away with a deploy under this tab: reload
- * onto the new build, at most once a minute so a broken build cannot loop. */
-function screenLoadFailed(error: unknown) {
-  reportError("load a screen", error);
-  reloadUnlessRecent(
-    () => sessionStorage,
-    () => location.reload(),
-  );
+let noticeRevision = 0;
+/** A line Lua shows and says on whatever page is open. */
+function showNotice(message: string) {
+  host.writeMailbox(MAILBOXES.notice, encodeFields([++noticeRevision, message]));
 }
 
 /** The builder's deck for the page's name: a deck the builder has not opened yet is loading too. */

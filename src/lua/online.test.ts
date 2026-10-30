@@ -343,6 +343,33 @@ describe("Lua online adapter", () => {
     expect(c.posts.at(-1)).toEqual({ kind: "reject", to: testSeatId("g"), reason: "kicked" });
   });
 
+  it("warms the game table's code once the lobby counts down, once per countdown", async () => {
+    const warmTable = vi.fn();
+    const made: LobbyClient[] = [];
+    const fakes: ReturnType<typeof fakeLobbyChannel>[] = [];
+    const online = new LuaOnline(vi.fn(), vi.fn(), {
+      warmTable,
+      client: (opts) => {
+        const fake = fakeLobbyChannel();
+        fakes.push(fake);
+        const client = new LobbyClient(opts, { channel: fake.channel });
+        made.push(client);
+        return client;
+      },
+    });
+    await online.command("open");
+    await online.command(`join\t${CODE}`);
+    const me = myId();
+    fakes[0]?.push({ kind: "state", snapshot: seated(me) });
+    expect(warmTable).not.toHaveBeenCalled();
+    fakes[0]?.push({
+      kind: "state",
+      snapshot: seated(me, { phase: "countdown", countdownStartedAt: Date.now() }),
+    });
+    vi.advanceTimersByTime(1200);
+    expect(warmTable).toHaveBeenCalledTimes(1);
+  });
+
   it("emits the countdown only when the whole second changes", async () => {
     const { online, header, publish, last } = setup();
     await online.command("open");

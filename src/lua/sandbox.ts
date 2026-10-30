@@ -25,6 +25,8 @@ export class LuaSandbox {
     private publish: (snapshot: string) => void,
     /** Resolves to the synchronous handoff, so nothing async sits between the last check and it. */
     private loadLaunch: () => Promise<(setup: LocalGameSetup) => void>,
+    /** Starts loading the game table's code, which a Play from this picker will need. */
+    private warm: () => void = () => {},
   ) {}
 
   session(status: AccountStatus, id: string) {
@@ -112,6 +114,8 @@ export class LuaSandbox {
     if (action === "open" || action === "refresh") {
       this.active = true;
       await this.load();
+      // After the decks, so a slow link fetches them first.
+      if (action === "open" && this.active) this.warm();
       return;
     }
     if (!this.active || this.phase !== "ready" || this.busy) return;

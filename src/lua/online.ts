@@ -95,6 +95,8 @@ export class LuaOnline {
       client?: (opts: LobbyClientOptions) => LobbyClient;
       now?: () => number;
       cards?: CardPool;
+      /** Starts loading the game table's code, which a countdown is about to need. */
+      warmTable?: () => void;
     } = {},
   ) {}
 
@@ -468,6 +470,7 @@ export class LuaOnline {
   }
 
   private sync(step: OnlineStep) {
+    if (step === "countdown" && this.ticker === null) this.deps.warmTable?.();
     if (step !== "countdown") {
       if (this.ticker !== null) clearInterval(this.ticker);
       this.ticker = null;
