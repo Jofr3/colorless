@@ -27,6 +27,8 @@ local Model=require('ui.sim_model')
 local Ko=require('ui.sim_ko')
 local Popup=require('ui.popup')
 local Speech=require('ui.sim_speech')
+local Display=require('ui.display')
+local HitArea=require('ui.hit_area')
 local Simulator={};Simulator.__index=Simulator
 local g=love.graphics
 local STATUS_ROTATION={asleep=-math.pi/2,paralyzed=math.pi/2,confused=math.pi}
@@ -1004,8 +1006,35 @@ function Simulator:build(quiet)
     self.closingPopup=nil
   end
   if self.reduced then self.closingPopup=nil end
+  self:inflateTargets()
   self:buildPrizeStops()
   self:restoreFocus(quiet)
+end
+-- On a phone the table's small buttons answer over a larger invisible area around their unchanged
+-- faces (audit LC4 (b), QA11): about 44 CSS px where the table draws under 0.7 CSS px per board
+-- px (a phone held sideways), 24 CSS px on a phone held upright. The HUD's buttons stay in the HUD
+-- column; no area reaches a card or another control.
+function Simulator:inflateTargets()
+  local zoom=Display.scale*self.zoom
+  if zoom>=1 then return end
+  local size=(zoom<0.7 and 44 or 24)/zoom
+  local cards={}
+  for _,c in ipairs(self.cards) do
+    local s=c.baseScale or 1
+    cards[#cards+1]={x=c.homeX-D.HALF_W*s,y=c.homeY-D.HALF_H*s,w=D.W*s,h=D.H*s}
+  end
+  local hud,attached={},{}
+  for _,b in ipairs(self.controls) do
+    if not b.invisible then if b.attached then attached[#attached+1]=b else hud[#hud+1]=b end end
+  end
+  local L=self.L
+  local board={x=0,y=0,w=self.boardW,h=self.boardH}
+  HitArea.inflate(hud,size,size,self.controls,cards,L.portrait and board or {x=L.hud.x,y=0,w=L.hud.w,h=self.boardH})
+  -- A popup over a card already takes the pointer there: its buttons grow only inside it.
+  local popup=self.attachedPopup
+  local over=false
+  for _,c in ipairs(cards) do over=over or (popup and HitArea.overlaps(popup,c)) end
+  HitArea.inflate(attached,size,size,self.controls,cards,over and popup or board)
 end
 local function groupLabel(group)
   local labels={attach='Attach',evolve='Evolve',tool='Attach',rareCandy='Rare Candy',ability='Ability'}

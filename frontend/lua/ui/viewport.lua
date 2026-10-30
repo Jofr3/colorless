@@ -1,11 +1,13 @@
 -- The viewport mailbox (host.js syncViewport): the canvas's CSS width and height, the system
 -- reduced-motion flag, then its device-pixel width and height, the CSS size times the device
--- pixel ratio (audit BT6). A host that sends no device size means one device pixel per CSS pixel.
+-- pixel ratio (audit BT6), then 1 when the primary pointer is coarse (a touch screen: a phone or
+-- tablet that can be turned, audit LC4). A host that sends no device size means one device pixel
+-- per CSS pixel; one that sends no pointer flag, a fine pointer.
 local Viewport={}
 -- Nil for a malformed record. `limit`, the GPU's largest texture side: a device size wider or
 -- taller renders at the largest size that fits, at the same aspect, and the browser scales it up.
 function Viewport.parse(raw,limit)
-  local w,h,reduced,pw,ph=(raw or ''):match('^(%d+) (%d+) (%d) ?(%d*) ?(%d*)')
+  local w,h,reduced,pw,ph,coarse=(raw or ''):match('^(%d+) (%d+) (%d) ?(%d*) ?(%d*) ?(%d?)')
   w,h=tonumber(w),tonumber(h)
   if not w or not h or w<1 or h<1 then return nil end
   pw,ph=tonumber(pw),tonumber(ph)
@@ -15,6 +17,6 @@ function Viewport.parse(raw,limit)
     pw,ph=math.max(1,math.floor(pw*fit)),math.max(1,math.floor(ph*fit))
   end
   -- Device pixels per CSS pixel, from the height: the CRT's scanline count follows it.
-  return {w=w,h=h,reduced=reduced=='1',pixelWidth=pw,pixelHeight=ph,density=ph/h}
+  return {w=w,h=h,reduced=reduced=='1',pixelWidth=pw,pixelHeight=ph,density=ph/h,coarse=coarse=='1'}
 end
 return Viewport

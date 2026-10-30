@@ -25,9 +25,14 @@ end
 -- This is the game's viewport scale, independent of our responsive UI layout.
 function Screen.unit(w,h) return math.min(w/22,h/12.9) end
 
+-- Below this many CSS pixels per layout pixel the scanlines follow the layout (audit LC4).
+Screen.SMALL_LAYOUT=0.6
 -- Writes the CRT uniforms into `values`, reusing its tables; returns it. `density`: device pixels
--- per CSS pixel; the scanline count follows the CSS height.
-function Screen.fill(values,height,unit,time,mx,my,reduced,preferences,density)
+-- per CSS pixel; the scanline count follows the CSS height. `layoutScale`: CSS pixels per layout
+-- pixel; on a layout drawn smaller than SMALL_LAYOUT (a phone held sideways) the count follows
+-- the layout's height instead, so scanlines keep the size they have against the text at
+-- 1280x800 rather than cutting through the rows of small glyphs.
+function Screen.fill(values,height,unit,time,mx,my,reduced,preferences,density,layoutScale)
   local crt=(preferences and preferences.crt or 70)*0.3/100
   local distortion,scale,mouse=values.distortion_fac or {},values.scale_fac or {},values.mouse_screen_pos or {}
   distortion[1],distortion[2]=1+0.07*crt,1+0.1*crt
@@ -37,16 +42,18 @@ function Screen.fill(values,height,unit,time,mx,my,reduced,preferences,density)
   values.feather_fac=0.01;values.bloom_fac=preferences and preferences.bloom or 0;values.glitch_intensity=0
   values.time=400+(reduced and 12 or time);values.noise_fac=reduced and 0 or 0.001*crt
   values.crt_intensity=0.16*crt;values.scanlines=height/(density or 1)*0.75
+  if layoutScale and layoutScale<Screen.SMALL_LAYOUT then values.scanlines=values.scanlines/layoutScale end
   values.screen_scale=unit;values.hovering=reduced and 0 or 1
   return values
 end
-function Screen.values(height,unit,time,mx,my,reduced,preferences,density)
-  return Screen.fill({},height,unit,time,mx,my,reduced,preferences,density)
+function Screen.values(height,unit,time,mx,my,reduced,preferences,density,layoutScale)
+  return Screen.fill({},height,unit,time,mx,my,reduced,preferences,density,layoutScale)
 end
 
--- `w`, `h` and `unit` in drawable pixels; `density`, device pixels per CSS pixel (default 1).
-function Screen.new(shader,w,h,unit,density)
-  local self=setmetatable({shader=shader,w=w,h=h,unit=unit,density=density or 1,values={},projected={}},Screen)
+-- `w`, `h` and `unit` in drawable pixels; `density`, device pixels per CSS pixel (default 1);
+-- `layoutScale`, CSS pixels per layout pixel (default 1).
+function Screen.new(shader,w,h,unit,density,layoutScale)
+  local self=setmetatable({shader=shader,w=w,h=h,unit=unit,density=density or 1,layoutScale=layoutScale,values={},projected={}},Screen)
   -- Only a shader patched by Screen.source divides by pixel_density.
   self.patched=shader.hasUniform~=nil and shader:hasUniform('pixel_density')
   -- LÖVE Canvas vertices: TL, BL, TR, BR; indices 0,1,2,2,1,3.
@@ -59,7 +66,7 @@ end
 
 -- Refills values and projected in place: an idle frame makes no garbage (audit LC7).
 function Screen:update(time,mx,my,reduced,preferences)
-  local values=Screen.fill(self.values,self.h,self.unit,time,mx,my,reduced,preferences,self.density)
+  local values=Screen.fill(self.values,self.h,self.unit,time,mx,my,reduced,preferences,self.density,self.layoutScale)
   -- Everything but time and the mouse follows CRT, bloom and reduced motion (and this Screen's
   -- size); draw sends it all again only when one of them changes.
   if values.crt_intensity~=self.sentCrt or values.bloom_fac~=self.sentBloom or values.hovering~=self.sentHovering then

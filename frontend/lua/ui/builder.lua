@@ -13,6 +13,8 @@ local DeckRow=require('ui.deck_row')
 local Alert=require('ui.card_alert')
 local Energy=require('ui.energy')
 local PageText=require('ui.page_text')
+local Display=require('ui.display')
+local HitArea=require('ui.hit_area')
 local Modal=require('ui.modal')
 local Codec=require('ui.codec')
 local Mailbox=require('ui.mailbox')
@@ -497,6 +499,17 @@ function Builder:build()
   -- The retry buttons keep their look, text and place (the user's rule for buttons).
   if self.saveStatus=='failed' then self:add(p and 'Retry save' or 'Retry',p and 24 or 1122,p and (self.tab=='deck' and h-124 or h-180) or h-83,p and 432 or 110,p and 36 or 18,'retry-save',T.red).fontSize=p and 24 or 16
   elseif self.retry then self:add(p and 'Retry loading' or 'Retry',p and 24 or 1122,p and (self.tab=='deck' and h-124 or h-180) or h-83,p and 432 or 110,p and 36 or 18,'retry',T.profile).fontSize=p and 24 or 16 end
+  self:inflateTargets()
+end
+-- PG8: the deck rows' - and + and Retry answer the pointer over about 34x34 virtual pixels (24
+-- CSS px at least), around their unchanged faces and clear of every other control.
+function Builder:inflateTargets()
+  local small={}
+  for _,b in ipairs(self.controls) do
+    if b.rowAction or b.action=='retry-save' or b.action=='retry' then small[#small+1]=b end
+  end
+  local size=math.max(34,Display.units(24,Display.collection))
+  HitArea.inflate(small,size,size,self.controls)
 end
 -- Portrait's catalog retry button covers the message line and the save caption's place.
 function Builder:retryCoversLine()

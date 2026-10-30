@@ -8,6 +8,8 @@ local CardBack=require('ui.card_back')
 local Alert=require('ui.card_alert')
 local DeckLabels=require('ui.deck_labels')
 local PageText=require('ui.page_text')
+local Display=require('ui.display')
+local HitArea=require('ui.hit_area')
 local Modal=require('ui.modal')
 local Codec=require('ui.codec')
 local Mailbox=require('ui.mailbox')
@@ -203,8 +205,15 @@ function Library:build()
       self.controls[#self.controls+1]={label=card.item.name,x=card.homeX-D.HALF_W*s,y=card.homeY-D.HALF_H*s,w=D.W*s,h=D.H*s,action='card',card=i}
       -- Rename and Delete live in the Manage dialog: a dots button under the
       -- pile's left half (the count sits under the right), focused after its deck.
-      self:add('Manage',card.homeX-D.HALF_W*s,card.homeY+D.HALF_H*s+2,40,24,'manage',T.blue,{card=i,displayLabel=''})
+      self:add('Manage',card.homeX-D.HALF_W*s,card.homeY+D.HALF_H*s+2,40,24,'manage',T.blue,{card=i,displayLabel='',hitGrow='down'})
     end
+    -- PG8: Manage answers over about 34x34 (24 CSS px at least) hanging from its face, inside
+    -- the tray and clear of its pile and every other control.
+    local manage={}
+    for _,b in ipairs(self.controls) do if b.action=='manage' then manage[#manage+1]=b end end
+    local size=math.max(34,Display.units(24,Display.collection))
+    local trayWidth=p and 380 or 1000
+    HitArea.inflate(manage,size,size,self.controls,nil,{x=(w-trayWidth)/2,y=p and 154 or 104,w=trayWidth,h=p and 452 or 510})
     Pager.arrow(self:add('<',w/2-177,h-144,36,48,'previous',T.red),-1,self.page,self.pages).fontSize=30
     Pager.arrow(self:add('>',w/2+141,h-144,36,48,'next',T.red),1,self.page,self.pages).fontSize=30
   elseif self.phase~='loading' then

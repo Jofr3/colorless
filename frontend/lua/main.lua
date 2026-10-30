@@ -19,6 +19,8 @@ local MenuLogo = require('ui.menu_logo')
 local Controls = require('ui.controls')
 local Pacer = require('ui.frame_pacer')
 local Viewport = require('ui.viewport')
+local Size = require('ui.interface_size')
+local Display = require('ui.display')
 local g = love.graphics
 -- Game:main_menu starts REAL at 12 when skipping the introductory splash.
 local state = {time=12,focused=0,hovered=0,muted=false,reduced=false,poll=0,ready=false,parked=false,lastInput='pointer',focusEdge='none'}
@@ -62,6 +64,19 @@ local wipe,pendingPage
 local scene, width, height, layoutScale, offsetX, offsetY, virtualWidth, virtualHeight
 -- Device pixels per CSS pixel: width and height are the canvas's device pixels (audit BT6).
 local density=1
+-- Settings' Interface Size (audit LQX2, ui/interface_size.lua). A layer at `scale` lays out in a
+-- w x h canvas, the virtual canvas divided by its scale, and draws scaled up about the canvas
+-- centre, so it covers the same part of the screen. Home grows in landscape (its compact
+-- arrangement still fits 150%), Settings as far as its tallest form fits; the collection panel
+-- drops its 0.9 inset; the table, the online lobby and the wipe are as large as the canvas.
+local homeLayer,popupLayer,tableLayer={scale=1},{scale=1},{scale=1}
+-- The smallest canvas each growing layer fits: home's compact arrangement, and Settings' widest
+-- popup (780) and tallest form (620) with a margin.
+local HOME_MIN,POPUP_MIN={720,520},{812,640}
+-- The collection panel's scale over the dimmed home: 0.9 in landscape at 100%.
+local collectionScale=0.9
+-- Home's logo: its centre height and drawn width.
+local homeLogo={y=310,width=900}
 local menu = {
   {label='Sandbox', action='sandbox', colour=T.blue},
   {label='Online', action='online', colour=T.red},
@@ -111,6 +126,26 @@ local REDRAW_SECONDS,BACKSTOP_SECONDS=0.5,1
 local function redraw() state.redrawUntil=state.time+REDRAW_SECONDS end
 -- Update and draw run at most this many times a second (Settings' Max Frame Rate).
 local function frameCap() return preferences.highFrameRate==1 and 144 or 60 end
+-- A point on the virtual canvas in a layer's canvas, and the layer's drawing transform.
+local function layerPoint(layer,x,y)
+  if layer.scale==1 then return x,y end
+  return (x-virtualWidth/2)/layer.scale+layer.w/2,(y-virtualHeight/2)/layer.scale+layer.h/2
+end
+local function applyLayer(layer)
+  if layer.scale==1 then return end
+  g.translate(virtualWidth/2,virtualHeight/2); g.scale(layer.scale); g.translate(-layer.w/2,-layer.h/2)
+end
+-- How much Settings' Interface Size asks for.
+local function interfaceStep() return Size.steps[preferences.interfaceSize+1] end
+-- Each layer's scale and canvas for the virtual canvas and the chosen Interface Size.
+local function arrangeLayers(portrait)
+  local function fit(layer,minimum)
+    layer.scale=portrait and 1 or Size.factor(preferences.interfaceSize,virtualWidth,virtualHeight,minimum[1],minimum[2])
+    layer.w,layer.h=virtualWidth/layer.scale,virtualHeight/layer.scale
+  end
+  fit(homeLayer,HOME_MIN);fit(popupLayer,POPUP_MIN);tableLayer.w,tableLayer.h=virtualWidth,virtualHeight
+  collectionScale=(portrait or preferences.interfaceSize>0) and 1 or 0.9
+end
 local function layout(w,h,pixelDensity)
   width,height,density=w,h,pixelDensity or 1
   redraw()
@@ -120,12 +155,19 @@ local function layout(w,h,pixelDensity)
   layoutScale=math.min(w/virtualWidth,h/virtualHeight)
   offsetX,offsetY=(w-virtualWidth*layoutScale)/2,(h-virtualHeight*layoutScale)/2
   room=Room.new(virtualWidth,virtualHeight,Screen.unit(w,h)/layoutScale)
+  arrangeLayers(portrait)
+  state.interfaceSize=preferences.interfaceSize
+  local css=layoutScale/density
+  Display.set({scale=css,collection=css*collectionScale,popup=css*popupLayer.scale,portrait=portrait,coarse=state.coarse or false})
+  -- Home lays out in its layer's canvas: in landscape smaller than 800 tall the menu rises, with
+  -- the logo between it and the top edge, shrunk only when it does not fit.
+  local homeWidth,homeHeight=homeLayer.w,homeLayer.h
   local buttonWidth,buttonHeight=portrait and 368 or 219,portrait and 68 or 93
   local gap,padding=portrait and 16 or 12,portrait and 14 or 12
   local menuWidth=portrait and buttonWidth or #menu*buttonWidth+(#menu-1)*gap
   local menuHeight=portrait and #menu*buttonHeight+(#menu-1)*gap or buttonHeight
-  local menuX=(virtualWidth-menuWidth)/2
-  local menuY=portrait and 535-menuHeight/2 or 550
+  local menuX=(homeWidth-menuWidth)/2
+  local menuY=portrait and 535-menuHeight/2 or math.min(550,homeHeight-250)
   for i,b in ipairs(menu) do
     b.w,b.h=buttonWidth,buttonHeight
     b.x=menuX+(portrait and 0 or (i-1)*(buttonWidth+gap))
@@ -135,14 +177,21 @@ local function layout(w,h,pixelDensity)
   end
   menuTray={x=menuX-padding,y=menuY-padding,w=menuWidth+2*padding,h=menuHeight+2*padding}
   controls={
-    {label='Account',action='account',x=virtualWidth/2-144,y=virtualHeight-104,w=120,h=48,fontSize=24,colour=T.profile},
-    {label='Settings',action='settings',x=virtualWidth/2+24,y=virtualHeight-104,w=120,h=48,fontSize=24,colour=T.profile},
+    {label='Account',action='account',x=homeWidth/2-144,y=homeHeight-104,w=120,h=48,fontSize=24,colour=T.profile},
+    {label='Settings',action='settings',x=homeWidth/2+24,y=homeHeight-104,w=120,h=48,fontSize=24,colour=T.profile},
   }
+  if portrait or homeHeight>=800 then homeLogo.y,homeLogo.width=portrait and 235 or 310,portrait and 440 or 900
+  else
+    -- Between the tray's top and the canvas top, 16 clear on each side.
+    local logoWidth,logoHeight=menuLogo:getDimensions()
+    homeLogo.y=menuTray.y/2
+    homeLogo.width=math.min(900,(menuTray.y-32)*logoWidth/logoHeight)
+  end
   if scene then scene:release() end
   scene=g.newCanvas(w,h)
   scene:setFilter('linear','linear') -- love.resize uses linear canvas filtering.
-  screen=Screen.new(shaders.CRT,w,h,Screen.unit(w,h),density)
-  if popup then popup:layout(virtualWidth,virtualHeight) end
+  screen=Screen.new(shaders.CRT,w,h,Screen.unit(w,h),density,css)
+  if popup then popup:layout(popupLayer.w,popupLayer.h) end
   if library then library:layout(virtualWidth,virtualHeight) end
   if builder then builder:layout(virtualWidth,virtualHeight) end
   if sandbox then sandbox:layout(virtualWidth,virtualHeight) end
@@ -154,13 +203,13 @@ local function pointer(x,y)
   x,y=screen:unproject(x,y)
   return room:unproject((x-offsetX)/layoutScale,(y-offsetY)/layoutScale)
 end
--- Leave a visible border of the dimmed home behind the collection on desktop.
+-- Leave a visible border of the dimmed home behind the collection on desktop, at 100%.
 local function libraryPoint(x,y)
-  local scale=virtualWidth<600 and 1 or 0.9
+  local scale=collectionScale
   return (x-virtualWidth/2)/scale+virtualWidth/2,(y-virtualHeight/2)/scale+virtualHeight/2
 end
 local function libraryTransform()
-  local scale=virtualWidth<600 and 1 or 0.9
+  local scale=collectionScale
   g.translate(virtualWidth/2,virtualHeight/2); g.scale(scale)
   g.translate(-virtualWidth/2,-virtualHeight/2+collection():offset())
 end
@@ -173,7 +222,8 @@ local function editBox(screen)
   if screen then x,y,w,h=screen:editBox() end
   if not x then return nil end
   g.push(); g.origin(); g.translate(offsetX,offsetY); g.scale(layoutScale)
-  if isCollection(state.page) and screen==collection() then libraryTransform() end
+  if screen==popup then applyLayer(popupLayer)
+  elseif isCollection(state.page) and screen==collection() then libraryTransform() end
   local left,top=g.transformPoint(x,y)
   local right,bottom=g.transformPoint(x+w,y+h)
   g.pop()
@@ -203,6 +253,7 @@ local function syncEditBox()
   if box then Bridge.emit('field-box',unpack(box)) end
 end
 local function hit(x,y)
+  x,y=layerPoint(homeLayer,x,y)
   for i,b in ipairs(menu) do if Button.hit(b,x,y) then return i end end
   for i,b in ipairs(controls) do if Button.hit(b,x,y) then return #menu+i end end
   return 0
@@ -277,6 +328,7 @@ local function browserState()
     layout(view.pixelWidth,view.pixelHeight,view.density)
   end
   state.systemReduced=view~=nil and view.reduced
+  if view and view.coarse~=(state.coarse or false) then state.coarse=view.coarse;Display.set({coarse=view.coarse});redraw() end
   loadMusic()
   local preferencesRaw=not state.preferencesLoaded and Mailbox.read('preferences')
   if preferencesRaw then
@@ -333,6 +385,8 @@ local function syncFocusEdge()
   if edge..label~=state.focusEdge then state.focusEdge=edge..label;Bridge.emit('focus-edge',edge,label) end
 end
 applyPreferences=function()
+  -- A new Interface Size lays every layer out again, Settings too while it is open.
+  if scene and preferences.interfaceSize~=state.interfaceSize then layout(width,height,density) end
   local reduced=preferences:reduced(state.systemReduced)
   if reduced~=state.reduced then redraw() end
   state.reduced=reduced
@@ -380,7 +434,7 @@ openSettings=function(keyboard,tab,opener)
   },state.reduced,keyboard,account)
   popup.tab=Settings.tabs[tab or 'game'] or Settings.tabs.game
   if keyboard then popup.focus=popup.tab end
-  popup:layout(virtualWidth,virtualHeight)
+  popup:layout(popupLayer.w,popupLayer.h)
   Bridge.emit('account','refresh')
   Bridge.emit('settings','open')
   announce('Settings. '..(popup.tab==Settings.tabs.account and 'Account' or 'Game')..' tab. Tab moves between controls. Escape closes.')
@@ -508,7 +562,8 @@ function love.update(dt)
     account:input(Mailbox.read('accountInput'))
     -- Tab or Enter in a native sign-in field moves focus as a key press would.
     if popup:authInput(Mailbox.read('authInput')) then parkPointer() end
-    popup:update(dt,state.time,mx,my,state.reduced)
+    local px,py=layerPoint(popupLayer,mx,my)
+    popup:update(dt,state.time,px,py,state.reduced)
     love.mouse.setCursor(popup.hover>0 and state.handCursor or state.arrowCursor)
     return
   end
@@ -528,7 +583,7 @@ local function button(b,index)
   local active=Controls.lit(state.hovered,state.focused,index)
   local clicked=state.lastClicked and state.lastClicked.index==index and state.time-state.lastClicked.at<0.1
   local pressed=(state.pressed==index and state.hovered==index) or clicked
-  Button.draw(b,active,pressed,state.focused==index,virtualWidth)
+  Button.draw(b,active,pressed,state.focused==index,homeLayer.w)
 end
 function love.draw()
   if not scene then return end
@@ -546,13 +601,14 @@ function love.draw()
   g.setShader(bg); g.setColor(1,1,1); g.rectangle('fill',0,0,width,height); g.setShader()
   g.push(); g.translate(offsetX,offsetY); g.scale(layoutScale)
   room:apply()
+  local layer=isTable(state.page) and tableLayer or homeLayer
+  g.push(); applyLayer(layer)
   if isTable(state.page) then simulator:draw(shaders) else
-  local portrait=virtualWidth<600
   -- Like Game:main_menu's SPLASH_LOGO, the lettering is a painted sprite.
   -- Draw inside the room/CRT pass so scanlines and fringing stay live.
   local logoWidth=menuLogo:getDimensions()
-  local logoScale=(portrait and 440 or 900)/logoWidth
-  g.push(); g.translate(virtualWidth/2,portrait and 235 or 310)
+  local logoScale=homeLogo.width/logoWidth
+  g.push(); g.translate(homeLayer.w/2,homeLogo.y)
   if not state.reduced then g.rotate(math.sin(state.time*0.6)*0.012) end
   g.setColor(1,1,1)
   menuLogo:draw(logoScale)
@@ -564,17 +620,20 @@ function love.draw()
     Button.tray(b.x-12,b.y-12,b.w+24,b.h+24)
     button(b,#menu+i)
   end
-  T.text('Colorless',19,24,virtualHeight-33,160,T.paper,'left')
-  T.text('Home',19,virtualWidth-130,virtualHeight-33,106,T.paper,'right')
+  T.text('Colorless',19,24,homeLayer.h-33,160,T.paper,'left')
+  T.text('Home',19,homeLayer.w-130,homeLayer.h-33,106,T.paper,'right')
   end
   -- Text only, in the gap under the home menu or across the table's top edge, never under 12
   -- CSS pixels. Where the gap cannot hold it that large, home shows it above the logo.
   if state.notice then
     local size=math.max(16,math.ceil(12*density/layoutScale))
+    -- Interface Size enlarges it where its layer does not.
+    size=math.floor(size*interfaceStep()/layer.scale+0.5)
     local y=isTable(state.page) and 16 or menuTray.y+menuTray.h+4
     if not isTable(state.page) and y+size+4>controls[1].y-12 then y=24 end
-    Button.errorLine(state.notice.text,size,24,y,virtualWidth-48)
+    Button.errorLine(state.notice.text,size,24,y,layer.w-48)
   end
+  g.pop()
   g.pop()
   if isCollection(state.page) then
     Modal.backdrop(width,height)
@@ -596,7 +655,7 @@ function love.draw()
   end
   if popup then
     Modal.backdrop(width,height)
-    g.push(); g.translate(offsetX,offsetY); g.scale(layoutScale); room:apply()
+    g.push(); g.translate(offsetX,offsetY); g.scale(layoutScale); room:apply(); applyLayer(popupLayer)
     popup:draw()
     g.pop()
   end
@@ -682,7 +741,7 @@ function love.mousepressed(x,y,button)
   state.parked=false; state.lastInput='pointer'
   unlockAudio(); state.focused=0
   x,y=pointer(x,y)
-  if popup then popup:mousepressed(x,y); return end
+  if popup then popup:mousepressed(layerPoint(popupLayer,x,y)); return end
   if isTable(state.page) then simulator:mousepressed(x,y);return end
   if state.page=='online' then online:mousepressed(x,y);return end
   if isCollection(state.page) then collection():mousepressed(libraryPoint(x,y)); return end
@@ -692,7 +751,7 @@ function love.mousereleased(x,y,button,istouch)
   if button~=1 or wipe then return end
   if istouch then parkPointer() end
   x,y=pointer(x,y)
-  if popup then popup:mousereleased(x,y); return end
+  if popup then popup:mousereleased(layerPoint(popupLayer,x,y)); return end
   if isTable(state.page) then simulator:mousereleased(x,y);return end
   if state.page=='online' then online:mousereleased(x,y);return end
   if isCollection(state.page) then collection():mousereleased(libraryPoint(x,y)); return end

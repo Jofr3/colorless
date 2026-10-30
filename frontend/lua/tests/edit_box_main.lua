@@ -37,8 +37,9 @@ end
 for _,name in ipairs({'library','builder','sandbox','simulator','online'})do
  package.loaded['ui.'..name]={new=function(callbacks)local s=stub(callbacks);screens[name]=s;return s end}
 end
-local popup
-package.loaded['ui.settings']={tabs={game=1,graphics=2,audio=3,account=4},new=function(_,callbacks)
+local popup,preferences
+package.loaded['ui.settings']={tabs={game=1,graphics=2,audio=3,account=4},new=function(prefs,callbacks)
+ preferences=prefs
  popup=stub(callbacks)
  for _,method in ipairs({'accountChanged','openAuth','openNamePrompt'})do popup[method]=noop end
  function popup:authInput()return false end
@@ -112,5 +113,27 @@ popup.box={60,300,360,40};popup.callbacks.auth('edit\temail');printed={}
 files['__viewport.txt']='480 850 0 480 850'
 for _=1,20 do frame() end
 expect(sent('field-box'),'60\t300\t360\t40','A resize moves the box')
+
+-- Interface Size 125% (audit LQX2) at 1280 x 800 CSS pixels and a ratio of 1. Settings lays out in
+-- a 1024 x 640 canvas drawn 1.25 times larger about the middle: (100,200) is drawn at
+-- (640+(100-512)*1.25, 400+(200-320)*1.25) = (125,250), 450 x 50 large.
+files['__viewport.txt']='1280 800 0 1280 800'
+for _=1,20 do frame() end
+preferences.interfaceSize=1;popup.callbacks.changed();frame();printed={}
+popup.box={100,200,360,40}
+popup.callbacks.auth('edit\temail')
+expect(sent('auth'),'edit\temail\t125\t250\t450\t50','At 125% a sign-in field\'s box is drawn through Settings\' layer')
+popup.callbacks.account('edit\tAsh')
+expect(sent('account'),'edit\tAsh\t125\t250\t450\t50','At 125% the account name\'s box is drawn through Settings\' layer')
+popup.box={100,240,360,40};frame()
+expect(sent('field-box'),'125\t300\t450\t50','At 125% a moved Settings field moves through the layer')
+-- The collection panel drops its 0.9 inset at 125%: its boxes are the layout's own.
+popup.box=nil;love.keypressed('escape');frame()
+assert(preferences.interfaceSize==1,'Closing Settings keeps 125%')
+files['__page.txt']='4\tbuilder\tdeck1';for _=1,3 do frame() end;printed={}
+local builder=screens.builder
+builder.box={48,38,402,42}
+builder.callbacks.command('input\tquery\tPika')
+expect(sent('builder'),'input\tquery\tPika\t48\t38\t402\t42','At 125% the builder search has no inset')
 print=output
 print('PASS: an edit\'s command carries its field\'s box in CSS pixels, and the box prints again only when it moves')

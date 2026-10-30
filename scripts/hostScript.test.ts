@@ -76,6 +76,8 @@ interface Options {
   ratio?: number;
   width?: number;
   height?: number;
+  /** Whether `(pointer: coarse)` matches: a touch screen as the primary pointer. */
+  coarse?: boolean;
 }
 
 /** One boot of host.js over a fresh fake page. */
@@ -88,6 +90,7 @@ function boot({
   ratio = 1,
   width = 1280,
   height = 800,
+  coarse = false,
 }: Options = {}) {
   const page = {
     activeElement: null as FakeElement | null,
@@ -175,8 +178,9 @@ function boot({
   const nativeAlerts: string[] = [];
   const errors: unknown[] = [];
   const windowTarget = new EventTarget();
-  // matchMedia over the fake page: reduced motion never matches, and a resolution query matches
-  // the current ratio, hearing "change" when the ratio moves off it.
+  // matchMedia over the fake page: reduced motion never matches, a resolution query matches the
+  // current ratio, hearing "change" when the ratio moves off it, and a coarse pointer matches
+  // when the boot says so.
   const mediaQueries: { media: string; target: EventTarget }[] = [];
   const matchMedia = (media: string) => {
     const target = new EventTarget();
@@ -184,6 +188,7 @@ function boot({
     return {
       media,
       get matches() {
+        if (media === "(pointer: coarse)") return coarse;
         return media === `(resolution: ${context.devicePixelRatio}dppx)`;
       },
       addEventListener: target.addEventListener.bind(target),
@@ -892,27 +897,33 @@ describe("host.js viewport (BT6)", () => {
   it("sends the CSS size, reduced motion and the device-pixel size at the full ratio", () => {
     const page = boot({ ratio: 3, width: 390, height: 844 });
     page.start();
-    expect(viewport(page)).toBe("390 844 0 1170 2532");
+    expect(viewport(page)).toBe("390 844 0 1170 2532 0");
   });
 
   it("sends one device pixel per CSS pixel at ratio 1, and rounds a fractional ratio", () => {
     const flat = boot();
     flat.start();
-    expect(viewport(flat)).toBe("1280 800 0 1280 800");
+    expect(viewport(flat)).toBe("1280 800 0 1280 800 0");
     const scaled = boot({ ratio: 1.25, width: 1366, height: 768 });
     scaled.start();
-    expect(viewport(scaled)).toBe("1366 768 0 1708 960");
+    expect(viewport(scaled)).toBe("1366 768 0 1708 960 0");
   });
 
   it("re-sends at once when the page moves to a screen of another ratio, with no resize", () => {
     const page = boot();
     page.start();
     page.moveToRatio(2);
-    expect(viewport(page)).toBe("1280 800 0 2560 1600");
+    expect(viewport(page)).toBe("1280 800 0 2560 1600 0");
     page.moveToRatio(1.5);
-    expect(viewport(page)).toBe("1280 800 0 1920 1200");
+    expect(viewport(page)).toBe("1280 800 0 1920 1200 0");
     page.moveToRatio(1);
-    expect(viewport(page)).toBe("1280 800 0 1280 800");
+    expect(viewport(page)).toBe("1280 800 0 1280 800 0");
+  });
+
+  it("ends with 1 when the primary pointer is coarse, a phone or tablet (LC4)", () => {
+    const page = boot({ ratio: 3, width: 844, height: 390, coarse: true });
+    page.start();
+    expect(viewport(page)).toBe("844 390 0 2532 1170 1");
   });
 
   it("re-sends after a resize, browser zoom's new ratio included", async () => {
@@ -920,7 +931,7 @@ describe("host.js viewport (BT6)", () => {
     page.start();
     page.resize(640, 400, 2);
     await page.advance(100);
-    expect(viewport(page)).toBe("640 400 0 1280 800");
+    expect(viewport(page)).toBe("640 400 0 1280 800 0");
   });
 });
 

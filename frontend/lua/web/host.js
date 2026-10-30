@@ -283,6 +283,8 @@ window.colorlessHost = {
   },
 };
 const motion = matchMedia("(prefers-reduced-motion: reduce)");
+// A touch screen as the primary pointer: Lua suggests turning a phone held sideways (audit LC4).
+const coarsePointer = matchMedia("(pointer: coarse)");
 
 // Boot timings for devtools and scripts/bench-boot.ts.
 /** @type {Set<string>} */
@@ -305,7 +307,7 @@ function syncViewport() {
   const device = `${Math.max(1, Math.round(width * ratio))} ${Math.max(1, Math.round(height * ratio))}`;
   writeMailbox(
     bridge.mailboxes.viewport,
-    `${width} ${height} ${motion.matches ? "1" : "0"} ${device}`,
+    `${width} ${height} ${motion.matches ? "1" : "0"} ${device} ${coarsePointer.matches ? "1" : "0"}`,
   );
 }
 /** @type {MediaQueryList | undefined} */

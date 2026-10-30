@@ -94,8 +94,11 @@ function Button.errorLine(text,size,x,y,w)
   T.text(text,size,x,y,w,T.red)
 end
 
+-- A control answers the pointer over its face, or over its larger invisible hit rectangle
+-- (ui/hit_area.lua) when it has one.
 function Button.hit(b,x,y)
-  return x>=b.x and x<=b.x+b.w and y>=b.y and y<=b.y+b.h
+  local r=b.hitRect or b
+  return x>=r.x and x<=r.x+r.w and y>=r.y and y<=r.y+r.h
 end
 
 function Button.hoverColour(colour,active)
