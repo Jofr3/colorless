@@ -1,7 +1,14 @@
 local T=require('ui.theme')
 local Button=require('ui.button')
 local Codec=require('ui.codec')
+local Fit=require('ui.text_fit')
 local Input={}
+-- The size, from `size` down to 12, at which a field's value fits its width; remembered per value
+-- and width, so a long value does not step through every size each frame.
+local fitSize=Fit.cached(function(value,size,width)
+  while size>12 and T.font(size):getWidth(value)>width do size=size-1 end
+  return size
+end)
 function Input.background(item,editing,disabled,hovered)
   -- create_text_input + G.FUNCS.text_input: hooked colour is 30% darker;
   -- hover adds the standard black overlay. Shadow opacity never changes.
@@ -16,8 +23,7 @@ function Input.draw(item,value,editing,firstUnit,lastUnit,time,disabled,hovered)
   local g=love.graphics
   T.text(item.label,24,item.x,item.y-32,item.w)
   Input.background(item,editing,disabled,hovered)
-  local size=27
-  while size>12 and T.font(size):getWidth(value)>item.w-20 do size=size-1 end
+  local size=fitSize(value,27,item.w-20)
   local font=T.font(size)
   local scale=math.min(1,(item.w-20)/math.max(1,font:getWidth(value)))
   g.push(); g.translate(item.x+10,item.y+5); g.scale(scale,1)

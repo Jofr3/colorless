@@ -26,6 +26,12 @@ local DECK_X,DECK_WIDTH=808,424
 local deckTypes={{key='all',label='All'},{key='Pokémon',label='Pokemon'},{key='Trainer',label='Trainer'},{key='Energy',label='Energy'}}
 local Builder={}; Builder.__index=Builder
 local SORT_LABELS={name='Name',['hp-desc']='HP',set='Set'}
+local SORT_ORDER={'name','hp-desc','set'}
+-- The save caption beside the deck name, by builder.ts's saveStatus: an edit waiting for its save
+-- (pending) reads as saving.
+local SAVE_CAPTIONS={pending='Saving...',saving='Saving...',saved='Saved',retrying='Retrying...',failed='Not saved'}
+-- The width the save caption keeps beside the deck name.
+local STATUS_WIDTH=130
 -- The visible labels of the builder's text fields, as the host's proxy also names them.
 local FIELD_LABELS={name='Deck name',query='Search cards',optionQuery='Find an option',text='Rules text',transfer='Decklist'}
 -- builder.ts's placeholder while a card's rules text loads.
@@ -86,6 +92,24 @@ function Builder:visibleDeck()
     if kind==self.deckType then visible[#visible+1]=item end
   end
   return visible
+end
+-- What the save caption says, or nil when there is nothing to save.
+function Builder:saveCaption() return SAVE_CAPTIONS[self.saveStatus] end
+-- Where the save caption draws: beside the deck name, which keeps STATUS_WIDTH for it; on
+-- portrait's catalog tab, which has no deck name, at the end of the message line.
+function Builder:statusSlot()
+  if not self.portrait then return DECK_X+DECK_WIDTH-STATUS_WIDTH,38,STATUS_WIDTH,42 end
+  if self.tab=='deck' then return 456-STATUS_WIDTH,98,STATUS_WIDTH,42 end
+  return 456-STATUS_WIDTH,self.height-186,STATUS_WIDTH,40
+end
+-- Whether portrait's catalog shows the drop hint, which takes the message line while a card is dragged.
+function Builder:dropHint() return self.portrait and self.tab~='deck' and self.drag and self.drag.active or false end
+-- Where builder messages draw: beside Retry above Back in landscape; in portrait above the
+-- catalog's pager, before the save caption, and under the deck's Import / Clear row.
+function Builder:messageLine()
+  if not self.portrait then return 816,self.height-84,294 end
+  if self.tab=='deck' then return 24,205,432 end
+  return 24,self.height-176,456-STATUS_WIDTH-8-24
 end
 function Builder:deckPageSize() return self.deckView=='cards' and 6 or (self.portrait and 8 or 9) end
 function Builder:deckPages() return math.max(1,math.ceil(#self:visibleDeck()/self:deckPageSize())) end
@@ -184,6 +208,11 @@ function Builder:makeCards(entering)
     local y=(p and 270 or 224)+math.floor((i-1)/cols)*(p and 260 or 267)
     self.cards[i]=self:newCard(item,i,x,y,p and 1.04 or 1.08,{count=cols,column=(i-1)%cols,center=p and 238 or 407,entering=entering})
   end
+  self:dimResults()
+end
+-- Results kept on screen while a search is out draw with the greyed card look; they stay usable.
+function Builder:dimResults()
+  for _,c in ipairs(self.cards)do c.greyed=self.busy==true end
 end
 -- The deck's quantities and the filter values, to tell what a sync changed.
 function Builder:baseline()
@@ -257,8 +286,9 @@ function Builder:sync(raw)
   signature=table.concat(signature,'|')
   if signature~=self.signature then self.signature=signature;self:makeCards(true)
   else for i,c in ipairs(self.cards)do c.item.quantity=self.items[i].quantity;c.item.remaining=self.items[i].remaining end end
+  self:dimResults()
   self.deckPage=math.max(1,math.min(self.deckPage,math.ceil(#self:visibleDeck()/self:deckPageSize())))
-  self.pageText:set('Page '..self.page..'/'..self.pages,self.time)
+  self.pageText:set(self.busy and 'Searching...' or 'Page '..self.page..'/'..self.pages,self.time)
   local say={}
   if self.opening or self.phase~=was.phase then
     local summary=self:summary()
@@ -268,6 +298,10 @@ function Builder:sync(raw)
     say=self:changes(was)
   end
   if self.message~='' and self.message~=self.announced then say[#say+1]=self.message end;self.announced=self.message
+  -- A failed save is announced by its message; the save that recovers it, once.
+  if self.saveStatus=='failed' then self.saveFailed=true
+  elseif self.saveStatus=='saved' and self.saveFailed then self.saveFailed=nil;say[#say+1]='Deck saved.'
+  elseif self.phase~='ready' then self.saveFailed=nil end
   self:build()
   local m=self.modal
   if m and m.mode=='detail' and not m.heardDetails and self:detailsFor(m.id) then
@@ -302,9 +336,11 @@ end
 function Builder:filterCycle(label,value,key,y,count,index,selected,x,width)
   width=width or 264;x=x or self.width/2-width/2
   local centreWidth=width-72
-  local action=key=='format' and 'format' or 'cycle'
+  -- Format and sort step through their own commands; every other filter cycles.
+  local action=(key=='format' or key=='sort') and key or 'cycle'
+  local own=action~='cycle'
   -- One focus stop per filter: '>' takes focus and Left/Right step it; '<' answers the pointer.
-  self:add('<',x,y,28.8,38.4,action,T.red,key=='format' and -1 or {key,-1},{skipFocus=true,cycleKey=key,optionTitle=label,optionValue=value}).fontSize=24
+  self:add('<',x,y,28.8,38.4,action,T.red,own and -1 or {key,-1},{skipFocus=true,cycleKey=key,optionTitle=label,optionValue=value}).fontSize=24
   self.filterTexts=self.filterTexts or {}
   local text=self.filterTexts[key] or PageText.new();self.filterTexts[key]=text
   -- Keep long catalog values within the original narrow cycle.
@@ -316,7 +352,7 @@ function Builder:filterCycle(label,value,key,y,count,index,selected,x,width)
   text:set(display,self.time)
   self:add(value,x+36,y,centreWidth,38.4,'filter-value',T.red,key,
     {cycleCentre=true,inert=true,cycleWidth=width,optionTitle=label,cycleText=text,pipCount=count or 0,pipIndex=index or 1,pipSelected=selected})
-  self:add('>',x+width-28.8,y,28.8,38.4,action,T.red,key=='format' and 1 or {key,1},{cycleKey=key,optionTitle=label,optionValue=value}).fontSize=24
+  self:add('>',x+width-28.8,y,28.8,38.4,action,T.red,own and 1 or {key,1},{cycleKey=key,optionTitle=label,optionValue=value}).fontSize=24
 end
 function Builder:build()
   if not self.width then return end
@@ -350,6 +386,12 @@ function Builder:build()
         if self.filterPage==1 then inputs[1]={label='Format',value=self.format=='standard' and 'Standard' or 'Expanded',key='format',count=2,index=self.format=='standard' and 1 or 2}end
         local first=self.filterPage==1 and 1 or 7;local last=self.filterPage==1 and 6 or 10
         for i=first,last do if self.options[i]then inputs[#inputs+1]=self.options[i]end end
+        -- Portrait has no room for Sort beside Filters, so the Cards tab cycles it in its free last slot.
+        if self.filterPage==1 and p then
+          local sort=self.fields.sort or 'name';local index=1
+          for i,key in ipairs(SORT_ORDER)do if key==sort then index=i end end
+          inputs[#inputs+1]={label='Sort',value=SORT_LABELS[sort] or sort,key='sort',count=#SORT_ORDER,index=index}
+        end
         local columnGap=p and 12 or 24
         local columnWidth=(bw-columnGap)/2
         local cycleWidth=math.min(264,columnWidth)
@@ -386,7 +428,7 @@ function Builder:build()
     self:add(self.phase=='anonymous' and 'Sign in' or 'Try again',w/2-140,h/2+38,280,44,self.phase=='anonymous' and 'signin' or 'retry',T.red)
     return
   end
-  if not p then self:field('name','',DECK_X,38,DECK_WIDTH,42,'Deck name')end
+  if not p then self:field('name','',DECK_X,38,DECK_WIDTH-STATUS_WIDTH-8,42,'Deck name')end
   if p then
     self:add('Browse cards',24,38,208,42,'tab',self.tab=='catalog' and T.blue or T.red,'catalog')
     self:add('Deck '..self.count..'/'..Limits.deckSizeFor(self.format),248,38,208,42,'tab',self.tab=='deck' and T.blue or T.red,'deck')
@@ -436,13 +478,22 @@ function Builder:build()
     self:add(self.deckView=='list' and 'Show cards' or 'Show list',pagerX+256,pagerY,40,36,'deck-view',T.profile,nil,{icon=self.deckView=='list' and 'cards' or 'list',displayLabel=''})
     self:add('Deck information',pagerX+308,pagerY,40,36,'deck-info',T.profile,nil,{icon='info',displayLabel=''})
     if p then
-      self:field('name','',24,98,432,42,'Deck name')
+      self:field('name','',24,98,432-STATUS_WIDTH-8,42,'Deck name')
       self:add('Import / Export',24,158,290,42,'transfer',T.blue)
       self:add('Clear',328,158,128,42,'confirm-clear',T.red)
     end
   end
-  if self.saveStatus=='failed' then self:add(p and 'Retry save' or 'Retry',p and 24 or 1122,p and (self.tab=='deck' and h-124 or h-180) or h-83,p and 432 or 110,p and 36 or 18,'retry-save',T.red).fontSize=p and 24 or 16
-  elseif self.retry then self:add(p and 'Retry loading' or 'Retry',p and 24 or 1122,p and (self.tab=='deck' and h-124 or h-180) or h-83,p and 432 or 110,p and 36 or 18,'retry',T.profile).fontSize=p and 24 or 16 end
+  local sx,sy,sw,sh=self:statusSlot()
+  if self.saveStatus=='failed' then
+    -- Not saved, then the Retry-save affordance's look at a 28 px target.
+    self:add('Retry',sx+sw-52,sy+(sh-28)/2,52,28,'retry-save',T.red).fontSize=16
+  end
+  if self.retry then
+    if not p then self:add('Retry',1122,h-83,110,18,'retry',T.profile).fontSize=16
+    elseif self.tab=='deck' then self:add('Retry loading',24,h-124,432,36,'retry',T.profile).fontSize=24
+    -- The catalog's message line leaves Retry loading the save caption's place while that is empty.
+    elseif not self:saveCaption() then self:add('Retry loading',sx,sy+2,sw,36,'retry',T.profile).fontSize=24 end
+  end
 end
 function Builder:openModal(mode,item)
   self:command('finish-input');self.editing='';self.focus=0;self.pressed=nil
@@ -732,7 +783,7 @@ function Builder:keypressed(key)
     self.callbacks.announce(control.label..': '..((self.fields[control.arg] or '')~='' and self.fields[control.arg] or 'Any'))
   elseif control and control.cycleKey and (key=='left' or key=='right') then
     local dir=key=='left' and -1 or 1
-    if control.action=='format' then self:command('format',dir) else self:command('cycle',control.cycleKey,dir) end
+    if control.action=='cycle' then self:command('cycle',control.cycleKey,dir) else self:command(control.action,dir) end
   elseif key=='escape' then if self.modal then local choices=self.modal.mode=='choices';self:closeModal();if choices then self:openModal('filters')end else self:command('leave')end
   elseif key=='tab' or key=='right' or key=='down' or key=='left' or key=='up' then
     if #self.controls==0 then return end
@@ -857,7 +908,7 @@ function Builder:draw(shaders)
       local hovered=not self.modal and Button.hit({x=cx-135,y=h-132,w=270,h=44},self.mx or -1,self.my or -1)
       Button.cycleFace(cx-135,h-132,270,44,hovered)
       self.pageText:draw(self.time,self.reduced,cx-135,h-132,270,44,w)
-      if self.drag and self.drag.active and p then T.text(self.drag.source=='deck' and 'Drop here to remove one copy' or 'Drop here to add to deck',20,24,h-170,w-48,T.blue)end
+      if self:dropHint() then local mx,_,mw=self:messageLine();T.text(self.drag.source=='deck' and 'Drop here to remove one copy' or 'Drop here to add to deck',20,mx,h-170,mw,T.blue)end
     end
     if not p or self.tab=='deck'then
       local x=p and 24 or DECK_X;local bw=p and 432 or DECK_WIDTH;local y=p and 213 or PANEL_Y
@@ -881,7 +932,14 @@ function Builder:draw(shaders)
         T.text(empty and 'Inspect a card to add it,\nor drag it into this tray.' or 'Add cards from the catalog\nor choose another tab.',22,x+24,y+220,bw-48,T.profile)
       end
     end
-    if self.message~='' and not p then caption(self.message,18,816,h-84,294,T.paper,'left')end
+    local mx,my,mw=self:messageLine()
+    if self.message~='' and not self:dropHint() then caption(self.message,18,mx,my,mw,T.paper,'left')end
+    local status=self:saveCaption()
+    if status then
+      local sx,sy,sw,sh=self:statusSlot();local failed=self.saveStatus=='failed'
+      -- Not saved leaves the right of its place to Retry.
+      caption(status,failed and 16 or 18,sx,sy+(sh-18)/2,failed and sw-56 or sw,failed and T.red or T.paper,failed and 'left' or 'center')
+    end
   else
     T.text(self.phase=='loading' and 'Opening your deck...' or self.phase=='anonymous' and 'Sign in to build your deck' or 'Could not open this deck',p and 28 or 40,24,h/2-42,w-48)
   end

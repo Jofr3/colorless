@@ -892,7 +892,7 @@ export class LuaBuilder {
     ["clear", () => this.onClear()],
     ["cover", (a) => this.onCover(a)],
     ["page", (a) => this.onPage(a)],
-    ["sort", () => this.onSort()],
+    ["sort", (a) => this.onSort(a)],
     ["options", (a) => this.onOptions(a)],
     ["option-query", (a) => this.onOptionQuery(a)],
     ["option-page", (a) => this.onOptionPage(a)],
@@ -1040,11 +1040,13 @@ export class LuaBuilder {
     this.emit();
     this.prefetch(catalog);
   }
-  private async onSort() {
+  /** Steps the sort by `step`: the Sort button sends none (forward), the Filters cycle -1 or 1. */
+  private async onSort(step: string) {
     const sorts: Filters["sort"][] = ["name", "hp-desc", "set"];
+    const by = Number(step) === -1 ? -1 : 1;
     this.filters = {
       ...this.filters,
-      sort: sorts[(sorts.indexOf(this.filters.sort) + 1) % sorts.length] ?? "name",
+      sort: sorts[(sorts.indexOf(this.filters.sort) + by + sorts.length) % sorts.length] ?? "name",
     };
     this.page = 1;
     await this.search();

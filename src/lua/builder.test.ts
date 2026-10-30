@@ -1036,6 +1036,19 @@ describe("results while a search is out", () => {
     expect(shown(publish.mock.lastCall?.[0])).toEqual({ busy: "1", results: ids(0, 4) });
   });
 
+  it("steps the sort forward by default and back on -1, as the Filters cycle does", async () => {
+    const { b } = await setup();
+    await b.command("sort");
+    expect(b.filters.sort).toBe("hp-desc");
+    await b.command("sort\t1");
+    expect(b.filters.sort).toBe("set");
+    await b.command("sort\t1");
+    expect(b.filters.sort).toBe("name");
+    await b.command("sort\t-1");
+    expect(b.filters.sort).toBe("set");
+    expect(api.getCards).toHaveBeenLastCalledWith(expect.objectContaining({ sort: "set" }));
+  });
+
   it("says loading at once when there are no results to keep", async () => {
     const { b, publish } = await setup();
     await tick();

@@ -114,7 +114,8 @@ for _,view in ipairs({{1280,800},{480,850}})do
    if c.action=='filter-tab'then tabCount=tabCount+1;assert(c.colour==T.red and c.h==48)end
    if c.cycleCentre then cycles=cycles+1;cycleControls[cycles]=c;assert(c.w==(tabs.portrait and 116 or 192) and c.h==38.4)end
   end
-  assert(tabCount==3 and cycles==(page==1 and 7 or page==2 and 4 or 0))
+  -- Portrait's Cards tab adds Sort, which landscape keeps beside Filters.
+  assert(tabCount==3 and cycles==(page==1 and (tabs.portrait and 8 or 7) or page==2 and 4 or 0))
   if page<3 then
    assert(cycleControls[1].y==cycleControls[2].y and cycleControls[2].x>cycleControls[1].x+cycleControls[1].w+36,'Filter rows must have two separate columns')
    assert(cycleControls[3].x==cycleControls[1].x and cycleControls[3].y>cycleControls[1].y,'Third filter begins the next row')
