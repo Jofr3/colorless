@@ -69,7 +69,7 @@ export class LuaOnline {
   notice = "";
   private invalid = false;
   private identity: LobbyIdentity | null = null;
-  private account = "loading";
+  private account: AccountStatus = "loading";
   private userId = "";
   private decksWanted = false;
   private readonly deckEpoch = epochGuard();
@@ -231,8 +231,8 @@ export class LuaOnline {
   }
 
   session(status: AccountStatus, id: string) {
-    const account =
-      status === "authenticated" ? status : status === "loading" ? status : "anonymous";
+    // "error": the check could not reach the server, which Lua must not answer with Sign in.
+    const account = status;
     const user = account === "authenticated" ? id : "";
     // Every account publish reaches every screen; only a new status or user is news here.
     if (account === this.account && (account === "loading" || user === this.userId)) return;
@@ -500,7 +500,8 @@ export class LuaOnline {
     const live = this.deckEpoch.next();
     this.decks = [];
     if (!this.userId) {
-      this.deckPhase = this.account === "loading" ? "loading" : "anonymous";
+      this.deckPhase =
+        this.account === "loading" ? "loading" : this.account === "error" ? "error" : "anonymous";
       this.emit();
       return;
     }

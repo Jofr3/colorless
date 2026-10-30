@@ -282,7 +282,7 @@ function Online:sync(raw)
   local H,P,K=W.header,W.seat,W.deck
   local f=rows[1];if not f or #f<H.status then return end
   local was={step=self.step,seats=self.seats,status=self.status,message=self.message,notice=self.notice,
-    countdown=self.countdown,deckPhase=self.deckPhase}
+    countdown=self.countdown,deckPhase=self.deckPhase,link=self.link}
   self.busy,self.message,self.code,self.role,self.link=f[H.busy]=='1',f[H.message],f[H.code],f[H.role],f[H.link]
   self.countdown,self.notice,self.deckPhase=tonumber(f[H.countdown]),f[H.notice],f[H.deckPhase]
   self.name,self.account,self.status=f[H.name],f[H.account],f[H.status]
@@ -312,6 +312,8 @@ function Online:sync(raw)
   -- Leaving a lobby lands back on the Create tab, which is a fresh lobby.
   if f[H.step]=='menu' and was.step~='menu' then self:create() end
 end
+-- The steps that draw the Reconnecting... marker while the lobby link reconnects.
+local seatedStep={waiting=true,versus=true,countdown=true}
 function Online:react(was,step)
   local say={}
   local function add(text) if text and text~='' then say[#say+1]=text end end
@@ -335,6 +337,11 @@ function Online:react(was,step)
           or s.name..(s.ready and ' is ready.' or ' is no longer ready.'))
       end
     end
+  end
+  -- The Reconnecting... marker's speech: a seated lobby's link dropping and coming back.
+  if self.link~=was.link and seatedStep[step] and seatedStep[was.step] then
+    if self.link=='connecting' then add('Connection lost, reconnecting.')
+    elseif was.link=='connecting' and self.link=='connected' then add('Reconnected.') end
   end
   if step=='versus' and self.status~=was.status then add(self.status) end
   if self.message~=was.message then add(self.message) end
@@ -628,7 +635,7 @@ function Online:draw()
   g.push();g.translate(0,self:offset())
   Button.modalFrameRaised(x,y,w,h)
   local step,d=self.step,self.dyna
-  if self.link=='connecting' and (step=='waiting' or step=='versus' or step=='countdown') then
+  if self.link=='connecting' and seatedStep[step] then
     T.text('Reconnecting...',18,x+16,y+8,w-32,T.gold,'right')
   end
   if self.picker then self:drawPicker()

@@ -318,6 +318,17 @@ describe("Lua online adapter", () => {
     expect(publish.mock.calls.length).toBe(before + 3);
   });
 
+  it("carries a session check that could not reach the server as its own state", async () => {
+    stubFetch(deckReads);
+    const { online, header } = setup();
+    online.session("error", "");
+    expect(header()[H("account")]).toBe("error");
+    await online.command("decks");
+    expect(header()[H("deckPhase")]).toBe("error");
+    online.session("authenticated", "u");
+    await vi.waitFor(() => expect(header()[H("deckPhase")]).toBe("ready"));
+  });
+
   it("sends select, ready and kick only when they are allowed", async () => {
     stubFetch(deckReads);
     const { online, header, rows, last } = setup();
