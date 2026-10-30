@@ -6,6 +6,8 @@ local T=require('ui.theme')
 local Button=require('ui.button')
 local Dyna=require('ui.dynatext')
 local Motion=require('ui.motion')
+local Display=require('ui.display')
+local Screen=require('ui.screen')
 local Hud={};Hud.__index=Hud
 -- A target pick's note when its prompt has none, as drawn and as announced.
 Hud.TARGET_NOTE='Click a highlighted card'
@@ -267,36 +269,69 @@ local function cell(x,y,b,label,text,roomWidth,on)
     g.pop()
   end
 end
--- Wrap the entire prompt inside the HUD instead of covering board targets.
+-- The portrait prompt's smallest scale (audit QA11): under it the note leaves the box for a strip
+-- of at most STRIP_LINES lines over the table's top band, just under the HUD.
+Hud.PORTRAIT_PROMPT_MIN=0.24
+local STRIP_LINES=2
+local STRIP_COLOUR={BOSS_DARK[1],BOSS_DARK[2],BOSS_DARK[3],0.92}
+-- Wrap the entire prompt inside the HUD instead of covering board targets; in portrait a prompt
+-- too long for the HUD's box at PORTRAIT_PROMPT_MIN keeps its title there and moves its note to
+-- the strip.
 function Hud:drawPrompt(sim,L,x,y,w,h)
   local prompt=sim.targeting and sim.targeting.menu or sim.luaTargeting
   if not prompt then return end
   local title=prompt.title or ''
   local note=prompt.note and prompt.note~='' and prompt.note or Hud.TARGET_NOTE
   local scale=L.portrait and 0.27 or 0.4
-  local titles,notes,th,nh
+  local titles,notes,th,nh,strip
   local fit=self.promptFit
-  if fit and fit.title==title and fit.note==note and fit.w==w and fit.h==h and fit.start==scale then
-    titles,notes,th,nh,scale=fit.titles,fit.notes,fit.th,fit.nh,fit.scale
+  local minimum=L.portrait and Display.dyna(Hud.PORTRAIT_PROMPT_MIN) or nil
+  if fit and fit.title==title and fit.note==note and fit.w==w and fit.h==h and fit.start==scale and fit.minimum==minimum then
+    titles,notes,th,nh,scale,strip=fit.titles,fit.notes,fit.th,fit.nh,fit.scale,fit.strip
   else
     local start=scale
+    scale=math.max(scale,minimum or 0)
     repeat
       titles,th=Dyna.wrap(title,scale,w)
       notes,nh=Dyna.wrap(note,scale*0.8,w)
-      if #titles*(th+3)+8+#notes*(nh+3)<=h or scale<=0.16 then break end
+      if #titles*(th+3)+8+#notes*(nh+3)<=h then break end
+      if minimum and scale<=minimum+1e-9 then
+        -- The title stays in the box (shrinking only if it alone is too long), the note goes to
+        -- the strip at the title's smallest scale, shrinking only past STRIP_LINES lines.
+        while #titles*(th+3)>h and scale>0.16 do scale=scale-0.01;titles,th=Dyna.wrap(title,scale,w) end
+        strip={x=L.hud.x,y=L.hud.y+L.hud.h+4,w=L.hud.w,scale=minimum}
+        repeat
+          notes,nh=Dyna.wrap(note,strip.scale,strip.w-24)
+          if #notes<=STRIP_LINES or strip.scale<=0.16 then break end
+          strip.scale=strip.scale-0.01
+        until false
+        strip.h=#notes*(nh+3)+9
+        break
+      end
+      if not minimum and scale<=0.16 then break end
       scale=scale-0.01
     until false
-    self.promptFit={title=title,note=note,w=w,h=h,start=start,titles=titles,notes=notes,th=th,nh=nh,scale=scale}
+    self.promptFit={title=title,note=note,w=w,h=h,start=start,minimum=minimum,titles=titles,notes=notes,th=th,nh=nh,scale=scale,strip=strip}
   end
-  local height=#titles*(th+3)+8+#notes*(nh+3)
+  local height=#titles*(th+3)+(strip and 0 or 8+#notes*(nh+3))
   local yy=y+math.max(0,(h-height)/2)
   for _,line in ipairs(titles) do
     Dyna.static(line,scale,x,yy,w,th,LIGHT,{roomWidth=L.w,fit=true});yy=yy+th+3
   end
-  yy=yy+8
+  local noteScale=scale*0.8
+  if strip then
+    Button.panel(strip.x,strip.y,strip.w,strip.h,STRIP_COLOUR,2.4)
+    x,yy,w,noteScale=strip.x+12,strip.y+6,strip.w-24,strip.scale
+  else yy=yy+8 end
   for _,line in ipairs(notes) do
-    Dyna.static(line,scale*0.8,x,yy,w,nh,T.jokerGrey,{roomWidth=L.w,shadow=false,fit=true});yy=yy+nh+3
+    Dyna.static(line,noteScale,x,yy,w,nh,T.jokerGrey,{roomWidth=L.w,shadow=false,fit=true});yy=yy+nh+3
   end
+end
+-- A touch screen held sideways with the table drawn under Screen.SMALL_LAYOUT (audit LC4): the
+-- portrait layout would draw it far larger, so the HUD's empty top band suggests turning.
+Hud.ROTATE_HINT={'Turn your phone upright','for a larger table'}
+function Hud.rotateHint()
+  return Display.coarse and not Display.portrait and Display.scale<Screen.SMALL_LAYOUT
 end
 -- An action still unanswered after a second says so in the hint's place.
 Hud.SENDING_AFTER=1
@@ -331,6 +366,11 @@ function Hud:draw(sim,L,time,reduced,hovered)
   Button.panel(x+3,y+3,w-6,h-6,BOSS_DARK,6)
   local ix,iw=x+L.hud.inset,w-2*L.hud.inset
   local cy=self:top(L)
+  if Hud.rotateHint() then
+    for i,line in ipairs(Hud.ROTATE_HINT) do
+      Dyna.static(line,0.42,ix,8+(i-1)*30,iw,28,T.jokerGrey,{roomWidth=rw,fit=true,shadow=false})
+    end
+  end
   -- 1. Turn panel (HUD_blind): BLACK, emboss 0.05, header DYN_UI.MAIN row with
   -- the name DynaText, DYN_UI.DARK body with the hint and the prize chip box.
   local th=226
@@ -418,10 +458,11 @@ function Hud:drawPortrait(sim,L,time,reduced,hovered)
   self.turnText:draw(ix+75,y+30,rw)
   local hint=self:hintText(sim,time)
   local warn=hint==self.hint and (self.warning or '')~=''
-  Dyna.static(warn and self.warning or hint,choosingFirst and 0.24 or 0.26,ix,y+56,230,14,warn and T.red or T.jokerGrey,{roomWidth=rw,fit=true,shadow=false})
+  -- On a phone, small HUD text is at least Display.MIN_TEXT_CSS (audit QA11).
+  Dyna.static(warn and self.warning or hint,Display.dyna(choosingFirst and 0.24 or 0.26),ix,y+56,230,14,warn and T.red or T.jokerGrey,{roomWidth=rw,fit=true,shadow=false})
   local function mini(xx,yy,label,text,colour)
     emboss(xx,yy,64,44,BOSS_MAIN,1.2)
-    Dyna.static(label,0.26,xx,yy+2,64,12,LIGHT,{roomWidth=rw,fit=true})
+    Dyna.static(label,Display.dyna(0.26),xx,yy+2,64,12,LIGHT,{roomWidth=rw,fit=true})
     Button.panel(xx+4,yy+16,56,24,BOSS_DARK,1.2)
     local keep=text.scale;text.scale=0.5
     text:draw(xx+32,yy+28,rw)
@@ -431,7 +472,7 @@ function Hud:drawPortrait(sim,L,time,reduced,hovered)
   mini(ix+70,y+72,self.p2Label,self.p2HandText)
   mini(ix+140,y+72,'Turn',self.turnCount)
   emboss(ix+166,y+10,70,42,BLACK,1.2)
-  Dyna.static('Prizes',0.24,ix+166,y+12,70,12,LIGHT,{roomWidth=rw})
+  Dyna.static('Prizes',Display.dyna(0.24),ix+166,y+12,70,12,LIGHT,{roomWidth=rw})
   local keep=self.prizeText.scale;self.prizeText.scale=0.5;self.prizeText:draw(ix+201,y+36,rw);self.prizeText.scale=keep
   self:drawPrompt(sim,L,ix+246,y+58,w-266,h-64)
 end
