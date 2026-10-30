@@ -22,6 +22,28 @@ local g = love.graphics
 -- Game:main_menu starts REAL at 12 when skipping the introductory splash.
 local state = {time=12,focused=0,hovered=0,muted=false,reduced=false,poll=0,ready=false,parked=false,lastInput='pointer',focusEdge='none'}
 local shaders, sounds, controls = {}, {}, {}
+-- Shaders home's first frame does not need (audit LC8): love.load compiles only splash and CRT,
+-- and these compile one per update after ready, or at once for a page or wipe that draws with
+-- them first. Reading one that has not compiled yet compiles it, so no draw meets a missing one.
+local LATER_SHADERS={'background','dissolve','played'}
+local function ensureShader(name)
+  local shader=rawget(shaders,name)
+  if not shader then
+    shader=love.graphics.newShader('assets/shaders/'..name..'.fs')
+    rawset(shaders,name,shader)
+  end
+  return shader
+end
+local later={}
+for _,name in ipairs(LATER_SHADERS) do later[name]=true end
+setmetatable(shaders,{__index=function(_,name) if later[name] then return ensureShader(name) end end})
+local function ensureShaders(...)
+  for _,name in ipairs({...}) do ensureShader(name) end
+end
+-- The next shader the warm-up compiles, or nil once all have.
+local function nextShader()
+  for _,name in ipairs(LATER_SHADERS) do if not rawget(shaders,name) then return name end end
+end
 local soundVoices={}
 local menuTray,room,screen,popup,library,builder,sandbox,simulator,online,menuLogo
 local screens={}
@@ -144,6 +166,9 @@ applyPage=function(page,deckId)
   if state.page=='online' then online:close() end
   if state.page=='builder' then builder:command('close') end
   if state.page=='sandbox' then sandbox:command('close') end
+  -- Cards draw with dissolve and played; the table's background with background.fs.
+  if isTable(page) then ensureShaders('background','dissolve','played')
+  elseif isCollection(page) then ensureShaders('dissolve','played') end
   if isTable(state.page) then simulator:command('close') end
   state.deckId=deckId
   if popup then closeSettings() end
@@ -167,6 +192,8 @@ startWipe=function(callback)
   state.pressed=nil;state.hovered=0;state.focused=0
   -- Clear held interactions so an old drag cannot move during the wipe.
   cancelInteractions()
+  -- The wipe's card draws with dissolve, and it opens onto or away from the table.
+  ensureShaders('background','dissolve','played')
   local colour=isTable(state.page) and simulator:backgroundColours()[2] or T.panel
   wipe=ScreenWipe.new(callback,colour,state.reduced,function(name,pitch,volume) sound(name,pitch,volume,true) end)
   wipe:layout(virtualWidth,virtualHeight,Screen.unit(width,height)/layoutScale,width/layoutScale,height/layoutScale)
@@ -326,7 +353,7 @@ function love.load()
   menuLogo=MenuLogo.new()
   state.handCursor=love.mouse.getSystemCursor('hand')
   state.arrowCursor=love.mouse.getSystemCursor('arrow')
-  for _,name in ipairs({'splash','background','CRT','dissolve','played'}) do shaders[name]=g.newShader('assets/shaders/'..name..'.fs') end
+  ensureShaders('splash','CRT')
   for _,name in ipairs(effects) do unloadedEffects[name]=true end
   local function refresh() Bridge.emit('account','refresh') end
   local function home() Bridge.emit('page','home') end
@@ -350,7 +377,11 @@ function love.update(dt)
   -- The host hides its loading overlay on this signal, so it waits until a drawn frame is on the
   -- canvas: sent from love.load, the overlay went before the first draw and one black frame
   -- showed between the bar and the menu.
-  if state.drawn and not state.readySent then state.readySent=true; Bridge.emit('ready') end
+  if state.readySent then
+    -- After ready, one deferred shader per update.
+    local shader=nextShader()
+    if shader then ensureShader(shader) end
+  elseif state.drawn then state.readySent=true; Bridge.emit('ready') end
   if Mailbox.poll() then redraw() end
   local effect=next(unloadedEffects)
   if effect then loadEffect(effect) end
