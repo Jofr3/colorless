@@ -486,17 +486,13 @@ function Builder:build()
       self:add('Clear',328,158,128,42,'confirm-clear',T.red)
     end
   end
-  local sx,sy,sw,sh=self:statusSlot()
-  if self.saveStatus=='failed' then
-    -- Not saved, then the Retry-save affordance's look at a 28 px target.
-    self:add('Retry',sx+sw-52,sy+(sh-28)/2,52,28,'retry-save',T.red).fontSize=16
-  end
-  if self.retry then
-    if not p then self:add('Retry',1122,h-83,110,18,'retry',T.profile).fontSize=16
-    elseif self.tab=='deck' then self:add('Retry loading',24,h-124,432,36,'retry',T.profile).fontSize=24
-    -- The catalog's message line leaves Retry loading the save caption's place while that is empty.
-    elseif not self:saveCaption() then self:add('Retry loading',sx,sy+2,sw,36,'retry',T.profile).fontSize=24 end
-  end
+  -- The retry buttons keep their look, text and place (the user's rule for buttons).
+  if self.saveStatus=='failed' then self:add(p and 'Retry save' or 'Retry',p and 24 or 1122,p and (self.tab=='deck' and h-124 or h-180) or h-83,p and 432 or 110,p and 36 or 18,'retry-save',T.red).fontSize=p and 24 or 16
+  elseif self.retry then self:add(p and 'Retry loading' or 'Retry',p and 24 or 1122,p and (self.tab=='deck' and h-124 or h-180) or h-83,p and 432 or 110,p and 36 or 18,'retry',T.profile).fontSize=p and 24 or 16 end
+end
+-- Portrait's catalog retry button covers the message line and the save caption's place.
+function Builder:retryCoversLine()
+  return self.portrait and self.tab~='deck' and (self.saveStatus=='failed' or self.retry) and true or false
 end
 function Builder:openModal(mode,item)
   self:command('finish-input');self.editing='';self.focus=0;self.pressed=nil
@@ -935,13 +931,12 @@ function Builder:draw(shaders)
         T.text(empty and 'Inspect a card to add it,\nor drag it into this tray.' or 'Add cards from the catalog\nor choose another tab.',22,x+24,y+220,bw-48,T.profile)
       end
     end
-    local mx,my,mw=self:messageLine()
-    if self.message~='' and not self:dropHint() then caption(self.message,18,mx,my,mw,T.paper,'left')end
+    local mx,my,mw=self:messageLine();local covered=self:retryCoversLine()
+    if self.message~='' and not self:dropHint() and not covered then caption(self.message,18,mx,my,mw,T.paper,'left')end
     local status=self:saveCaption()
-    if status then
+    if status and not covered then
       local sx,sy,sw,sh=self:statusSlot();local failed=self.saveStatus=='failed'
-      -- Not saved leaves the right of its place to Retry.
-      caption(status,failed and 16 or 18,sx,sy+(sh-18)/2,failed and sw-56 or sw,failed and T.red or T.paper,failed and 'left' or 'center')
+      caption(status,18,sx,sy+(sh-18)/2,sw,failed and T.red or T.paper,'center')
     end
   else
     T.text(self.phase=='loading' and 'Opening your deck...' or self.phase=='anonymous' and 'Sign in to build your deck' or 'Could not open this deck',p and 28 or 40,24,h/2-42,w-48)
