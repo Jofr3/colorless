@@ -8,6 +8,7 @@ local Account=require('ui.account')
 local Auth=require('ui.auth')
 local Input=require('ui.text_input')
 local Motion=require('ui.motion')
+local Size=require('ui.interface_size')
 local g=love.graphics
 local Settings={}
 Settings.__index=Settings
@@ -17,7 +18,9 @@ Settings.tabs={game=1,graphics=2,audio=3,account=4}
 local TAB=Settings.tabs
 local rows={
   {{kind='slider',key='screenshake',label='Screenshake'},
-   {kind='toggle',key='reducedMotion',label='Reduced Motion'}},
+   {kind='toggle',key='reducedMotion',label='Reduced Motion'},
+   -- How large the whole interface draws (audit LQX2): main.lua grows each layer that fits.
+   {kind='cycle',key='interfaceSize',label='Interface Size',options=Size.labels}},
   {{kind='slider',key='crt',label='CRT'},
    {kind='cycle',key='bloom',label='CRT Bloom'},
    -- The update and draw cap (main.lua frameCap); `options` names each value, from 0.
@@ -319,7 +322,8 @@ function Settings:still()
   return not self.drag and not self.armed and not self.account.savedRemaining
     and self.motion:still() and self.deleteJuice:still()
 end
-function Settings:activate(index)
+-- `dir`: a cycle's step, -1 from its left arrow or Left, else forward.
+function Settings:activate(index,dir)
   local item=self.items[index]
   if not item or self:disabled(item) then return end
   local confirm=item.kind=='delete-confirm'
@@ -345,7 +349,10 @@ function Settings:activate(index)
   elseif item.action then
     if item.action=='edit' then self.focus=index end
     self.callbacks.account(self.account:command(item.action))
-  elseif item.kind=='toggle' or item.kind=='cycle' then
+  elseif item.kind=='cycle' then
+    self:change(item,(self:value(item)+(dir or 1))%(item.options and #item.options or 2))
+    self.callbacks.announce(self:describe(item))
+  elseif item.kind=='toggle' then
     self:change(item,1-self:value(item))
     self.callbacks.announce(self:describe(item))
   elseif item.kind=='back' then self.callbacks.close() end
@@ -473,7 +480,7 @@ function Settings:draw()
       g.push(); g.translate(x,y+1); g.scale(textScale,1)
       T.text(label,size,0,0,centreWidth/textScale)
       g.pop()
-      local count,index=2,self:value(item)
+      local count,index=item.options and #item.options or 2,self:value(item)
       for pip=0,count-1 do
         panel(x+(centreWidth-(count*7.2-2.4))/2+pip*7.2,y+28,4.8,4.8,index==pip and T.white or T.ink,0.6)
       end

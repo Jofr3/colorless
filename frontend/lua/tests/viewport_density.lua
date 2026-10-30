@@ -112,7 +112,10 @@ for _,size in ipairs(cases) do
     check(mode.w==pw and mode.h==ph,('DPR %s renders at %dx%d, got %dx%d'):format(density,pw,ph,mode.w,mode.h))
     check(mode.flags.resizable==false,'A denser canvas is sized only by Lua: SDL would size a resizable one to its CSS size')
     check(canvases[#canvases][1]==pw and canvases[#canvases][2]==ph,'The scene canvas is the device size')
-    check(math.abs(sent.scanlines-h*0.75)<1e-6,('Scanlines come from the CSS height at DPR %s (%s)'):format(density,tostring(sent.scanlines)))
+    -- On a layout drawn under 0.6 CSS px per layout px (844x390) they follow the layout (LC4).
+    local layout=w/h<0.9 and math.min(w/480,h/850) or math.min(w/1280,h/800)
+    local lines=h*0.75/(layout<0.6 and layout or 1)
+    check(math.abs(sent.scanlines-lines)<1e-6,('Scanlines come from the CSS height at DPR %s (%s)'):format(density,tostring(sent.scanlines)))
     check(math.abs(sent.pixel_density-ph/h)<1e-9,'The CRT fringe is measured in CSS pixels')
     sameMap(base,homeAt(w,h,pw/w,ph/h),('%dx%d at DPR %s'):format(w,h,density))
   end

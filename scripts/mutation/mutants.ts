@@ -65938,7 +65938,7 @@ export const MUTANTS: Mutant[] = [
     what: "The host sends only the CSS size, so Lua renders at it. Killed by hostScript.test's viewport cases.",
     file: "frontend/lua/web/host.js",
     symbol: "syncViewport",
-    find: '`${width} ${height} ${motion.matches ? "1" : "0"} ${device}`',
+    find: '`${width} ${height} ${motion.matches ? "1" : "0"} ${device} ${coarsePointer.matches ? "1" : "0"}`',
     replace: '`${width} ${height} ${motion.matches ? "1" : "0"}`',
     expectKilledBy: ["scripts/hostScript.test.ts"],
   },
