@@ -64626,10 +64626,10 @@ export const MUTANTS: Mutant[] = [
   {
     id: "UI-PG4-lua-deck-line-on-tabs",
     decision: "UI-PG4",
-    what: "The deck tab's message line draws over the deck-type tabs. Killed by builder_status.lua's message-line block.",
+    what: "The deck tab's message line draws into the chosen deck type's marker. Killed by builder_status.lua's message-line block.",
     file: "frontend/lua/ui/builder.lua",
-    find: "  if self.tab=='deck' then return 24,205,432 end",
-    replace: "  if self.tab=='deck' then return 24,237,432 end",
+    find: "  if self.tab=='deck' then return 24,206,432 end",
+    replace: "  if self.tab=='deck' then return 24,214,432 end",
     expectKilledBy: [],
     killedByCommand: ["bun", "scripts/test-lua.ts", "builder_status.lua"],
   },

@@ -180,7 +180,8 @@ do
       elseif view[4]=='portrait' then
         local _,import=find(b,function(c) return c.action=='transfer' end)
         local _,kind=find(b,function(c) return c.action=='deck-type' end)
-        check(y>=import.y+import.h and y+20<=kind.y,'portrait deck: the message line sits under Import / Clear')
+        -- Above the chosen deck type's marker, which rises up to 29 px over its tab.
+        check(y>=import.y+import.h and y+20<=kind.y-29,'portrait deck: the message line sits under Import / Clear, above the deck types')
       end
       -- A load failure keeps its Retry, clear of the message.
       b:sync(snapshot({results=view[3],message='Card search failed. Try again.',retry=true}))

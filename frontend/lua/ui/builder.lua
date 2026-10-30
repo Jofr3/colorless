@@ -23,6 +23,9 @@ local Pager=require('ui.pager')
 local g=love.graphics
 local PANEL_Y,PANEL_HEIGHT=95,554
 local DECK_X,DECK_WIDTH=808,424
+-- Portrait's deck panel starts below the message line under Import / Clear; its contents keep
+-- their places within it.
+local PORTRAIT_DECK_Y=232
 local deckTypes={{key='all',label='All'},{key='Pokémon',label='Pokemon'},{key='Trainer',label='Trainer'},{key='Energy',label='Energy'}}
 local Builder={}; Builder.__index=Builder
 local SORT_LABELS={name='Name',['hp-desc']='HP',set='Set'}
@@ -108,7 +111,7 @@ function Builder:dropHint() return self.portrait and self.tab~='deck' and self.d
 -- catalog's pager, before the save caption, and under the deck's Import / Clear row.
 function Builder:messageLine()
   if not self.portrait then return 816,self.height-84,294 end
-  if self.tab=='deck' then return 24,205,432 end
+  if self.tab=='deck' then return 24,206,432 end
   return 24,self.height-176,456-STATUS_WIDTH-8-24
 end
 function Builder:deckPageSize() return self.deckView=='cards' and 6 or (self.portrait and 8 or 9) end
@@ -131,7 +134,7 @@ function Builder:makeDeckCards()
     local p=self.portrait;local left=p and 24 or DECK_X;local span=p and 432 or DECK_WIDTH
     for i,item in ipairs(items)do
       local cx=left+span*((i-1)%3+0.5)/3
-      local cy=(p and 367 or 269)+math.floor((i-1)/3)*(p and 170 or 201)
+      local cy=(p and PORTRAIT_DECK_Y+154 or 269)+math.floor((i-1)/3)*(p and 170 or 201)
       self.deckCards[i]=self:newCard(item,i,cx,cy,p and 0.72 or 0.84,{count=3,column=(i-1)%3,center=left+span/2,entering=true})
     end
   else
@@ -448,13 +451,13 @@ function Builder:build()
     Pager.arrow(self:add('>',cx+141,h-132,36,44,'page',T.red,1),1,self.page,self.pages).fontSize=30
   end
   if not p or self.tab=='deck' then
-    local x=p and 24 or DECK_X+8;local bw=p and 432 or DECK_WIDTH-16;local y=p and 291 or 179
+    local x=p and 24 or DECK_X+8;local bw=p and 432 or DECK_WIDTH-16;local y=p and PORTRAIT_DECK_Y+78 or 179
     local allWidth=56
     local tabWidth=(bw-40-allWidth)/3
     local tabX=x+8
     for i,kind in ipairs(deckTypes)do
       local width=i==1 and allWidth or tabWidth
-      self:add(kind.label,tabX,p and 237 or PANEL_Y+24,width,44,'deck-type',T.red,kind.key).fontSize=24
+      self:add(kind.label,tabX,p and PORTRAIT_DECK_Y+24 or PANEL_Y+24,width,44,'deck-type',T.red,kind.key).fontSize=24
       tabX=tabX+width+8
     end
     local pageSize=self:deckPageSize();local visible=self:visibleDeck()
@@ -911,8 +914,8 @@ function Builder:draw(shaders)
       if self:dropHint() then local mx,_,mw=self:messageLine();T.text(self.drag.source=='deck' and 'Drop here to remove one copy' or 'Drop here to add to deck',20,mx,h-170,mw,T.blue)end
     end
     if not p or self.tab=='deck'then
-      local x=p and 24 or DECK_X;local bw=p and 432 or DECK_WIDTH;local y=p and 213 or PANEL_Y
-      Button.panel(x,y,bw,p and 496 or PANEL_HEIGHT,T.panel)
+      local x=p and 24 or DECK_X;local bw=p and 432 or DECK_WIDTH;local y=p and PORTRAIT_DECK_Y or PANEL_Y
+      Button.panel(x,y,bw,p and 709-PORTRAIT_DECK_Y or PANEL_HEIGHT,T.panel)
       local pagerLeft,pagerY=self:deckPager();local pagerX=pagerLeft+36
       local hovered=not self.modal and Button.hit({x=pagerX,y=pagerY,w=170,h=36},self.mx or -1,self.my or -1)
       Button.cycleFace(pagerX,pagerY,170,36,hovered,5)
