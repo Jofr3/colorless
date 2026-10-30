@@ -599,8 +599,9 @@ export class LuaBuilder {
           if (!live()) return;
           this.saveStatus = status;
           clearTimeout(this.savedTimer);
+          // Its Retry goes with the button: a save tried again says so in the caption instead.
+          if (status !== "failed" && this.message === MESSAGE.saveFailed) this.message = "";
           if (status === "saved") {
-            if (this.message === MESSAGE.saveFailed) this.message = "";
             this.dirty = JSON.stringify(this.snapshot()) !== this.acknowledged;
             if (this.leaving && !this.dirty) {
               this.exit();

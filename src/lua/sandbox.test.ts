@@ -174,6 +174,27 @@ describe("Lua sandbox setup", () => {
     await open;
     expect(deckIds(publish)).toEqual(["a", "b"]);
   });
+  it("stays on its error when the list it holds is judged after the check failed", async () => {
+    stubFetch(reads);
+    await deckStore.revalidate("user");
+    let judge: () => void = () => {};
+    stubFetch({
+      "GET /decks": () => Promise.reject(new TypeError("offline")),
+      "GET /cards/full": (url) =>
+        new Promise<Response>((done) => {
+          judge = () => done(fullCardsFrom({ [card.id]: card, energy })(url));
+        }),
+    });
+    const publish = vi.fn();
+    const sandbox = new LuaSandbox(publish, async () => () => {});
+    sandbox.session("authenticated", "user");
+    await sandbox.command("open");
+    expect(sandbox.phase).toBe("error");
+    judge();
+    await new Promise((done) => setTimeout(done, 0));
+    expect(sandbox.phase).toBe("error");
+    expect(deckIds(publish)).toEqual([]);
+  });
   it("opens on the decks another screen already judged, without judging them again", async () => {
     const { calls } = stubFetch(reads);
     const list = await deckStore.revalidate("user");

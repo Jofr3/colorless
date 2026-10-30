@@ -239,6 +239,23 @@ describe("Lua deck builder", () => {
     expect(back).toHaveBeenCalledTimes(1);
     expect(b.message).toBe("");
   });
+  it("drops the failed save's Retry from its message while the save is tried again", async () => {
+    for (let i = 0; i <= 2 * MAX_TRANSIENT_RETRIES + 1; i++) {
+      vi.mocked(api.patchDeck).mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    }
+    const { b } = await setup();
+    await b.command("add\ta");
+    await vi.advanceTimersByTimeAsync(15_000);
+    expect(b.saveStatus).toBe("failed");
+    expect(b.message).toBe("Could not save. Your edits are kept. Retry.");
+    await b.command("retry-save");
+    await tick();
+    expect(b.saveStatus).toBe("retrying");
+    expect(b.message).toBe("");
+    await vi.advanceTimersByTimeAsync(15_000);
+    expect(b.saveStatus).toBe("failed");
+    expect(b.message).toBe("Could not save. Your edits are kept. Retry.");
+  });
   it("gives up on saves that never answer, so Retry and Leave work again", async () => {
     vi.mocked(api.patchDeck).mockImplementation(() =>
       api.withDeadline(api.DECK_WRITE_TIMEOUT_MS, () => new Promise<Deck>(() => {})),

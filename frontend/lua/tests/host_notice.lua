@@ -19,7 +19,7 @@ local T=require('ui.theme');T.text=noop
 local Button=require('ui.button')
 Button.draw=noop
 local lines={}
-Button.errorLine=function(text,_,_,y)lines[#lines+1]={text=text,y=y}end
+Button.errorLine=function(text,size,_,y)lines[#lines+1]={text=text,size=size,y=y}end
 for _,name in ipairs({'library','builder','sandbox','simulator','online'})do
  package.loaded['ui.'..name]={new=function(callbacks)
   local s={callbacks=callbacks,cards={},hover=0}
@@ -56,5 +56,17 @@ if said[1]~=OFFLINE then fail('A new revision of the same notice is said again')
 -- A frame advances the clock by at most 0.1 s.
 for _=1,100 do frame(1) end
 if #lines>0 then fail('The line goes after a few seconds') end
+-- A small landscape phone (667x375 draws the 1280x800 layout at 0.47) keeps the line readable:
+-- at least 12 device pixels tall, clear of the menu and of the Account and Settings trays.
+files['__viewport.txt']='667 375 0'
+files['__notice.txt']='3\tYou\'re%20offline.%20Check%20your%20connection%2C%20then%20try%20again.'
+frame()
+local scale=375/800
+local line=lines[1]
+if not line then fail('The notice shows on a small landscape phone') end
+if line.size*scale<12 then fail('The notice is readable on a small landscape phone ('..line.size*scale..' px)') end
+local top,bottom=line.y-4,line.y+line.size+4
+if bottom>550-12 and top<550+93+12 then fail('The notice clears the menu (y='..line.y..')') end
+if bottom>800-104-12 and top<800-104+48+12 then fail('The notice clears the Account and Settings trays (y='..line.y..')') end
 print=output
 print('host_notice: ok')

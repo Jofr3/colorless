@@ -457,9 +457,13 @@ function love.draw()
   T.text('Colorless',19,24,virtualHeight-33,160,T.paper,'left')
   T.text('Home',19,virtualWidth-130,virtualHeight-33,106,T.paper,'right')
   end
-  -- Text only, in the gap under the home menu or across the table's top edge.
+  -- Text only, in the gap under the home menu or across the table's top edge, never under 12
+  -- device pixels. Where the gap cannot hold it that large, home shows it above the logo.
   if state.notice then
-    Button.errorLine(state.notice.text,16,24,isTable(state.page) and 16 or menuTray.y+menuTray.h+4,virtualWidth-48)
+    local size=math.max(16,math.ceil(12/layoutScale))
+    local y=isTable(state.page) and 16 or menuTray.y+menuTray.h+4
+    if not isTable(state.page) and y+size+4>controls[1].y-12 then y=24 end
+    Button.errorLine(state.notice.text,size,24,y,virtualWidth-48)
   end
   g.pop()
   if isCollection(state.page) then

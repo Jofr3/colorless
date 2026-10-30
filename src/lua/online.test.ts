@@ -385,6 +385,27 @@ describe("Lua online adapter", () => {
     expect(rows()).toHaveLength(4);
   });
 
+  it("stays on its error when the list it holds is judged after the check failed", async () => {
+    stubFetch(deckReads);
+    await deckStore.revalidate("u");
+    let judge: () => void = () => {};
+    stubFetch({
+      "GET /decks": () => Promise.reject(new TypeError("offline")),
+      "GET /cards/full": (url) =>
+        new Promise<Response>((done) => {
+          judge = () => done(deckReads["GET /cards/full"](url));
+        }),
+    });
+    const { online, header, rows } = setup();
+    online.session("authenticated", "u");
+    await online.command("decks");
+    expect(header()[H("deckPhase")]).toBe("error");
+    judge();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(header()[H("deckPhase")]).toBe("error");
+    expect(rows()).toHaveLength(1);
+  });
+
   it("opens the picker on the decks another screen already judged", async () => {
     const { calls } = stubFetch(deckReads);
     await deckStore.judge(await deckStore.revalidate("u"));

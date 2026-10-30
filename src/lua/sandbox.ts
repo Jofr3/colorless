@@ -78,13 +78,15 @@ export class LuaSandbox {
       return;
     }
     const live = this.epoch.next();
+    // A failed check settles the picker on its error: a late judgement of the held list stays off.
+    let failed = false;
     const cached = deckStore.peek(this.user);
     const judged = cached && deckStore.peekVerdicts(cached);
     if (cached && judged) this.show(sandboxDecksFrom([...cached.decks], judged), cached.revision);
     else {
       if (this.phase !== "ready") this.phase = "loading";
       // A list the store holds unjudged is judged while it is checked again, not after.
-      if (cached) void this.showJudged(cached, live);
+      if (cached) void this.showJudged(cached, () => live() && !failed);
     }
     this.message = "";
     this.emit();
@@ -96,6 +98,7 @@ export class LuaSandbox {
       this.show(sandboxDecksFrom([...list.decks], verdicts), list.revision);
     } catch (error) {
       if (!live()) return;
+      failed = true;
       this.phase = error instanceof api.ApiError && error.status === 401 ? "anonymous" : "error";
       this.decks = [];
       this.shown = -1;

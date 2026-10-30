@@ -517,13 +517,15 @@ export class LuaOnline {
       this.emit();
       return;
     }
+    // A failed check settles the picker on its error: a late judgement of the held list stays off.
+    let failed = false;
     const cached = deckStore.peek(this.userId);
     const judged = cached && deckStore.peekVerdicts(cached);
     if (cached && judged) this.showDecks(cached, judged);
     else {
       if (this.deckPhase !== "ready") this.deckPhase = "loading";
       // A list the store holds unjudged is judged while it is checked again, not after.
-      if (cached) void this.showJudged(cached, live);
+      if (cached) void this.showJudged(cached, () => live() && !failed);
     }
     this.emit();
     try {
@@ -534,6 +536,7 @@ export class LuaOnline {
       this.showDecks(list, verdicts);
     } catch (error) {
       if (!live()) return;
+      failed = true;
       this.decks = [];
       this.decksShown = -1;
       this.deckPhase =
