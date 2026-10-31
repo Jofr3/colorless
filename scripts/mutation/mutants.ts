@@ -63319,7 +63319,7 @@ export const MUTANTS: Mutant[] = [
     id: "UI-SM4-lua-pop-per-revision",
     decision: "UI-SM4",
     what: "Lua pops a standing refusal on every new revision, as before. Killed by sim_table_speech.",
-    file: "frontend/lua/ui/simulator.lua",
+    file: "frontend/lua/ui/sim_juice.lua",
     find: "  if self.message~='' and not gameOver and self.messageSerial~=previous.messageSerial then",
     replace:
       "  if self.message~='' and not gameOver and (self.message~=previous.message or self.revision~=previous.revision) then",
