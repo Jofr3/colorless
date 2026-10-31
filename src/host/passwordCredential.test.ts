@@ -3,6 +3,16 @@ import { storePasswordCredential } from "./passwordCredential";
 
 afterEach(() => vi.unstubAllGlobals());
 
+/** Node's process, which the browser-typed tests do not declare. */
+const node = (
+  globalThis as unknown as {
+    process: {
+      on(event: "unhandledRejection", listener: () => void): void;
+      off(event: "unhandledRejection", listener: () => void): void;
+    };
+  }
+).process;
+
 /** A browser with the Credential Management API: PasswordCredential and navigator.credentials. */
 function credentialApi(store = vi.fn(async () => {})) {
   class PasswordCredential {
@@ -62,13 +72,13 @@ describe("storePasswordCredential (audit BR7)", () => {
       },
     );
     const unhandled = vi.fn();
-    process.on("unhandledRejection", unhandled);
+    node.on("unhandledRejection", unhandled);
     try {
       expect(storePasswordCredential("ash@example.com", "pikachu123", "")).toBe(true);
       await new Promise((done) => setTimeout(done, 10));
       expect(unhandled).not.toHaveBeenCalled();
     } finally {
-      process.off("unhandledRejection", unhandled);
+      node.off("unhandledRejection", unhandled);
     }
   });
 
