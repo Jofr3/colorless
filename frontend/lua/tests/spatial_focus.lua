@@ -184,8 +184,10 @@ do
     local right=press(b,'right');check(right.action=='card' and right.y==c1.y and right.x>c1.x,name..': Right moves along the card row')
     b.focus=i1;local down=press(b,'down')
     check(down.action=='card' and down.y>c1.y and math.abs(centre(down)-centre(c1))<1,name..': Down moves to the card below')
-    -- A modal keeps the shortcuts away.
-    b:openModal('clear');local open=#sent;press(b,'/');press(b,'d')
+    -- A modal keeps the shortcuts away, the phone's tab under it too.
+    local tab=b.tab
+    b:openModal('clear');local open=#sent;press(b,'/');check(b.tab==tab,name..': / under a dialog leaves the tab under it');press(b,'d')
+    check(b.tab==tab,name..': D under a dialog leaves the tab under it')
     check(b.modal and b.modal.mode=='clear' and b.editing=='' and #sent==open,name..': no shortcut works under a dialog')
     check(b.controls[#b.controls].action=='close' and press(b,'tab').action=='clear',name..': a dialog Tabs from its first control')
     b:closeModal()
