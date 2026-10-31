@@ -30,9 +30,7 @@ local rows={
    {kind='slider',key='effectsVolume',label='Game Sounds'},
    {kind='toggle',key='muted',label='Mute'}},
 }
--- The cycle's two arrows and the toggle's emboss, refilled or made once rather than per draw.
-local SIDES={'left','right'}
-local ARROWS={left={label='<',w=28.8,h=38.4,fontSize=24},right={label='>',w=28.8,h=38.4,fontSize=24}}
+-- The toggle's emboss, made once rather than per draw.
 local TOGGLE_EMBOSS={[true]={0.5,0.5,0.5,1},[false]={0.7,0.7,0.7,1}}
 local DELETE_WARNING='This permanently deletes your account, your decks and your folders. It cannot be undone.'
 -- The one-time prompt for an account whose name may have come from its email or Google account
@@ -475,32 +473,16 @@ function Settings:draw()
       T.text(item.label,30,item.x-28,item.y-34,item.w+112)
       Button.slider(item.x,item.y+7,item.w,value/100,tostring(value),active)
     elseif item.kind=='cycle' then
-      local x,y=item.x+36,item.y
-      local centreWidth=item.w-72
       T.text(item.label,24,item.x,item.y-32,item.w)
       -- The center is embossed, while only the arrows cast button shadows.
       local colour=self:disabled(item) and T.panel or T.red
-      local highlighted=not self:disabled(item) and self.hover==i and self.hoverPart=='center'
-      local depth=highlighted and 0.5 or 0.7
-      panel(x,y+6,centreWidth,38.4,Button.shade(colour,depth))
-      panel(x,y,centreWidth,38.4,Button.hoverColour(colour,highlighted))
       local label=item.options and item.options[self:value(item)+1] or self:value(item)==1 and 'On' or 'Off'
-      local size=24
-      while size>12 and T.font(size):getWidth(label)>centreWidth-12 do size=size-1 end
-      local textScale=math.min(1,(centreWidth-12)/math.max(1,T.font(size):getWidth(label)))
-      g.push(); g.translate(x,y+1); g.scale(textScale,1)
-      T.text(label,size,0,0,centreWidth/textScale)
-      g.pop()
-      local count,index=item.options and #item.options or 2,self:value(item)
-      for pip=0,count-1 do
-        panel(x+(centreWidth-(count*7.2-2.4))/2+pip*7.2,y+28,4.8,4.8,index==pip and T.white or T.ink,0.6)
-      end
-      for _,side in ipairs(SIDES) do
-        local arrow=ARROWS[side]
-        arrow.x,arrow.y,arrow.colour=side=='left' and item.x or item.x+item.w-28.8,y,colour
-        Button.draw(arrow,(self.hover==i and self.hoverPart==side) or (self.hover==0 and self.focus==i),
-          pressed and self.pressedPart==side and self.hoverPart==side,false,self.width)
-      end
+      local count=item.options and #item.options or 2
+      Button.optionCycle(item.x+36,item.y,item.w-72,38.4,{colour=colour,label=label,squeeze=true,
+        hovered=not self:disabled(item) and self.hover==i and self.hoverPart=='center',
+        pips={count=count,index=self:value(item)+1,off=T.ink,span=count*7.2-2.4}})
+      Button.cycleArrows(item.x,item.y,item.w,colour,self.hover==i and self.hoverPart,self.hover==0 and self.focus==i,
+        pressed and self.pressedPart==self.hoverPart and self.pressedPart,self.width)
     elseif item.kind=='name' or item.kind=='email' then
       local disabled=item.kind=='email'
       local editing=not disabled and self.account.editing

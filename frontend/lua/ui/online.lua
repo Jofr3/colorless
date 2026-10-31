@@ -545,25 +545,13 @@ function Online:drawCode(item,hovered)
 end
 -- Settings' create_option_cycle with five pips.
 function Online:drawCycle(item,i)
-  local x,y,cw=item.x+36,item.y,item.w-72
   local colour=item.disabled and T.panel or T.red
-  local highlighted=not item.disabled and self.hover==i and self.hoverPart=='center'
-  local depth=highlighted and 0.5 or 0.7
-  Button.panel(x,y+6,cw,38.4,{colour[1]*depth,colour[2]*depth,colour[3]*depth,1})
-  Button.panel(x,y,cw,38.4,Button.hoverColour(colour,highlighted))
-  local label=filters[self.filter][1]
-  local size=24
-  while size>12 and T.font(size):getWidth(label)>cw-12 do size=size-1 end
-  T.text(label,size,x,y+1,cw)
-  for pip=0,#filters-1 do
-    Button.panel(x+(cw-(#filters*7.2-2.4))/2+pip*7.2,y+28,4.8,4.8,self.filter-1==pip and T.white or T.ink,0.6)
-  end
-  for _,side in ipairs({'left','right'}) do
-    local arrow={label=side=='left' and '<' or '>',x=side=='left' and item.x or item.x+item.w-28.8,y=y,w=28.8,h=38.4,fontSize=24,colour=colour}
-    local live=not item.disabled
-    Button.draw(arrow,live and ((self.hover==i and self.hoverPart==side) or (self.hover==0 and self.focus==i)),
-      live and self.pressed==i and self.pressedPart==side and self.hoverPart==side,false,self.width)
-  end
+  local live=not item.disabled
+  Button.optionCycle(item.x+36,item.y,item.w-72,38.4,{colour=colour,label=filters[self.filter][1],
+    hovered=live and self.hover==i and self.hoverPart=='center',
+    pips={count=#filters,index=self.filter,off=T.ink,span=#filters*7.2-2.4}})
+  Button.cycleArrows(item.x,item.y,item.w,colour,live and self.hover==i and self.hoverPart,live and self.hover==0 and self.focus==i,
+    live and self.pressed==i and self.pressedPart==self.hoverPart and self.pressedPart,self.width)
 end
 local function juiced(m,x,y,w,h)
   g.push();g.translate(x+w/2,y+h/2);g.rotate(m.VT.r);g.scale(m.VT.scale);g.translate(-x-w/2,-y-h/2)

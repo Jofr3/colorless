@@ -844,19 +844,11 @@ function Builder:drawControlFaces(controls,active)
       Button.slider(b.x,b.y+7,b.w,value/400,label,lit)
     elseif b.cycleCentre then
       caption(b.optionTitle,24,b.x-36,b.y-30,b.cycleWidth,T.white)
-      local hovered=active and self.hover==i
-      local depth=hovered and 0.5 or 0.7
-      Button.panel(b.x,b.y+6,b.w,b.h,{T.red[1]*depth,T.red[2]*depth,T.red[3]*depth,1})
-      Button.panel(b.x,b.y,b.w,b.h,Button.hoverColour(T.red,hovered))
       local spacing=b.pipCount>15 and 5.76 or 7.2
       local pips=b.pipCount>1 and b.pipCount<=25 and (b.pipCount-1)*spacing+4.8<=b.w-12
-      b.cycleText:draw(self.time,self.reduced,b.x,b.y,b.w,pips and 29 or b.h,self.width,0.4)
-      if pips then
-        for pip=1,b.pipCount do
-          local selected=b.pipSelected and (','..b.pipSelected..','):find(','..pip..',',1,true) or (not b.pipSelected and pip==b.pipIndex)
-          Button.panel(b.x+(b.w-((b.pipCount-1)*spacing+4.8))/2+(pip-1)*spacing,b.y+28,4.8,4.8,selected and T.white or T.panel,0.6)
-        end
-      end
+      Button.optionCycle(b.x,b.y,b.w,b.h,{hovered=active and self.hover==i,text=b.cycleText,textHeight=pips and 29 or b.h,
+        time=self.time,reduced=self.reduced,roomWidth=self.width,
+        pips=pips and {count=b.pipCount,spacing=spacing,index=b.pipIndex,set=b.pipSelected,off=T.panel} or nil})
     elseif b.multiline then
       Input.background(b,active and self.editing=='transfer',b.disabled,lit)
       local font=T.font(22);local value=self.transfer;local lines={};local base=0

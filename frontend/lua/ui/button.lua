@@ -115,12 +115,66 @@ function Button.shade(colour,k)
   return shaded
 end
 
-function Button.cycleFace(x,y,w,h,hovered,emboss)
+function Button.cycleFace(x,y,w,h,hovered,emboss,colour)
   -- create_option_cycle's non-clickable center: hover overlay on the face,
   -- emboss darken=.5 on hover (.3 otherwise), with no button drop shadow.
+  -- `colour`: T.red unless given (T.panel for a disabled cycle).
+  colour=colour or T.red
   local depth=hovered and 0.5 or 0.7
-  Button.panel(x,y+(emboss or 6),w,h,Button.shade(T.red,depth))
-  Button.panel(x,y,w,h,Button.hoverColour(T.red,hovered))
+  Button.panel(x,y+(emboss or 6),w,h,Button.shade(colour,depth))
+  Button.panel(x,y,w,h,Button.hoverColour(colour,hovered))
+end
+
+-- create_option_cycle's centre at (x,y,w,h), as Settings, the lobby's deck filter and the
+-- builder's filters draw it: the face (cycleFace), its value, then its pips. `o` holds:
+--   colour, hovered: as cycleFace;
+--   label: the value, shrunk from 24 until it fits w-12 and drawn at y+1; with `squeeze` it is
+--     narrowed further to fit (Settings);
+--   or text: a PageText drawn over the face at scale 0.4, `textHeight` tall (default h), with
+--     time, reduced and roomWidth (the builder);
+--   pips: {count,spacing,index or set,off,span}: `count` 4.8-pixel pips `spacing` apart at y+28,
+--     centred over a row `span` wide (default (count-1)*spacing+4.8; Settings and the lobby pass
+--     count*7.2-2.4, the same row to the last bit of a float). Pip n is white when `set` (a
+--     comma list) holds n, or with no set when n is `index`; else `off`.
+function Button.optionCycle(x,y,w,h,o)
+  local colour=o.colour or T.red
+  local depth=o.hovered and 0.5 or 0.7
+  Button.panel(x,y+6,w,h,Button.shade(colour,depth))
+  Button.panel(x,y,w,h,Button.hoverColour(colour,o.hovered))
+  if o.text then
+    o.text:draw(o.time,o.reduced,x,y,w,o.textHeight or h,o.roomWidth,0.4)
+  else
+    local label=o.label
+    local size=24
+    while size>12 and T.font(size):getWidth(label)>w-12 do size=size-1 end
+    if o.squeeze then
+      local textScale=math.min(1,(w-12)/math.max(1,T.font(size):getWidth(label)))
+      g.push(); g.translate(x,y+1); g.scale(textScale,1)
+      T.text(label,size,0,0,w/textScale)
+      g.pop()
+    else T.text(label,size,x,y+1,w) end
+  end
+  local pips=o.pips
+  if not pips then return end
+  local count,spacing,set=pips.count,pips.spacing or 7.2,pips.set
+  local left=x+(w-(pips.span or (count-1)*spacing+4.8))/2
+  for pip=1,count do
+    local on=set and (','..set..','):find(','..pip..',',1,true) or (not set and pip==pips.index)
+    Button.panel(left+(pip-1)*spacing,y+28,4.8,4.8,on and T.white or pips.off,0.6)
+  end
+end
+
+-- An option cycle's '<' and '>' arrows at the ends of the w-wide cycle at (x,y), in `colour`.
+-- Each lights while `hovered` names its side or while `focused` (the cycle has keyboard focus),
+-- and presses while `pressed` names it.
+local SIDES={'left','right'}
+local ARROWS={left={label='<',w=28.8,h=38.4,fontSize=24},right={label='>',w=28.8,h=38.4,fontSize=24}}
+function Button.cycleArrows(x,y,w,colour,hovered,focused,pressed,roomWidth)
+  for _,side in ipairs(SIDES) do
+    local arrow=ARROWS[side]
+    arrow.x,arrow.y,arrow.colour=side=='left' and x or x+w-28.8,y,colour
+    Button.draw(arrow,hovered==side or focused,pressed==side,false,roomWidth)
+  end
 end
 
 function Button.slider(x,y,w,fraction,label,hovered)
