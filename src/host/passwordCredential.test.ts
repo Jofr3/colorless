@@ -51,11 +51,25 @@ describe("storePasswordCredential (audit BR7)", () => {
     );
     vi.stubGlobal("navigator", { credentials: { store: vi.fn() } });
     expect(storePasswordCredential("ash@example.com", "pikachu123", "")).toBe(false);
-    const rejected = vi.fn(() => Promise.reject(new DOMException("denied", "NotAllowedError")));
-    credentialApi(rejected);
-    expect(storePasswordCredential("ash@example.com", "pikachu123", "")).toBe(true);
-    await Promise.resolve();
-    await Promise.resolve();
+    // A plain function: a vi.fn would watch the promise it returns, which handles the rejection.
+    vi.stubGlobal("navigator", {
+      credentials: { store: () => Promise.reject(new DOMException("denied", "NotAllowedError")) },
+    });
+    vi.stubGlobal(
+      "PasswordCredential",
+      class {
+        constructor(readonly data: unknown) {}
+      },
+    );
+    const unhandled = vi.fn();
+    process.on("unhandledRejection", unhandled);
+    try {
+      expect(storePasswordCredential("ash@example.com", "pikachu123", "")).toBe(true);
+      await new Promise((done) => setTimeout(done, 10));
+      expect(unhandled).not.toHaveBeenCalled();
+    } finally {
+      process.off("unhandledRejection", unhandled);
+    }
   });
 
   it("stores nothing without both an email and a password", () => {
