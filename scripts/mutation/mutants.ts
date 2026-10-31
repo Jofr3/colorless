@@ -62268,7 +62268,7 @@ export const MUTANTS: Mutant[] = [
     id: "UI-PG3-table-hover-and-focus-both-lit",
     decision: "UI-PG3",
     what: "A table button is lit by hover or focus alone, so a pointed card or button and the focused button both look active. Killed by focus_visible's table cases.",
-    file: "frontend/lua/ui/simulator.lua",
+    file: "frontend/lua/ui/sim_draw.lua",
     find: "      local active=not self.overlay and (self.hover==i or (self.hover==0 and not self.hoverCard and self.focus==i))",
     replace: "      local active=not self.overlay and (self.hover==i or self.focus==i)",
     expectKilledBy: [],
