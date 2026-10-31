@@ -62087,7 +62087,7 @@ export const MUTANTS: Mutant[] = [
     id: "UI-ST1-lua-draws-discard",
     decision: "UI-ST1",
     what: "Lua draws the x discard on a loading row, as on an unavailable one. Killed by tests/builder.lua's loading-entry block.",
-    file: "frontend/lua/ui/builder.lua",
+    file: "frontend/lua/ui/builder_deck.lua",
     find: "      if not item.pending then self:add(item.kind=='' and 'x' or '-',",
     replace: "      if true then self:add(item.kind=='' and 'x' or '-',",
     expectKilledBy: [],
