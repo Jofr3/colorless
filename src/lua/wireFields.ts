@@ -247,6 +247,8 @@ export const WIRE_ROWS = {
         "email",
         "hasPassword",
         "namePrompt",
+        "invalid",
+        "failures",
       ],
     },
   },

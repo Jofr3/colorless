@@ -115,3 +115,104 @@ for i,item in ipairs(popup.items) do if item.action=='logout-all' then popup:act
 assert(#sent==2,'Busy disables it')
 account.busy=false
 print('PASS: sign out everywhere button, layout in both orientations, busy guard')
+
+-- A failed sign-in (audit PG9): focus moves to the first refused field, which opens for editing,
+-- each refused field is outlined, typing in one clears its outline, and the message is 22 px.
+do
+  -- Settings holds love.graphics from its load: the calls it makes are added to that table.
+  setmetatable(love.graphics,{__index=function() return function() end end})
+  love.mouse={getPosition=function() return 0,0 end}
+  local T=require('ui.theme')
+  local font=T.font
+  -- A font whose letters are 0.44 of its size wide, so a size change changes the wrap.
+  T.font=function(size)
+    local f={getHeight=function() return size end,getWidth=function(_,s) return #tostring(s)*size*0.44 end}
+    function f.getWrap(_,s,w)
+      local lines,line={},''
+      for word in tostring(s):gmatch('%S+') do
+        local next=line=='' and word or line..' '..word
+        if #next*size*0.44>w and line~='' then lines[#lines+1]=line;line=word else line=next end
+      end
+      if line~='' then lines[#lines+1]=line end
+      return w,lines
+    end
+    return f
+  end
+  local drawn={}
+  local printf=love.graphics.printf
+  love.graphics.printf=function(text,x,y,w) drawn[#drawn+1]={text=text,x=x,y=y,w=w,size=love.graphics.size} end
+  local setFont=love.graphics.setFont
+  love.graphics.setFont=function(f) love.graphics.size=f.getHeight() end
+  local rects={}
+  local Button=require('ui.button')
+  local panel=Button.panel
+  Button.panel=function(x,y,w,h,colour) rects[#rects+1]={x=x,y=y,w=w,h=h,colour=colour} end
+  account.status='anonymous';account.email=''
+  local said={}
+  popup.callbacks.announce=function(text) said[#said+1]=text end
+  popup.callbacks.auth=function(cmd) commands[#commands+1]=cmd end
+  popup:layout(1280,800);popup:openAuth('register')
+  local function item(field) for i,it in ipairs(popup.items) do if it.field==field then return it,i end end end
+  assert(item('password').label=='Password (at least 8 characters)','Register keeps the password rule in its label')
+  assert(popup:describe(item('password'))=='Password (at least 8 characters). Enter to edit.')
+  popup:openAuth('login');assert(item('password').label=='Password','Sign-in asks for the password alone')
+  popup:openAuth('register')
+  local function fail(revision,message,invalid,failures)
+    account:sync(table.concat({revision,'anonymous',0,Codec.encode(message),'','','',0,0,Codec.encode(invalid),failures},'\t'))
+    popup:accountChanged()
+  end
+  commands={}
+  fail(100,'Enter a valid email address. Passwords need at least 8 characters.','email password',1)
+  local email,emailIndex=item('email')
+  assert(popup.focus==emailIndex and popup.auth.editing=='email' and commands[#commands]=='edit\temail',
+    'A failed submit opens the first refused field: '..tostring(commands[#commands]))
+  assert(popup:describe(email)=='Email: . Needs fixing. Enter to edit.',popup:describe(email))
+  local function outlined(it)
+    for _,r in ipairs(rects) do if r.x<it.x and r.y<it.y and r.x+r.w>it.x+it.w and r.y+r.h>it.y+it.h and r.colour==T.red then return true end end
+  end
+  local function messageLines()
+    local out={}
+    for _,d in ipairs(drawn) do if d.text:find('Passwords need') or d.text:find('Wrong') then out[#out+1]=d end end
+    return out
+  end
+  -- Landscape: one line at 22 px between the submit button and Google, in the shadowed pair.
+  rects,drawn={},{};popup:draw()
+  local submit,google
+  for _,it in ipairs(popup.items) do if it.kind=='auth-submit' then submit=it elseif it.kind=='auth-google' then google=it end end
+  assert(outlined(item('email')) and outlined(item('password')) and not outlined(item('name')),'Each refused field is outlined')
+  local lines=messageLines()
+  assert(#lines==2 and lines[2].size==22,'The message is 22 px')
+  local wraps=select(2,T.font(22):getWrap(lines[2].text,lines[2].w))
+  assert(#wraps==1 and lines[2].y>=submit.y+submit.h and lines[2].y+22<=google.y,'One line fits between the buttons')
+  -- Portrait: two lines at 22 px, started higher, still between the buttons.
+  popup:layout(480,850);rects,drawn={},{};popup:draw()
+  for _,it in ipairs(popup.items) do if it.kind=='auth-submit' then submit=it elseif it.kind=='auth-google' then google=it end end
+  lines=messageLines()
+  wraps=select(2,T.font(lines[2].size):getWrap(lines[2].text,lines[2].w))
+  assert(lines[2].size==22 and #wraps==2,'Two problems wrap to two lines at 22 px in portrait')
+  assert(lines[2].y>=submit.y+submit.h and lines[2].y+2*22<=google.y,'Two lines fit between the buttons')
+  assert(outlined(item('email')),'The outline survives a layout')
+  -- Typing in a refused field clears its outline, not the other's; opening it does not.
+  input({200,'email','','','',0,0,'input','email'})
+  assert(account.invalid.email and account.message~='','Opening a refused field keeps its mark and the message')
+  input({201,'email','a','','',1,1,'input','email'})
+  assert(not account.invalid.email and account.invalid.password,'Typing clears that field\'s mark alone')
+  -- The same failure again opens the field again.
+  popup.auth.editing='';commands={}
+  fail(101,'Enter a valid email address. Passwords need at least 8 characters.','email password',2)
+  assert(commands[#commands]=='edit\temail' and account.invalid.email,'A repeated failure marks and opens again')
+  -- A failure with no field marks none and leaves focus.
+  local focus=popup.focus;commands={}
+  fail(102,'Wrong email or password.','',3);rects={};popup:draw()
+  assert(#commands==0 and popup.focus==focus and not outlined(item('email')),'No field, no focus move')
+  -- A message too long for two lines at 22 px shrinks to fit two.
+  fail(103,'Enter a valid email address. Passwords need at least 8 characters. Names cannot have hidden characters.','email password name',4)
+  drawn={};popup:draw()
+  for _,d in ipairs(drawn) do if d.text:find('hidden characters') then lines={d} end end
+  wraps=select(2,T.font(lines[1].size):getWrap(lines[1].text,lines[1].w))
+  assert(lines[1].size<22 and lines[1].size>=16 and #wraps<=2,'A three-problem message fits two lines')
+  love.graphics.printf,love.graphics.setFont,Button.panel=printf,setFont,panel
+  T.font=font
+  setmetatable(love.graphics,nil)
+end
+print('PASS: a failed sign-in outlines and opens its first refused field, the message is 22 px, and register keeps its password rule')

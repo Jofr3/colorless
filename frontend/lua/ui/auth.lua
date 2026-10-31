@@ -9,10 +9,13 @@ function Auth:input(raw)
   self.raw=raw
   local f=Codec.fields(raw)
   if #f<9 then return false end
+  local before={email=self.email,password=self.password,name=self.name}
   self.editing=f[2]
   self.email,self.password,self.name=f[3],f[4],f[5]
   self.selectionStart,self.selectionEnd=tonumber(f[6]) or 0,tonumber(f[7]) or 0
   self.action,self.field=f[8],f[9]
+  -- Whether the field changed: opening a field publishes it unchanged.
+  self.changed=before[self.field]~=nil and before[self.field]~=self[self.field]
   return true
 end
 return Auth

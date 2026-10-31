@@ -44,7 +44,13 @@ interface FormIssue {
   code: string;
 }
 
-/** What to tell someone whose sign-in form the request schema refused, by its first issue. */
+/** The auth form's fields as the shell and Lua name them, in the form's order. */
+type AuthField = "email" | "password" | "name";
+const AUTH_FIELD_ORDER: readonly AuthField[] = ["email", "password", "name"];
+const authField = (issue: FormIssue): AuthField =>
+  issue.path[0] === "email" ? "email" : issue.path[0] === "displayName" ? "name" : "password";
+
+/** What to tell someone whose sign-in form the request schema refused, by one issue. */
 function formProblem(issue: FormIssue | undefined, mode: "login" | "register", name = "") {
   const field = issue?.path[0];
   if (field === "email") return "Enter a valid email address.";
@@ -55,6 +61,18 @@ function formProblem(issue: FormIssue | undefined, mode: "login" | "register", n
   }
   if (issue?.code === "too_big") return "Password is too long.";
   return mode === "register" ? "Passwords need at least 8 characters." : "Enter your password.";
+}
+
+/** Every field the schema refused, in the form's order, each with what to tell the user about it
+ * (its first issue): all of them at once, not one per submit (audit PG9). */
+function formProblems(issues: readonly FormIssue[], mode: "login" | "register", name = "") {
+  const byField = new Map<AuthField, string>();
+  for (const issue of issues) {
+    const field = authField(issue);
+    if (!byField.has(field)) byField.set(field, formProblem(issue, mode, name));
+  }
+  const fields = AUTH_FIELD_ORDER.filter((field) => byField.has(field));
+  return { message: fields.map((field) => byField.get(field)).join(" "), fields };
 }
 
 /** How long a session check answers the page's navigation refreshes. A revoked session still
@@ -70,6 +88,10 @@ export class LuaAccount {
   status: AccountStatus = "loading";
   busy = false;
   message = "";
+  /** The form fields the last failed submit refused, for Lua to mark and focus. */
+  private invalid: readonly AuthField[] = [];
+  /** Failed submits so far, refused here or by the server: Lua says each one, a repeat too. */
+  private failures = 0;
   private operation = 0;
   private revision = 0;
   /** A failed Google sign-in, shown once by the next anonymous refresh. */
@@ -94,6 +116,8 @@ export class LuaAccount {
           email: u?.email ?? "",
           hasPassword: u?.hasPassword ? 1 : 0,
           namePrompt: u?.namePrompt ? 1 : 0,
+          invalid: this.invalid.join(" "),
+          failures: this.failures,
         }),
       ),
     );
@@ -261,19 +285,20 @@ export class LuaAccount {
     const needsPassword = this.user.hasPassword;
     const confirmEmail = email.trim();
     if (needsPassword && !password) {
-      this.refuse("Enter your password.");
+      this.refuse("Enter your password.", ["password"]);
       return;
     }
     if (!needsPassword && !confirmEmail) {
-      this.refuse("Type your email to confirm.");
+      this.refuse("Type your email to confirm.", ["email"]);
       return;
     }
     if (!needsPassword && confirmEmail.toLowerCase() !== this.user.email.toLowerCase()) {
-      this.refuse(EMAIL_MISMATCH);
+      this.refuse(EMAIL_MISMATCH, ["email"]);
       return;
     }
     const op = ++this.operation;
     this.busy = true;
+    this.invalid = [];
     this.message = "Deleting your account...";
     this.emit();
     try {
@@ -301,6 +326,8 @@ export class LuaAccount {
               : status === 429
                 ? "Too many attempts. Wait a moment."
                 : "Could not delete your account. Try again.";
+        this.invalid = status === 401 ? ["password"] : status === 403 ? ["email"] : [];
+        this.failures++;
       }
     } finally {
       if (op === this.operation) {
@@ -317,16 +344,23 @@ export class LuaAccount {
     if (mode === "login") {
       const request = loginRequestSchema.safeParse(form);
       if (request.success) await this.signIn(() => login(request.data));
-      else this.refuse(formProblem(request.error.issues[0], mode));
+      else this.refuseForm(formProblems(request.error.issues, mode));
     } else {
       const request = registerRequestSchema.safeParse(form);
       if (request.success) await this.signIn(() => register(request.data));
-      else this.refuse(formProblem(request.error.issues[0], mode, displayName));
+      else this.refuseForm(formProblems(request.error.issues, mode, displayName));
     }
   }
 
-  private refuse(message: string) {
+  private refuseForm({ message, fields }: ReturnType<typeof formProblems>) {
+    this.refuse(message, fields);
+  }
+
+  /** A failed submit: says why, marks `fields`, and counts it, so a repeat is said again. */
+  private refuse(message: string, fields: readonly AuthField[] = []) {
     this.message = message;
+    this.invalid = fields;
+    this.failures++;
     this.emit();
   }
 
@@ -334,6 +368,7 @@ export class LuaAccount {
     const op = ++this.operation;
     this.busy = true;
     this.message = "";
+    this.invalid = [];
     this.emit();
     try {
       const user = await send();
@@ -355,6 +390,8 @@ export class LuaAccount {
               : status === 400
                 ? "Check the fields and try again."
                 : "Could not connect. Please try again.";
+      this.invalid = status === 409 ? ["email"] : [];
+      this.failures++;
     } finally {
       if (op === this.operation) {
         this.busy = false;
@@ -398,6 +435,7 @@ export class LuaAccount {
     if (action === "google") await this.google();
     if (action === "clear-message" && !this.busy) {
       this.message = "";
+      this.invalid = [];
       this.emit();
     }
   }

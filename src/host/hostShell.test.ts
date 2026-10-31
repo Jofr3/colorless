@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import { encodeFields } from "../lua/wire";
+import { WIRE_ROWS, wireColumn } from "../lua/wireFields";
 import type { ColorlessHost } from "./bridgeProtocol";
 import { MAILBOXES } from "./mailboxes";
 import { HostShell, type PageView, READY_JOIN_MS, type ShellPorts } from "./shell";
@@ -7,6 +8,7 @@ import { HostShell, type PageView, READY_JOIN_MS, type ShellPorts } from "./shel
 /** Just enough of an element for the shell and its text proxies, on Node's EventTarget. */
 class FakeElement extends EventTarget {
   tagName = "";
+  id = "";
   value = "";
   hidden = false;
   inert = false;
@@ -320,6 +322,73 @@ describe("HostShell", () => {
     shell.onPrint(print("auth", "close"));
     expect(email.value).toBe("");
   });
+
+  it("marks the fields a failed submit refused, described by its message (audit PG9)", () => {
+    const { shell, labelled, created } = fakePage();
+    const email = labelled("Email");
+    const password = labelled("Password");
+    const name = labelled("Display name (optional)");
+    if (!email || !password || !name) throw new Error("The auth form has no inputs");
+    const failed = (message: string, invalid: string, failures: number) => {
+      const header = WIRE_ROWS.account.header;
+      const fields: (string | number)[] = header.fields.map(() => "");
+      fields[wireColumn(header, "revision")] = failures + 1;
+      fields[wireColumn(header, "status")] = "anonymous";
+      fields[wireColumn(header, "message")] = message;
+      fields[wireColumn(header, "invalid")] = invalid;
+      fields[wireColumn(header, "failures")] = failures;
+      shell.accountChanged(encodeFields(fields));
+    };
+    const marks = () =>
+      [email, password, name].map((input) => [
+        input.getAttribute("aria-invalid"),
+        input.getAttribute("aria-describedby"),
+      ]);
+    shell.onPrint(print("auth", "open", "register"));
+    expect(password.getAttribute("aria-label")).toBe("Password, at least 8 characters");
+    failed(
+      "Enter a valid email address. Passwords need at least 8 characters.",
+      "email password",
+      1,
+    );
+    const problem = created.find((e) => e.textContent.startsWith("Enter a valid email"));
+    expect(problem?.textContent).toBe(
+      "Enter a valid email address. Passwords need at least 8 characters.",
+    );
+    const id = problem?.id ?? "";
+    expect(id).not.toBe("");
+    expect(marks()).toEqual([
+      ["true", id],
+      ["true", id],
+      [null, null],
+    ]);
+    // Typing in a refused field clears its mark; a snapshot that is no new failure keeps that.
+    email.value = "ash@example.com";
+    email.dispatchEvent(new Event("input"));
+    failed(
+      "Enter a valid email address. Passwords need at least 8 characters.",
+      "email password",
+      1,
+    );
+    expect(marks()[0]).toEqual([null, null]);
+    expect(marks()[1]).toEqual(["true", id]);
+    // The same failure again marks the field again; a failure naming none marks none.
+    failed(
+      "Enter a valid email address. Passwords need at least 8 characters.",
+      "email password",
+      2,
+    );
+    expect(marks()[0]).toEqual(["true", id]);
+    failed("Wrong email or password.", "", 3);
+    expect(marks()).toEqual([
+      [null, null],
+      [null, null],
+      [null, null],
+    ]);
+    expect(problem?.textContent).toBe("");
+    shell.onPrint(print("auth", "open", "login"));
+    expect(password.getAttribute("aria-label")).toBe("Password");
+  });
 });
 
 describe("HostShell's text proxies at their fields (audit BR6)", () => {
@@ -362,10 +431,20 @@ describe("HostShell's text proxies at their fields (audit BR6)", () => {
     shell.onPrint(print("auth", "edit", "email", ...box));
     shell.onPrint(print("field-box", "120", "-30", "432", "42"));
     expect(placed(labelled("Email"))).toEqual(["120px", "-30px", "432px", "42px"]);
-    expect(placed(labelled("Password"))).toEqual([undefined, undefined, undefined, undefined]);
+    expect(placed(labelled("Password, at least 8 characters"))).toEqual([
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    ]);
     shell.onPrint(print("auth", "edit", "password", ...box));
     shell.onPrint(print("field-box", "0", "0", "100", "40"));
-    expect(placed(labelled("Password"))).toEqual(["0px", "0px", "100px", "40px"]);
+    expect(placed(labelled("Password, at least 8 characters"))).toEqual([
+      "0px",
+      "0px",
+      "100px",
+      "40px",
+    ]);
     expect(placed(labelled("Email"))).toEqual(["120px", "-30px", "432px", "42px"]);
     shell.onPrint(print("library", "input", "search", "fire", ...box));
     shell.onPrint(print("field-box", "1", "2", "3", "4"));
@@ -399,7 +478,8 @@ describe("HostShell's text proxies at their fields (audit BR6)", () => {
     shell.onPrint(print("library", "input", "name", "Deck", ...box));
     const [line] = created.filter((e) => !e.hidden);
     expect([line?.tagName, line?.getAttribute("aria-label")]).toEqual(["INPUT", "Deck name"]);
-    expect(created.map((e) => e.className)).toEqual(created.map(() => "sr-only text-proxy"));
+    const proxies = created.filter((e) => e.tagName !== "P");
+    expect(proxies.map((e) => e.className)).toEqual(proxies.map(() => "sr-only text-proxy"));
   });
 });
 

@@ -8,6 +8,7 @@ import { decodeFields, encodeFields } from "../lua/wire";
 import type { ColorlessHost } from "./bridgeProtocol";
 import { MAILBOXES } from "./mailboxes";
 import type { Page } from "./router";
+import { WIRE_ROWS, wireColumn } from "../lua/wireFields";
 import {
   AUTH_FIELDS,
   type AuthField,
@@ -150,6 +151,17 @@ export function joinAnnouncements(parts: readonly string[]): string {
   return parts.map((p) => (/[.!?]$/.test(p.trimEnd()) ? p.trimEnd() : `${p.trimEnd()}.`)).join(" ");
 }
 
+/** Marks an auth input refused, described by the element `describedBy` names, or unmarks it. */
+function markInvalid(input: HTMLInputElement, invalid: boolean, describedBy = "") {
+  if (invalid) {
+    input.setAttribute("aria-invalid", "true");
+    input.setAttribute("aria-describedby", describedBy);
+  } else {
+    input.removeAttribute("aria-invalid");
+    input.removeAttribute("aria-describedby");
+  }
+}
+
 export class HostShell {
   private view: PageView;
   private ready = false;
@@ -181,6 +193,10 @@ export class HostShell {
   /** The builder's decklist, where Enter types a newline. */
   private readonly builderText: TextProxy;
   private readonly auth: AuthProxy;
+  /** The last failed submit's message, which describes the fields it refused (audit PG9). */
+  private readonly authProblem: HTMLElement;
+  /** Failed submits the account snapshots have counted. */
+  private authFailures = 0;
   private authMode: AuthMode = "login";
   /** The account the last snapshot named, "" when signed out. */
   private accountUser = "";
@@ -277,8 +293,17 @@ export class HostShell {
       input.autocapitalize = field === "name" ? "words" : "none";
       input.spellcheck = false;
       if (field === "email") input.inputMode = "email";
+      // Typing in a refused field takes its mark away, as Lua takes away its outline.
+      input.addEventListener("input", () => markInvalid(input, false));
       authInputs[field] = input;
     }
+    const authProblem = doc.createElement("p");
+    authProblem.id = "auth-problem";
+    authProblem.className = "sr-only";
+    // Read only through the fields' aria-describedby, which reaches a hidden element.
+    authProblem.hidden = true;
+    (doc.querySelector("main") ?? doc.body).append(authProblem);
+    this.authProblem = authProblem;
     this.auth = createAuthProxy({
       inputs: authInputs,
       write: (record) => host.writeMailbox(MAILBOXES.authInput, record),
@@ -364,7 +389,9 @@ export class HostShell {
 
   accountChanged(snapshot: string) {
     this.host.writeMailbox(MAILBOXES.account, snapshot);
-    const [, status = "", , , user = ""] = decodeFields(snapshot) ?? [];
+    const fields = decodeFields(snapshot) ?? [];
+    const [, status = "", , , user = ""] = fields;
+    this.markRefused(fields);
     // A different account (a sign-in, a sign-out, a deletion) empties the auth form, password
     // included. Other snapshots leave it: the deletion form stays filled while signed in.
     if (user !== this.accountUser) {
@@ -372,6 +399,23 @@ export class HostShell {
       this.auth.clear();
     }
     if (status !== "authenticated") this.name.finish("done", true);
+  }
+
+  /** A failed submit marks the auth fields it refused invalid, described by its message; a repeat
+   * marks them again. Other snapshots keep the marks typing took away, until the account clears
+   * them all. */
+  private markRefused(fields: readonly string[]) {
+    const header = WIRE_ROWS.account.header;
+    const invalid = (fields[wireColumn(header, "invalid")] ?? "").split(" ").filter(Boolean);
+    const failures = Number(fields[wireColumn(header, "failures")] ?? this.authFailures);
+    const failed = failures !== this.authFailures;
+    this.authFailures = failures;
+    if (!failed && invalid.length > 0) return;
+    for (const field of AUTH_FIELDS)
+      markInvalid(this.authInput(field), invalid.includes(field), this.authProblem.id);
+    this.authProblem.textContent = invalid.length
+      ? (fields[wireColumn(header, "message")] ?? "")
+      : "";
   }
 
   /** Runs one of Lua's prints. It never throws: love.js swallows an error thrown from print, and
@@ -668,6 +712,11 @@ export class HostShell {
       this.authInput("password").value = "";
       this.authInput("password").autocomplete =
         this.authMode === "register" ? "new-password" : "current-password";
+      // The rule Lua keeps in the field's label, which typing would hide as a placeholder.
+      this.authInput("password").setAttribute(
+        "aria-label",
+        this.authMode === "register" ? "Password, at least 8 characters" : "Password",
+      );
       // A deletion's email is typed, never filled in: by this page or by the browser.
       const email = this.authInput("email");
       const deleting = this.authMode === "delete";

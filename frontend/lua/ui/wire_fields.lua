@@ -38,6 +38,6 @@ return {
     deck={id=2,name=3,count=4},
   },
   account={
-    header={revision=1,status=2,busy=3,message=4,id=5,displayName=6,email=7,hasPassword=8,namePrompt=9},
+    header={revision=1,status=2,busy=3,message=4,id=5,displayName=6,email=7,hasPassword=8,namePrompt=9,invalid=10,failures=11},
   },
 }

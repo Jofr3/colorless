@@ -3,7 +3,7 @@ local H=require('ui.wire_fields').account.header
 local Account={}
 Account.__index=Account
 function Account.new()
-  return setmetatable({status='loading',busy=false,message='',name='',email='',draftName=''},Account)
+  return setmetatable({status='loading',busy=false,message='',name='',email='',draftName='',invalid={}},Account)
 end
 function Account:sync(raw)
   if not raw or self.raw==raw then return false end
@@ -12,7 +12,20 @@ function Account:sync(raw)
   self.raw=raw
   local reset=self.id~=f[H.id] or f[H.message]=='Saved.'
   local resetName=reset or self.draftName==self.name
+  local previous=self.message
   self.status,self.busy,self.message=f[H.status],f[H.busy]=='1',f[H.message]
+  -- A failed submit (audit PG9) marks the fields it refused anew, a repeat of the last one too,
+  -- and its message is said again. Other snapshots keep the marks typing has cleared, until the
+  -- host clears them all. A host without the fields marks nothing.
+  local failures,invalid=tonumber(f[H.failures]) or self.failures or 0,f[H.invalid] or ''
+  self.refused=failures~=(self.failures or 0)
+  self.failures=failures
+  if self.refused or not invalid:find('%S') then
+    self.invalid={}
+    for field in invalid:gmatch('%S+') do self.invalid[field]=true end
+  end
+  -- What main.lua says: a new message, or any failed submit's.
+  self.fresh=self.message~='' and (self.message~=previous or self.refused)
   self.id,self.name,self.email=f[H.id],f[H.displayName],f[H.email]
   -- Whether deleting the account asks for its password (an OAuth-only account has none).
   self.hasPassword=f[H.hasPassword]=='1'
@@ -24,6 +37,8 @@ function Account:sync(raw)
   if self.status~='authenticated' then self.editing=false end
   return true
 end
+-- Typing in a refused field takes its mark away.
+function Account:clearInvalid(field) self.invalid[field]=nil end
 function Account:input(raw)
   if not raw or raw==self.inputRaw then return false end
   self.inputRaw=raw

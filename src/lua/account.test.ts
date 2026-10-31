@@ -248,6 +248,64 @@ describe("Lua authentication", () => {
     expect(account.message).toBe("Names cannot have hidden characters.");
     expect(impl).not.toHaveBeenCalled();
   });
+  it("reports every refused field at once, and names them for Lua", async () => {
+    const { impl } = stubFetch({});
+    const { account, publish } = setup();
+    const header = (field: (typeof WIRE_ROWS.account.header.fields)[number]) =>
+      decodeURIComponent(String(publish.mock.lastCall?.[0]).split("\t")[A(field)] ?? "");
+    await account.authenticate("register", "bad", "short", "Bad\u202EName");
+    expect(account.message).toBe(
+      "Enter a valid email address. Passwords need at least 8 characters. Names cannot have hidden characters.",
+    );
+    expect(header("invalid")).toBe("email password name");
+    expect(header("failures")).toBe("1");
+    await account.authenticate("login", USER.email, "", "");
+    expect(account.message).toBe("Enter your password.");
+    expect(header("invalid")).toBe("password");
+    expect(header("failures")).toBe("2");
+    // The same refusal again is a new failure, so Lua says it again.
+    await account.authenticate("login", USER.email, "", "");
+    expect(header("failures")).toBe("3");
+    await account.command(encodeFields(["clear-message"]));
+    expect(header("invalid")).toBe("");
+    expect(header("failures")).toBe("3");
+    expect(impl).not.toHaveBeenCalled();
+  });
+  it("counts a refused sign-in as a failure, marking the email the server says is taken", async () => {
+    let status = 409;
+    stubFetch({ "POST /auth/register": () => json({}, status) });
+    const { account, publish } = setup();
+    const header = (field: (typeof WIRE_ROWS.account.header.fields)[number]) =>
+      decodeURIComponent(String(publish.mock.lastCall?.[0]).split("\t")[A(field)] ?? "");
+    await account.authenticate("register", USER.email, "test-password", "");
+    expect([header("invalid"), header("failures")]).toEqual(["email", "1"]);
+    status = 401;
+    await account.authenticate("register", USER.email, "test-password", "");
+    expect([header("invalid"), header("failures")]).toEqual(["", "2"]);
+    status = 201;
+    stubFetch({ "POST /auth/register": () => json(USER, 201) });
+    await account.authenticate("register", USER.email, "test-password", "");
+    expect([header("invalid"), header("failures"), header("message")]).toEqual(["", "2", ""]);
+  });
+  it("marks the deletion form's field it refuses", async () => {
+    let answer = () => json({ error: "invalid password" }, 401);
+    stubFetch({ ...session, "DELETE /auth/me": () => answer() });
+    const { account, publish } = setup();
+    const header = (field: (typeof WIRE_ROWS.account.header.fields)[number]) =>
+      decodeURIComponent(String(publish.mock.lastCall?.[0]).split("\t")[A(field)] ?? "");
+    await account.refresh();
+    await account.deleteAccount("", "");
+    expect([header("invalid"), header("failures")]).toEqual(["password", "1"]);
+    await account.deleteAccount("wrong", "");
+    expect([account.message, header("invalid"), header("failures")]).toEqual([
+      "Wrong password.",
+      "password",
+      "2",
+    ]);
+    answer = () => json({ error: "too many attempts" }, 429);
+    await account.deleteAccount("wrong", "");
+    expect([header("invalid"), header("failures")]).toEqual(["", "3"]);
+  });
   it.each([
     [401, "Wrong email or password."],
     [409, "That email already has an account."],

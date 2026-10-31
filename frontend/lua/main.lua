@@ -553,10 +553,9 @@ function love.update(dt)
   if popup then
     local accountRaw=Mailbox.read('account')
     if accountRaw then
-      local previousMessage=account.message
       if account:sync(accountRaw) then
         popup:accountChanged()
-        if popup.tab==Settings.tabs.account and account.message~='' and account.message~=previousMessage then announce(account.message) end
+        if popup.tab==Settings.tabs.account and account.fresh then announce(account.message) end
       end
     end
     account:input(Mailbox.read('accountInput'))

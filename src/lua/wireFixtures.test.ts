@@ -272,7 +272,10 @@ describe("Lua wire fixtures", () => {
   it("the account", async () => {
     const published: string[] = [];
     stubFetch({ "GET /auth/me": () => json({ ...USER, namePrompt: true }) });
-    await new LuaAccount((raw) => published.push(raw)).refresh();
+    const account = new LuaAccount((raw) => published.push(raw));
+    await account.refresh();
+    // A refused deletion: the snapshot names the field it refused and counts the failure.
+    await account.deleteAccount("", "");
     await pin("account_snapshot.txt", published.at(-1) ?? "");
   });
 });

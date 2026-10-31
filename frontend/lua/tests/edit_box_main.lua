@@ -107,6 +107,15 @@ popup.callbacks.auth('submit');popup.callbacks.account('save\tAsh')
 expect(sent('auth'),'submit','Submit carries no box')
 popup.box=nil;popup.callbacks.auth('edit\tpassword')
 expect(sent('auth'),'edit\tpassword','A field Settings does not draw carries no box')
+-- On the account tab a failed submit is said each time, the same refusal again too (audit PG9).
+popup.tab=4
+files['__account.txt']='1\tanonymous\t0\tEnter%20your%20password.\t\t\t\t0\t0\tpassword\t1';frame()
+expect(sent('announce'),'Enter%20your%20password.','A failed submit is announced')
+files['__account.txt']='2\tanonymous\t0\tEnter%20your%20password.\t\t\t\t0\t0\tpassword\t1';frame()
+expect(sent('announce'),'','A snapshot that is no new failure says nothing again')
+files['__account.txt']='3\tanonymous\t0\tEnter%20your%20password.\t\t\t\t0\t0\tpassword\t2';frame()
+expect(sent('announce'),'Enter%20your%20password.','The same refusal again is announced again')
+popup.tab=nil;printed={}
 
 -- A resize moves it: 480 x 850 CSS pixels at a ratio of 1 is portrait, scale 1, offset 0.
 popup.box={60,300,360,40};popup.callbacks.auth('edit\temail');printed={}

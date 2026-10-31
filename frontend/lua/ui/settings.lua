@@ -81,6 +81,7 @@ function Settings:accountChanged()
   -- A sign-in form closes once signed in, the deletion form once the account is gone.
   if self.auth and (self.auth.mode=='delete')~=signedIn then self:closeAuth()
   else self:build() end
+  if self.auth and a.refused then self:focusInvalid() end
   if not self.auth and self.tab==TAB.account and a:shouldPrompt() then self:openNamePrompt(false) end
 end
 -- `standalone`: Settings opened only to ask, so Later closes Settings rather than showing the
@@ -117,11 +118,22 @@ function Settings:arm()
   self.callbacks.announce('Press again to delete your account permanently.')
 end
 function Settings:disarm() if self.armed then self.armed=nil; self:build() end end
+-- A failed submit opens the first field it refused for editing, as a web form focuses its first
+-- invalid field (audit PG9); a failure that names no field leaves focus where it is.
+function Settings:focusInvalid()
+  for i,item in ipairs(self.items) do
+    if item.kind=='auth-field' and self.account.invalid[item.field] then
+      self.focus=i; self.auth.editing=item.field
+      self.callbacks.auth('edit\t'..item.field)
+      return
+    end
+  end
+end
 -- Returns true when the field's Tab, Shift+Tab or Enter moved or kept keyboard focus.
 function Settings:authInput(raw)
   if not self.auth or not self.auth:input(raw) then return false end
   local a=self.auth
-  if a.action=='input' then self.account.message='' end
+  if a.action=='input' and a.changed then self.account.message=''; self.account:clearInvalid(a.field) end
   if a.action~='next' and a.action~='previous' and a.action~='enter' then return false end
   for i,item in ipairs(self.items) do if item.field==a.field then self.focus=i end end
   if a.action=='enter' and (a.field=='name' or (a.field=='password' and a.mode=='login')) then
@@ -171,7 +183,8 @@ function Settings:buildAuth()
   local start=a.mode=='register' and 135 or 175
   add('auth-field','Email','email',start)
   self.items[#self.items].placeholder='you@example.com'
-  add('auth-field','Password','password',start+90)
+  -- Register keeps the password rule in the label, where it stays once typing hides the placeholder.
+  add('auth-field',a.mode=='register' and 'Password (at least 8 characters)' or 'Password','password',start+90)
   self.items[#self.items].placeholder=a.mode=='register' and 'At least 8 characters' or 'Your password'
   if a.mode=='register' then
     add('auth-field','Display name (optional)','name',start+180)
@@ -263,7 +276,8 @@ function Settings:value(item)
 end
 function Settings:describe(item)
   if item.kind=='auth-field' then
-    return item.label..(item.field=='password' and '. Enter to edit.' or ': '..self.auth[item.field]..'. Enter to edit.')
+    local refused=self.account.invalid[item.field] and '. Needs fixing' or ''
+    return item.label..(item.field=='password' and '' or ': '..self.auth[item.field])..refused..'. Enter to edit.'
   end
   if item.kind=='delete-confirm' and not self.armed and not self.account.busy then
     return 'Delete account. Asks you to press again.'
@@ -418,6 +432,19 @@ function Settings:keypressed(key)
     self.callbacks.announce(self:describe(self.items[self.focus]))
   elseif key=='return' or key=='space' then self:activate(self.focus) end
 end
+-- The sign-in form's message (audit PG9) sits in the 50 px between its button and the next: one
+-- 22 px line, or two started 9 px higher; only a message needing more than two lines at 22 px is
+-- drawn smaller, down to 16 px.
+local AUTH_MESSAGE_SIZE,AUTH_MESSAGE_MIN=22,16
+function Settings:drawAuthMessage(text)
+  local x,y,w=self.x+30,self.y+self.authMessageY,self.w-60
+  local size=AUTH_MESSAGE_SIZE
+  local lines=select(2,T.font(size):getWrap(text,w))
+  while #lines>2 and size>AUTH_MESSAGE_MIN do
+    size=size-1; lines=select(2,T.font(size):getWrap(text,w))
+  end
+  T.text(text,size,x,#lines>1 and y-9 or y,w,T.paper)
+end
 function Settings:draw()
   local panel=Button.panel
   g.push(); g.translate(0,self.motion.VT.y*60)
@@ -433,7 +460,7 @@ function Settings:draw()
       T.text('Delete account',30,self.x+32,self.y+40,self.w-64)
       T.text(DELETE_WARNING,22,self.x+32,self.y+96,self.w-64)
     end
-    if self.account.message~='' then T.text(self.account.message,19,self.x+30,self.y+self.authMessageY,self.w-60,T.paper)
+    if self.account.message~='' then self:drawAuthMessage(self.account.message)
     -- delete_profile's warning_text: hidden until the first press, as on Leave match.
     elseif self.armed then T.text('Press again to delete permanently',19,self.x+30,self.y+self.authMessageY,self.w-60) end
   elseif self.tab==TAB.account then
@@ -467,6 +494,11 @@ function Settings:draw()
       end
     elseif item.kind=='auth-field' then
       local a=self.auth
+      -- A refused field is ringed in the page errors' red on ink (PG10).
+      if self.account.invalid[item.field] then
+        panel(item.x-6,item.y-6,item.w+12,item.h+16,T.ink)
+        panel(item.x-3,item.y-3,item.w+6,item.h+10,T.red)
+      end
       Input.draw(item,a[item.field],a.editing==item.field,a.selectionStart,a.selectionEnd,self.caretTime,self.account.busy,active)
     elseif item.kind=='slider' then
       local value=self:value(item)
