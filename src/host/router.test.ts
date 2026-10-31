@@ -119,6 +119,15 @@ describe("titles and labels", () => {
       expect(pageInstructions(page)).toContain("V views a selected card");
     expect(pageInstructions("decks")).toContain("Manage button");
   });
+
+  it("says that arrows move by layout and lists the builder's shortcuts (audit PG14)", () => {
+    for (const page of ["home", "decks", "builder", "sandbox", "online"] as const)
+      expect(pageInstructions(page)).toContain("arrow keys move to the nearest control");
+    const builder = pageInstructions("builder");
+    for (const shortcut of ["/ searches the cards", "D focuses the deck list", "- and + change"])
+      expect(builder).toContain(shortcut);
+    expect(pageInstructions("online")).toContain("left and right switch tabs");
+  });
 });
 
 function fakeWindow(path: string) {

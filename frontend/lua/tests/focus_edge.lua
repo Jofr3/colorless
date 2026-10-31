@@ -40,7 +40,10 @@ end}
 local edges={}
 local labels={}
 local output=print
+local spoken={}
 print=function(line)
+ local said=line:match('^COLORLESS:announce:(.*)$')
+ if said then spoken[#spoken+1]=said end
  local edge,label=line:match('^COLORLESS:focus%-edge:([^\t]*)\t?(.*)$')
  if edge then edges[#edges+1]=edge;labels[edge]=label end
 end
@@ -67,7 +70,13 @@ if labels.none~='' then print=output;error('Inside the ring no button is named')
 frame();expect('The edge prints once')
 press('tab');expect('A Tab that reaches Lua wraps to Sandbox','first')
 shift=true;press('tab');shift=false;expect('Shift+Tab wraps back to Settings','last')
-press('left');press('left');press('left');press('left');expect('Arrows move it too','none','first')
+-- Arrows move by layout (audit PG14): Left from Settings to Account, Up to Online above it, Left
+-- to Sandbox, and Left again finds nothing further.
+press('left');press('up');press('left');press('left');expect('Arrows move it too','none','first')
+local function at(label) if spoken[#spoken]~=label then print=output;error('Focus should be on '..label..', not '..tostring(spoken[#spoken]),2) end end
+at('Sandbox')
+press('down');at('Account');press('right');at('Settings');press('up');at('Online');press('right');at('Decks');press('right');at('Decks')
+press('left');press('left');at('Sandbox');expect('Arrows follow the menu row and the buttons under it','none','last','none','first')
 press('escape');expect('Escape clears focus','none')
 press('up');expect('Up from nothing lands on the last button','last')
 press('return');assert(popup and popup.callbacks,'Enter on Settings opens it');frame()

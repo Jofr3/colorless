@@ -323,7 +323,8 @@ function Builder:build()
     self:add('Back',x,m.y+m.h-60,bw,40,'close',T.orange)
     return
   end
-  self:add('Back',p and 24 or 48,h-62,p and w-48 or w-96,40,'leave',T.orange)
+  -- Drawn first, reached last: Tab starts at the page's content (audit PG14).
+  self:add('Back',p and 24 or 48,h-62,p and w-48 or w-96,40,'leave',T.orange,nil,{ringLast=true})
   if self.phase~='ready' then
     self:add(self.phase=='anonymous' and 'Sign in' or 'Try again',w/2-140,h/2+38,280,44,self.phase=='anonymous' and 'signin' or 'retry',T.red)
     return
@@ -635,6 +636,34 @@ function Builder:mousereleased(x,y)
   elseif self.pressed and self.pressed==self:hit(x,y)then self:activate(self.pressed)end
   self.drag=nil;self.pressed=nil
 end
+-- The page's shortcuts (audit PG14), listed in its canvas description: '/' opens the card search,
+-- 'D' focuses the deck list, '-' and '+' change the focused deck entry by a copy. None works
+-- under a dialog. Returns whether `key` is one.
+local MINUS,PLUS={['-']=true,['kp-']=true},{['+']=true,['=']=true,['kp+']=true}
+function Builder:focusFirst(pred)
+  for i,b in ipairs(self.controls)do if pred(b) and not Controls.unfocusable(b) then self.focus=i;return i,b end end
+end
+function Builder:shortcut(key)
+  if self.modal or self.phase~='ready' then return false end
+  if key=='/' then
+    if self.portrait and self.tab~='catalog' then self.tab='catalog';self:build() end
+    local i=self:focusFirst(function(b) return b.input and b.arg=='query' end)
+    if i then self:activate(i) end
+  elseif key=='d' then
+    if self.portrait and self.tab~='deck' then self.tab='deck';self:build() end
+    local i,b=self:focusFirst(function(c) return c.deckRow or c.action=='deck-card' end)
+    if not i then i,b=self:focusFirst(function(c) return c.action=='deck-type' and c.arg==self.deckType end) end
+    if i then self.callbacks.announce(self:describe(b)) end
+  elseif MINUS[key] or PLUS[key] then
+    local b=self.controls[self.focus] or {}
+    local item=(b.deckRow or b.action=='deck-card') and b.arg or b.rowAction and self:entry(b.arg)
+    if not item or item.pending then return true end
+    -- What the row's own - (x for an unavailable card) and + buttons send.
+    if MINUS[key] and item.quantity>0 then self.callbacks.feedback('button');self:command(item.kind=='' and 'discard' or 'remove',item.id)
+    elseif PLUS[key] and item.remaining>0 then self.callbacks.feedback('button');self:command('add',item.id) end
+  else return false end
+  return true
+end
 function Builder:keypressed(key)
   if self.editing~='' then return end
   local control=self.controls[self.focus]
@@ -644,11 +673,12 @@ function Builder:keypressed(key)
   elseif control and control.cycleKey and (key=='left' or key=='right') then
     local dir=key=='left' and -1 or 1
     if control.action=='cycle' then self:command('cycle',control.cycleKey,dir) else self:command(control.action,dir) end
+  elseif self:shortcut(key) then return
   elseif key=='escape' then if self.modal then local choices=self.modal.mode=='choices';self:closeModal();if choices then self:openModal('filters')end else self:command('leave')end
   elseif key=='tab' or key=='right' or key=='down' or key=='left' or key=='up' then
     if #self.controls==0 then return end
     local found
-    self.focus,found=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,#self.controls,function(i) return Controls.unfocusable(self.controls[i]) end)
+    self.focus,found=Controls.move(self.focus,key,self.controls,nil,Controls.first(self.controls))
     if found then self.callbacks.announce(self:describe(self.controls[self.focus])) end
   elseif key=='return' or key=='space'then self:activate(self.focus)
   elseif not self.modal and (key=='pagedown' or key=='pageup')then self:command('page',key=='pageup' and -1 or 1)end

@@ -411,9 +411,10 @@ function Settings:keypressed(key)
   elseif (key=='left' or key=='right') and item and item.kind=='tab' then
     self:activate((item.tab-1+(key=='left' and -1 or 1))%#tabs+1)
   elseif key=='tab' or key=='down' or key=='up' or key=='left' or key=='right' then
-    local backward=Controls.backward(key)
-    self.focus=self.focus==0 and (backward and #self.items or 1)
-      or ((self.focus-1+(backward and -1 or 1))%#self.items)+1
+    -- Every row is a stop, the disabled email too; arrows move by layout (audit PG14).
+    local found
+    self.focus,found=Controls.move(self.focus,key,self.items,function() return false end)
+    if not found then return end
     if self.items[self.focus].kind~='delete-confirm' then self:disarm() end
     self.callbacks.announce(self:describe(self.items[self.focus]))
   elseif key=='return' or key=='space' then self:activate(self.focus) end

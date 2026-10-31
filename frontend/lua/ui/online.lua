@@ -466,8 +466,9 @@ function Online:keypressed(key)
   if (key=='left' or key=='right') and item and item.kind=='cycle' then self:activate(self.focus,key=='left' and -1 or 1)
   elseif (key=='left' or key=='right') and self.step=='menu' then self:activate(self.tab==1 and 2 or 1)
   elseif key=='tab' or key=='up' or key=='down' or key=='left' or key=='right' then
-    self.focus=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,#self.items,function(i) return Controls.unfocusable(self.items[i]) end)
-    self.callbacks.announce(self:describe(self.items[self.focus]))
+    local found
+    self.focus,found=Controls.move(self.focus,key,self.items)
+    if found then self.callbacks.announce(self:describe(self.items[self.focus])) end
   elseif key=='pageup' or key=='pagedown' then self:changePage(key=='pageup' and -1 or 1)
   elseif key=='return' or key=='space' then self:activate(self.focus)
   elseif #key==1 and key:match('%w') and self.step=='menu' and self.tab==2 then

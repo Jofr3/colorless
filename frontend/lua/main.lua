@@ -768,12 +768,13 @@ function love.keypressed(key)
   if state.page=='online' then online:keypressed(key);return end
   if isCollection(state.page) then collection():keypressed(key); return end
   if key=='tab' or key=='right' or key=='down' or key=='left' or key=='up' then
-    local backward=key=='left' or key=='up' or (key=='tab' and love.keyboard.isDown('lshift','rshift'))
-    local count=#menu+#controls
-    state.focused=state.focused==0 and (backward and count or 1)
-      or ((state.focused-1+(backward and -1 or 1))%count)+1
-    local item=state.focused<=#menu and menu[state.focused] or controls[state.focused-#menu]
-    announce(item.label)
+    -- Tab keeps the ring's order; arrows move by layout (audit PG14).
+    local ring={}
+    for _,b in ipairs(menu) do ring[#ring+1]=b end
+    for _,b in ipairs(controls) do ring[#ring+1]=b end
+    local found
+    state.focused,found=Controls.move(state.focused,key,ring,function() return false end)
+    if found then announce(ring[state.focused].label) end
   elseif key=='return' or key=='space' then activate(state.focused)
   elseif key=='m' then
     preferences:set('muted',1-preferences.muted)
