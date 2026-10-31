@@ -122,14 +122,18 @@ export function unresolvedMessage(lines: readonly string[]): string {
   return `${lines.length} unknown ${lines.length === 1 ? "card" : "cards"}${unchanged}`;
 }
 
-/** Why a name edit that ended blank was undone, naming the kept name as far as fits one line. */
+/** Why a name edit that ended blank was undone, naming the kept name as far as fits one line. A
+    shortened name ends in its three dots, which stand for the sentence's period too, with no space
+    before them. */
 export function keptNameMessage(name: string): string {
-  const text = (shown: string) => `A deck needs a name. Kept ${shown}.`;
-  if (messageWidth(text(name)) <= MESSAGE_MAX_PX) return text(name);
+  const prefix = "A deck needs a name. Kept ";
+  const full = `${prefix}${name}.`;
+  if (messageWidth(full) <= MESSAGE_MAX_PX) return full;
   const chars = [...name];
   for (let shown = chars.length - 1; shown > 0; shown--) {
-    const shortened = text(`${chars.slice(0, shown).join("")}...`);
-    if (messageWidth(shortened) <= MESSAGE_MAX_PX) return shortened;
+    const cut = chars.slice(0, shown).join("").trimEnd();
+    const shortened = `${prefix}${cut}...`;
+    if (cut && messageWidth(shortened) <= MESSAGE_MAX_PX) return shortened;
   }
   return "A deck needs a name. Kept the old one.";
 }

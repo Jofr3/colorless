@@ -37,8 +37,10 @@ local function along(b,d)
   if d[1]+d[2]<0 then a0,a1=-a1,-a0 end
   return a0,a1,b0,b1
 end
--- Android's FocusFinder rules, written along the arrow: a candidate lies further that way; one
--- in the beam (overlapping across the arrow) beats one outside it unless that one is nearer than
+-- Android's FocusFinder rules, written along the arrow: a candidate lies further that way, its
+-- near edge past the source's middle (FocusFinder takes any near edge past the source's, but a
+-- fanned card row sets its outer cards a few pixels lower, which made them "below"); one in the
+-- beam (overlapping across the arrow) beats one outside it unless that one is nearer than
 -- the beam one's far edge (always, sideways); else the nearer by 13 x gap² + offset² wins.
 local function better(s,c,best,sideways)
   local cBeam=c.b1>s.b0 and c.b0<s.b1
@@ -65,7 +67,7 @@ function Controls.grid(focus,key,controls,skip,first)
   for i,b in ipairs(controls) do
     if i~=focus and not b.arrowSkip and not skip(i) then
       local c={};c.a0,c.a1,c.b0,c.b1=along(b,d)
-      if (s.a0<c.a0 or s.a1<=c.a0) and s.a1<c.a1 then
+      if c.a0>(s.a0+s.a1)/2 and s.a1<c.a1 then
         local gap=math.max(0,c.a0-s.a1)
         local offset=(c.b0+c.b1)/2-(s.b0+s.b1)/2
         c.weight=13*gap*gap+offset*offset

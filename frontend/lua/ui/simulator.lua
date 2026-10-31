@@ -130,7 +130,7 @@ function Simulator:update(dt,time,mx,my,reduced)
   -- Keyboard focus shows only while the pointer is over no control or card.
   local pointed=self.hover>0 or hovered~=nil
   local focusedControl=not blocked and not pointed and self.controls[self.focus] or nil
-  self.tooltip:update(dt,self:tooltipTarget(blocked,pointed,mx,my),reduced)
+  self.tooltip:update(dt,self:tooltipTarget(blocked,pointed,mx,my),reduced,self.controls)
   for _,c in ipairs(self.cards) do
     local focused=not blocked and not pointed and self.focusCard==c
     local active=(not blocked and c==hovered) or focused

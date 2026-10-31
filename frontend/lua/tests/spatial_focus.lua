@@ -93,7 +93,7 @@ local B=Wire.builder
 local function builderSnapshot(o)
   o=o or {}
   local lines={row(nil,B.header,{revision=o.revision or 1,phase='ready',name='Fire Deck',format='standard',saveStatus='',
-    message='',busy=0,page=1,pages=3,total=24,count=14,selected='',details='',transfer='',cover='',importing=0,dirty=0,retry=0})}
+    message='',busy=0,page=1,pages=o.pages or 3,total=24,count=14,selected='',details='',transfer='',cover='',importing=0,dirty=0,retry=0})}
   for i=1,8 do
     lines[#lines+1]=row('C',B.card,{cardId='sv01-0'..(10+i),name='Card '..i,supertype='Pokémon',subtype='Basic',quantity=0,
       remaining=1,hp=70,mark='G',number=tostring(10+i),copyLimit=4,illegal=0,gaps=''})
@@ -184,6 +184,21 @@ do
     local right=press(b,'right');check(right.action=='card' and right.y==c1.y and right.x>c1.x,name..': Right moves along the card row')
     b.focus=i1;local down=press(b,'down')
     check(down.action=='card' and down.y>c1.y and math.abs(centre(down)-centre(c1))<1,name..': Down moves to the card below')
+    -- The rows are fanned, so the outer cards sit a few pixels lower than the inner ones: Down and
+    -- Up still leave the row rather than step along it (QA7 bug 2), with a single page too, where
+    -- the pager takes no focus and the nearest control below is far.
+    revision=revision+1;b:sync(builderSnapshot({revision=revision,pages=1}))
+    if portrait then b.tab='catalog' end
+    b:update(1/60,10,-1000,-1000,true);b:build()
+    for i,c in ipairs(b.controls) do
+      if c.action=='card' then
+        for _,key in ipairs({'down','up'}) do
+          b.focus=i;local to=press(b,key)
+          local away=key=='down' and to.y>=c.y+c.h/2 or key=='up' and to.y+to.h<=c.y+c.h/2
+          check(b.focus==i or away,name..': '..key..' from '..c.label..' leaves its row, not to '..tostring(to.label))
+        end
+      end
+    end
     -- A modal keeps the shortcuts away, the phone's tab under it too.
     local tab=b.tab
     b:openModal('clear');local open=#sent;press(b,'/');check(b.tab==tab,name..': / under a dialog leaves the tab under it');press(b,'d')

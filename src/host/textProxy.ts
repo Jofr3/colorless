@@ -12,7 +12,9 @@ type TextElement = HTMLInputElement | HTMLTextAreaElement;
 const KEY_EVENTS = ["keydown", "keyup", "keypress"] as const;
 
 /** Keeps SDL from also handling keys typed into a proxy: a capture listener on the window sees
- * them first. `keyup` republishes the caret, and Enter, Escape and Tab end the edit. */
+ * them first. `keyup` republishes the caret, and Enter, Escape and Tab end the edit. A key SDL saw
+ * go down outside the proxy, as the Enter or / that opened it, still has its release reach SDL,
+ * which would otherwise think it held and take the next press for a repeat. */
 function captureKeys(
   target: EventTarget,
   owns: (element: EventTarget | null) => boolean,
@@ -20,13 +22,21 @@ function captureKeys(
   republish: () => void,
   endKey: (event: KeyboardEvent) => boolean,
 ) {
+  const heldOutside = new Set<string>();
   for (const type of KEY_EVENTS)
     target.addEventListener(
       type,
       (event) => {
-        if (!("key" in event) || !owns(event.target)) return;
+        if (!("key" in event)) return;
         const key = event as KeyboardEvent;
-        event.stopImmediatePropagation();
+        const id = key.code || key.key;
+        if (!owns(event.target)) {
+          if (type === "keydown") heldOutside.add(id);
+          else if (type === "keyup") heldOutside.delete(id);
+          return;
+        }
+        const released = type === "keyup" && heldOutside.delete(id);
+        if (!released) event.stopImmediatePropagation();
         if (type === "keyup" && editing()) republish();
         if (
           type === "keydown" &&

@@ -184,13 +184,19 @@ do
   assert(#lines==2 and lines[2].size==22,'The message is 22 px')
   local wraps=select(2,T.font(22):getWrap(lines[2].text,lines[2].w))
   assert(#wraps==1 and lines[2].y>=submit.y+submit.h and lines[2].y+22<=google.y,'One line fits between the buttons')
-  -- Portrait: two lines at 22 px, started higher, still between the buttons.
+  -- Portrait: two lines, a little smaller, between the buttons' faces with their shadow (QA7 bug
+  -- 4: two 22 px lines ran into Continue with Google). A face lifts 1.8 at rest and its panel
+  -- hangs 3 below its bounds; a line is its size tall, and the shadow 3 below it.
+  local function between(d,size)
+    local n=#select(2,T.font(size):getWrap(d.text,d.w))
+    return d.y>=submit.y+submit.h+3 and d.y+n*size+3<=google.y-1.8,n
+  end
   popup:layout(480,850);rects,drawn={},{};popup:draw()
   for _,it in ipairs(popup.items) do if it.kind=='auth-submit' then submit=it elseif it.kind=='auth-google' then google=it end end
   lines=messageLines()
-  wraps=select(2,T.font(lines[2].size):getWrap(lines[2].text,lines[2].w))
-  assert(lines[2].size==22 and #wraps==2,'Two problems wrap to two lines at 22 px in portrait')
-  assert(lines[2].y>=submit.y+submit.h and lines[2].y+2*22<=google.y,'Two lines fit between the buttons')
+  local fits,count=between(lines[2],lines[2].size)
+  assert(count==2 and lines[2].size>=20,'Two problems wrap to two lines of at least 20 px in portrait')
+  assert(fits,'Two lines and their shadow fit between the buttons\' faces')
   assert(outlined(item('email')),'The outline survives a layout')
   -- Typing in a refused field clears its outline, not the other's; opening it does not.
   input({200,'email','','','',0,0,'input','email'})
@@ -211,6 +217,7 @@ do
   for _,d in ipairs(drawn) do if d.text:find('hidden characters') then lines={d} end end
   wraps=select(2,T.font(lines[1].size):getWrap(lines[1].text,lines[1].w))
   assert(lines[1].size<22 and lines[1].size>=16 and #wraps<=2,'A three-problem message fits two lines')
+  assert(between(lines[1],lines[1].size),'and fits between the buttons\' faces')
   love.graphics.printf,love.graphics.setFont,Button.panel=printf,setFont,panel
   T.font=font
   setmetatable(love.graphics,nil)

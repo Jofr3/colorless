@@ -122,6 +122,39 @@ describe("createTextProxy", () => {
     expect(game).not.toHaveBeenCalled();
   });
 
+  it("lets the game see a key's release when it saw the key go down (QA7)", () => {
+    // The key that opens a proxy (Enter, or the builder's /) goes down on the canvas and comes up
+    // on the proxy focused since. Swallowed, SDL would think it still held and drop the next press.
+    const page = new EventTarget();
+    const canvas = new EventTarget();
+    const field = new FakeField();
+    const proxy = createTextProxy({
+      element: asInput(field),
+      keyTarget: page,
+      write: () => {},
+      release: vi.fn(),
+    });
+    const game: string[] = [];
+    for (const type of ["keydown", "keyup"])
+      page.addEventListener(type, (event) => game.push(`${type}:${(event as KeyboardEvent).key}`));
+    const send = (type: string, key: string, target: EventTarget) => {
+      const event = Object.assign(new Event(type, { cancelable: true }), {
+        key,
+        code: `Key${key}`,
+        isComposing: false,
+      });
+      Object.defineProperty(event, "target", { value: target });
+      page.dispatchEvent(event);
+    };
+    send("keydown", "/", canvas);
+    proxy.open("query", "");
+    send("keyup", "/", field);
+    send("keydown", "a", field);
+    send("keyup", "a", field);
+    send("keyup", "/", field);
+    expect(game).toEqual(["keydown:/", "keyup:/"]);
+  });
+
   it("ignores a composing Enter", () => {
     const { proxy, field } = setup();
     proxy.open("search", "");

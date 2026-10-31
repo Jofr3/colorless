@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { FIXED_MESSAGES, LuaBuilder, messageWidth, unresolvedMessage } from "./builder";
+import {
+  FIXED_MESSAGES,
+  keptNameMessage,
+  LuaBuilder,
+  messageWidth,
+  unresolvedMessage,
+} from "./builder";
 import { decodeFields, encodeFields } from "./wire";
 import { deckNameOrNull } from "../decks/deckSnapshot";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
@@ -1377,8 +1383,20 @@ describe("builder deck name", () => {
     const { b } = await setup();
     await b.command(encodeFields(["name", "", "done"]));
     expect(b.name).toBe(long);
-    expect(b.message).toMatch(/^A deck needs a name\. Kept W+\.\.\.\.$/);
+    expect(b.message).toMatch(/^A deck needs a name\. Kept W+\.\.\.$/);
     expect(messageWidth(b.message)).toBeLessThanOrEqual(280);
+  });
+
+  it("ends a shortened kept name in its three dots, with no space before them (QA7)", () => {
+    // Names that differ in their first word's length, so some cut lands right after a space.
+    for (let pad = 1; pad <= 12; pad++) {
+      const message = keptNameMessage(
+        `${"A".repeat(pad)} Extremely Long Deck Name That Keeps Going Past The Line`,
+      );
+      expect(message).toMatch(/^A deck needs a name\. Kept A+ .*[^\s.]\.\.\.$/);
+      expect(message).not.toMatch(/\.\.\.\.$/);
+      expect(messageWidth(message)).toBeLessThanOrEqual(280);
+    }
   });
 
   it("validates a name as the library does: 1 to 100 characters once trimmed", () => {

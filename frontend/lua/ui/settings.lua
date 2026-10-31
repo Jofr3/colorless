@@ -433,18 +433,22 @@ function Settings:keypressed(key)
     self.callbacks.announce(self:describe(self.items[self.focus]))
   elseif key=='return' or key=='space' then self:activate(self.focus) end
 end
--- The sign-in form's message (audit PG9) sits in the 50 px between its button and the next: one
--- 22 px line, or two started 9 px higher; only a message needing more than two lines at 22 px is
--- drawn smaller, down to 16 px.
-local AUTH_MESSAGE_SIZE,AUTH_MESSAGE_MIN=22,16
+-- The sign-in form's message (audit PG9) sits between its button's face and the next one's, a
+-- GAP-px band starting 9 px above authMessageY: one 22 px line at authMessageY, or, when it wraps,
+-- the largest size down to 16 px whose lines (each its size tall) and their 3 px shadow fit the
+-- band, centred in it. Two 22 px lines ran into Continue with Google.
+local AUTH_MESSAGE_SIZE,AUTH_MESSAGE_MIN,AUTH_MESSAGE_GAP,SHADOW=22,16,45,3
 function Settings:drawAuthMessage(text)
   local x,y,w=self.x+30,self.y+self.authMessageY,self.w-60
   local size=AUTH_MESSAGE_SIZE
   local lines=select(2,T.font(size):getWrap(text,w))
-  while #lines>2 and size>AUTH_MESSAGE_MIN do
-    size=size-1; lines=select(2,T.font(size):getWrap(text,w))
+  if #lines>1 then
+    while #lines*size+SHADOW>AUTH_MESSAGE_GAP and size>AUTH_MESSAGE_MIN do
+      size=size-1; lines=select(2,T.font(size):getWrap(text,w))
+    end
+    y=y-9+math.max(0,math.floor((AUTH_MESSAGE_GAP-#lines*size-SHADOW)/2))
   end
-  T.text(text,size,x,#lines>1 and y-9 or y,w,T.paper)
+  T.text(text,size,x,y,w,T.paper)
 end
 function Settings:draw()
   local panel=Button.panel
