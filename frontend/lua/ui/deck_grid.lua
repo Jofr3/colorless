@@ -10,8 +10,6 @@ local Labels=require('ui.deck_labels')
 local CardBack=require('ui.card_back')
 local g=love.graphics
 local DeckGrid={}
--- The grid's pager (ui/pager.lua), anchored at the room's centre.
-DeckGrid.PAGER={face=-119,w=238,arrow=32,h=36,textScale=0.4}
 function DeckGrid.release(view)
   for _,card in ipairs(view.cards) do card.texture:release() end
   view.cards={}

@@ -16,6 +16,7 @@ local Button=require('ui.button')
 local Pager=require('ui.pager')
 local Labels=require('ui.deck_labels')
 local DeckGrid=require('ui.deck_grid')
+local DeckPicker=require('ui.deck_picker')
 local function check(ok,message) if not ok then error(message,2) end end
 local function same(a,b) for i=1,4 do if a[i]~=(b[i] or 1) then return false end end return true end
 
@@ -91,7 +92,7 @@ check(not draws[1].active and not draws[2].active,'The centre lights neither arr
 -- Pagers: arrows 6 px either side of the face, spoken, and a focus stop only with pages to turn.
 local made={}
 local function make(label,x,y,w,h,dir) local c={label=label,x=x,y=y,w=w,h=h,dir=dir,fontSize=24};made[#made+1]=c;return c end
-local left,right=Pager.arrows(DeckGrid.PAGER,640,500,1,3,make)
+local left,right=Pager.arrows(DeckPicker.PAGER,640,500,1,3,make)
 check(left.x==640-157 and right.x==640+125 and left.w==32 and left.h==36 and left.y==500,"The deck grid's arrows where the chooser placed them")
 check(left.dir==-1 and right.dir==1 and left.label=='<' and right.label=='>','Each arrow knows its direction')
 check(left.speech=='Previous page, page 1 of 3' and right.speech=='Next page, page 1 of 3' and not left.skipFocus,'Spoken and focusable')

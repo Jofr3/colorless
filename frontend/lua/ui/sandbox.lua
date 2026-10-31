@@ -12,8 +12,8 @@ local Mailbox=require('ui.mailbox')
 local PageText=require('ui.page_text')
 local Input=require('ui.text_input')
 local DeckGrid=require('ui.deck_grid')
+local DeckPicker=require('ui.deck_picker')
 local Limits=require('ui.limits')
-local Pager=require('ui.pager')
 local Sandbox={}
 Sandbox.__index=Sandbox
 local NO_DECKS='No valid decks. Create a deck to play.'
@@ -54,10 +54,7 @@ end
 function Sandbox:makeCards(entering)
   if not self.area then return end
   DeckGrid.release(self)
-  local matches={}
-  local q=self.query:lower():match('^%s*(.-)%s*$')
-  for _,item in ipairs(self.items) do if q=='' or item.name:lower():find(q,1,true) then matches[#matches+1]=item end end
-  DeckGrid.fill(self,matches,self.size,self.portrait and 2 or 5,math.min(0.82,(self.area.h/2-84)/D.H),entering)
+  DeckGrid.fill(self,DeckPicker.matches(self.items,self.query),self.size,self.portrait and 2 or 5,math.min(0.82,(self.area.h/2-84)/D.H),entering)
 end
 function Sandbox:add(label,x,y,w,h,action,colour,disabled)
   local b={label=label,x=x,y=y,w=w,h=h,action=action,colour=disabled and T.panel or colour,fontSize=26,disabled=disabled}
@@ -77,7 +74,7 @@ function Sandbox:build()
       local b=self:add(card.item.name,bounds.x,bounds.y,bounds.w,bounds.h,'card',nil,self.busy)
       b.card=i
     end
-    Pager.arrows(DeckGrid.PAGER,self.width/2,y+h-170,self.page,self.pages,function(label,ax,ay,aw,ah,dir)
+    DeckPicker.arrows(self,y+h-170,function(label,ax,ay,aw,ah,dir)
       return self:add(label,ax,ay,aw,ah,dir<0 and 'previous' or 'next',T.red,self.busy)
     end)
     if #self.items==0 then self:add('Create a deck',x+w/2-140,y+310,280,44,'decks',T.blue,false) end
@@ -163,20 +160,11 @@ function Sandbox:update(dt,time,mx,my,reduced)
   self:input(Mailbox.read('sandboxInput'))
   if self.motion then self.motion:update(dt,time,false,false,reduced) end
   self.mx,self.my=mx,my-self:offset();self.hover=self:hit(mx,my)
-  for i,card in ipairs(self.cards) do
-    local active=not self.busy and ((self.controls[self.hover] or {}).card==i or self.hover==0 and (self.controls[self.focus] or {}).card==i)
-    if active and not card.hovered then
-      if not card.motion.juice then card:juiceUp(time,0.05,0.03,reduced) end
-      self.callbacks.feedback('paper1')
-    end
-    card:update(dt,time,active,reduced,self.width)
-  end
+  DeckPicker.update(self,self.controls,dt,time,reduced,not self.busy)
 end
 function Sandbox:changePage(delta)
   if self.busy or self.phase~='ready' then return end
-  local page=self.page
-  self.page=(self.page-1+delta+self.pages)%self.pages+1;self:makeCards(true);self:build();self.focus=0;self.pressed=nil
-  if self.page~=page then self.callbacks.announce(Pager.page(self.page,self.pages)) end
+  DeckPicker.turn(self,delta)
 end
 function Sandbox:leave(action)
   self:command('finish-input');self.editing=false;self:command('close');self.callbacks[action]()
@@ -223,11 +211,10 @@ function Sandbox:draw()
   Button.modalFrameRaised(x,y,w,h)
   if self.phase=='ready' then
     local a=self.area
-    Button.panel(a.x,a.y+3,a.w,a.h,{T.panel[1]*0.7,T.panel[2]*0.7,T.panel[3]*0.7,1})
-    Button.panel(a.x,a.y,a.w,a.h,T.panel)
-    for _,card in ipairs(self.cards) do DeckGrid.drawPile(card,card.item.id==self.selected[self.tab],self.width) end
+    DeckPicker.drawTray(a)
+    DeckPicker.drawPiles(self,self.selected[self.tab])
     if #self.cards==0 then T.text(#self.items==0 and 'No valid decks' or 'No matches',32,a.x,a.y+80,a.w) end
-    Pager.draw(DeckGrid.PAGER,self.width/2,y+h-170,self.pageText,true,self.mx,self.my,self.time,self.reduced,self.width)
+    DeckPicker.drawPager(self,y+h-170)
   else
     local text=self.phase=='loading' and 'Loading your decks...' or self.phase=='anonymous' and 'Sign in to choose your decks' or 'Could not load your decks'
     T.text(text,self.portrait and 27 or 32,x+24,y+220,w-48)

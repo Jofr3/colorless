@@ -21,8 +21,8 @@ local Pile=require('ui.deck_pile')
 local Alert=require('ui.card_alert')
 local CardBack=require('ui.card_back')
 local DeckGrid=require('ui.deck_grid')
+local DeckPicker=require('ui.deck_picker')
 local Limits=require('ui.limits')
-local Pager=require('ui.pager')
 local LobbyCode=require('ui.host_constants').lobbyCode
 local g=love.graphics
 local Online={}
@@ -99,12 +99,8 @@ function Online:layout(w,h)
 end
 function Online:deck(id) for _,d in ipairs(self.decks) do if d.id==id then return d end end end
 function Online:matches()
-  local out,f={},filters[self.filter]
-  local q=self.query:lower():match('^%s*(.-)%s*$')
-  for _,d in ipairs(self.decks) do
-    if (not f[2] or d[f[2]]==f[3]) and (q=='' or d.name:lower():find(q,1,true)) then out[#out+1]=d end
-  end
-  return out
+  local f=filters[self.filter]
+  return DeckPicker.matches(self.decks,self.query,f[2] and function(d) return d[f[2]]==f[3] end)
 end
 function Online:frame()
   local w,h=self.width,self.height
@@ -185,7 +181,7 @@ function Online:build()
         -- A deck that can't be played online stays focusable so its reason is read out.
         add({kind='card',card=i,label=card.item.name,x=b.x,y=b.y,w=b.w,h=b.h,blocked=not card.item.online})
       end
-      Pager.arrows(DeckGrid.PAGER,self.width/2,y+h-158,self.page,self.pages,function(label,ax,ay,aw,ah,dir)
+      DeckPicker.arrows(self,y+h-158,function(label,ax,ay,aw,ah,dir)
         return add({kind='button',action=dir<0 and 'previous' or 'next',label=label,x=ax,y=ay,w=aw,h=ah})
       end)
     elseif self.deckPhase=='anonymous' or self.deckPhase=='error' then
@@ -407,14 +403,7 @@ function Online:update(dt,time,mx,my,reduced)
   for _,d in pairs(self.dyna) do d:update(time,reduced) end
   for _,m in pairs(self.juice) do m:update(dt,time,false,false,reduced) end
   for _,pile in pairs(self.piles) do pile:update(dt,time,false,reduced,self.width) end
-  for i,card in ipairs(self.cards) do
-    local active=(self.items[self.hover] or {}).card==i or self.hover==0 and (self.items[self.focus] or {}).card==i
-    if active and not card.hovered then
-      if not card.motion.juice then card:juiceUp(time,0.05,0.03,reduced) end
-      self.callbacks.feedback('paper1')
-    end
-    card:update(dt,time,active,reduced,self.width)
-  end
+  DeckPicker.update(self,self.items,dt,time,reduced,true)
   self.fx:update(dt,time,reduced,false)
 end
 function Online:describe(item)
@@ -442,9 +431,7 @@ function Online:openPicker()
 end
 function Online:changePage(delta)
   if not self.picker or self.deckPhase~='ready' then return end
-  local page=self.page
-  self.page=(self.page-1+delta+self.pages)%self.pages+1;self:makeCards(true);self:build();self.focus=0;self.pressed=nil
-  if self.page~=page then self.callbacks.announce(Pager.page(self.page,self.pages)) end
+  DeckPicker.turn(self,delta)
 end
 function Online:activate(i,dir)
   local item=self.items[i]
@@ -587,16 +574,14 @@ function Online:drawSeat(tag)
 end
 function Online:drawPicker()
   local y,h,a=self.y,self.h,self.area
-  Button.panel(a.x,a.y+3,a.w,a.h,darken(T.panel,0.3))
-  Button.panel(a.x,a.y,a.w,a.h,T.panel)
+  DeckPicker.drawTray(a)
   if self.deckPhase=='ready' then
-    local chosen=(self.seats.you or {}).deckId
-    for _,card in ipairs(self.cards) do
-      DeckGrid.drawPile(card,card.item.id==chosen,self.width)
+    -- A deck that can't be played online carries the card alert.
+    DeckPicker.drawPiles(self,(self.seats.you or {}).deckId,function(card)
       if not card.item.online then Alert.drawOnCard(card,self.time,self.reduced,self.width,Alert.pile) end
-    end
+    end)
     if #self.cards==0 then T.text(#self.decks==0 and 'No decks yet. Build one in Decks.' or 'No matches',28,a.x+16,a.y+80,a.w-32) end
-    Pager.draw(DeckGrid.PAGER,self.width/2,y+h-158,self.pageText,true,self.mx,self.my,self.time,self.reduced,self.width)
+    DeckPicker.drawPager(self,y+h-158)
   else
     local text=self.deckPhase=='anonymous' and 'Sign in to use your decks.' or self.deckPhase=='error' and "Couldn't load your decks." or 'Loading decks...'
     T.text(text,self.portrait and 26 or 30,a.x+16,a.y+100,a.w-32)
