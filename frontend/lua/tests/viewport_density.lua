@@ -3,7 +3,8 @@
 -- the same keeps its CSS size: the layout, the CRT's scanline count and fringe, the notice's
 -- smallest text. A pointer anywhere lands on the same control, and a table drag reaches the
 -- simulator at the same board point, at 1, 1.25, 1.5, 2 and 3. One device pixel per CSS pixel
--- keeps SDL's own resizing, as before.
+-- keeps SDL's own resizing, as before. Over 2560x1600 device pixels the canvas renders at the
+-- highest ratio within that, never under one per CSS pixel.
 package.path='frontend/lua/?.lua;'..package.path
 local noop=function() end
 local function check(ok,message) if not ok then error(message,2) end end
@@ -108,6 +109,8 @@ for _,size in ipairs(cases) do
   for _,density in ipairs({1.25,1.5,2,3}) do
     local pw,ph=math.floor(w*density+0.5),math.floor(h*density+0.5)
     view(w..' '..h..' 1 '..pw..' '..ph)
+    -- Over the pixel budget (1280x800 at 3) it renders at the ratio that fits.
+    if pw*ph>2560*1600 then pw,ph=2560,1600 end
     local mode=lastMode()
     check(mode.w==pw and mode.h==ph,('DPR %s renders at %dx%d, got %dx%d'):format(density,pw,ph,mode.w,mode.h))
     check(mode.flags.resizable==false,'A denser canvas is sized only by Lua: SDL would size a resizable one to its CSS size')
@@ -145,7 +148,8 @@ end
 local base=drag(1)
 for _,density in ipairs({1.25,1.5,2,3}) do
   view(('1280 800 1 %d %d'):format(1280*density,800*density))
-  local points=drag(density)
+  -- The pointer arrives in rendered pixels: at DPR 3 the budget renders at 2.
+  local points=drag(lastMode().w/1280)
   for i,p in ipairs(points) do
     check(math.abs(p[1]-base[i][1])<1e-6 and math.abs(p[2]-base[i][2])<1e-6,
       ('Table point %d at DPR %s: %.4f,%.4f against %.4f,%.4f'):format(i,density,p[1],p[2],base[i][1],base[i][2]))
@@ -162,10 +166,25 @@ view('640 400 0 1280 800')
 check(noticeSize==cssSize,'DPR 2 keeps the notice\'s size ('..tostring(noticeSize)..' against '..tostring(cssSize)..')')
 files['__notice.txt']=nil
 
+-- Over 2560x1600 device pixels: the highest ratio within that, never under one pixel per CSS
+-- pixel, with the CSS layout and scanlines kept.
+local Viewport=require('ui.viewport')
+local function size(raw) local v=Viewport.parse(raw);return v.pixelWidth..'x'..v.pixelHeight end
+check(size('2560 1600 0 2560 1600')=='2560x1600' and size('1280 800 0 2560 1600')=='2560x1600','A 2560x1600 canvas renders in full')
+check(size('1280 800 0 3840 2400')=='2560x1600','1280x800 at DPR 3 renders at DPR 2 ('..size('1280 800 0 3840 2400')..')')
+check(size('1440 900 0 2880 1800')=='2560x1600','1440x900 at DPR 2 renders at about 1.78 ('..size('1440 900 0 2880 1800')..')')
+check(size('2560 1440 0 3840 2160')=='2698x1517','4K at 150% renders at about 1.05 ('..size('2560 1440 0 3840 2160')..')')
+check(size('3072 1728 0 3840 2160')=='3072x1728','4K at 125% renders at its CSS size, as before ('..size('3072 1728 0 3840 2160')..')')
+check(size('3840 2160 0 3840 2160')=='3840x2160','4K at 100% renders in full, as before')
+check(size('390 844 0 1170 2532')=='1170x2532','A phone at DPR 3 is within the budget')
+check(size('5000 3000 0 4000 2400')=='4000x2400','Zoomed out under DPR 1, a large canvas keeps its device size')
+view('2560 1440 0 3840 2160')
+check(lastMode().w==2698 and lastMode().h==1517,'main.lua renders 4K at 150% at the budgeted size')
+check(math.abs(sent.scanlines-1440*0.75)<1e-6 and math.abs(sent.pixel_density-1517/1440)<1e-9,'with its CSS scanline count and fringe')
 -- Wider than the GPU's largest texture: the largest device size that fits, at the same aspect.
 limit=4096
-view('2560 1440 0 5120 2880')
-check(lastMode().w==4096 and lastMode().h==2304,('A 5120x2880 canvas renders at 4096x2304 on a 4096 GPU, got %dx%d'):format(lastMode().w,lastMode().h))
-check(math.abs(sent.scanlines-1440*0.75)<1e-6,'and keeps its CSS scanline count')
+view('4800 800 0 4800 800')
+check(lastMode().w==4096 and lastMode().h==682,('A 4800x800 canvas renders at 4096x682 on a 4096 GPU, got %dx%d'):format(lastMode().w,lastMode().h))
+check(math.abs(sent.scanlines-800*0.75)<1e-6,'and keeps its CSS scanline count')
 print=output
-print('PASS: device-pixel canvas at DPR 1.25-3 with CSS layout, scanlines, fringe and notice; pointer and table drag mapping exact; DPR 1 resizable; GPU texture limit')
+print('PASS: device-pixel canvas at DPR 1.25-3 with CSS layout, scanlines, fringe and notice; pointer and table drag mapping exact; DPR 1 resizable; pixel budget; GPU texture limit')
