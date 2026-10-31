@@ -13,13 +13,11 @@ local Motion=require('ui.motion')
 local Codec=require('ui.codec')
 local W=require('ui.wire_fields').online
 local Mailbox=require('ui.mailbox')
-local Fit=require('ui.text_fit')
 local Input=require('ui.text_input')
 local Dyna=require('ui.dynatext')
 local Fx=require('ui.fx')
 local PageText=require('ui.page_text')
 local Pile=require('ui.deck_pile')
-local Labels=require('ui.deck_labels')
 local Alert=require('ui.card_alert')
 local CardBack=require('ui.card_back')
 local DeckGrid=require('ui.deck_grid')
@@ -584,25 +582,8 @@ function Online:drawSeat(tag)
   T.text(label,24,px,ry,pw,tint,'right')
   g.pop()
   if tag=='opponent' then g.pop();return end
-  if self.piles.you then self:drawDeck(self.piles.you,false) end
+  if self.piles.you then DeckGrid.drawPile(self.piles.you,false,self.width) end
   g.pop()
-end
--- A deck pile with its name above and count below, as the picker draws it.
-function Online:drawDeck(card,chosen)
-  card:draw()
-  local bottom=Labels.drawCounter(card)
-  local tx,ty=card:target(1,self.width,Pile.parallax())
-  local titleX,titleY=tx-D.HALF_W*card.baseScale-6,ty-D.HALF_H*card.baseScale-32
-  local titleWidth=D.W*card.baseScale+12
-  if chosen then
-    local left=math.min(titleX,card.homeX-D.HALF_W*card.baseScale)-5
-    local right=math.max(titleX+titleWidth,card.homeX+78.1*card.baseScale)+5
-    g.push('all');g.setLineWidth(1.5)
-    Button.outline(left,titleY-5,right-left,bottom-titleY+10,T.white,1.2)
-    g.pop()
-  end
-  local text,size=Fit.fit(card.item.name,22,titleWidth)
-  T.text(text,size,titleX,titleY,titleWidth,T.white)
 end
 function Online:drawPicker()
   local y,h,a=self.y,self.h,self.area
@@ -611,7 +592,7 @@ function Online:drawPicker()
   if self.deckPhase=='ready' then
     local chosen=(self.seats.you or {}).deckId
     for _,card in ipairs(self.cards) do
-      self:drawDeck(card,card.item.id==chosen)
+      DeckGrid.drawPile(card,card.item.id==chosen,self.width)
       if not card.item.online then Alert.drawOnCard(card,self.time,self.reduced,self.width,Alert.pile) end
     end
     if #self.cards==0 then T.text(#self.decks==0 and 'No decks yet. Build one in Decks.' or 'No matches',28,a.x+16,a.y+80,a.w-32) end

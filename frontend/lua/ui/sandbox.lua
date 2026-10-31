@@ -9,15 +9,11 @@ local Modal=require('ui.modal')
 local Codec=require('ui.codec')
 local W=require('ui.wire_fields').sandbox
 local Mailbox=require('ui.mailbox')
-local Fit=require('ui.text_fit')
 local PageText=require('ui.page_text')
-local Pile=require('ui.deck_pile')
-local Labels=require('ui.deck_labels')
 local Input=require('ui.text_input')
 local DeckGrid=require('ui.deck_grid')
 local Limits=require('ui.limits')
 local Pager=require('ui.pager')
-local g=love.graphics
 local Sandbox={}
 Sandbox.__index=Sandbox
 local NO_DECKS='No valid decks. Create a deck to play.'
@@ -229,22 +225,7 @@ function Sandbox:draw()
     local a=self.area
     Button.panel(a.x,a.y+3,a.w,a.h,{T.panel[1]*0.7,T.panel[2]*0.7,T.panel[3]*0.7,1})
     Button.panel(a.x,a.y,a.w,a.h,T.panel)
-    for _,card in ipairs(self.cards) do
-      card:draw()
-      local bottom=Labels.drawCounter(card)
-      local tx,ty=card:target(1,self.width,Pile.parallax())
-      local titleX,titleY=tx-D.HALF_W*card.baseScale-6,ty-D.HALF_H*card.baseScale-32
-      local titleWidth=D.W*card.baseScale+12
-      if card.item.id==self.selected[self.tab] then
-        local left=math.min(titleX,card.homeX-D.HALF_W*card.baseScale)-5
-        local right=math.max(titleX+titleWidth,card.homeX+78.1*card.baseScale)+5
-        g.push('all');g.setLineWidth(1.5)
-        Button.outline(left,titleY-5,right-left,bottom-titleY+10,T.white,1.2)
-        g.pop()
-      end
-      local text,size=Fit.fit(card.item.name,22,titleWidth)
-      T.text(text,size,titleX,titleY,titleWidth,T.white)
-    end
+    for _,card in ipairs(self.cards) do DeckGrid.drawPile(card,card.item.id==self.selected[self.tab],self.width) end
     if #self.cards==0 then T.text(#self.items==0 and 'No valid decks' or 'No matches',32,a.x,a.y+80,a.w) end
     Pager.draw(DeckGrid.PAGER,self.width/2,y+h-170,self.pageText,true,self.mx,self.my,self.time,self.reduced,self.width)
   else

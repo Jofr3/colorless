@@ -2,8 +2,13 @@
 -- online picker show them. `view` carries cards, area, page, pageText, time,
 -- reduced and width; fill sets view.cards, view.page and view.pages.
 local D=require('ui.card_dimensions')
+local T=require('ui.theme')
+local Button=require('ui.button')
+local Fit=require('ui.text_fit')
 local Pile=require('ui.deck_pile')
+local Labels=require('ui.deck_labels')
 local CardBack=require('ui.card_back')
+local g=love.graphics
 local DeckGrid={}
 -- The grid's pager (ui/pager.lua), anchored at the room's centre.
 DeckGrid.PAGER={face=-119,w=238,arrow=32,h=36,textScale=0.4}
@@ -25,5 +30,23 @@ function DeckGrid.fill(view,matches,size,cols,scale,entering)
     card:collect(cols,index%cols,view.width/2,entering,view.time,view.reduced,view.width)
     view.cards[#view.cards+1]=card
   end
+end
+-- A deck pile with its count below and its name above, fitted to the pile, and a white outline
+-- round all three while `chosen`: the grid's piles and the lobby seat's chosen deck.
+function DeckGrid.drawPile(card,chosen,roomWidth)
+  card:draw()
+  local bottom=Labels.drawCounter(card)
+  local tx,ty=card:target(1,roomWidth,Pile.parallax())
+  local titleX,titleY=tx-D.HALF_W*card.baseScale-6,ty-D.HALF_H*card.baseScale-32
+  local titleWidth=D.W*card.baseScale+12
+  if chosen then
+    local left=math.min(titleX,card.homeX-D.HALF_W*card.baseScale)-5
+    local right=math.max(titleX+titleWidth,card.homeX+78.1*card.baseScale)+5
+    g.push('all');g.setLineWidth(1.5)
+    Button.outline(left,titleY-5,right-left,bottom-titleY+10,T.white,1.2)
+    g.pop()
+  end
+  local text,size=Fit.fit(card.item.name,22,titleWidth)
+  T.text(text,size,titleX,titleY,titleWidth,T.white)
 end
 return DeckGrid
