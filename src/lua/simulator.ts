@@ -7,6 +7,7 @@ import { loadSimulatorSave, clearSimulatorSave } from "../game/simulatorSave";
 import { effectMenu } from "./simulatorChoices";
 import { usedTrainersForTurn } from "../game/usedTrainers";
 import { SimulatorOrder } from "./simulatorOrder";
+import { hotSeatSidebar, remoteSidebar, withHistory } from "./simulatorSidebar";
 import { LUA_ART_SLOTS } from "./artworkCache";
 import { LocalTableSource, type HistoryStep, type TableSource } from "./tableSource";
 import { autoStepFor, type CoinFlips } from "./tableEvents";
@@ -344,134 +345,7 @@ export class LuaSimulator {
           run: () => this.cancelRareCandy(),
         },
       ];
-    return src.mode === "local" ? this.hotSeatSidebar(v, src) : this.remoteSidebar(v, src);
-  }
-  /** A hot-seat prompt (a promotion, a card's choice) keeps Undo and Redo,
-   * which step out of it without answering. */
-  private withHistory(menu: SimMenu): SimMenu {
-    const history = this.source?.history;
-    if (!history || !menu.mandatory || menu.kind === "coin") return menu;
-    const step = (label: string, type: "undoAction" | "redoAction"): SimOption => ({
-      label,
-      colour: "red",
-      disabled: !history.canStep(type),
-      run: () => this.history(type),
-    });
-    return {
-      ...menu,
-      footer: [...(menu.footer ?? []), step("Undo", "undoAction"), step("Redo", "redoAction")],
-    };
-  }
-  /** Both seats at one table: either player's choices, plus the game's history. */
-  private hotSeatSidebar(v: RedactedGame, src: TableSource): SimOption[] {
-    const seat = v.seat;
-    const p = v.phase;
-    const flags = src.lifecycle().flags;
-    const newGame = (slot: SimOption["slot"]): SimOption[] =>
-      flags.includes("newgame")
-        ? [{ label: "New game", colour: "red", slot, run: () => this.command("newgame") }]
-        : [];
-    const step = (
-      label: string,
-      type: "undoAction" | "redoAction" | "undoTurn" | "redoTurn",
-    ): SimOption => ({
-      label,
-      colour: "red",
-      slot: "minor",
-      disabled: !src.history?.canStep(type),
-      run: () => this.history(type),
-    });
-    // The undo/redo row, on the setup screens as well as the turn.
-    const history: SimOption[] = flags.includes("undo")
-      ? [
-          step("Undo turn", "undoTurn"),
-          step("Undo action", "undoAction"),
-          ...newGame("minor"),
-          step("Redo action", "redoAction"),
-          step("Redo turn", "redoTurn"),
-        ]
-      : [];
-    if (p.kind === "setup:chooseFirst")
-      return [
-        {
-          ...this.action("P1 first", { type: "chooseFirstPlayer", seat, first: "p1" }),
-          slot: "primary",
-        },
-        {
-          ...this.action("P2 first", { type: "chooseFirstPlayer", seat, first: "p2" }),
-          slot: "primary",
-        },
-        {
-          ...this.action(
-            "Random",
-            {
-              type: "chooseFirstPlayer",
-              seat,
-              // The coin winner is the seat waited on.
-              first: v.waitingOn === "opponent" ? otherSeat(seat) : seat,
-            },
-            "red",
-          ),
-          slot: "minor",
-        },
-        ...history,
-      ];
-    if (p.kind === "setup:place")
-      return [
-        {
-          ...this.action("Ready", { type: "setupReady", seat }, seat === "p2" ? "red" : "blue"),
-          slot: "primary",
-        },
-        ...history,
-      ];
-    // Attacks, Retreat and Abilities live on the Active card's attached
-    // buttons; the panel keeps End turn and the undo/redo history.
-    if (p.kind === "turn:action")
-      return [
-        { ...this.action("End turn", { type: "endTurn", seat }, "red"), slot: "primary" },
-        ...history,
-      ];
-    if (p.kind === "gameOver") return newGame("danger");
-    return [];
-  }
-  /** One seat against a remote player: only this seat's decisions; Rematch once it is over. */
-  private remoteSidebar(v: RedactedGame, src: TableSource): SimOption[] {
-    const seat = v.seat;
-    const p = v.phase;
-    const flags = src.lifecycle().flags;
-    if (p.kind === "setup:chooseFirst" && v.waitingOn === "you")
-      return [
-        {
-          ...this.action("Go first", { type: "chooseFirstPlayer", seat, first: seat }),
-          slot: "primary",
-        },
-        {
-          ...this.action("Go second", { type: "chooseFirstPlayer", seat, first: otherSeat(seat) }),
-          slot: "primary",
-        },
-      ];
-    if (p.kind === "setup:place" && !p.ready.you)
-      return [
-        {
-          ...this.action("Ready", { type: "setupReady", seat }, seat === "p2" ? "red" : "blue"),
-          slot: "primary",
-        },
-      ];
-    if (p.kind === "turn:action" && v.activePlayer === "you")
-      return [{ ...this.action("End turn", { type: "endTurn", seat }, "red"), slot: "primary" }];
-    if (flags.includes("rematch")) {
-      const sent = flags.includes("rematch-sent");
-      return [
-        {
-          label: sent ? "Waiting..." : "Rematch",
-          colour: "red",
-          slot: "danger",
-          disabled: sent,
-          run: () => this.command("rematch"),
-        },
-      ];
-    }
-    return [];
+    return src.mode === "local" ? hotSeatSidebar(this, v, src) : remoteSidebar(this, v, src);
   }
   /** The open modal's page first, then its neighbours, the board, the rest. */
   private publishImages() {
@@ -814,7 +688,7 @@ export class LuaSimulator {
       if (!s.menu) cardActionRows(f, cardActions(v, this, staged));
     }
     sidebarRows(f, this.sidebar(), !!s.menu);
-    if (s.menu) menuRows(f, this.withHistory(s.menu), s.menuId);
+    if (s.menu) menuRows(f, withHistory(this, this.source, s.menu), s.menuId);
     if (src) infoRows(f, src);
     this.handlers = f.handlers;
     this.boardArt = f.art;
