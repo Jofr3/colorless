@@ -67031,4 +67031,13 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: [],
     killedByCommand: ["bun", "scripts/test-lua.ts", "page_widgets.lua"],
   },
+  {
+    id: "UI-BR11-push-same-page",
+    decision: "UI-BR11",
+    what: "Asking for the page it is on pushes a second history entry and reruns the page change. Killed by router.test.ts.",
+    file: "src/host/router.ts",
+    find: "if (!moving && push) {",
+    replace: "if (false) {",
+    expectKilledBy: ["src/host/router.test.ts"],
+  },
 ];

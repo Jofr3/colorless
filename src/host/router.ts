@@ -173,6 +173,12 @@ export class Router {
   private go(next: Route, push: boolean, held = false) {
     const from = this.current;
     const moving = next.page !== from.page || next.id !== from.id;
+    if (!moving && push) {
+      // Asked for the page it is on: no second history entry and no page change, and an open
+      // settings or account form keeps its parameter.
+      this.win.history.replaceState(null, "", routeUrl(this.url(), next));
+      return;
+    }
     if (!held && moving && this.options.holdLeave) {
       // Back/forward already moved the URL; keep it on the held page until it lets go, which may
       // happen before holdLeave returns.

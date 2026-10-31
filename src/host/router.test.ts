@@ -245,6 +245,17 @@ describe("Router", () => {
     }
   });
 
+  it("replaces rather than pushes a page it is already on, without a page change", () => {
+    const page = fakeWindow("/");
+    const changed = vi.fn<(route: Route) => void>();
+    const router = new Router(page.win, { changed });
+    router.navigate("decks");
+    router.navigate("decks");
+    router.navigate("home");
+    expect(page.entries()).toEqual(["/", "/decks", "/"]);
+    expect(changed.mock.calls.map(([route]) => route.page)).toEqual(["decks", "home"]);
+  });
+
   it("does not ask to leave when the route stays put", () => {
     const page = fakeWindow("/decks/abc");
     const holdLeave = vi.fn(() => true);
