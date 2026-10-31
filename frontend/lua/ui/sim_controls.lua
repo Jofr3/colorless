@@ -68,8 +68,9 @@ function Simulator:build(quiet)
     if not cl.horizontal then y=y+44+gap end
     for i,entry in ipairs(historyRow) do
       local action=history[entry[1]]
+      -- Icons only: the spoken label shows as a tooltip after a pause on one (audit SM12).
       self:add(action.label,x+(i-1)*(size+gap),y,size,size,'invoke',entry[2]=='restart' and T.gold or T.red,
-        {token=action.token,disabled=action.disabled,icon=entry[2]})
+        {token=action.token,disabled=action.disabled,icon=entry[2],tooltip=true})
     end
   elseif chooseFirst and #primaries==2 and #minors<=1 and #dangers==0 then
     -- Online the coin winner gets Go first / Go second without the dice.
@@ -233,6 +234,17 @@ function Simulator:buildAttached(card)
     buttonY=buttonY+b.height+gap
     if b.disabled then added.colour=T.grey end -- not the panel black
   end
+end
+-- The control whose tooltip may show (audit SM12): one under a fine pointer, disabled ones too,
+-- else the keyboard's while the pointer rests on nothing. A touch screen's pointer shows none, so
+-- a tap or a resting finger never raises one.
+function Simulator:tooltipTarget(blocked,pointed,mx,my)
+  if blocked or self.drag then return nil end
+  if not Display.coarse then
+    for _,b in ipairs(self.controls) do if b.tooltip and Button.hit(b,mx,my) then return b end end
+  end
+  local b=not pointed and self.controls[self.focus]
+  return b and b.tooltip and b or nil
 end
 function Simulator:hit(x,y)
   for i=#self.controls,1,-1 do
