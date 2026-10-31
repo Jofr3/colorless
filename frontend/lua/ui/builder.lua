@@ -190,24 +190,8 @@ function Builder:artwork(item,w,h)
   T.text(item.name,18,10,36,w-20,T.paper)
   T.text(item.kind or '',16,10,h-40,w-20,T.profile)
 end
--- tcgdex ships no art for basic Energy (sve, mee, mfb), so an Energy without
--- art gets a generated face in its type's colour: the name across the top,
--- the pixel pip large in the middle, and the subtype at the foot.
-function Builder.energyFace(item,w,h)
-  local kind=Energy.normalise((item.name or ''):gsub('%s*Energy%s*$',''))
-  local c=Energy.colour(kind)
-  local light=kind=='Colorless' or kind=='Metal' or kind=='Lightning' or kind=='Special'
-  local text=light and T.ink or T.white
-  T.box(0,0,w,h,T.paper,4)
-  T.box(4,4,w-8,h-8,c,4)
-  -- A darker inner field, stippled like the generated card faces.
-  g.setColor(0,0,0,0.18);T.box(10,30,w-20,h-66,{0,0,0,0.18},3)
-  g.setColor(0,0,0,0.12)
-  for x=16,w-20,8 do for y=36,h-44,8 do g.rectangle('fill',x,y,2,2) end end
-  T.text(item.name,17,8,8,w-16,text)
-  Energy.pip(w/2,h/2-4,34,kind)
-  T.text(item.subtype~='' and item.subtype or 'Basic Energy',14,8,h-28,w-16,text)
-end
+-- An Energy card without art (ui/energy.lua).
+Builder.energyFace=Energy.face
 function Builder:newCard(item,index,x,y,scale,grid)
   item.colour=T.blue;item.edition='dissolve';item.resolution=2;item.drawFace=function(w,h)self:face(item,w,h)end
   local copy={};for k,v in pairs(item)do copy[k]=v end

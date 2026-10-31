@@ -119,4 +119,22 @@ function Energy.row(types,x,y,r,gap,alpha,align)
   return width
 end
 Energy.split=Codec.list
+-- tcgdex ships no art for basic Energy (sve, mee, mfb), so the builder gives an Energy card
+-- without art a generated face in its type's colour: the name across the top,
+-- the pixel pip large in the middle, and the subtype at the foot.
+function Energy.face(item,w,h)
+  local kind=Energy.normalise((item.name or ''):gsub('%s*Energy%s*$',''))
+  local c=Energy.colour(kind)
+  local light=kind=='Colorless' or kind=='Metal' or kind=='Lightning' or kind=='Special'
+  local text=light and T.ink or T.white
+  T.box(0,0,w,h,T.paper,4)
+  T.box(4,4,w-8,h-8,c,4)
+  -- A darker inner field, stippled like the generated card faces.
+  g.setColor(0,0,0,0.18);T.box(10,30,w-20,h-66,{0,0,0,0.18},3)
+  g.setColor(0,0,0,0.12)
+  for x=16,w-20,8 do for y=36,h-44,8 do g.rectangle('fill',x,y,2,2) end end
+  T.text(item.name,17,8,8,w-16,text)
+  Energy.pip(w/2,h/2-4,34,kind)
+  T.text(item.subtype~='' and item.subtype or 'Basic Energy',14,8,h-28,w-16,text)
+end
 return Energy
