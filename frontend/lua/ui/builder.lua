@@ -21,6 +21,7 @@ local Mailbox=require('ui.mailbox')
 local W=require('ui.wire_fields').builder
 local Fit=require('ui.text_fit')
 local Input=require('ui.text_input')
+local TextArea=require('ui.text_area')
 local Pager=require('ui.pager')
 local g=love.graphics
 local PANEL_Y,PANEL_HEIGHT=95,554
@@ -65,7 +66,9 @@ local function caption(text,size,x,y,w,colour,align)
   T.text(text,size,x,y,w,colour,align)
 end
 function Builder.new(callbacks)
-  return setmetatable({callbacks=callbacks,phase='loading',time=0,hover=0,focus=0,controls={},cards={},deckCards={},deckView='list',items={},deck={},options={},fields={},art={},pageText=PageText.new(),deckPageText=PageText.new(),page=1,pages=1,total=0,count=0,name='',format='standard',message='',saveStatus='',details='',transfer='',deckPage=1,deckType='all',tab='catalog',filterPage=1,editing='',values={},validation='',groups={0,0,0},choices={},optionLabel='',optionPage=1,optionPages=1},Builder)
+  local self=setmetatable({callbacks=callbacks,phase='loading',time=0,hover=0,focus=0,controls={},cards={},deckCards={},deckView='list',items={},deck={},options={},fields={},art={},pageText=PageText.new(),deckPageText=PageText.new(),page=1,pages=1,total=0,count=0,name='',format='standard',message='',saveStatus='',details='',transfer='',deckPage=1,deckType='all',tab='catalog',filterPage=1,editing='',values={},validation='',groups={0,0,0},choices={},optionLabel='',optionPage=1,optionPages=1},Builder)
+  self.transferArea=TextArea.new('Paste a decklist here...')
+  return self
 end
 function Builder:command(...)
   Codec.command(self.callbacks.command,...)
@@ -856,40 +859,7 @@ function Builder:drawControlFaces(controls,active)
         time=self.time,reduced=self.reduced,roomWidth=self.width,
         pips=pips and {count=b.pipCount,spacing=spacing,index=b.pipIndex,set=b.pipSelected,off=T.panel} or nil})
     elseif b.multiline then
-      Input.background(b,active and self.editing=='transfer',b.disabled,lit)
-      local font=T.font(22);local value=self.transfer;local lines={};local base=0
-      local display=value~='' and value or 'Paste a decklist here...'
-      for paragraph in (display..'\n'):gmatch('(.-)\n')do
-        local _,wrapped=font:getWrap(paragraph,b.w-24);if #wrapped==0 then wrapped={''}end
-        local cursor=1
-        for _,line in ipairs(wrapped)do
-          local at=paragraph:find(line,cursor,true) or cursor
-          lines[#lines+1]={text=line,first=base+at-1,last=base+at-1+#line};cursor=at+#line
-        end
-        base=base+#paragraph+1
-      end
-      local first=#Codec.utf16Prefix(value,self.first or 0);local last=#Codec.utf16Prefix(value,self.last or 0)
-      local caretLine=1
-      for i,line in ipairs(lines)do if last>=line.first then caretLine=i end end
-      local visible=math.floor((b.h-20)/25)
-      local start=math.max(1,math.min(math.max(1,#lines-visible+1),math.floor((self.modal.scroll or 0)/25)+1))
-      if self.editing=='transfer' and (self.caretByte~=last or self.caretValue~=value)then
-        if caretLine<start then start=caretLine elseif caretLine>=start+visible then start=caretLine-visible+1 end
-        self.modal.scroll=(start-1)*25;self.caretByte,self.caretValue=last,value
-      end
-      for n=start,math.min(#lines,start+visible-1)do
-        local line=lines[n];local ly=b.y+10+(n-start)*25
-        if self.editing=='transfer' and last>first and first<=line.last and last>=line.first then
-          local left=font:getWidth(line.text:sub(1,math.max(0,first-line.first)))
-          local right=font:getWidth(line.text:sub(1,math.min(#line.text,last-line.first)))
-          g.setColor(T.blue);g.rectangle('fill',b.x+12+left,ly,math.max(2,right-left),25)
-        end
-        T.text(line.text,22,b.x+12,ly,b.w-24,T.paper,'left')
-        if self.editing=='transfer' and n==caretLine and math.floor(self.time*2)%2==0 then
-          local px=font:getWidth(line.text:sub(1,math.max(0,last-line.first)))
-          g.setColor(T.white);g.rectangle('fill',b.x+12+px,ly,2,22)
-        end
-      end
+      self.transferArea:draw(b,self.transfer,active,self.editing=='transfer',self.first,self.last,self.time,lit,self.modal)
     elseif b.action~='card' and b.action~='deck-card' then
       local original=b.label
       b.label,b.fontSize=Fit.label(b.label,b.fontSize,b.w-16)

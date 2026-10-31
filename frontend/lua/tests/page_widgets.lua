@@ -159,5 +159,31 @@ reset()
 Button.icon({x=600,y=100,w=40,h=36},'other',false,1280)
 check(rects()==list,'Any other name draws the list')
 
+-- The decklist text area (audit PG16): it wraps each paragraph once per value and width, and
+-- draws the lines a new value wraps to.
+local TextArea=require('ui.text_area')
+local wraps=0
+font.getWrap=function(_,s,w)
+  wraps=wraps+1
+  local lines={}
+  for word in s:gmatch('%S+') do lines[#lines+1]=word end
+  return w,lines
+end
+local area=TextArea.new('Paste here')
+local field={x=10,y=20,w=300,h=220}
+local view={}
+local function shownLines() local list={};for _,t in ipairs(texts) do list[#list+1]=t.text end;return table.concat(list,' ') end
+reset();area:draw(field,'4 Pikachu\n2 Raichu',true,false,0,0,0,false,view)
+check(wraps==2 and shownLines()=='4 Pikachu 2 Raichu','Each paragraph wraps to its own lines')
+reset();area:draw(field,'4 Pikachu\n2 Raichu',true,false,0,0,1,false,view)
+check(wraps==2 and shownLines()=='4 Pikachu 2 Raichu','An unchanged decklist keeps its wrap')
+reset();area:draw(field,'3 Pichu',true,false,0,0,1,false,view)
+check(wraps==3 and shownLines()=='3 Pichu','A new decklist wraps again')
+reset();area:draw({x=10,y=20,w=200,h=220},'3 Pichu',true,false,0,0,1,false,view)
+check(wraps==4,'So does a new width')
+reset();area:draw(field,'',true,false,0,0,1,false,view)
+check(shownLines()=='Paste here','An empty field shows its placeholder')
+font.getWrap=nil
+
 Button.panel,T.text,Button.draw,Button.cycleFace,Button.outline=panel,text,draw,cycleFace,outline
-print('PASS: option cycle centre and arrows, pager arrows and face, titled deck pile and icon glyphs')
+print('PASS: option cycle centre and arrows, pager arrows and face, titled deck pile, icon glyphs and the text area')
