@@ -7,4 +7,6 @@ function Shared.groupLabel(group)
   local labels={attach='Attach',evolve='Evolve',tool='Attach',rareCandy='Rare Candy',ability='Ability'}
   return labels[group] or (group:gsub('^%l',string.upper))
 end
+-- Public cards keep their uid across a hot-seat flip; hidden ones are positional.
+function Shared.cardKey(item) return 'card:'..(item.hidden and item.owner..':'..item.id or item.id) end
 return Shared
