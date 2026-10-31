@@ -37,6 +37,10 @@ local SORT_ORDER={'name','hp-desc','set'}
 local SAVE_CAPTIONS={pending='Saving...',saving='Saving...',saved='Saved',retrying='Retrying...',failed='Not saved'}
 -- The width the save caption keeps beside the deck name.
 local STATUS_WIDTH=130
+-- The catalog's pager (ui/pager.lua), anchored at the catalog's centre, and the deck's, anchored at
+-- deckPager()'s left arrow.
+local CATALOG_PAGER={face=-135,w=270,arrow=36,h=44,fontSize=30}
+local DECK_PAGER={face=36,w=170,arrow=30,h=36,fontSize=26,emboss=5}
 -- The visible labels of the builder's text fields, as the host's proxy also names them.
 local FIELD_LABELS={name='Deck name',query='Search cards',optionQuery='Find an option',text='Rules text',transfer='Decklist'}
 -- builder.ts's placeholder while a card's rules text loads.
@@ -457,8 +461,9 @@ function Builder:build()
       self.controls[#self.controls+1]={action='card',card=i,label=c.item.name,x=c.homeX-D.HALF_W*c.baseScale,y=c.homeY-D.HALF_H*c.baseScale,w=D.W*c.baseScale,h=D.H*c.baseScale}
     end
     local cx=p and w/2 or 408
-    Pager.arrow(self:add('<',cx-177,h-132,36,44,'page',T.red,-1),-1,self.page,self.pages).fontSize=30
-    Pager.arrow(self:add('>',cx+141,h-132,36,44,'page',T.red,1),1,self.page,self.pages).fontSize=30
+    Pager.arrows(CATALOG_PAGER,cx,h-132,self.page,self.pages,function(label,ax,ay,aw,ah,dir)
+      return self:add(label,ax,ay,aw,ah,'page',T.red,dir)
+    end)
   end
   if not p or self.tab=='deck' then
     local x=p and 24 or DECK_X+8;local bw=p and 432 or DECK_WIDTH-16;local y=p and PORTRAIT_DECK_Y+78 or 179
@@ -486,8 +491,9 @@ function Builder:build()
     end
     local pagerX,pagerY=self:deckPager()
     local deckPages=self:deckPages()
-    Pager.arrow(self:add('<',pagerX,pagerY,30,36,'deck-page',T.red,-1),-1,self.deckPage,deckPages).fontSize=26
-    Pager.arrow(self:add('>',pagerX+212,pagerY,30,36,'deck-page',T.red,1),1,self.deckPage,deckPages).fontSize=26
+    Pager.arrows(DECK_PAGER,pagerX,pagerY,self.deckPage,deckPages,function(label,ax,ay,aw,ah,dir)
+      return self:add(label,ax,ay,aw,ah,'deck-page',T.red,dir)
+    end)
     self:add(self.deckView=='list' and 'Show cards' or 'Show list',pagerX+256,pagerY,40,36,'deck-view',T.profile,nil,{icon=self.deckView=='list' and 'cards' or 'list',displayLabel=''})
     self:add('Deck information',pagerX+308,pagerY,40,36,'deck-info',T.profile,nil,{icon='info',displayLabel=''})
     if p then
@@ -917,18 +923,14 @@ function Builder:draw(shaders)
       for _,c in ipairs(self.cards)do caption(c.item.quantity>0 and c.item.quantity..' in deck' or '',19,c.homeX-65,c.homeY+D.HALF_H*c.baseScale+12,130,T.paper)end
       if #self.cards==0 then T.text(self.busy and 'Loading cards...' or 'No matching cards',28,p and 24 or 48,360,p and 432 or 716,T.paper)end
       local cx=p and w/2 or 408
-      local hovered=not self.modal and Button.hit({x=cx-135,y=h-132,w=270,h=44},self.mx or -1,self.my or -1)
-      Button.cycleFace(cx-135,h-132,270,44,hovered)
-      self.pageText:draw(self.time,self.reduced,cx-135,h-132,270,44,w)
+      Pager.draw(CATALOG_PAGER,cx,h-132,self.pageText,not self.modal,self.mx,self.my,self.time,self.reduced,w)
       if self:dropHint() then local mx,_,mw=self:messageLine();T.text(self.drag.source=='deck' and 'Drop here to remove one copy' or 'Drop here to add to deck',20,mx,h-170,mw,T.blue)end
     end
     if not p or self.tab=='deck'then
       local x=p and 24 or DECK_X;local bw=p and 432 or DECK_WIDTH;local y=p and PORTRAIT_DECK_Y or PANEL_Y
       Button.panel(x,y,bw,p and 709-PORTRAIT_DECK_Y or PANEL_HEIGHT,T.panel)
-      local pagerLeft,pagerY=self:deckPager();local pagerX=pagerLeft+36
-      local hovered=not self.modal and Button.hit({x=pagerX,y=pagerY,w=170,h=36},self.mx or -1,self.my or -1)
-      Button.cycleFace(pagerX,pagerY,170,36,hovered,5)
-      self.deckPageText:draw(self.time,self.reduced,pagerX,pagerY,170,36,w)
+      local pagerX,pagerY=self:deckPager()
+      Pager.draw(DECK_PAGER,pagerX,pagerY,self.deckPageText,not self.modal,self.mx,self.my,self.time,self.reduced,w)
       if self.deckView=='cards' then
         for _,c in ipairs(self.deckCards)do
           if not (self.dragCard and self.dragCard.item.id==c.item.id)then

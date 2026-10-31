@@ -187,8 +187,9 @@ function Online:build()
         -- A deck that can't be played online stays focusable so its reason is read out.
         add({kind='card',card=i,label=card.item.name,x=b.x,y=b.y,w=b.w,h=b.h,blocked=not card.item.online})
       end
-      Pager.arrow(add({kind='button',action='previous',label='<',x=self.width/2-157,y=y+h-158,w=32,h=36}),-1,self.page,self.pages)
-      Pager.arrow(add({kind='button',action='next',label='>',x=self.width/2+125,y=y+h-158,w=32,h=36}),1,self.page,self.pages)
+      Pager.arrows(DeckGrid.PAGER,self.width/2,y+h-158,self.page,self.pages,function(label,ax,ay,aw,ah,dir)
+        return add({kind='button',action=dir<0 and 'previous' or 'next',label=label,x=ax,y=ay,w=aw,h=ah})
+      end)
     elseif self.deckPhase=='anonymous' or self.deckPhase=='error' then
       local anonymous=self.deckPhase=='anonymous'
       add({kind='button',action=anonymous and 'signin' or 'decks',label=anonymous and 'Sign in' or 'Try again',x=x+(w-280)/2,y=self.area.y+180,w=280,h=48})
@@ -614,9 +615,7 @@ function Online:drawPicker()
       if not card.item.online then Alert.drawOnCard(card,self.time,self.reduced,self.width,Alert.pile) end
     end
     if #self.cards==0 then T.text(#self.decks==0 and 'No decks yet. Build one in Decks.' or 'No matches',28,a.x+16,a.y+80,a.w-32) end
-    local px,py=self.width/2-119,y+h-158
-    Button.cycleFace(px,py,238,36,Button.hit({x=px,y=py,w=238,h=36},self.mx or -1,self.my or -1))
-    self.pageText:draw(self.time,self.reduced,px,py,238,36,self.width,0.4)
+    Pager.draw(DeckGrid.PAGER,self.width/2,y+h-158,self.pageText,true,self.mx,self.my,self.time,self.reduced,self.width)
   else
     local text=self.deckPhase=='anonymous' and 'Sign in to use your decks.' or self.deckPhase=='error' and "Couldn't load your decks." or 'Loading decks...'
     T.text(text,self.portrait and 26 or 30,a.x+16,a.y+100,a.w-32)

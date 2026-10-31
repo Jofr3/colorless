@@ -23,6 +23,8 @@ Library.__index=Library
 local sorts={'name-asc','name-desc','cards-desc'}
 local sortLabels={['name-asc']='Name A-Z',['name-desc']='Name Z-A',['cards-desc']='Card count'}
 local saved={create='Deck created.',rename='Deck renamed.',delete='Deck deleted.'}
+-- The library's pager (ui/pager.lua), anchored at the room's centre.
+local PAGER={face=-135,w=270,arrow=36,h=48,fontSize=30}
 local function nextValue(values,current)
   for i,v in ipairs(values) do if v==current then return values[i%#values+1] end end
   return values[1]
@@ -214,8 +216,9 @@ function Library:build()
     local size=math.max(34,Display.units(24,Display.collection))
     local trayWidth=p and 380 or 1000
     HitArea.inflate(manage,size,size,self.controls,nil,{x=(w-trayWidth)/2,y=p and 154 or 104,w=trayWidth,h=p and 452 or 510})
-    Pager.arrow(self:add('<',w/2-177,h-144,36,48,'previous',T.red),-1,self.page,self.pages).fontSize=30
-    Pager.arrow(self:add('>',w/2+141,h-144,36,48,'next',T.red),1,self.page,self.pages).fontSize=30
+    Pager.arrows(PAGER,w/2,h-144,self.page,self.pages,function(label,ax,ay,aw,ah,dir)
+      return self:add(label,ax,ay,aw,ah,dir<0 and 'previous' or 'next',T.red)
+    end)
   elseif self.phase~='loading' then
     self:add(self.phase=='anonymous' and 'Sign in' or 'Try again',w/2-140,h/2+48,280,48,self.phase=='anonymous' and 'signin' or 'refresh',T.red)
   end
@@ -395,13 +398,8 @@ function Library:draw(shaders)
       T.text(self.query~='' and 'No matches' or 'Nothing here yet',p and 34 or 44,24,h/2-30,w-48)
       T.text(self.query~='' and 'Try another name.' or 'Create a deck to get started.',p and 22 or 26,24,h/2+24,w-48,T.paper)
     end
-    do
-      -- create_option_cycle: w=4.5, h=0.8, no_pips=true; embossed center.
-      local x,y=w/2-135,h-144
-      local hovered=not self.modal and Button.hit({x=x,y=y,w=270,h=48},self.mx or -1,self.my or -1)
-      Button.cycleFace(x,y,270,48,hovered)
-      self.pageText:draw(self.time,self.reduced,x,y,270,48,w)
-    end
+    -- create_option_cycle: w=4.5, h=0.8, no_pips=true; embossed center.
+    Pager.draw(PAGER,w/2,h-144,self.pageText,not self.modal,self.mx,self.my,self.time,self.reduced,w)
 
   else
     local label=self.phase=='loading' and 'Loading your library...' or self.phase=='anonymous' and 'Your decks, all together' or 'Could not load your decks'

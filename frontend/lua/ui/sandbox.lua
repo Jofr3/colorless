@@ -81,8 +81,9 @@ function Sandbox:build()
       local b=self:add(card.item.name,bounds.x,bounds.y,bounds.w,bounds.h,'card',nil,self.busy)
       b.card=i
     end
-    Pager.arrow(self:add('<',self.width/2-157,y+h-170,32,36,'previous',T.red,self.busy),-1,self.page,self.pages)
-    Pager.arrow(self:add('>',self.width/2+125,y+h-170,32,36,'next',T.red,self.busy),1,self.page,self.pages)
+    Pager.arrows(DeckGrid.PAGER,self.width/2,y+h-170,self.page,self.pages,function(label,ax,ay,aw,ah,dir)
+      return self:add(label,ax,ay,aw,ah,dir<0 and 'previous' or 'next',T.red,self.busy)
+    end)
     if #self.items==0 then self:add('Create a deck',x+w/2-140,y+310,280,44,'decks',T.blue,false) end
   elseif self.phase=='anonymous' or self.phase=='error' then
     self:add(self.phase=='anonymous' and 'Sign in' or 'Try again',x+w/2-140,y+310,280,48,self.phase=='anonymous' and 'signin' or 'refresh',T.red,false)
@@ -245,9 +246,7 @@ function Sandbox:draw()
       T.text(text,size,titleX,titleY,titleWidth,T.white)
     end
     if #self.cards==0 then T.text(#self.items==0 and 'No valid decks' or 'No matches',32,a.x,a.y+80,a.w) end
-    local px,py=self.width/2-119,y+h-170
-    Button.cycleFace(px,py,238,36,Button.hit({x=px,y=py,w=238,h=36},self.mx or -1,self.my or -1))
-    self.pageText:draw(self.time,self.reduced,px,py,238,36,self.width,0.4)
+    Pager.draw(DeckGrid.PAGER,self.width/2,y+h-170,self.pageText,true,self.mx,self.my,self.time,self.reduced,self.width)
   else
     local text=self.phase=='loading' and 'Loading your decks...' or self.phase=='anonymous' and 'Sign in to choose your decks' or 'Could not load your decks'
     T.text(text,self.portrait and 27 or 32,x+24,y+220,w-48)
