@@ -67040,4 +67040,14 @@ export const MUTANTS: Mutant[] = [
     replace: "if (false) {",
     expectKilledBy: ["src/host/router.test.ts"],
   },
+  {
+    id: "UI-LC10-edition-unguarded",
+    decision: "UI-LC10",
+    what: "A card whose edition has no compiled shader sends to a nil shader and fails the frame. Killed by card_render.lua.",
+    file: "frontend/lua/ui/card.lua",
+    find: "  if shader then\n    values[self.item.edition]=edition",
+    replace: "  if self.item.edition~='dissolve' then\n    values[self.item.edition]=edition",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/test-lua.ts", "card_render.lua"],
+  },
 ];

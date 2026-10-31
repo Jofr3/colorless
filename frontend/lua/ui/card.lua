@@ -229,8 +229,10 @@ function Card:draw(shaders,time,mx,my,reduced,roomWidth)
   g.draw(self.texture,self.x,self.y,self.angle,sx,sy,W*resolution/2,H*resolution/2)
   -- Balatro draws every edition ON TOP of the ordinary card, with identical
   -- geometry; foil's partially transparent pass must never have its own tilt.
-  if self.item.edition~='dissolve' then
-    local shader=shaders[self.item.edition]
+  -- An edition whose shader is not compiled (foil, holo and polychrome are packaged for later
+  -- pages but never built) keeps the ordinary face rather than failing the frame.
+  local shader=self.item.edition~='dissolve' and shaders[self.item.edition]
+  if shader then
     values[self.item.edition]=edition
     send(shader,values); g.setShader(shader)
     values[self.item.edition]=nil

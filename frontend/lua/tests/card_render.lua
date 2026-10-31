@@ -55,6 +55,14 @@ for _,edition in ipairs({'dissolve','foil','holo','polychrome'}) do
   end
 end
 print('PASS: corner/centre cursor transforms at four viewport scales; idle/reduced tilt; all edition/shadow passes')
+-- An edition with no compiled shader (or none at all) draws the ordinary face alone.
+for _,edition in ipairs({'negative',false}) do
+  c.item.edition=edition or nil; draws={}
+  local ok,err=pcall(c.draw,c,shaders,20,310,437,false,1280)
+  assert(ok,tostring(err))
+  assert(#draws==2 and draws[2].shader==shaders.dissolve,'A missing edition shader falls back to the ordinary face')
+end
+print('PASS: a missing edition shader falls back to the ordinary face')
 -- The greyed effect replaces the face and suppresses shadows, using the same
 -- geometry/uniforms so transparency follows the tilted card's actual pixels.
 c.item.edition='dissolve';draws={}
