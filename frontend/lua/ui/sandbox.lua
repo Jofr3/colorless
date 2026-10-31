@@ -217,7 +217,7 @@ function Sandbox:keypressed(key)
   if key=='escape' then self:leave('home');return end
   if key=='tab' or key=='up' or key=='down' or key=='left' or key=='right' then
     local found
-    self.focus,found=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,#self.controls,function(i) return Controls.unfocusable(self.controls[i]) end)
+    self.focus,found=Controls.move(self.focus,key,self.controls)
     if found then self.callbacks.announce(self:describe(self.controls[self.focus])) end
   elseif key=='pageup' or key=='pagedown' then self:changePage(key=='pageup' and -1 or 1)
   elseif key=='return' or key=='space' then self:activate(self.focus) end

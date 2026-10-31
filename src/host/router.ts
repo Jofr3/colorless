@@ -119,16 +119,16 @@ const TABLE_INSTRUCTIONS =
   "Drag cards to play. Tab selects controls and cards; Enter activates; V views a selected card. Escape opens options.";
 
 const PAGE_INSTRUCTIONS: Record<Page, string> = {
-  home: "Click a button, or use Tab or arrow keys to choose and Enter to open. Tab past the last button, or Shift+Tab before the first, leaves the game for the page's links. M toggles sound. Settings opens a popup: Tab moves between controls, left and right adjust sliders, and Escape closes. Account opens your profile in the settings popup. Decks opens the deck library. Sandbox opens the deck chooser and game table. Online opens the lobby popup: create a lobby and share its code, or join with a code; then choose a deck and ready up.",
+  home: "Click a button, or use Tab to choose and Enter to open; arrow keys move to the nearest control in their direction. Tab past the last button, or Shift+Tab before the first, leaves the game for the page's links. M toggles sound. Settings opens a popup: Tab moves between controls, left and right adjust sliders, and Escape closes. Account opens your profile in the settings popup. Decks opens the deck library. Sandbox opens the deck chooser and game table. Online opens the lobby popup: create a lobby and share its code, or join with a code; then choose a deck and ready up.",
   decks:
-    "Tab or arrows choose controls and cards; each deck's Manage button renames or deletes it. Enter opens. Escape returns home.",
+    "Tab chooses controls and cards in order; arrow keys move to the nearest control in their direction. Each deck's Manage button renames or deletes it. Enter opens. Escape returns home.",
   builder:
-    "Tab selects controls. Enter inspects a card. Drag a card into your deck or use Add in its dialog. Escape returns to the deck library.",
+    "Tab selects controls in order; arrow keys move to the nearest control in their direction. / searches the cards, D focuses the deck list, and - and + change the focused deck card by one copy. Enter inspects a card. Drag a card into your deck or use Add in its dialog. Escape returns to the deck library.",
   sandbox:
-    "Tab or arrows choose controls. Enter selects a deck or activates a button. Escape returns home.",
+    "Tab chooses controls in order; arrow keys move to the nearest control in their direction. Enter selects a deck or activates a button. Escape returns home.",
   simulator: TABLE_INSTRUCTIONS,
   online:
-    "Tab or arrows choose controls; left and right switch tabs. Enter activates. Escape goes back.",
+    "Tab chooses controls in order; arrow keys move to the nearest control in their direction, and on the menu left and right switch tabs. Enter activates. Escape goes back.",
   match: TABLE_INSTRUCTIONS,
 };
 

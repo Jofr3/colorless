@@ -15,6 +15,7 @@ local Screen=require('ui.screen')
 local Hud=require('ui.sim_hud')
 local Fx=require('ui.sim_fx')
 local Popup=require('ui.popup')
+local Tooltip=require('ui.tooltip')
 local Simulator={};Simulator.__index=Simulator
 local prefix=Layout.prefix
 function Simulator.new(callbacks)
@@ -22,6 +23,7 @@ function Simulator.new(callbacks)
     message='',title='',hint='',outcome='',outcomeDetail='',gamePhase='',turn=0,turnIndex=0,turnCount=0,waiting='',activePlayer='',viewerSeat='',allow={},
     mode='local',code='',flags={}},Simulator)
   self.hud=Hud.new({feedback=callbacks.sourceFeedback or callbacks.feedback,jiggle=callbacks.jiggle})
+  self.tooltip=Tooltip.new()
   self.fx=Fx.new({feedback=function(name,pitch) callbacks.feedback(name,pitch) end,jiggle=function(amount) if callbacks.jiggle then callbacks.jiggle(amount) end end})
   return self
 end
@@ -128,6 +130,7 @@ function Simulator:update(dt,time,mx,my,reduced)
   -- Keyboard focus shows only while the pointer is over no control or card.
   local pointed=self.hover>0 or hovered~=nil
   local focusedControl=not blocked and not pointed and self.controls[self.focus] or nil
+  self.tooltip:update(dt,self:tooltipTarget(blocked,pointed,mx,my),reduced)
   for _,c in ipairs(self.cards) do
     local focused=not blocked and not pointed and self.focusCard==c
     local active=(not blocked and c==hovered) or focused

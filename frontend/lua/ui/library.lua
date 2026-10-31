@@ -187,7 +187,8 @@ function Library:build()
     return
   end
   local contentX=p and 24 or (w-1000)/2
-  self:add('Back',contentX,h-66,p and w-48 or 1000,40,'home',T.orange)
+  -- Drawn first, reached last: Tab starts at the page's content (audit PG14).
+  self:add('Back',contentX,h-66,p and w-48 or 1000,40,'home',T.orange,{ringLast=true})
   if self.phase=='ready' then
     self:add('',contentX,48,p and 432 or 476,42,'input-search',T.ink,{input=true,placeholder='Search decks'})
     self:add('Sort: '..(sortLabels[self.sort] or 'Name A-Z'),p and 24 or contentX+490,p and 102 or 48,p and 208 or 260,42,'sort',T.blue)
@@ -197,7 +198,8 @@ function Library:build()
       self.controls[#self.controls+1]={label=card.item.name,x=card.homeX-D.HALF_W*s,y=card.homeY-D.HALF_H*s,w=D.W*s,h=D.H*s,action='card',card=i}
       -- Rename and Delete live in the Manage dialog: a dots button under the
       -- pile's left half (the count sits under the right), focused after its deck.
-      self:add('Manage',card.homeX-D.HALF_W*s,card.homeY+D.HALF_H*s+2,40,24,'manage',T.blue,{card=i,displayLabel='',hitGrow='down'})
+      -- Arrows pass over it, so Down from a pile reaches the pile below (audit PG14).
+      self:add('Manage',card.homeX-D.HALF_W*s,card.homeY+D.HALF_H*s+2,40,24,'manage',T.blue,{card=i,displayLabel='',hitGrow='down',arrowSkip=true})
     end
     -- PG8: Manage answers over about 34x34 (24 CSS px at least) hanging from its face, inside
     -- the tray and clear of its pile and every other control.
@@ -355,7 +357,7 @@ function Library:keypressed(key)
     else self.callbacks.home() end
   elseif key=='tab' or key=='right' or key=='down' or key=='left' or key=='up' then
     local found
-    self.focus,found=Controls.cycle(self.focus,Controls.backward(key) and -1 or 1,#self.controls,function(i) return Controls.unfocusable(self.controls[i]) end)
+    self.focus,found=Controls.move(self.focus,key,self.controls,nil,Controls.first(self.controls))
     if found then self.callbacks.announce(self:describe(self.controls[self.focus])) end
   elseif key=='return' or key=='space' then self:activate(self.focus)
   elseif key=='pageup' or key=='pagedown' then if not self.modal then self:command('page',key=='pageup' and -1 or 1) end end

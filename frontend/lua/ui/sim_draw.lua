@@ -249,6 +249,7 @@ function Simulator:draw(shaders)
       if b.selected then g.setLineWidth(1.5);Button.outline(b.x-2,b.y-2,b.w+4,b.h+4,T.white,1.2) end
     end
   end
+  self.tooltip:draw(self.boardW,self.boardH,rw)
   -- Hover popup.
   if self.popup and self.popupBox and not self.overlay then
     local c=self.popup

@@ -362,7 +362,9 @@ export class HostShell {
       if (
         ["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code) ||
         ((this.settingsOpen || this.view.page !== "home") &&
-          ["Tab", "Home", "End", "Escape", "PageUp", "PageDown"].includes(event.code))
+          ["Tab", "Home", "End", "Escape", "PageUp", "PageDown"].includes(event.code)) ||
+        // The builder's '/' opens its card search, not the browser's quick find (audit PG14).
+        (this.view.page === "builder" && event.key === "/")
       )
         event.preventDefault();
     });

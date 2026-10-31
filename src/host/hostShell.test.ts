@@ -752,3 +752,22 @@ describe("HostShell's Tab out of the canvas", () => {
     expect(tab().reachedSdl).toBe(true);
   });
 });
+
+describe("HostShell's builder shortcuts (audit PG14)", () => {
+  /** A keydown on the canvas; true when the shell kept the browser's own action from it. */
+  const key = (canvas: FakeElement, init: { key: string; code: string }) => {
+    const event = new Event("keydown", { cancelable: true });
+    Object.assign(event, init);
+    canvas.dispatchEvent(event);
+    return event.defaultPrevented;
+  };
+
+  it("keeps '/' from the browser's quick find on the builder, where it opens the card search", () => {
+    const { shell, canvas } = fakePage();
+    shell.showPage(PAGE_VIEWS.builder);
+    expect(key(canvas, { key: "/", code: "Slash" })).toBe(true);
+    expect(key(canvas, { key: "/", code: "Digit7" })).toBe(true);
+    shell.showPage(PAGE_VIEWS.home);
+    expect(key(canvas, { key: "/", code: "Slash" })).toBe(false);
+  });
+});
