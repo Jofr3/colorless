@@ -894,22 +894,7 @@ function Builder:drawControlFaces(controls,active)
       local original=b.label
       b.label,b.fontSize=Fit.label(b.label,b.fontSize,b.w-16)
       Button.draw(b,lit and not b.disabled,active and self.pressed==i,lit and self.hover==0,self.width);b.label=original
-      if b.icon then
-        local pressed=active and self.pressed==i
-        local sx=((b.x+b.w/2-self.width/2)/(self.width/2))*1.5
-        local layer=0.4-(pressed and 1.5 or 0)
-        g.push();g.translate(b.x+layer*sx*3+b.w/2,b.y-layer*4.5+b.h/2);g.scale(pressed and 0.985 or 1)
-        g.setColor(T.white)
-        if b.icon=='info' then
-          g.rectangle('fill',-2,-11,5,5);g.rectangle('fill',-2,-3,5,14)
-          g.rectangle('fill',-5,-3,8,3);g.rectangle('fill',-5,8,11,3)
-        elseif b.icon=='cards' then
-          for col=0,1 do for row=0,1 do g.rectangle('fill',-10+col*12,-11+row*13,8,10)end end
-        else
-          for row=0,2 do g.rectangle('fill',-10,-9+row*7,3,3);g.rectangle('fill',-3,-9+row*7,13,3)end
-        end
-        g.pop()
-      end
+      if b.icon then Button.icon(b,b.icon,active and self.pressed==i,self.width) end
       if (b.action=='deck-type' and b.arg==self.deckType) or (b.action=='filter-tab' and b.arg==self.filterPage) then Button.chosen(b,self.time,active and self.pressed==i,self.width,self.reduced)end
     end
   end

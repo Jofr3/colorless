@@ -305,6 +305,28 @@ local function historyIcon(icon)
   fillRuns(pixelRuns(name,pixels,'#',-7.5,-#pixels/2),0)
 end
 
+-- A white pixel glyph over a button's face, following the face's parallax and press: 'info',
+-- 'cards' (a 2x2 grid), 'dots' (three dots) or, for any other name, 'list' (three rows). The
+-- builder's deck view and info buttons and the library's Manage button draw their faces with it.
+local ICONS={
+  info=function()
+    g.rectangle('fill',-2,-11,5,5);g.rectangle('fill',-2,-3,5,14)
+    g.rectangle('fill',-5,-3,8,3);g.rectangle('fill',-5,8,11,3)
+  end,
+  cards=function() for col=0,1 do for row=0,1 do g.rectangle('fill',-10+col*12,-11+row*13,8,10)end end end,
+  dots=function() for dot=-1,1 do g.rectangle('fill',dot*8-2,-2,4,4) end end,
+  list=function() for row=0,2 do g.rectangle('fill',-10,-9+row*7,3,3);g.rectangle('fill',-3,-9+row*7,13,3)end end,
+}
+function Button.icon(b,name,pressed,roomWidth)
+  local sx=((b.x+b.w/2-roomWidth/2)/(roomWidth/2))*1.5
+  local layer=0.4-(pressed and 1.5 or 0)
+  g.push();g.translate(b.x+layer*sx*3+b.w/2,b.y-layer*4.5+b.h/2);g.scale(pressed and 0.985 or 1)
+  g.setColor(T.white)
+  local glyph=ICONS[name] or ICONS.list
+  glyph()
+  g.pop()
+end
+
 function Button.draw(b,active,pressed,focused,roomWidth)
   local colour=b.colour
   -- UIBox_button sets shadow=true, NOT emboss. UIElement:draw_self projects

@@ -32,16 +32,6 @@ end
 local function caption(text,size,x,y,w,colour)
   text,size=Fit.fit(text,size,w); T.text(text,size,x,y,w,colour)
 end
--- The Manage button's face: three pixel dots, following the face's parallax
--- like the builder's icon buttons.
-local function manageDots(b,pressed,roomWidth)
-  local sx=((b.x+b.w/2-roomWidth/2)/(roomWidth/2))*1.5
-  local layer=0.4-(pressed and 1.5 or 0)
-  g.push(); g.translate(b.x+layer*sx*3+b.w/2,b.y-layer*4.5+b.h/2); g.scale(pressed and 0.985 or 1)
-  g.setColor(T.white)
-  for dot=-1,1 do g.rectangle('fill',dot*8-2,-2,4,4) end
-  g.pop()
-end
 function Library.new(callbacks)
   return setmetatable({callbacks=callbacks,pageText=PageText.new(),phase='loading',busy=false,message='',query='',sort='name-asc',page=1,pages=1,total=0,items={},cards={},controls={},focus=0,hover=0,time=0,draft='',search='',editing=''},Library)
 end
@@ -412,7 +402,8 @@ function Library:draw(shaders)
     elseif b.action~='card' then
       local pressed=not self.modal and self.pressed==i
       Button.draw(b,lit and not b.disabled,pressed,lit and self.hover==0,w)
-      if b.action=='manage' then manageDots(b,pressed,w) end
+      -- The Manage button's face: three pixel dots.
+      if b.action=='manage' then Button.icon(b,'dots',pressed,w) end
     end
   end
   if not self.modal then
