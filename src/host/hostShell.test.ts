@@ -280,6 +280,21 @@ describe("HostShell", () => {
     expect(open()).toEqual([]);
   });
 
+  it("tells the builder when a name edit ends, so it can refuse a blank name", () => {
+    const { shell, ports, labelled } = fakePage();
+    shell.onPrint(print("builder", "input", "name", "Bolt"));
+    const field = labelled("Deck name");
+    if (!field) throw new Error("No deck name field");
+    field.value = "  ";
+    field.dispatchEvent(new Event("input"));
+    shell.onPrint(print("builder", "finish-input"));
+    expect(vi.mocked(ports.command).mock.calls.filter(([owner]) => owner === "builder")).toEqual([
+      ["builder", encodeFields(["name", "Bolt", "input"])],
+      ["builder", encodeFields(["name", "  ", "input"])],
+      ["builder", encodeFields(["name", "  ", "done"])],
+    ]);
+  });
+
   it("empties the auth form for another account, a deletion's email, and on close", () => {
     const { shell, labelled } = fakePage();
     const email = labelled("Email");

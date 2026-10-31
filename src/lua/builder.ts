@@ -39,7 +39,12 @@ import {
   type Deck,
 } from "../decks/deckMath";
 import { createDeckSaver, type DeckSaver, outcomeUnknown } from "../decks/deckSaver";
-import { savedSnapshot, toSnapshot, type DeckSnapshot } from "../decks/deckSnapshot";
+import {
+  deckNameOrNull,
+  savedSnapshot,
+  toSnapshot,
+  type DeckSnapshot,
+} from "../decks/deckSnapshot";
 import { deckStore } from "../decks/deckStore";
 import { formatDecklist } from "../decks/decklistText";
 import { cachedCard, fetchCard } from "../game/cardPool";
@@ -117,6 +122,18 @@ export function unresolvedMessage(lines: readonly string[]): string {
   return `${lines.length} unknown ${lines.length === 1 ? "card" : "cards"}${unchanged}`;
 }
 
+/** Why a name edit that ended blank was undone, naming the kept name as far as fits one line. */
+export function keptNameMessage(name: string): string {
+  const text = (shown: string) => `A deck needs a name. Kept ${shown}.`;
+  if (messageWidth(text(name)) <= MESSAGE_MAX_PX) return text(name);
+  const chars = [...name];
+  for (let shown = chars.length - 1; shown > 0; shown--) {
+    const shortened = text(`${chars.slice(0, shown).join("")}...`);
+    if (messageWidth(shortened) <= MESSAGE_MAX_PX) return shortened;
+  }
+  return "A deck needs a name. Kept the old one.";
+}
+
 /** For a save refused as a version conflict, the deck as the server now holds it, or null when the
     409 did not carry it; undefined for any other failure. */
 function conflictingDeck(error: unknown): SavedDeck | null | undefined {
@@ -156,6 +173,8 @@ function fromIndex(query: CardsQueryParams, page: number): boolean {
 export class LuaBuilder {
   id = "";
   name = "";
+  /** The last non-blank name the deck held: what a blank name edit puts back. */
+  private keptName = "";
   format = "standard";
   phase = "loading";
   message = "";
@@ -239,6 +258,7 @@ export class LuaBuilder {
     this.previewIds = [];
     this.results = [];
     this.name = "";
+    this.keptName = "";
     this.dirty = false;
     this.message = "";
     this.saveStatus = "";
@@ -530,6 +550,7 @@ export class LuaBuilder {
       if (!live()) return;
       this.message = notice;
       this.name = data.name;
+      this.keptName = data.name.trim();
       this.format = data.format ?? "standard";
       this.cover = data.chosenCoverCardId;
       this.entries = new Map(data.cards.map((c) => [c.cardId, c.count]));
@@ -841,8 +862,8 @@ export class LuaBuilder {
           .catch((error) => reportError("prefetch card page", error));
       }
   }
-  private changed() {
-    this.message = "";
+  private changed(message = "") {
+    this.message = message;
     this.cover = this.snapshot().chosenCoverCardId;
     this.dirty = JSON.stringify(this.snapshot()) !== this.acknowledged;
     // An edit made while a failed save waits to be sent again joins that retry.
@@ -895,7 +916,7 @@ export class LuaBuilder {
     ["preview-cards", (a, b) => this.onPreviewCards(a, b)],
     ["retry-save", () => this.retrySave()],
     ["retry", () => this.onRetry()],
-    ["name", (a) => this.onName(a)],
+    ["name", (a, b) => this.onName(a, b)],
     ["format", () => this.onFormat()],
     ["add", (a) => this.onAdd(a)],
     ["discard", (a) => this.onDiscard(a)],
@@ -975,8 +996,18 @@ export class LuaBuilder {
     const live = this.epoch.current();
     await Promise.all([this.hydrate(live), this.search(), this.loadOptions(live)]);
   }
-  private onName(name: string) {
+  /** Every keystroke of a name edit arrives as `input`; the edit's end as `enter` or `done`. One
+      that ends blank gets the last name the deck held back, with a message, as the library refuses
+      a blank name: the save leaves a blank name out, so the server keeps that name anyway. */
+  private onName(name: string, action: string) {
     this.name = name.slice(0, DECK_NAME_MAX);
+    const valid = deckNameOrNull(this.name);
+    if (valid) this.keptName = valid;
+    else if (action && action !== "input" && this.keptName) {
+      this.name = this.keptName;
+      this.changed(keptNameMessage(this.keptName));
+      return;
+    }
     this.changed();
   }
   private async onFormat() {

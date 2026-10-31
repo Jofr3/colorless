@@ -4,7 +4,14 @@
 // the card ORDER (which decides whether a save fires at all) and the cover PIN
 // (which decides whether the server accepts it).
 
-import type { Deck, DeckCard } from "@colorless/schema";
+import { DECK_NAME_MAX, type Deck, type DeckCard } from "@colorless/schema";
+
+/** A deck name as the builder and the library both accept it: trimmed, 1 to DECK_NAME_MAX
+    characters (the server's own rule); null for any other. */
+export function deckNameOrNull(raw: string): string | null {
+  const name = raw.trim();
+  return name && name.length <= DECK_NAME_MAX ? name : null;
+}
 
 /** Name kept pre-trimmed so it either matches the server's own trim or is
     omitted (empty) from the PATCH body. */

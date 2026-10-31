@@ -199,6 +199,10 @@ describe("Lua deck library", () => {
     const { library } = await setup();
     await library.command("create\tdeck\t%20%20");
     expect(library.message).toContain("1 to 100");
+    library.message = "";
+    await library.command(encodeFields(["create", "deck", "x".repeat(101)]));
+    expect(library.message).toContain("1 to 100");
+    expect(impl.mock.calls.some(([, i]) => i?.method === "POST")).toBe(false);
     await library.command(encodeFields(["create", "deck", "  A new deck  "]));
     const call = impl.mock.calls.find(([, i]) => i?.method === "POST");
     expect(JSON.parse(String(call?.[1]?.body))).toMatchObject({

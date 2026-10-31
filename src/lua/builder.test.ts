@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FIXED_MESSAGES, LuaBuilder, messageWidth, unresolvedMessage } from "./builder";
-import { encodeFields } from "./wire";
+import { decodeFields, encodeFields } from "./wire";
+import { deckNameOrNull } from "../decks/deckSnapshot";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
 import * as api from "../lib/api";
 import {
@@ -8,6 +9,7 @@ import {
   type CardBrief,
   type CardIndexPayload,
   type CardsQueryParams,
+  DECK_NAME_MAX,
   type Deck,
   MAX_CACHED_CARDS_PAGE,
 } from "@colorless/schema";
@@ -1336,6 +1338,54 @@ describe("filter options", () => {
     // Sets and series loaded the first time, so Retry does not ask for them again.
     expect(api.getSets).toHaveBeenCalledTimes(1);
     expect(b.message).toBe("");
+  });
+});
+
+describe("builder deck name", () => {
+  const nameOf = (raw: string) =>
+    decodeFields(raw.split("\n")[0] ?? "")?.[wireColumn(WIRE_ROWS.builder.header, "name")];
+
+  it("keeps the saved name when a name edit ends blank, and says so", async () => {
+    const { b, publish } = await setup();
+    await b.command(encodeFields(["name", "", "input"]));
+    expect(b.message).toBe("");
+    await b.command(encodeFields(["name", "   ", "done"]));
+    expect(b.name).toBe("Electric Dreams");
+    expect(b.message).toBe("A deck needs a name. Kept Electric Dreams.");
+    expect(nameOf(publish.mock.lastCall?.[0])).toBe("Electric Dreams");
+    await tick();
+    expect(b.hasUnsavedEdits()).toBe(false);
+    expect(api.patchDeck).not.toHaveBeenCalled();
+  });
+
+  it("keeps the last name it held, and lets a real name through without a message", async () => {
+    const { b } = await setup();
+    await b.command(encodeFields(["name", "Bolt", "input"]));
+    await b.command(encodeFields(["name", " Bolt ", "enter"]));
+    expect(b.message).toBe("");
+    await b.command(encodeFields(["name", "", "input"]));
+    await b.command(encodeFields(["name", "", "enter"]));
+    expect(b.name).toBe("Bolt");
+    expect(b.message).toBe("A deck needs a name. Kept Bolt.");
+    await b.command(encodeFields(["name", "Volt", "input"]));
+    expect(b.message).toBe("");
+  });
+
+  it("shortens a long kept name so the message stays on its line", async () => {
+    const long = "W".repeat(DECK_NAME_MAX);
+    vi.mocked(api.getDeck).mockResolvedValue({ ...deck(), name: long });
+    const { b } = await setup();
+    await b.command(encodeFields(["name", "", "done"]));
+    expect(b.name).toBe(long);
+    expect(b.message).toMatch(/^A deck needs a name\. Kept W+\.\.\.\.$/);
+    expect(messageWidth(b.message)).toBeLessThanOrEqual(280);
+  });
+
+  it("validates a name as the library does: 1 to 100 characters once trimmed", () => {
+    expect(deckNameOrNull("  Bolt ")).toBe("Bolt");
+    expect(deckNameOrNull("   ")).toBeNull();
+    expect(deckNameOrNull("x".repeat(DECK_NAME_MAX))).toBe("x".repeat(DECK_NAME_MAX));
+    expect(deckNameOrNull("x".repeat(DECK_NAME_MAX + 1))).toBeNull();
   });
 });
 

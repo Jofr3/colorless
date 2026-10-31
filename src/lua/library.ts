@@ -2,6 +2,7 @@ import { DECK_NAME_MAX, MAX_DECKS_PER_USER } from "@colorless/schema";
 import * as api from "../lib/api";
 import type { Deck } from "../decks/data";
 import { legalityFrom } from "../game/sandboxDecks";
+import { deckNameOrNull } from "../decks/deckSnapshot";
 import { type DeckList, deckStore } from "../decks/deckStore";
 import { decodeFields, encodeFields } from "./wire";
 import { WIRE_ROWS, wireRow } from "./wireFields";
@@ -258,8 +259,8 @@ export class LuaLibrary {
       return;
     }
     if (action === "create" || (action === "rename" && item)) {
-      const name = (action === "create" ? b : c).trim();
-      if (!name || name.length > DECK_NAME_MAX) {
+      const name = deckNameOrNull(action === "create" ? b : c);
+      if (!name) {
         this.message = `Use 1 to ${DECK_NAME_MAX} characters for the name.`;
         this.emit();
         return;

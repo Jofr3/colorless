@@ -12,6 +12,7 @@ import {
   AUTH_FIELDS,
   type AuthField,
   type AuthProxy,
+  type ProxyAction,
   type TextProxy,
   createAuthProxy,
   createTextProxy,
@@ -229,8 +230,9 @@ export class HostShell {
       },
     });
 
-    const builderPublished = (field: string, value: string) => {
-      if (field === "name") this.builderCommand("name", value);
+    const builderPublished = (field: string, value: string, action: ProxyAction) => {
+      // The builder refuses a name that ends its edit blank, so it hears how each record ends.
+      if (field === "name") this.builderCommand("name", value, action);
       else if (field === "optionQuery") this.builderCommand("option-query", value);
       else if (field !== "transfer") this.builderCommand("filter", field, value);
     };
