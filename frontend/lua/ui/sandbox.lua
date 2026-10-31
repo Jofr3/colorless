@@ -17,6 +17,7 @@ local Limits=require('ui.limits')
 local Sandbox={}
 Sandbox.__index=Sandbox
 local NO_DECKS='No valid decks. Create a deck to play.'
+local NOT_READY=' a deck needs exactly '..Limits.deckSize..' cards and a Basic Pokémon.'
 function Sandbox.new(callbacks)
   return setmetatable({callbacks=callbacks,phase='loading',busy=false,message='',items={},selected={'',''},tab=1,controls={},cards={},query='',editing=false,page=1,pages=1,focus=0,hover=0,time=0,pageText=PageText.new()},Sandbox)
 end
@@ -90,8 +91,9 @@ function Sandbox:sync(raw)
   local rows=Codec.rows(raw)
   local H,K=W.header,W.deck
   local f=rows[1];if not f or #f<H.second then return end
-  local was,hadDecks=self.phase,#self.items>0
+  local was=self.phase
   self.phase,self.busy,self.message=f[H.phase],f[H.busy]=='1',f[H.message]
+  self.hidden=tonumber(f[H.hidden]) or 0
   if self.phase~='ready' and self.editing then self:command('finish-input');self.editing=false end
   self.selected={f[H.first],f[H.second]};self.items={}
   local signature={}
@@ -103,11 +105,26 @@ function Sandbox:sync(raw)
   if signature~=self.signature then self.signature=signature;self:makeCards(true);self.focus=0;self.pressed=nil end
   self:build()
   local say={}
+  -- The empty state is said when the chooser opens on it or comes to it, and again when its
+  -- reason changes, as the other states are.
+  local empty=self.phase=='ready' and #self.items==0 and self:emptyState() or nil
   if self.opening or self.phase~=was then say[1]=self:summary();self.opening=nil
-  elseif self.phase=='ready' and hadDecks and #self.items==0 then say[1]=NO_DECKS end
+  elseif empty and empty~=self.saidEmpty then say[1]=empty end
+  self.saidEmpty=empty
   if self.message~='' and self.message~=self.announced then say[#say+1]=self.message end
   self.announced=self.message
   if #say>0 then self.callbacks.announce(table.concat(say,' ')) end
+end
+-- Why the chooser has no decks when the user has some: how many it leaves out, and what a game
+-- needs from a deck (audit PG11). Nil when the user has none.
+function Sandbox:emptyNote()
+  local n=self.hidden or 0
+  if n<1 then return nil end
+  return n..(n==1 and ' of your decks isn\'t ready:' or ' of your decks aren\'t ready:')..NOT_READY
+end
+function Sandbox:emptyState()
+  local note=self:emptyNote()
+  return note and 'No valid decks. '..note or NO_DECKS
 end
 local function seatDeck(self,seat) local d=self:deck(seat);return d and d.name or 'no deck' end
 -- What the chooser says when it opens or its phase changes.
@@ -116,7 +133,7 @@ function Sandbox:summary()
   if self.phase=='loading' then state='Loading your decks.'
   elseif self.phase=='anonymous' then state='Sign in to choose your decks.'
   elseif self.phase~='ready' then state='Could not load your decks.'
-  elseif #self.items==0 then state=NO_DECKS
+  elseif #self.items==0 then state=self:emptyState()
   else
     state=#self.items..(#self.items==1 and ' deck.' or ' decks.')..' Player 1: '..seatDeck(self,1)..'. Player 2: '..seatDeck(self,2)..'.'
   end
@@ -214,6 +231,9 @@ function Sandbox:draw()
     DeckPicker.drawTray(a)
     DeckPicker.drawPiles(self,self.selected[self.tab])
     if #self.cards==0 then T.text(#self.items==0 and 'No valid decks' or 'No matches',32,a.x,a.y+80,a.w) end
+    -- Under Create a deck, which keeps its place.
+    local note=#self.items==0 and self:emptyNote()
+    if note then T.text(note,20,a.x+16,y+372,a.w-32,T.paper) end
     DeckPicker.drawPager(self,y+h-170)
   else
     local text=self.phase=='loading' and 'Loading your decks...' or self.phase=='anonymous' and 'Sign in to choose your decks' or 'Could not load your decks'

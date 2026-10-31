@@ -34,7 +34,7 @@ return {
     deck={id=2,name=3,count=4,standard=5,expanded=6,online=7,formatName=8},
   },
   sandbox={
-    header={revision=1,phase=2,busy=3,message=4,first=5,second=6},
+    header={revision=1,phase=2,busy=3,message=4,first=5,second=6,hidden=7},
     deck={id=2,name=3,count=4},
   },
   account={

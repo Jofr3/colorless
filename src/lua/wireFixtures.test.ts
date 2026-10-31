@@ -263,6 +263,7 @@ describe("Lua wire fixtures", () => {
     );
     sandbox.decks = [deck("d1", "Fire Rush", 60, 20), deck("d2", "Water Wall", 42, 200)];
     sandbox.selected = ["d1", "d2"];
+    sandbox.hidden = 3;
     sandbox.phase = "ready";
     sandbox.emit();
     await pin("sandbox_snapshot.txt", published.at(-1) ?? "");

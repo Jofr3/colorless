@@ -141,6 +141,7 @@ sandbox:layout(1280,800)
 sandbox:sync(fixture('sandbox_snapshot.txt'))
 check(sandbox.phase=='ready' and not sandbox.busy and sandbox.selected[1]=='d1' and sandbox.selected[2]=='d2','Sandbox header parsed')
 check(#sandbox.items==2 and sandbox.items[1].name=='Fire Rush' and sandbox.items[2].count==42,'Sandbox decks parsed')
+check(sandbox.hidden==3,'Sandbox hidden-deck count parsed')
 print('PASS: sandbox snapshot')
 
 local account=require('ui.account').new()

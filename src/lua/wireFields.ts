@@ -232,7 +232,7 @@ export const WIRE_ROWS = {
     },
   },
   sandbox: {
-    header: { fields: ["revision", "phase", "busy", "message", "first", "second"] },
+    header: { fields: ["revision", "phase", "busy", "message", "first", "second", "hidden"] },
     deck: { tags: ["D"], fields: ["id", "name", "count"] },
   },
   account: {

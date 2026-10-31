@@ -6,6 +6,7 @@ import { deckStore } from "../decks/deckStore";
 import { loadSimulatorSave } from "../game/simulatorSave";
 import { LuaSandbox } from "./sandbox";
 import { launchSandbox } from "./sandboxLaunch";
+import { WIRE_ROWS, wireColumn } from "./wireFields";
 
 const SAVED = "2026-10-01T00:00:00.000Z";
 const EDITED = "2026-10-02T00:00:00.000Z";
@@ -100,6 +101,16 @@ const deckIds = (publish: ReturnType<typeof vi.fn>) =>
     .split("\n")
     .slice(1)
     .map((row) => row.split("\t")[1]);
+
+/** The header's count of the user's decks the chooser leaves out. */
+const hiddenOf = (sandbox: LuaSandbox) => {
+  let raw = "";
+  (sandbox as unknown as { publish: (snapshot: string) => void }).publish = (snapshot) => {
+    raw = snapshot;
+  };
+  sandbox.emit();
+  return Number(raw.split("\n")[0]?.split("\t")[wireColumn(WIRE_ROWS.sandbox.header, "hidden")]);
+};
 
 describe("Lua sandbox setup", () => {
   it("ignores a command with a malformed percent-sequence", async () => {
@@ -452,6 +463,13 @@ describe("Lua sandbox setup", () => {
     expect(sandbox.phase).toBe("ready");
     expect(sandbox.decks).toEqual([]);
     expect(sandbox.selected).toEqual(["", ""]);
+    expect(hiddenOf(sandbox)).toBe(3);
+  });
+  it("counts the decks it hides, so an empty chooser can say why", async () => {
+    stubFetch(reads);
+    const { sandbox } = await setup();
+    expect(sandbox.decks).toHaveLength(2);
+    expect(hiddenOf(sandbox)).toBe(1);
   });
   it("judges every reload from the list alone, the card pool already in hand", async () => {
     const { calls } = stubFetch(reads);

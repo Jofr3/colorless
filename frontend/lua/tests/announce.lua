@@ -293,7 +293,7 @@ print('PASS: library controls, pagers, dialogs, phases, empty states, validation
 local S=Wire.sandbox
 local function sandboxSnapshot(o)
   o=o or {}
-  local lines={row(nil,S.header,{revision=nextRevision(),phase=o.phase or 'ready',busy=0,message=o.message or '',first='deck1',second='deck2'})}
+  local lines={row(nil,S.header,{revision=nextRevision(),phase=o.phase or 'ready',busy=0,message=o.message or '',first='deck1',second='deck2',hidden=o.hidden or 0})}
   for i=1,o.decks or 25 do lines[#lines+1]=row('D',S.deck,{id='deck'..i,name='Deck '..i,count=60}) end
   return table.concat(lines,'\n')
 end
@@ -314,6 +314,32 @@ do
   s:open(true)
   check(heard(function() s:sync(sandboxSnapshot({decks=3})) end)[1]=='Sandbox. 3 decks. Player 1: Deck 1. Player 2: Deck 2.','Reopening the sandbox announces it again')
   check(heard(function() s:sync(sandboxSnapshot({decks=0})) end)[1]=='No valid decks. Create a deck to play.','No valid decks is announced')
+  -- Decks the chooser leaves out are counted, with what a deck needs to be played.
+  local why='No valid decks. 2 of your decks aren\'t ready: a deck needs exactly 60 cards and a Basic Pok\195\169mon.'
+  local spoken=heard(function() s:sync(sandboxSnapshot({decks=0,hidden=2})) end)
+  check(spoken[1]==why,'The hidden decks are announced: '..tostring(spoken[1]))
+  check(#heard(function() s:sync(sandboxSnapshot({decks=0,hidden=2})) end)==0,'An unchanged empty state is not repeated')
+  spoken=heard(function() s:sync(sandboxSnapshot({decks=0,hidden=1})) end)
+  check(spoken[1]=='No valid decks. 1 of your decks isn\'t ready: a deck needs exactly 60 cards and a Basic Pok\195\169mon.','One hidden deck: '..tostring(spoken[1]))
+  s:open(true)
+  spoken=heard(function() s:sync(sandboxSnapshot({decks=0,hidden=1})) end)
+  check(spoken[1]=='Sandbox. No valid decks. 1 of your decks isn\'t ready: a deck needs exactly 60 cards and a Basic Pok\195\169mon.','Opening on the empty state says why: '..tostring(spoken[1]))
+  local create=s.controls[index(s,function(b) return b.action=='decks' end)]
+  check(create and create.label=='Create a deck','The empty state keeps its Create a deck button')
+  -- The note draws between the empty title and the button, inside the tray.
+  local printed={}
+  local printf=love.graphics.printf
+  love.graphics.printf=function(text,x,y,w) printed[#printed+1]={text=text,x=x,y=y,w=w};return printf(text,x,y,w) end
+  for _,view in ipairs({{1280,800},{390,844}}) do
+    s:layout(view[1],view[2]);printed={};s:draw()
+    local note
+    for _,p in ipairs(printed) do if p.text:find('aren\'t ready') or p.text:find('isn\'t ready') then note=p end end
+    check(note,'The hidden-deck note is drawn at '..view[1])
+    local b=s.controls[index(s,function(c) return c.action=='decks' end)]
+    check(note.x>=s.area.x and note.x+note.w<=s.area.x+s.area.w,'The note stays inside the tray at '..view[1])
+    check(note.y>=b.y+b.h and note.y+60<=s.area.y+s.area.h,'The note sits under Create a deck, in the tray, at '..view[1])
+  end
+  love.graphics.printf=printf
 end
 print('PASS: sandbox controls, pagers, seats, empty states and page changes are announced')
 

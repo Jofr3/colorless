@@ -3,7 +3,7 @@ import * as api from "../lib/api";
 import type { Deck } from "../decks/data";
 import type { LocalGameSetup } from "../game/localHost";
 import { SandboxSetupError } from "../game/sandboxSetupError";
-import { sandboxDecksFrom } from "../game/sandboxDecks";
+import { type DeckVerdict, sandboxDecksFrom } from "../game/sandboxDecks";
 import { type DeckList, deckStore } from "../decks/deckStore";
 import { decodeFields, encodeFields } from "./wire";
 import { WIRE_ROWS, wireRow } from "./wireFields";
@@ -13,6 +13,8 @@ import { DECKS_UNREACHABLE, epochGuard, sessionUser } from "./epochGuard";
 /** Read-only deck selection; Lua owns all layout, controls and animation. */
 export class LuaSandbox {
   decks: Deck[] = [];
+  /** How many of the user's decks the chooser leaves out because a game cannot run them. */
+  hidden = 0;
   selected: [string, string] = ["", ""];
   phase = "loading";
   busy = false;
@@ -38,6 +40,7 @@ export class LuaSandbox {
     this.epoch.invalidate();
     this.user = user;
     this.decks = [];
+    this.hidden = 0;
     this.shown = -1;
     this.selected = ["", ""];
     this.busy = false;
@@ -58,6 +61,7 @@ export class LuaSandbox {
             message: this.message,
             first: this.selected[0],
             second: this.selected[1],
+            hidden: this.hidden,
           }),
         ),
         ...this.decks.map((d) =>
@@ -82,7 +86,7 @@ export class LuaSandbox {
     let failed = false;
     const cached = deckStore.peek(this.user);
     const judged = cached && deckStore.peekVerdicts(cached);
-    if (cached && judged) this.show(sandboxDecksFrom([...cached.decks], judged), cached.revision);
+    if (cached && judged) this.show(cached, judged);
     else {
       if (this.phase !== "ready") this.phase = "loading";
       // A list the store holds unjudged is judged while it is checked again, not after.
@@ -95,12 +99,13 @@ export class LuaSandbox {
       if (!live()) return;
       const verdicts = await deckStore.judge(list);
       if (!live()) return;
-      this.show(sandboxDecksFrom([...list.decks], verdicts), list.revision);
+      this.show(list, verdicts);
     } catch (error) {
       if (!live()) return;
       failed = true;
       this.phase = error instanceof api.ApiError && error.status === 401 ? "anonymous" : "error";
       this.decks = [];
+      this.hidden = 0;
       this.shown = -1;
       this.selected = ["", ""];
       this.message =
@@ -115,13 +120,16 @@ export class LuaSandbox {
     try {
       const verdicts = await deckStore.judge(list);
       if (!live() || list.revision <= this.shown) return;
-      this.show(sandboxDecksFrom([...list.decks], verdicts), list.revision);
+      this.show(list, verdicts);
       this.emit();
     } catch {}
   }
 
-  private show(decks: Deck[], revision: number) {
-    this.shown = revision;
+  /** Shows the decks of `list` a game can run, counting the ones it leaves out. */
+  private show(list: DeckList, verdicts: Map<string, DeckVerdict>) {
+    const decks = sandboxDecksFrom([...list.decks], verdicts);
+    this.shown = list.revision;
+    this.hidden = list.decks.length - decks.length;
     // Include decks in existing folders, without bringing folder management here.
     this.decks = decks.sort((a, b) => a.name.localeCompare(b.name));
     this.selected = this.selected.map((id) =>
