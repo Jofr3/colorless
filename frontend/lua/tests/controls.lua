@@ -42,6 +42,9 @@ assert(go(5,'down')==6 and go(5,'up')==2,'From the hanging button arrows move by
 assert(go(0,'down')==2 and go(0,'right')==2 and go(0,'up')==1 and go(0,'left')==1,'With nothing focused Right and Down land where Tab would, Left and Up where Shift+Tab would')
 local _,moved=Controls.grid(4,'right',grid,nil,2);assert(not moved,'An arrow with nothing that way reports no move')
 assert(Controls.grid(2,'tab',grid)==2,'Only arrows move by layout')
+-- Sideways, a control in the beam (overlapping across the arrow) wins over a nearer one outside it.
+local row={box(0,0,40,100),box(300,0,40,100),box(60,101,40,40)}
+assert(Controls.grid(1,'right',row)==2,'Right keeps to the row rather than the nearer box below it')
 -- move: Tab and Shift+Tab stay linear, arrows go by layout.
 assert(Controls.move(2,'tab',grid,nil,2)==3 and Controls.move(4,'tab',grid,nil,2)==5,'Tab keeps list order, hanging button included')
 assert(Controls.move(2,'down',grid,nil,2)==6,'move hands arrows to grid')

@@ -16,6 +16,14 @@ T.font=function() return glyphs end
 local Card=require('ui.card');Card.rebuild=function(self) self.texture={release=function() end} end
 local Display=require('ui.display')
 local Simulator=require('ui.simulator')
+-- What the frame draws: each popup frame and DynaText label.
+local Popup=require('ui.popup')
+local Dyna=require('ui.dynatext')
+local frames,labels={},{}
+local frame,static=Popup.frame,Dyna.static
+Popup.frame=function(x,y,w,h) frames[#frames+1]={x=x,y=y,w=w,h=h};return frame(x,y,w,h) end
+Dyna.static=function(text,scale,...) labels[#labels+1]={text=text,scale=scale};return static(text,scale,...) end
+local function drawn() frames,labels={},{} end
 local function check(ok,message) if not ok then error(message,2) end end
 local shader={hasUniform=function() return true end,send=function() end}
 local shaders={dissolve=shader,played=shader,foil=shader,holo=shader,polychrome=shader,background=shader}
@@ -79,6 +87,12 @@ for _,view in ipairs(layouts) do
     check(box and box.label==b.label,view.name..': '..b.label..' shows its label after about 400 ms'..(b.disabled and ' (disabled too)' or ''))
     check(box.x>=0 and box.y>=0 and box.x+box.w<=sim.boardW and box.y+box.h+4<=sim.boardH,view.name..': '..b.label..' tooltip stays on the board')
     check(clear(box,b),view.name..': '..b.label..' tooltip does not cover its icon')
+    check(box.textScale*60*Display.scale>=12-1e-9,view.name..': its label is at least 12 CSS px')
+    drawn();sim:draw(shaders)
+    local framed,named=false,false
+    for _,f in ipairs(frames) do if f.x==box.x and f.y==box.y and f.w==box.w and f.h==box.h then framed=true end end
+    for _,t in ipairs(labels) do if t.text==b.label and t.scale==box.textScale then named=true end end
+    check(framed and named,view.name..': '..b.label..' tooltip draws its frame and label')
     run(0.15);check(shown().scale==1,view.name..': it has grown in soon after')
     -- It takes no clicks: the pointer hits what it did before it showed.
     check(sim:hit(mouseX,mouseY)==under,view.name..': the icon still answers the pointer')
