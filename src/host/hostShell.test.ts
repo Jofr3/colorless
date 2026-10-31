@@ -42,7 +42,10 @@ class FakeElement extends EventTarget {
   }
   select() {}
   setSelectionRange() {}
-  append() {}
+  children: FakeElement[] = [];
+  append(...children: FakeElement[]) {
+    this.children.push(...children);
+  }
 }
 class FakeCanvas extends FakeElement {
   /** Where the canvas sits in the viewport. */
@@ -249,7 +252,7 @@ describe("HostShell", () => {
 
   it("edits the builder's names and searches in a one-line field named as Lua draws it", () => {
     const { shell, created } = fakePage();
-    const open = () => created.filter((e) => !e.hidden);
+    const open = () => created.filter((e) => !e.hidden && e.tagName !== "FORM");
     const expected = {
       name: ["Deck name", "done", "text", 100],
       query: ["Search cards", "search", "search", 300],
@@ -321,6 +324,57 @@ describe("HostShell", () => {
     email.value = "ash@example.com";
     shell.onPrint(print("auth", "close"));
     expect(email.value).toBe("");
+  });
+
+  it("keeps the sign-in fields in a form that never submits, laid out as before (audit BR7)", () => {
+    const { created, labelled } = fakePage();
+    const form = created.find((e) => e.tagName === "FORM");
+    if (!form) throw new Error("No auth form");
+    expect(form.children).toEqual([
+      labelled("Email"),
+      labelled("Password"),
+      labelled("Display name (optional)"),
+    ]);
+    expect(form.style.display).toBe("contents");
+    const submit = new Event("submit", { cancelable: true });
+    form.dispatchEvent(submit);
+    expect(submit.defaultPrevented).toBe(true);
+  });
+
+  it("offers a successful sign-in to the password manager, and no failed one (audit BR7)", async () => {
+    const store = vi.fn(async (_credential: unknown) => {});
+    vi.stubGlobal(
+      "PasswordCredential",
+      class {
+        constructor(readonly data: unknown) {}
+      },
+    );
+    vi.stubGlobal("navigator", { credentials: { store } });
+    const { shell, ports, labelled } = fakePage();
+    const email = labelled("Email");
+    const name = labelled("Display name (optional)");
+    shell.onPrint(print("auth", "open", "register"));
+    const password = labelled("Password, at least 8 characters");
+    if (!email || !password || !name) throw new Error("The auth form has no inputs");
+    let signedIn = false;
+    vi.mocked(ports.authenticate).mockImplementation(async () => {
+      // The account's snapshot empties the form before the sign-in's promise settles.
+      email.value = password.value = name.value = "";
+      return signedIn;
+    });
+    const submit = async (values: [string, string, string]) => {
+      [email.value, password.value, name.value] = values;
+      shell.onPrint(print("auth", "submit"));
+      await Promise.resolve();
+      await Promise.resolve();
+    };
+    await submit(["ash@example.com", "pikachu123", "Ash"]);
+    expect(store).not.toHaveBeenCalled();
+    signedIn = true;
+    await submit(["ash@example.com", "pikachu123", "Ash"]);
+    expect(store.mock.calls.map(([credential]) => (credential as { data: unknown }).data)).toEqual([
+      { id: "ash@example.com", password: "pikachu123", name: "Ash" },
+    ]);
   });
 
   it("marks the fields a failed submit refused, described by its message (audit PG9)", () => {
@@ -400,7 +454,7 @@ describe("HostShell's text proxies at their fields (audit BR6)", () => {
   it("puts each proxy over the field Lua opens it on, beside the canvas's own place", () => {
     const { shell, created, labelled, canvas } = fakePage();
     canvas.frame = { left: 5, top: 7 };
-    const open = () => created.filter((e) => !e.hidden);
+    const open = () => created.filter((e) => !e.hidden && e.tagName !== "FORM");
     shell.onPrint(print("library", "input", "search", "fire", ...box));
     expect(open().map((e) => e.getAttribute("aria-label"))).toEqual(["Search decks"]);
     expect(placed(open()[0])).toEqual(["125px", "55px", "432px", "42px"]);
@@ -456,7 +510,7 @@ describe("HostShell's text proxies at their fields (audit BR6)", () => {
 
   it("leaves a proxy in the page's flow for a print with no box, and ignores a broken one", () => {
     const { shell, created } = fakePage();
-    const open = () => created.filter((e) => !e.hidden);
+    const open = () => created.filter((e) => !e.hidden && e.tagName !== "FORM");
     shell.onPrint(print("sandbox", "input", "search", "fire", ...box));
     shell.onPrint(print("sandbox", "finish-input"));
     shell.onPrint(print("sandbox", "input", "search", "fire"));
@@ -476,9 +530,9 @@ describe("HostShell's text proxies at their fields (audit BR6)", () => {
   it("keeps each proxy's name and role where it is put", () => {
     const { shell, created } = fakePage();
     shell.onPrint(print("library", "input", "name", "Deck", ...box));
-    const [line] = created.filter((e) => !e.hidden);
+    const [line] = created.filter((e) => !e.hidden && e.tagName !== "FORM");
     expect([line?.tagName, line?.getAttribute("aria-label")]).toEqual(["INPUT", "Deck name"]);
-    const proxies = created.filter((e) => e.tagName !== "P");
+    const proxies = created.filter((e) => e.tagName === "INPUT" || e.tagName === "TEXTAREA");
     expect(proxies.map((e) => e.className)).toEqual(proxies.map(() => "sr-only text-proxy"));
   });
 });

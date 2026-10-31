@@ -9,6 +9,7 @@ import type { ColorlessHost } from "./bridgeProtocol";
 import { MAILBOXES } from "./mailboxes";
 import type { Page } from "./router";
 import { WIRE_ROWS, wireColumn } from "../lua/wireFields";
+import { storePasswordCredential } from "./passwordCredential";
 import {
   AUTH_FIELDS,
   type AuthField,
@@ -50,7 +51,8 @@ type FocusEdge = "first" | "last" | "none";
 export interface ShellPorts {
   command(screen: BridgeScreen, raw: string): void;
   navigate(page: string): void;
-  authenticate(request: AuthRequest): void;
+  /** Signs in or registers; resolves true when the account is signed in. */
+  authenticate(request: AuthRequest): Promise<boolean> | void;
   /** Deletes the signed-in account with the auth form's fields: the password, or for an
    * OAuth-only account the email typed to confirm. */
   deleteAccount(password: string, email: string): void;
@@ -278,8 +280,16 @@ export class HostShell {
     });
 
     const authInputs = {} as Record<AuthField, HTMLInputElement>;
+    // A form groups the sign-in fields for a password manager (audit BR7). It never submits: Lua
+    // sends the sign-in. With display: contents it has no box, so the proxies keep their place and
+    // their order in the page, and only the field being edited is shown, as before.
+    const authForm = doc.createElement("form");
+    authForm.style.display = "contents";
+    authForm.addEventListener("submit", (event) => event.preventDefault());
+    (doc.querySelector("main") ?? doc.body).append(authForm);
     for (const field of AUTH_FIELDS) {
       const input = proxyElement(doc, "input");
+      authForm.append(input);
       input.type = field === "password" ? "password" : "text";
       input.setAttribute(
         "aria-label",
@@ -736,11 +746,16 @@ export class HostShell {
         this.ports.deleteAccount(this.authInput("password").value, this.authInput("email").value);
         return;
       }
-      this.ports.authenticate({
+      const request = {
         mode: this.authMode,
         email: this.authInput("email").value,
         password: this.authInput("password").value,
         name: this.authInput("name").value,
+      };
+      // The account's snapshot empties the fields once signed in, so the request keeps them.
+      void Promise.resolve(this.ports.authenticate(request)).then((signedIn) => {
+        if (signedIn)
+          storePasswordCredential(request.email.trim(), request.password, request.name.trim());
       });
     } else if (action === "google") {
       this.auth.finish();

@@ -37,8 +37,10 @@ const shell = new HostShell(document, host, {
   navigate: (page) => router.navigate(page),
   // Credentials stay in the native browser inputs and the API client. Lua receives only the
   // email, the name and a masked password.
-  authenticate: ({ mode, email, password, name }) =>
-    void account.authenticate(mode, email, password, name),
+  authenticate: async ({ mode, email, password, name }) => {
+    await account.authenticate(mode, email, password, name);
+    return account.status === "authenticated";
+  },
   deleteAccount: (password, email) => void account.deleteAccount(password, email),
 });
 const router = new Router(window, {
