@@ -52,7 +52,7 @@ export interface ShellPorts {
   command(screen: BridgeScreen, raw: string): void;
   navigate(page: string): void;
   /** Signs in or registers; resolves true when the account is signed in. */
-  authenticate(request: AuthRequest): Promise<boolean> | void;
+  authenticate(request: AuthRequest): Promise<boolean>;
   /** Deletes the signed-in account with the auth form's fields: the password, or for an
    * OAuth-only account the email typed to confirm. */
   deleteAccount(password: string, email: string): void;
