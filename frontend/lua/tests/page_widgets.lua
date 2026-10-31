@@ -160,6 +160,42 @@ reset()
 Button.icon({x=600,y=100,w=40,h=36},'other',false,1280)
 check(rects()==list,'Any other name draws the list')
 
+-- The deck picker (audit PG16): a literal, case-blind name search with an optional filter,
+-- paging that wraps round and is said, and the pile under the pointer or focus lifting.
+local decks={{name='Fire Deck',standard=true},{name='Water 100%',standard=false},{name='fire storm',standard=false}}
+local names=function(list) local out={};for _,d in ipairs(list) do out[#out+1]=d.name end;return table.concat(out,',') end
+check(names(DeckPicker.matches(decks,'  FIRE '))=='Fire Deck,fire storm','Trimmed and case-blind')
+check(names(DeckPicker.matches(decks,'0%'))=='Water 100%','Literal, not a pattern')
+check(names(DeckPicker.matches(decks,'fire',function(d) return d.standard end))=='Fire Deck','Filtered')
+local said,sounds,steps={},{},{}
+local picker={page=3,pages=3,focus=2,pressed=1,hover=0,width=1280,cards={},
+  callbacks={announce=function(t) said[#said+1]=t end,feedback=function(n) sounds[#sounds+1]=n end},
+  makeCards=function(_,entering) steps[#steps+1]=entering and 'enter' or 'make' end,build=function() steps[#steps+1]='build' end}
+DeckPicker.turn(picker,1)
+check(picker.page==1 and picker.focus==0 and picker.pressed==nil and said[1]=='Page 1 of 3','Past the last page wraps to the first')
+check(table.concat(steps,' ')=='enter build','The new page deals in')
+DeckPicker.turn(picker,-1)
+check(picker.page==3 and said[2]=='Page 3 of 3','Before the first wraps to the last')
+picker.pages=1;picker.page=1;DeckPicker.turn(picker,1)
+check(picker.page==1 and #said==2,'One page: nothing to say')
+local function pileStub()
+  local c={motion={},hovered=false,juiced=0}
+  function c:juiceUp() self.juiced=self.juiced+1 end
+  function c:update(_,_,active) self.active=active;self.hovered=active end
+  return c
+end
+picker.cards={pileStub(),pileStub()}
+local controls={{card=1},{card=2},{label='Back'}}
+picker.hover,picker.focus=1,2
+DeckPicker.update(picker,controls,1/60,1,false,true)
+check(picker.cards[1].active and not picker.cards[2].active and picker.cards[1].juiced==1 and sounds[1]=='paper1','The pointed pile lifts with its sound')
+picker.hover=0
+DeckPicker.update(picker,controls,1/60,1,false,true)
+check(not picker.cards[1].active and picker.cards[2].active,'With the pointer over no control, the focused pile lifts')
+picker.cards={pileStub(),pileStub()};sounds={}
+DeckPicker.update(picker,controls,1/60,1,false,false)
+check(not picker.cards[2].active and #sounds==0,'Nothing lifts while the picker is busy')
+
 -- The decklist text area (audit PG16): it wraps each paragraph once per value and width, and
 -- draws the lines a new value wraps to.
 local TextArea=require('ui.text_area')
