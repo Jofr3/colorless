@@ -63651,7 +63651,7 @@ export const MUTANTS: Mutant[] = [
     id: "UI-QA2-B6-pick-silent",
     decision: "UI-QA2",
     what: "A card button's target pick opens without saying its question. Killed by sim_keyboard's target pick case.",
-    file: "frontend/lua/ui/simulator.lua",
+    file: "frontend/lua/ui/sim_targeting.lua",
     find: "  self.callbacks.announce(Speech.sentences({targeting.title,Hud.TARGET_NOTE}))\n",
     replace: "",
     expectKilledBy: [],
