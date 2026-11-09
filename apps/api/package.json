@@ -23,15 +23,15 @@
     "@colorless/engine": "workspace:*",
     "@colorless/schema": "workspace:*",
     "@hono/zod-validator": "^0.9.1",
-    "drizzle-orm": "^0.45.2",
-    "hono": "^4.13.13",
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.13.17",
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260708.1",
+    "@cloudflare/workers-types": "^5.20261104.1",
     "@tcgdex/sdk": "2.9.0",
-    "drizzle-kit": "^0.31.10",
-    "miniflare": "4.20260708.0",
-    "wrangler": "^4.0.0"
+    "drizzle-kit": "^0.31.11",
+    "miniflare": "5.20261104.0-beta",
+    "wrangler": "^4.158.0"
   }
 }

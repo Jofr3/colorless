@@ -5,7 +5,7 @@
 // `users` would empty sessions, decks and deck_cards. testing/d1.ts migrates an empty database,
 // so only this test sees that. See docs/conventions.md "Database migrations".
 
-import { Miniflare } from "miniflare";
+import { convertV4MiniflareOptions, Miniflare } from "miniflare";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrationFiles } from "../testing/d1";
 
@@ -47,7 +47,7 @@ let mf: Miniflare;
 let db: D1Database;
 
 beforeAll(async () => {
-  mf = new Miniflare({ modules: true, script: "", d1Databases: ["DB"] });
+  mf = new Miniflare(convertV4MiniflareOptions({ modules: true, script: "", d1Databases: ["DB"] }));
   db = (await mf.getD1Database("DB")) as unknown as D1Database;
 });
 

@@ -1,7 +1,7 @@
 // Migration 0012's backfill (security audit AU3, decision 12): which existing accounts are asked,
 // once, to choose their public name. No name changes.
 
-import { Miniflare } from "miniflare";
+import { convertV4MiniflareOptions, Miniflare } from "miniflare";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { migrationFiles } from "../testing/d1";
 
@@ -11,7 +11,7 @@ let mf: Miniflare;
 let db: D1Database;
 
 beforeAll(async () => {
-  mf = new Miniflare({ modules: true, script: "", d1Databases: ["DB"] });
+  mf = new Miniflare(convertV4MiniflareOptions({ modules: true, script: "", d1Databases: ["DB"] }));
   db = (await mf.getD1Database("DB")) as unknown as D1Database;
 });
 
