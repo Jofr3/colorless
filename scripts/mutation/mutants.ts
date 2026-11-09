@@ -68356,4 +68356,14 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: [],
     killedByCommand: ["bun", "scripts/test-lua.ts", "table_text.lua"],
   },
+  {
+    id: "UI-FU1-tray-instruction-not-grown",
+    decision: "UI-FU1",
+    what: "An untitled card tray's instruction line stays at 0.28. Killed by table_text.lua.",
+    file: "frontend/lua/ui/sim_overlay.lua",
+    find: "else Dyna.static(self.instructionText,0.28*k,",
+    replace: "else Dyna.static(self.instructionText,0.28,",
+    expectKilledBy: [],
+    killedByCommand: ["bun", "scripts/test-lua.ts", "table_text.lua"],
+  },
 ];

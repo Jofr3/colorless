@@ -645,7 +645,13 @@ function Overlay:draw(shaders)
   elseif kind=='cards' or kind=='pile' then
     local top=y+(kind=='pile' and 64 or 66)
     for i=1,math.min(2,#(self.noteLines or {})) do Dyna.static(self.noteLines[i],0.28,x+32,top+(i-1)*16,w-64,16,T.jokerGrey,{roomWidth=rw}) end
-    if (self.instructionText or '')~='' then Dyna.static(self.instructionText,0.28,x+32,y+22,w-64,16,T.jokerGrey,{roomWidth=rw,fit=true}) end
+    if (self.instructionText or '')~='' then
+      -- Interface Size grows it about its line's centre (audit FU1), in the band above the cards;
+      -- fit keeps it in the tray's width.
+      local k=Display.tableText
+      if k==1 then Dyna.static(self.instructionText,0.28,x+32,y+22,w-64,16,T.jokerGrey,{roomWidth=rw,fit=true})
+      else Dyna.static(self.instructionText,0.28*k,x+32,y+30-8*k,w-64,16*k,T.jokerGrey,{roomWidth=rw,fit=true}) end
+    end
     -- The pack tray: G.C.BLACK inset with a 0.05 emboss, like the collection.
     local v=self.viewport
     local tx,ty,tw,th=v.x,v.y,v.w,v.h

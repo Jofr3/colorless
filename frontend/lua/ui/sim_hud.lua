@@ -377,7 +377,6 @@ function Hud:hintText(sim,time)
   if sim.pendingSince and time-sim.pendingSince>=Hud.SENDING_AFTER then return 'Sending...' end
   return self.hint
 end
--- With no prompt to show, the turn panel's body carries the hint, and a standing warning under it.
 -- The landscape hint's scale: 0.32, grown by Interface Size (audit FU1) while its lines and the
 -- warning's still fit the box.
 function Hud:hintScale(text,w,h)
@@ -398,6 +397,7 @@ function Hud:hintScale(text,w,h)
   self.hintGrow={key=key,scale=0.32*k}
   return 0.32*k
 end
+-- With no prompt to show, the turn panel's body carries the hint, and a standing warning under it.
 function Hud:drawHint(sim,L,time,x,y,w,h)
   local scale=self:hintScale(self:hintText(sim,time),w,h)
   local lines,lh=Dyna.wrap(self:hintText(sim,time),scale,w)
