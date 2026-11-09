@@ -29,5 +29,5 @@ export function clipText(value: string, max: number): string {
 
 /** `schema`, refusing any value with a control or format character. */
 export function withoutControlChars<T extends z.ZodType<string>>(schema: T): T {
-  return schema.refine((value) => !hasControlChars(value), { message: CONTROL_CHARS_MESSAGE });
+  return schema.refine((value) => !hasControlChars(value), { error: CONTROL_CHARS_MESSAGE });
 }

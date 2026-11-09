@@ -61,7 +61,7 @@ function nonEmptyPatch<Shape extends z.ZodRawShape>(shape: Shape) {
     .refine(
       (patch) =>
         Object.entries(patch).some(([key, value]) => key !== "version" && value !== undefined),
-      { message: "empty patch: provide at least one field" },
+      { error: "empty patch: provide at least one field" },
     );
 }
 
