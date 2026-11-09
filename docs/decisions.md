@@ -1365,7 +1365,7 @@ The last two branches of the 2026-11-09 audit, built by worktree agents and merg
 - Catalog query values are capped at 100 characters, and `name`, `nameExact` and `text` at 300 (the builder's field limit). A longer value is a 400. Free text is 300 rather than about 100 because the client parses its local searches with the same schema.
 - KV `get_failed`, `put_failed` and `epoch_failed` carry `errorFields`, so a spent KV quota reads `quota: true` (OPS1, catalog half).
 - Client cost:
-  - A builder spends at most about 5 misses before its card index loads, and none after.
+  - Before its card index loads, a builder spends up to 3 misses per new filter combination (page 1, plus prefetching pages 2-3), and none after. Browser QA measured 14 misses (12 `/cards`, 1 `/cards/index`, 1 `/facets`) for 8 quick filter changes on a throttled network, while the index took about 21 s. Two such sessions from one address within a minute could reach the limit; on a normal network the index loads in a few seconds.
   - Deck hydration (`?id=`), the online picker and the sandbox (`/cards/full`) are never limited.
   - A 429 shows the search's existing retry message.
   - No wrangler change.
