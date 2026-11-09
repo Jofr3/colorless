@@ -68992,4 +68992,23 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: [],
     killedByCommand: ["bun", "scripts/test-lua.ts", "online_compact.lua"],
   },
+  {
+    id: "API-DECK7-patch-unbatched",
+    decision: "API-P0",
+    what: "A deck PATCH runs its card delete, card upsert and version update one by one instead of as one D1 batch, so a failing update leaves the card changes behind. Killed by the mid-batch abort test.",
+    file: "apps/api/src/decks/routes.ts",
+    find: "  const [, , updated] = await db.batch([removeCards, upsertCards, update]);",
+    replace: "  await removeCards;\n  await upsertCards;\n  const updated = await update;",
+    expectKilledBy: ["apps/api/src/decks/routes.d1.test.ts"],
+  },
+  {
+    id: "API-DECK7-create-unbatched",
+    decision: "API-P0",
+    what: "A deck create inserts the deck row and its cards as two separate statements, so a failing card insert leaves an empty deck behind. Killed by the mid-batch abort test.",
+    file: "apps/api/src/decks/routes.ts",
+    find: "      version: 0,\n    }),\n    newDeckCardsInsert(db, deckId, body.cards),\n  ]);",
+    replace:
+      "      version: 0,\n    }),\n  ]);\n  await newDeckCardsInsert(db, deckId, body.cards);",
+    expectKilledBy: ["apps/api/src/decks/routes.d1.test.ts"],
+  },
 ];

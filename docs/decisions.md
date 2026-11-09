@@ -1276,3 +1276,29 @@ The audit's open items after Phase 7, minus the manual testing (NVDA, real devic
 - **Builder Retry's hit area (UI-FU4), not done.** Retry sits in the 26 virtual px between Clear and Back. At the 1280x800 collection scale (0.9) that is about 23.4 CSS px, and 24 needs 26.7, so it can only be reached by moving Clear or Back about 1 px, which the no-button-changes rule forbids. It reaches 24 CSS px from about 1440x900 up.
 
 Verification on the merged `ui`: `bun run check` passes (17,188 tests, 75/75 Lua files), and the full UI- sweep kills 698 rows with 1 declared equivalent (UI-FU2-main-portrait-grows) and 0 gaps.
+
+### 2026-11-09 — Backend and API audit safety nets, and what production says
+
+Phase 0 of the 2026-11-09 backend and API audit (39 findings: 4 medium, 16 low, 19 info, no high). The user accepted all 12 of the audit's recommended decisions:
+
+- Google's Cancel (`error=access_denied`) returns to the app with no error message, and any other provider error reads as the existing `exchange` failure.
+- The Google sign-in probe stays, behind a deadline.
+- `userSchema.email` becomes as permissive as what OAuth stores.
+- A 404 save is terminal, offers Export, and a second Back leaves after any failed save.
+- The builder slices every page from its card index once the index has loaded.
+- Google sign-in drops the `profile` scope but keeps the userinfo call.
+- The catalog limiter residual is tightened, but only after the builder change is live.
+- The deck saver spaces save starts about 1 s apart.
+- Every server response keeps its schema parse.
+- Success and audit log lines get `logInfo`.
+- A failed lobby alarm pass waits a fixed 5 s, in memory.
+- The probes are kept until the phases land.
+
+- **Deck writes that fail partway through their batch.** The `failingD1` helper refuses a batch before it runs, so nothing showed what happens when a statement fails after earlier ones in the same batch have written. Two tests in `decks/routes.d1.test.ts` add a trigger that raises ABORT:
+  - On PATCH, the version update fails after the card delete and upsert have run. The answer is a JSON 500 and the deck reads back unchanged.
+  - On POST, the card insert fails after the deck row was inserted. No deck is left behind.
+  - Two mutant rows (API-DECK7-patch-unbatched, API-DECK7-create-unbatched) run those statements one at a time instead of as one batch, and both are killed (DECK7).
+- **What production says** (read-only, the GraphQL Analytics API and `wrangler d1 insights`; `tmp/api/phase0/checks.md`):
+  - **CPU.** In 30 days colorless-api answered about 2,900 requests with no `exceededCpu` outcome and no error. CPU was p50 3.4 ms, p99 23 ms and max 111 ms. The account is on Workers Free (10 ms per request), and the platform still served those requests. So EDGE1 (the card index ETag) keeps its place in Phase 3.
+  - **D1 reads.** The peak was 2.44M rows read in one day (2026-10-23, 1,422 queries), 49% of the 5M free quota. The top queries are the builder's catalog pages and their `count(*)` over `cards`, about 5,084 rows per run, a full scan. This is CAT1's mechanism in production data, so CAT1 stays first in Phase 2.
+  - **Workers Logs.** The Workers Free cap is 200,000 events a day with 3 days of retention. Cloudflare moves Workers Logs to Observability pricing on 2026-12-01, so recheck the allowance then (OPS5, Phase 5).

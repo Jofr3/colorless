@@ -650,6 +650,49 @@ describe("a failed deck query", () => {
   });
 });
 
+// failingD1 refuses a batch before it runs. These tests fail a statement while the batch runs,
+// after earlier statements have written, with a trigger that raises ABORT: D1 must roll back the
+// whole batch (API audit DECK7).
+describe("a deck write that fails partway through its batch", () => {
+  async function withAbortTrigger(timing: string, run: () => Promise<void>) {
+    await d1().db.exec(`CREATE TRIGGER abort_write ${timing} BEGIN SELECT RAISE(ABORT, 'x'); END`);
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      await run();
+    } finally {
+      error.mockRestore();
+      await d1().db.exec("DROP TRIGGER IF EXISTS abort_write");
+    }
+  }
+
+  it("PATCH: the version update fails after the card delete and upsert ran, and nothing changes", async () => {
+    const deck = await createDeck("Fire", [card("sv01-004", 4)]);
+    await withAbortTrigger("BEFORE UPDATE ON decks", async () => {
+      const res = await patchDeck(deck.id, {
+        name: "Renamed",
+        cards: [card("sv01-006", 2)],
+        version: deck.version,
+      });
+      expect(res.status).toBe(500);
+      expect(await res.json()).toEqual({ error: "internal error" });
+    });
+    expect(await getDeck(deck.id)).toEqual(deck);
+  });
+
+  it("POST: the card insert fails after the deck row was inserted, and no deck is made", async () => {
+    await withAbortTrigger("BEFORE INSERT ON deck_cards", async () => {
+      const res = await app.request(
+        "/decks",
+        jsonInit("POST", { name: "Fire", tint: 22, cards: [card("sv01-004", 4)] }, ash.cookie),
+        d1().env(),
+      );
+      expect(res.status).toBe(500);
+      expect(await res.json()).toEqual({ error: "internal error" });
+    });
+    expect(await listDecks()).toEqual([]);
+  });
+});
+
 describe("unknown card ids", () => {
   it("names at most 20 of them", async () => {
     const cards = Array.from({ length: 25 }, (_, i) => card(`sv99-${i}`, 1));
