@@ -1,14 +1,16 @@
 {
   // The seam suites (src/seam): the web client's sources run against the api's through its
-  // `./testing/*` exports, so both are typechecked here again, with the DOM and the Workers types.
+  // `./testing/*` exports, so both are typechecked here again, with the DOM and the api's generated
+  // Workers types (apps/api/worker-configuration.d.ts, which src/env.ts reads its bindings from).
+  // It is in `include`, not `types`, so `tsc -b` rebuilds when it is regenerated.
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "useDefineForClassFields": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
-    "types": ["vite/client", "@cloudflare/workers-types"]
+    "types": ["vite/client"]
   },
-  "include": ["src/seam"],
+  "include": ["src/seam", "apps/api/worker-configuration.d.ts"],
   "references": [{ "path": "./packages/engine" }, { "path": "./packages/schema" }]
 }

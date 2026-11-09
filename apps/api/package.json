@@ -15,6 +15,7 @@
     "release:health": "bun scripts/release-gate.ts health",
     "db:check": "bun scripts/db-check.ts",
     "typecheck": "tsc -b",
+    "types": "rm -f worker-configuration.d.ts && wrangler types --env-file=/dev/null --env-interface=GeneratedEnv",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "bun ../../scripts/with-system-certs.ts wrangler d1 migrations apply colorless --local",
     "db:migrate:remote": "wrangler d1 migrations apply colorless --remote"
@@ -28,7 +29,6 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20261104.1",
     "@tcgdex/sdk": "2.9.0",
     "drizzle-kit": "^0.31.11",
     "miniflare": "5.20261104.0-beta",

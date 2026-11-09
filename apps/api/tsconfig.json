@@ -1,10 +1,14 @@
 {
+  // The Workers runtime and the bindings come from worker-configuration.d.ts, which
+  // `bun run types` generates from wrangler.jsonc (dependency audit VER8). It is in `include`
+  // rather than `types`, because `tsc -b` decides a project is up to date from its included
+  // files only: listed in `types`, a regenerated file left the old build standing.
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2022"],
     "resolveJsonModule": true,
-    "types": ["@cloudflare/workers-types"]
+    "types": []
   },
-  "include": ["src"],
+  "include": ["src", "worker-configuration.d.ts"],
   "references": [{ "path": "../../packages/engine" }, { "path": "../../packages/schema" }]
 }
