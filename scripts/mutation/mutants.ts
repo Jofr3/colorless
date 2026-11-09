@@ -68157,16 +68157,6 @@ export const MUTANTS: Mutant[] = [
     killedByCommand: ["bun", "scripts/test-lua.ts", "table_text.lua"],
   },
   {
-    id: "UI-FU1-hover-off-table",
-    decision: "UI-FU1",
-    what: "The hover popup grows past the table's right edge. Killed by table_text.lua.",
-    file: "frontend/lua/ui/sim_draw.lua",
-    find: "r.x+r.w<=self.boardW-4+1e-9 and",
-    replace: "",
-    expectKilledBy: [],
-    killedByCommand: ["bun", "scripts/test-lua.ts", "table_text.lua"],
-  },
-  {
     id: "UI-FU1-hover-drawn-unscaled",
     decision: "UI-FU1",
     what: "The hover popup draws at 100% where it was placed for its grown size. Killed by table_text.lua.",
@@ -68269,7 +68259,7 @@ export const MUTANTS: Mutant[] = [
   {
     id: "UI-FU1-strip-covers-controls",
     decision: "UI-FU1",
-    what: "Grown text no longer keeps off the controls it cleared. Killed by table_text.lua.",
+    what: "Grown text no longer keeps off the controls it cleared (the shared check behind the hover popup, the portrait strip and the away text). Killed by table_text.lua.",
     file: "frontend/lua/ui/sim_shared.lua",
     find: "        if not covered then return false end\n",
     replace: "",

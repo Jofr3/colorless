@@ -117,6 +117,14 @@ local layouts={
 }
 local STEPS={1,1.25,1.5}
 check(Display.tableText==1,'The table text factor starts at 100%')
+-- Grown text keeps off a visible control it cleared at 100%; one it covered then, or an invisible
+-- hit area, does not hold it back.
+local Shared=require('ui.sim_shared')
+local controls={{x=0,y=0,w=10,h=10},{x=100,y=0,w=10,h=10,invisible=true}}
+check(Shared.clears(controls,{x=50,y=0,w=10,h=10},{x=50,y=0,w=10,h=10}),'Text away from every control clears them')
+check(not Shared.clears(controls,{x=5,y=0,w=10,h=10},{x=50,y=0,w=10,h=10}),'Text grown over a control it cleared does not clear it')
+check(Shared.clears(controls,{x=5,y=0,w=10,h=10},{x=8,y=0,w=10,h=10}),'Text over a control it covered at 100% may stay there')
+check(Shared.clears(controls,{x=95,y=0,w=10,h=10},{x=50,y=0,w=10,h=10}),'An invisible hit area does not hold text back')
 local base={}
 for _,view in ipairs(layouts) do
   for _,factor in ipairs(STEPS) do
@@ -142,6 +150,8 @@ for _,view in ipairs(layouts) do
     note(name,'tooltip',box.textScale/unit)
     if view.name=='landscape' then check(math.abs(box.textScale-unit*factor)<1e-9,name..': the tooltip grows by the whole step where it fits') end
     check(box.x>=0 and box.y>=0 and box.x+box.w<=sim.boardW and box.y+box.h+4<=sim.boardH,name..': the tooltip stays on the board')
+    local tw,th=Dyna.measure(box.label,box.textScale)
+    check(tw<=box.w-20+1e-9 and th<=box.h-12+1e-9,name..': the tooltip\'s frame holds its label')
     for _,b in ipairs(sim.controls) do
       if not b.tooltip or b==undo then
         check(not overlaps({x=box.x,y=box.y,w=box.w,h=box.h+4},face(b)),name..': the tooltip keeps off '..b.label)
@@ -189,6 +199,18 @@ for _,view in ipairs(layouts) do
     check(ok,name..': the Bench popup covers '..tostring(covered)..', which it cleared at 100%')
     if factor>1 and view.name~='portrait' then check(benchPopup.scale>1,name..': the Bench popup grows') end
     hover(nil);run(0.1)
+
+    -- 2c. With the Active selected its action rows show above it; the Bench popup keeps off them.
+    local function tap(c) local sx,sy=c.x*sim.zoom+sim.ox,c.y*sim.zoom+sim.oy;sim:mousepressed(sx,sy);sim:mousereleased(sx,sy) end
+    tap(active);run(0.3)
+    check(sim.highlight==active and sim.attachedPopup,name..': the Active shows its action rows')
+    hover(bench.x,bench.y);run(0.2)
+    local over=sim:hoverPopup()
+    local unitOver=grown('overHover',over)
+    note(name,'hover over',over.scale)
+    ok,covered=clears(over,unitOver,sim.controls)
+    check(ok,name..': the Bench popup covers '..tostring(covered)..', which it cleared at 100%')
+    hover(nil);tap(active);run(0.3)
 
     -- 3. The card inspector: its rules text grows; the zoomed card, Back and the actions do not move
     -- or change, and the frame grows upward on the board.
