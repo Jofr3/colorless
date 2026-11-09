@@ -27,7 +27,7 @@ const LOCALE = /\/zod\/(?:.*\/)?locales\/([^/]+)\.js$/;
 const TEST_ONLY = /(?:^|\/)src\/(?:testing\/[^/]+|[^/]+\/[^/]+Harness)\.ts$/;
 
 /** The workspaces whose `dependencies` may ship in the Worker. */
-const SHIPPED = ["apps/api", "packages/engine", "packages/schema"];
+export const SHIPPED = ["apps/api", "packages/engine", "packages/schema"];
 
 /** A store path's package: bun's `node_modules/.bun/@scope+name@version/`, else the segment after
     the last `node_modules/` (a package whose own source map points at its `src/`, like

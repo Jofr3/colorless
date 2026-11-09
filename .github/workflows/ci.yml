@@ -25,17 +25,25 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # No bun-version pin here: setup-bun reads .bun-version for a
       # reproducible toolchain (matches the packageManager field too).
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
 
+      # tsc, vite, vitest, wrangler and biome start with `#!/usr/bin/env node`,
+      # so `bun run` executes them under Node. .node-version pins the line
+      # (22 LTS) rather than taking whatever the runner image ships (PRC4).
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+
       # Cache Bun's global install cache (keyed on the lockfile) so unchanged
       # deps don't re-download each run. Not node_modules — bun links from cache.
       - name: Cache Bun dependencies
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -45,17 +53,17 @@ jobs:
         run: bun install --frozen-lockfile
 
       # Known advisories in what the Workers ship (hono, zod, drizzle-orm and
-      # their dependencies; dev tools are left to Dependabot). The pinned bun
-      # 1.3.13 has no `audit --prod` and would audit the whole dev tree, so the
-      # audit alone runs on a newer bun; it only reads bun.lock. A new advisory
-      # with no fix yet gets a dated `--ignore=GHSA-…` here.
+      # their dependencies). The dev tree is reported, not gated, by
+      # deps-report.yml and `bun run deps:check`: GitHub's alerts do not read
+      # bun.lock. A new advisory with no fix yet gets a dated
+      # `--ignore=GHSA-…` here.
       - name: Audit production dependencies
-        run: bunx bun@1.4.2 audit --prod --audit-level=moderate
+        run: bun audit --prod --audit-level=moderate
 
       # The previous run's build info and engine and schema declarations, so
       # `tsc -b` re-checks only what changed. Each run saves under its own sha.
       - name: Cache TypeScript build
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             **/*.tsbuildinfo
@@ -78,7 +86,7 @@ jobs:
       # The mutant binding gate's verdicts from the previous run. The gate
       # discards a cache stamped by another version of itself.
       - name: Cache binding-gate verdicts
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: tmp/binding-gate-cache.json
           key: ${{ runner.os }}-binding-gate-${{ hashFiles('scripts/mutation/binding-gate.ts', 'bun.lock') }}-${{ github.sha }}
@@ -91,13 +99,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
 
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+
       - name: Cache Bun dependencies
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -120,13 +133,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
 
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+
       - name: Cache Bun dependencies
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -143,7 +161,7 @@ jobs:
       # Transformed modules (keyed by content hash) and vitest's results,
       # which order the next run's files longest first.
       - name: Cache vitest
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             node_modules/.experimental-vitest-cache
@@ -164,7 +182,7 @@ jobs:
     steps:
       # The sample diffs names against the base, which needs history but no
       # old file contents.
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           filter: blob:none
@@ -172,8 +190,13 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
 
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+
       - name: Cache Bun dependencies
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -188,7 +211,7 @@ jobs:
 
       # The harness's own vitest module cache (it drops what each mutant adds).
       - name: Cache the harness's vitest modules
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: tmp/mutation-vitest-cache
           key: ${{ runner.os }}-mutation-vitest-${{ hashFiles('bun.lock') }}-${{ steps.week.outputs.week }}-${{ github.sha }}
@@ -212,13 +235,18 @@ jobs:
     timeout-minutes: 15
     continue-on-error: true
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
 
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+
       - name: Cache Bun dependencies
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}

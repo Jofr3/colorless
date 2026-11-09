@@ -3,11 +3,11 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "packageManager": "bun@1.3.13",
+  "packageManager": "bun@1.4.2",
   "workspaces": ["apps/*", "packages/*"],
   "engines": {
-    "bun": ">=1.3",
-    "node": ">=22"
+    "bun": ">=1.4",
+    "node": ">=22.12"
   },
   "scripts": {
     "dev": "bun run build:lua && vite --host 127.0.0.1 --port 5175 --strictPort",
@@ -30,6 +30,7 @@
     "mutants:precheck": "bun scripts/mutation/precheck.ts",
     "check": "bun scripts/check.ts 'bun run check:static' 'bun run check:lua' && bun run check:test",
     "docs:index": "bun scripts/decision-index.ts",
+    "deps:check": "bun scripts/deps-check.ts",
     "check:static": "bun scripts/check.ts 'bun scripts/typecheck-coverage.ts' 'bun scripts/import-graph.ts --check' 'tsc -b' 'bun scripts/lint-coverage.ts' 'biome ci . --error-on-warnings' 'bun scripts/lua-constants.ts --check' 'bun scripts/lua-bridge-guard.ts' 'bun scripts/registry-aliases.ts --check' 'bun scripts/worker-bundle.ts --check' 'bun scripts/decision-index.ts --check' 'bun scripts/mutation/precheck.ts' 'bun scripts/migration-guard.ts' 'bun scripts/lock-check.ts' 'bun scripts/drizzle-drift.ts'",
     "check:lua": "bun scripts/test-lua.ts --require-source",
     "check:test": "vitest run",
@@ -40,9 +41,9 @@
     "api:dev": "bun run --cwd apps/api dev",
     "api:deploy": "bun run --cwd apps/api deploy",
     "build:lua": "node frontend/lua/build.mjs",
-    "deploy": "bun run build && bun run deploy:web",
+    "deploy": "bun install --frozen-lockfile && bun run build && bun run deploy:web",
     "deploy:web": "bun apps/api/scripts/release-gate.ts clean-tree && wrangler deploy",
-    "release": "bun run check && bun run --cwd apps/api release:gate && bun run build && bun run --cwd apps/api db:migrate:remote && bun run api:deploy && bun run --cwd apps/api release:health && bun run deploy:web"
+    "release": "bun install --frozen-lockfile && bun run check && bun run --cwd apps/api release:gate && bun run build && bun run --cwd apps/api db:migrate:remote && bun run api:deploy && bun run --cwd apps/api release:health && bun run deploy:web"
   },
   "dependencies": {
     "@colorless/engine": "workspace:*",

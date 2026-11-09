@@ -59,7 +59,12 @@ bun run format      # biome --write
 bun run test:run    # vitest (src, apps, packages)
 bun run check       # check:static + check:lua + check:test (the full gate, as in CI)
 bun run release     # check, remote D1 migrations, API deploy, then web deploy
+bun run deps:check  # the monthly dependency report (needs the network, never fails)
 ```
+
+The toolchain is pinned: bun in `.bun-version` and Node (22 LTS) in
+`.node-version`. The build and test tools run under Node. The upgrade routine is
+in `docs/conventions.md` ("Dependencies").
 
 `build:lua` needs the sibling `../balatro-source` checkout (or
 `BALATRO_SOURCE`) with its installed `love.js` package. The Lua unit checks run
