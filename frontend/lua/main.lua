@@ -451,6 +451,8 @@ openSettings=function(keyboard,tab,opener)
     feedback=function() sound('button'); room.jiggle=room.jiggle+0.5 end,
     account=function(command) Bridge.send('account',withEditBox(command,'edit',popup)) end,
     auth=function(command) Bridge.send('auth',withEditBox(command,'edit',popup)) end,
+    -- The page opens the third-party notices in a new tab (shell.ts); Settings stays open.
+    credits=function() Bridge.emit('credits') end,
   },state.reduced,keyboard,account)
   popup.tab=Settings.tabs[tab or 'game'] or Settings.tabs.game
   if keyboard then popup.focus=popup.tab end

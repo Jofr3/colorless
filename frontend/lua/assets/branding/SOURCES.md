@@ -100,6 +100,17 @@ The original main-menu screenshot and local
 `Game:main_menu` in `balatro-source/game.lua` draws `SPLASH_LOGO` as a sprite with
 a separate center card. This custom wordmark contains letters only.
 
+## Credits
+
+The wordmark is modelled on Balatro's logo. Balatro is by LocalThunk, published
+by Playstack. The imagegen passes under Prompts used the original
+`balatro-source/resources/textures/2x/balatro.png` sprite as a reference (pass 3
+edited it directly), and the border is measured from it (Measured source
+border). The repository's MIT `LICENSE` covers the wordmark only as far as it is
+Colorless's own work; Balatro's sprite and its design remain LocalThunk's. The
+site's `THIRD-PARTY-NOTICES.txt` (`scripts/third-party-notices.ts`) carries the
+same credit with the Balatro files the build copies.
+
 ## Refinement
 
 1. Reduced the original draft's oversized extrusion.

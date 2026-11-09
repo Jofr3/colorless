@@ -56,7 +56,12 @@ export interface ShellPorts {
   /** Deletes the signed-in account with the auth form's fields: the password, or for an
    * OAuth-only account the email typed to confirm. */
   deleteAccount(password: string, email: string): void;
+  /** Opens a page of the site beside this one (Settings' Credits), keeping the game open. */
+  openTab(url: string): void;
 }
+
+/** The third-party notices (scripts/third-party-notices.ts), for a page without its Credits link. */
+const CREDITS_URL = "/love/THIRD-PARTY-NOTICES.txt";
 
 /** What the auth form is open for: signing in, creating an account, or confirming a deletion. */
 type AuthMode = AuthRequest["mode"] | "delete";
@@ -525,6 +530,12 @@ export class HostShell {
         this.edgeLabel = label.replace(/\p{Cc}/gu, " ");
         break;
       }
+      case "credits":
+        // Settings' Credits: the notices the page's Credits link opens, at its versioned URL.
+        this.ports.openTab(
+          this.doc.getElementById("credits-link")?.getAttribute("href") ?? CREDITS_URL,
+        );
+        break;
     }
   }
 

@@ -42,6 +42,13 @@ const shell = new HostShell(document, host, {
     return account.status === "authenticated";
   },
   deleteAccount: (password, email) => void account.deleteAccount(password, email),
+  // Lua asks within a frame of the press, still inside its user activation, so a popup blocker
+  // lets the tab open; one that stops it anyway gets the page in this tab instead.
+  openTab: (url) => {
+    const tab = window.open(url, "_blank");
+    if (tab) tab.opener = null;
+    else location.assign(url);
+  },
 });
 const router = new Router(window, {
   changed: showPage,

@@ -79,6 +79,41 @@ function loveVersionsPlugin(): Plugin {
   };
 }
 
+// The npm packages the page's bundle may carry: the production dependencies of the page (the root)
+// and of the two packages it imports, the ones scripts/third-party-notices.ts prints licences for
+// (its WEB_WORKSPACES; dependency audit TRN4). A bundle with any other package, such as a dev
+// dependency one value import away, fails the build until it is declared, and so credited.
+const NOTICED_WORKSPACES = [".", "packages/engine", "packages/schema"];
+const PACKAGE = /.*node_modules\/((?:@[^/]+\/)?[^/]+)\//;
+function noticedPackagesPlugin(): Plugin {
+  const declared = new Set(
+    NOTICED_WORKSPACES.flatMap((dir) => {
+      const manifest = JSON.parse(readFileSync(`${dir}/package.json`, "utf8"));
+      return Object.entries<string>(manifest.dependencies ?? {})
+        .filter(([, spec]) => !spec.startsWith("workspace:"))
+        .map(([name]) => name);
+    }),
+  );
+  return {
+    name: "noticed-packages",
+    apply: "build",
+    generateBundle(_options, bundle) {
+      const bundled = new Set<string>();
+      for (const chunk of Object.values(bundle))
+        if (chunk.type === "chunk")
+          for (const id of chunk.moduleIds) {
+            const name = PACKAGE.exec(id)?.[1];
+            if (name !== undefined) bundled.add(name);
+          }
+      const foreign = [...bundled].filter((name) => !declared.has(name)).sort();
+      if (foreign.length > 0)
+        this.error(
+          `the page bundles ${foreign.join(", ")}, not a production dependency of ${NOTICED_WORKSPACES.join(", ")}; declare it there so THIRD-PARTY-NOTICES.txt carries its licence`,
+        );
+    },
+  };
+}
+
 // index.html is the love.js host page. `bun run build:lua` generates the
 // runtime, game package and host script/styles into public/love/, which Vite
 // serves at /love/ in dev and copies into dist/love/ on build; the page's one
@@ -88,7 +123,12 @@ export default defineConfig(({ mode }) => {
   const apiOrigin = (env.VITE_API_ORIGIN ?? "http://localhost:8787").replace(/\/+$/, "");
   const siteOrigin = (env.VITE_SITE_ORIGIN ?? "http://localhost:5175").replace(/\/+$/, "");
   return {
-    plugins: [loveVersionsPlugin(), cspPlugin(buildCsp(apiOrigin)), shareUrlsPlugin(siteOrigin)],
+    plugins: [
+      loveVersionsPlugin(),
+      cspPlugin(buildCsp(apiOrigin)),
+      shareUrlsPlugin(siteOrigin),
+      noticedPackagesPlugin(),
+    ],
     server: {
       // The dev server's root is the repo root, so without this it serves any file in it, such as
       // apps/api/.dev.vars (OAuth secret) and the local D1 database under .wrangler/. Setting

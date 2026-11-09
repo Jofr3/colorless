@@ -83,9 +83,15 @@ function fakePage() {
   const heading = new FakeElement();
   const nav = new FakeElement();
   const links = Object.fromEntries(
-    ["decks-link", "online-link", "sandbox-link", "settings-link", "account-link", "home-link"].map(
-      (id) => [id, new FakeElement()],
-    ),
+    [
+      "decks-link",
+      "online-link",
+      "sandbox-link",
+      "settings-link",
+      "account-link",
+      "home-link",
+      "credits-link",
+    ].map((id) => [id, new FakeElement()]),
   );
   const elements: Record<string, FakeElement> = {
     canvas,
@@ -131,6 +137,7 @@ function fakePage() {
     navigate: vi.fn(),
     authenticate: vi.fn(),
     deleteAccount: vi.fn(),
+    openTab: vi.fn(),
   };
   const shell = new HostShell(doc as unknown as Document, host, ports);
   const labelled = (label: string) => created.find((e) => e.getAttribute("aria-label") === label);
@@ -750,6 +757,14 @@ describe("HostShell's Tab out of the canvas", () => {
     expect(tab().reachedSdl).toBe(false);
     page.activeElement = null;
     expect(tab().reachedSdl).toBe(true);
+  });
+
+  it("opens the Credits link's versioned notices in a new tab when Settings' Credits asks", () => {
+    const { shell, ports, links } = fakePage();
+    links["credits-link"]?.setAttribute("href", "/love/THIRD-PARTY-NOTICES.txt?v=abc123");
+    shell.onPrint(print("credits"));
+    expect(ports.openTab).toHaveBeenCalledExactlyOnceWith("/love/THIRD-PARTY-NOTICES.txt?v=abc123");
+    expect(ports.navigate).not.toHaveBeenCalled();
   });
 });
 

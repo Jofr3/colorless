@@ -25,6 +25,23 @@ if (!existsSync(compiler))
   throw new Error(
     `Install love.js in ${source}, or set BALATRO_SOURCE to your Balatro source directory.`,
   );
+/** Runs a repo script under bun and returns its stdout; its stderr reaches the terminal.
+    @param {string} script @param {string[]} args */
+const bunScript = (script, args) =>
+  execFileSync("bun", [join(root, "scripts", script), ...args], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "inherit"],
+  });
+// love.js must be the pinned 11.4.1 (scripts/love-inputs.ts, dependency audit VER10): a mismatch
+// stops the build, naming each file that differs; otherwise it reports the source tree's commit.
+/** @type {{ loveJs: object, balatroSource: object | null }} */
+let inputs;
+try {
+  inputs = JSON.parse(bunScript("love-inputs.ts", [source]));
+} catch {
+  // love-inputs.ts has printed what differs.
+  process.exit(1);
+}
 const stage = mkdtempSync(join(tmpdir(), "colorless-love-"));
 // Vite's public dir: served at /love/ by the dev server and copied into
 // dist/love/ by the production build. Generated, so gitignored.
@@ -143,7 +160,30 @@ try {
   // The root index.html is the host page; drop the compiler's own page and theme.
   rmSync(join(output, "index.html"), { force: true });
   rmSync(join(output, "theme"), { recursive: true, force: true });
-  writeFileSync(join(output, "asset-manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
+  // The build's record of what it took from outside the repo (VER10): the pinned love.js, the
+  // Balatro tree's commit (null when it is not a git checkout) and one digest over every file
+  // copied from it, beside each file's own hash.
+  const copied = [...assets, music].map((asset) => `${asset} ${manifest[asset]}\n`).join("");
+  const record = {
+    inputs: {
+      loveJs: inputs.loveJs,
+      balatroSource: {
+        git: inputs.balatroSource,
+        resources: createHash("sha256").update(copied).digest("hex"),
+      },
+    },
+    files: manifest,
+  };
+  writeFileSync(join(output, "asset-manifest.json"), `${JSON.stringify(record, null, 2)}\n`);
+  // The credits Settings and the page's Credits link open (TRN4): every third-party licence and
+  // credit for what this build ships, Balatro's files listed from `assets`.
+  bunScript("third-party-notices.ts", [
+    "--love-js",
+    join(source, "node_modules/love.js"),
+    "--out",
+    join(output, "THIRD-PARTY-NOTICES.txt"),
+    ...[...assets, music].flatMap((asset) => ["--balatro", asset]),
+  ]);
   // Workers static assets give .data no Content-Type, and Cloudflare compresses only the types it
   // lists, so game.data would go out as is. host.js downloads this gzip copy instead (served as
   // application/gzip, never compressed twice) and unpacks it with DecompressionStream; game.data

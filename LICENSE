@@ -1,0 +1,50 @@
+MIT License
+
+Copyright (c) 2026 Jofr3
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+-------------------------------------------------------------------------------
+
+What this licence covers
+
+This licence covers this repository's own code and original assets only. It
+does not cover, and grants no rights in, the following, which remain their
+owners' and are used under their own terms:
+
+- The Balatro assets: the shaders, textures, sound effects and music that
+  frontend/lua/build.mjs copies at build time from a separate Balatro source
+  tree. They are not stored in this repository. Balatro is by LocalThunk and
+  published by Playstack.
+- The m6x11plus font, by Daniel Linssen (managore), which the build copies
+  from the same Balatro source tree.
+- The LÖVE runtime and its love.js WebAssembly port, and the libraries they
+  include, under their own licences (zlib for LÖVE, MIT for love.js).
+- TCGdex card data and card images, including the card scans in
+  frontend/lua/assets/transition_cards/.
+- Pokémon names, trademarks and card artwork, which belong to Nintendo,
+  Creatures Inc., GAME FREAK inc. and The Pokémon Company.
+
+Colorless is an unofficial fan project. It is not affiliated with, endorsed,
+sponsored or approved by Nintendo, Creatures Inc., GAME FREAK inc., The
+Pokémon Company, LocalThunk or Playstack.
+
+The notices for the third-party parts that ship with the site are generated
+by the build into dist/love/THIRD-PARTY-NOTICES.txt and served at
+/love/THIRD-PARTY-NOTICES.txt (scripts/third-party-notices.ts).

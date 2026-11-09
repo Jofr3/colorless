@@ -170,3 +170,14 @@ packages/engine          # the rules engine (shared with the API)
 packages/schema          # wire schemas (shared with the API)
 apps/api                 # Cloudflare Worker API
 ```
+
+## Licence and credits
+
+Colorless's own code and original assets are under the MIT licence in `LICENSE`. It does
+not cover the Balatro assets the Lua build copies from a separate source tree (Balatro is
+by LocalThunk, published by Playstack), the m6x11plus font (Daniel Linssen), LÖVE and
+love.js, TCGdex card data and images, or the Pokémon trademarks; those remain their
+owners'. The build writes their notices to `dist/love/THIRD-PARTY-NOTICES.txt`
+(`scripts/third-party-notices.ts`), which the site's Credits link and Settings' Credits
+button open. Colorless is an unofficial fan project, not affiliated with or endorsed by
+Nintendo, Creatures Inc., GAME FREAK inc., The Pokémon Company, LocalThunk or Playstack.
