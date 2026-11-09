@@ -33,9 +33,12 @@ export function moveToAction(request: CardMoveRequest, view: RedactedGame): Game
     if (phase !== "setup:place" && !isViewerTurn) return null;
     const fromIndex = you.bench.findIndex((card) => card.id === cardId);
     const index = to.index ?? you.bench.length - 1;
+    // A drop back onto the card's own slot changes nothing, and online the server sends no reply
+    // to an action that changes nothing, which would leave the table waiting on one.
     if (
       fromIndex < 0 ||
       from.index !== fromIndex ||
+      index === fromIndex ||
       !Number.isInteger(index) ||
       index < 0 ||
       index >= you.bench.length

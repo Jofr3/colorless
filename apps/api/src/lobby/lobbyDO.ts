@@ -3,6 +3,8 @@
 // auto-response without waking the instance.
 // One alarm covers all deadlines: liveness sweeps, disconnect graces, countdown, match forfeits,
 // and empty-lobby expiry.
+// Other events can run only while the DO awaits D1: the upgrade's session read, the handoff's deck
+// reads and the rematch's session check. A storage await keeps the input gate closed.
 // Not a `DurableObject` subclass, so the module imports outside the workers runtime.
 
 import {
@@ -95,6 +97,7 @@ import {
 } from "./logic";
 import {
   applyMatchAction,
+  type BeginMatchResult,
   beginMatch,
   freshMatchRng,
   loadMatchRecord,
@@ -193,8 +196,15 @@ type ReadDecks = (host: DeckRequest, guest: DeckRequest) => Promise<HandoffDecks
     this, the pass commits nothing and the rescheduled alarm, already due, tries again at once. */
 const HANDOFF_ATTEMPTS = 3;
 
+/** How long the alarm waits after a pass that threw. A deadline already past would otherwise
+    re-arm it to fire at once, and a throw that repeats would run back to back (LOB1). */
+export const ALARM_RETRY_MS = 5_000;
+
 /** What both players are told when the handoff could not reach D1. */
 const DECK_LOAD_FAILED_REASON = "Couldn't load the decks. Ready up to try again.";
+
+/** What both players are told when starting the match threw. */
+const MATCH_START_FAILED_REASON = "This match couldn't start. Ready up to try again.";
 
 /** What a rematch's requester is told when their own session has ended (MI4). */
 const REMATCH_SIGNED_OUT_REASON = "You're signed out. Sign in again to play another game.";
@@ -268,6 +278,9 @@ export class LobbyDO {
   private readonly frameCounts = new WeakMap<WebSocket, number>();
   /** Sockets this instance closed, whose frames still in flight are dropped unread. */
   private readonly closing = new WeakSet<WebSocket>();
+  /** The earliest the alarm may fire after a pass that threw, until a pass succeeds. In memory
+      only: a fresh instance has no failure to wait out. */
+  private retryNotBefore: number | null = null;
 
   constructor(state: DurableObjectState, env: Env, deps: LobbyDeps = lobbyDepsFromEnv(env)) {
     this.state = state;
@@ -501,8 +514,8 @@ export class LobbyDO {
     // swallowing every action for the rest of the lobby's life.
     if (load.kind === "stale") return await this.retireStaleMatch();
     if (load.kind === "none") return;
-    // The read may have awaited D1 (a migration), letting other events run: judge the seat by the
-    // lobby as it is now.
+    // The match read awaits only storage, so no other event ran meanwhile. The seat is checked
+    // again anyway, as a cheap guard.
     const current = await this.loadSnapshot();
     const seat = this.seatInMatch(current, playerId);
     if (current === null || seat === null || !(await this.ownsSeat(ws, playerId))) return;
@@ -577,8 +590,8 @@ export class LobbyDO {
     if (seat !== null) await this.concedeSeat(snapshot, seat, this.deps.now(), "left");
     // …and only THEN the lobby change, which in-game keeps the seat (so the
     // result the concede just broadcast stays on the winner's screen) and
-    // otherwise frees a guest's / parks the host's (applyBye). The concede's
-    // match read may have awaited D1, so the change applies to the lobby as it is now.
+    // otherwise frees a guest's / parks the host's (applyBye). The concede awaits only storage,
+    // but the change still applies to the lobby as it is now, as a cheap guard.
     const current = await this.loadSnapshot();
     const currentSlot = current === null ? null : slotOf(current, frame.from);
     if (current === null || currentSlot === null) return;
@@ -608,9 +621,9 @@ export class LobbyDO {
     // means a crafted frame, and it changes nothing.
     if (load.kind !== "ok" || load.record.state.phase.kind !== "gameOver") return;
     if (!(await this.seatSessionsLive(ws, snapshot))) return;
-    // The reads may have awaited D1 (a migration, the session check): the rematch starts from the
-    // lobby as it is now, not as it was before, or it would undo whatever happened meanwhile. The
-    // other seat's rematch may have landed then, which makes this one its acceptance.
+    // The session check may have awaited D1: the rematch starts from the lobby as it is now, not
+    // as it was before, or it would undo whatever happened meanwhile. The other seat's rematch may
+    // have landed then, which makes this one its acceptance.
     const current = await this.loadSnapshot();
     if (current?.phase === "selecting") return await this.acceptRematch(ws, frame.from, current);
     if (current === null || current.phase !== "in-game") return;
@@ -667,9 +680,11 @@ export class LobbyDO {
     let wiped = false;
     try {
       wiped = (await this.retireLegacyLobby()) || (await this.maintain(now));
+      this.retryNotBefore = null;
     } catch (error) {
       // Logged and not rethrown: the `finally` re-arms the alarm, and that is the retry. The
       // runtime's own retry on top would run the same pass twice.
+      this.retryNotBefore = this.deps.now() + ALARM_RETRY_MS;
       await this.log("alarm_failed", { error: describeError(error) });
     } finally {
       // Always, so one failed pass cannot leave the liveness sweep, the countdown and the
@@ -1163,23 +1178,33 @@ export class LobbyDO {
     if (!guestDeck.ok) {
       return await this.failedStart("deck_unresolved", `${guest.name}: ${guestDeck.reason}.`);
     }
-    const seed = this.deps.randomSeed();
     // A player no longer seated (a new guest since the rematch) falls back to the coin.
     const chooserId = await this.read(CHOOSER_KEY, storedChooserSchema);
     const chooser = chooserId === undefined ? null : matchSeatOf(snapshot, chooserId);
     // Storage enforces no construction rules, so `beginMatch` is the validator.
     // D1 lists a deck by card id and the engine mints uids in list order, so each list is shuffled
     // first or a uid would place its card in the sorted decklist (MIX1).
-    const begun = beginMatch({
-      seed,
-      hostDeck: this.deps.shuffleDeck(hostDeck.ids),
-      guestDeck: this.deps.shuffleDeck(guestDeck.ids),
-      cardPool,
-      names: { host: snapshot.host.name, guest: guest.name },
-      formats: { host: hostDeck.format, guest: guestDeck.format },
-      chooser,
-      now: this.deps.now(),
-    });
+    let begun: BeginMatchResult;
+    try {
+      begun = beginMatch({
+        seed: this.deps.randomSeed(),
+        hostDeck: this.deps.shuffleDeck(hostDeck.ids),
+        guestDeck: this.deps.shuffleDeck(guestDeck.ids),
+        cardPool,
+        names: { host: snapshot.host.name, guest: guest.name },
+        formats: { host: hostDeck.format, guest: guestDeck.format },
+        chooser,
+        now: this.deps.now(),
+      });
+    } catch (error) {
+      // The engine is meant to be total, as in `applyMatchAction` (MI3). A throw would repeat on
+      // every pass with the countdown frozen, so the players are told and un-readied instead.
+      return await this.failedStart(
+        "match_refused",
+        MATCH_START_FAILED_REASON,
+        describeError(error),
+      );
+    }
     if (!begun.ok) return await this.failedStart("match_refused", begun.reason);
     await this.match.put(begun.record);
     await this.state.storage.delete(CHOOSER_KEY);
@@ -1372,7 +1397,9 @@ export class LobbyDO {
     // deadline is kept, since `alarm()` re-derives every deadline when it fires and schedules the
     // rest: so the liveness deadline each commit pushes 30s on writes nothing (LB1).
     const now = this.deps.now();
-    const at = deadlines.length === 0 ? null : Math.min(...deadlines);
+    let at = deadlines.length === 0 ? null : Math.min(...deadlines);
+    // After a pass that threw, a deadline already past waits out the retry delay.
+    if (at !== null && this.retryNotBefore !== null) at = Math.max(at, this.retryNotBefore);
     // After a wake the alarm is read back (a read, not a write) rather than set blind.
     const armed = this.alarmAt === undefined ? await this.state.storage.getAlarm() : this.alarmAt;
     this.alarmAt = armed;

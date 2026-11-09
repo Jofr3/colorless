@@ -982,11 +982,11 @@ closes a client can repeat are throttled (marked *t*); the throttle is per
 | `rematch_refused` | `cause`, `sockets`, `requester` | A rematch refused because a seat's session ended (`session_ended`, MI4): the `sockets` holding it were closed (1008), `requester` says whether the asker's own was one. |
 | `rematch_unchecked` *t* | `cause`, `error` | The rematch's session read failed (`session_lookup`) and the rematch went ahead; the handoff's deck read re-checks each session. |
 | `lobby_wiped` | `cause`, `sockets`, `ageMs`, `inGame` | The lobby was deleted: `empty` (its expiry), `inactive` (an hour without play; `sockets` were closed with 4000) or `legacy` (stored before the LB6 cutover). |
-| `handoff_failed`, `handoff_deferred` | `cause`, `error` / `attempts` | A match could not start: `d1_error`, `deck_unresolved` or `match_refused`; or the lobby kept changing under the handoff. |
+| `handoff_failed`, `handoff_deferred` | `cause`, `error` / `attempts` | A match could not start: `d1_error`, `deck_unresolved` or `match_refused` (the engine refused the decks, or starting the match threw, with `error`); or the lobby kept changing under the handoff. |
 | `forfeit` | `seat`, `cause` | A seat conceded by leaving (`left`) or by its forfeit clock (`abandoned`). |
 | `action_threw` *t* | `type`, `error` | The engine threw on an action; it was refused like any move (MI3). |
 | `match_migrated`, `match_retired` | `from`, `to` / `cause` | A stored match was migrated to this build's version, or retired as unreadable. |
-| `alarm_failed` | `error` | An alarm pass threw; the alarm is re-armed. |
+| `alarm_failed` | `error` | An alarm pass threw; the alarm is re-armed, no sooner than 5 s later until a pass succeeds (LOB1). |
 
 ---
 
