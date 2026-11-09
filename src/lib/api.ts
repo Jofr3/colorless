@@ -27,8 +27,11 @@ import { apiUrl } from "./apiOrigin";
 /** A non-2xx api response. `status` is the http status; `body` is the parsed
     JSON error payload when the api sent one (terse `{error}` objects, plus
     extras like the 400 `cardIds` list), else undefined. Notable statuses:
-    401 logged out · 404 absent/not-yours · 409 duplicate email · 429
-    rate-limited · 503 OAuth not configured. */
+    401 logged out · 403 a cross-site request, or the wrong email to confirm
+    an account deletion · 404 absent/not-yours · 409 duplicate email, a deck
+    changed since this version (the body carries the current deck) or the
+    deck limit · 429 rate-limited · 503 OAuth not configured, sign-in briefly
+    unavailable (with Retry-After) or no free lobby code. */
 export class ApiError extends Error {
   readonly status: number;
   readonly body: unknown;
