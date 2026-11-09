@@ -131,6 +131,12 @@ files['__page.txt']='3\tsimulator\t';for _=1,5 do frame() end
 files['__notice.txt']='1\tOffline';frame()
 check(noticeSize==24,'The table notice is 16 x 1.5 at 150%, got '..tostring(noticeSize))
 check(scenes.simulator.w==1280 and scenes.simulator.h==800,'The table lays out in 1280x800')
+-- Its text overlays grow instead (audit FU1), in portrait too.
+local Display=require('ui.display')
+check(Display.tableText==1.5,'The table text grows by 1.5 at 150%, got '..tostring(Display.tableText))
+view('390 844 1 390 844')
+check(Display.tableText==1.5,'The table text grows in portrait as well')
+view('1280 800 1 1280 800')
 files['__notice.txt']=nil
 files['__page.txt']='4\thome\t';for _=1,5 do frame() end
 
@@ -140,6 +146,7 @@ for _=1,6 do key('tab') end
 key('right')
 check(popupLayout[1]==1280 and popupLayout[2]==800,'100% again lays Settings out in 1280x800')
 spans('Back',266,642,748,38,'100% Settings Back again')
+check(Display.tableText==1,'The table text is back at 100%')
 close()
 spans('Settings',664,696,120,48,'100% home Settings again')
 files['__page.txt']='5\tdecks\t';for _=1,5 do frame() end

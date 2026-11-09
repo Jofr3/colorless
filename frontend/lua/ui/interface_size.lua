@@ -17,4 +17,17 @@ function Size.factor(choice,w,h,minW,minH)
   end
   return best
 end
+-- The table's text overlays (audit FU1) grow by the chosen step where it fits: the largest scale
+-- from `factor` down by STEP for which `fits(scale)` holds, else 1 (100%, never smaller).
+Size.STEP=0.05
+function Size.grow(factor,fits)
+  local scale=factor or 1
+  while scale>1+1e-9 do
+    if fits(scale) then return scale end
+    scale=scale-Size.STEP
+  end
+  return 1
+end
+-- Whether two x, y, w, h rectangles overlap.
+function Size.overlaps(a,b) return a.x<b.x+b.w and b.x<a.x+a.w and a.y<b.y+b.h and b.y<a.y+a.h end
 return Size

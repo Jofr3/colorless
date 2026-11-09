@@ -18,6 +18,8 @@ local CollectionMotion=require('ui.collection_motion')
 local Motion=require('ui.motion')
 local Pager=require('ui.pager')
 local Speech=require('ui.sim_speech')
+local Display=require('ui.display')
+local Size=require('ui.interface_size')
 local Overlay={};Overlay.__index=Overlay
 local g=love.graphics
 local function lines(text)
@@ -283,6 +285,20 @@ function Overlay:build(keepCards)
     end
     footer(d.footer,bottom-50)
     for _,o in ipairs(d.options) do self:add(o.label,x+24,bottom,bw,38,'invoke',o.colour,{token=o.token,fontSize=26}) end
+    -- Interface Size grows the captions under the coins (audit FU1) while they end above the
+    -- buttons and stay narrower than a coin's spacing and the frame.
+    local n=#self.flips
+    local spacing=math.min(130,(w-60)/math.max(n,1))
+    local cy=y+h/2-14
+    local top=y+h
+    for _,b in ipairs(self.controls) do top=math.min(top,b.y-2) end
+    self.captionScale=Size.grow(Display.tableText,function(k)
+      for _,f in ipairs(self.flips) do
+        local tw=Dyna.measure('HEADS',0.42*k)
+        if tw>(n>1 and spacing-8 or w-48) or 140*k>w-48 then return false end
+      end
+      return cy+56+24*k+16*k<=top
+    end)
   elseif kind=='log' then
     -- Rows arrive as "who<TAB>name<TAB>elapsed<TAB>text"; a turn divider as
     -- "turn<TAB><TAB><TAB>Turn N". Wrapped continuation lines indent under
@@ -290,20 +306,23 @@ function Overlay:build(keepCards)
     self.logLines={}
     -- One spoken entry per row, at the first drawn line it wraps onto.
     self.logEntries={}
-    local textW=bw-24-(p and 0 or 150)
+    -- Interface Size grows its lines (audit FU1): a page holds fewer of them, in the same frame.
+    local s=Display.tableText
+    self.logScale=s
+    local textW=bw-24-(p and 0 or 150*s)
     for line in (tostring(d.note or '')..'\n'):gmatch('(.-)\n') do
       local who,name,elapsed,text=line:match('^([^\t]*)\t([^\t]*)\t([^\t]*)\t(.*)$')
       if not who then who,name,elapsed,text='system','','',line end
       if line~='' then self.logEntries[#self.logEntries+1]={text=(name~='' and name..': ' or '')..text,line=#self.logLines+1} end
       if who=='turn' then self.logLines[#self.logLines+1]={turn=text}
       else
-        local wrapped=Dyna.wrap(text,0.3,textW)
+        local wrapped=Dyna.wrap(text,0.3*s,textW)
         for i,wl in ipairs(wrapped) do
           self.logLines[#self.logLines+1]={who=who,name=i==1 and name or '',elapsed=i==1 and elapsed or '',text=wl}
         end
       end
     end
-    self.visible=p and 24 or 19
+    self.visible=math.floor((p and 24 or 19)/s)
     self.pages=math.max(1,math.ceil(#self.logLines/self.visible))
     -- The log opens on its newest page and keeps the reader's page after that.
     self.page=self.logOpened and math.min(self.page,self.pages) or self.pages
@@ -347,6 +366,19 @@ function Overlay:build(keepCards)
     local contentH=p and (40+D.H*scale+popupH+24+#actions*46) or math.max(36+D.H*scale+12,36+popupH+16+#actions*46)
     h=math.min(sim.boardH-20,contentH+78)
     y=(sim.boardH-h)/2
+    self.popupScale=1
+    -- Interface Size grows the rules text as a whole (audit FU1). The frame grows upward by as much
+    -- and the zoomed card rides up with its top, so the action rows and Back stay where 100% puts
+    -- them; the step shrinks to what fits the board's top and the frame's width.
+    if Display.tableText>1 and self.popup then
+      local room=p and bw or w-(24+D.W*scale+24)-24
+      local popup=self.popup
+      self.popupScale=Size.grow(Display.tableText,function(k)
+        return popup.w*k<=room and y-popupH*(k-1)>=10
+      end)
+      local extra=popupH*(self.popupScale-1)
+      y,h,popupH=y-extra,h+extra,popupH*self.popupScale
+    end
     self.y,self.h=y,h
     bottom=y+h-54
     local cx=p and x+w/2 or x+24+D.HALF_W*scale
@@ -389,6 +421,17 @@ function Overlay:build(keepCards)
       self:add('Game log',x+24,top+54,bw/2-4,40,'log',T.blue,{fontSize=24})
       self:add('View table',x+24+bw/2+4,top+54,bw/2-4,40,'peek',T.profile,{fontSize=24})
     end
+  end
+  if kind=='gameover' then
+    -- Interface Size grows the result rows (audit FU1) while their box ends above the buttons and
+    -- the online notice over them, and each label stays in its half of the box.
+    local rows=d.rows or {}
+    local limit=y+h-150-(sim.mode=='online' and 34 or 0)-8
+    self.rowScale=Size.grow(Display.tableText,function(k)
+      if y+110+#rows*34*k+20>limit then return false end
+      for _,r in ipairs(rows) do if Dyna.measure(r.label,0.34*k)>(w-48)/2-16 then return false end end
+      return true
+    end)
   end
 end
 local function cardLayer(card)
@@ -576,6 +619,15 @@ local function cycle(self,x,y,w,h)
   Button.cycleFace(x,y,w,h,hovered)
   self.pageText:draw(self.time or 0,self.sim.reduced,x,y,w,h,self.sim.boardW,0.4)
 end
+-- The inspector's rules text as drawn: x, y, w, h and its Interface Size scale (audit FU1).
+function Overlay:popupRect()
+  local p,c,k=self.sim.portrait,self.cards[1],self.popupScale or 1
+  local x,y,w=self.x,self.y,self.w
+  local pw=self.popup.w*k
+  local px=p and x+(w-pw)/2 or x+24+D.W*(c and c.baseScale or 1.6)+24
+  local py=p and y+40+D.H*(c and c.baseScale or 1.2)+12 or y+36
+  return {x=px,y=py,w=pw,h=self.popup.h*k,scale=k}
+end
 function Overlay:draw(shaders)
   local sim=self.sim
   local p=sim.portrait
@@ -593,7 +645,13 @@ function Overlay:draw(shaders)
   elseif kind=='cards' or kind=='pile' then
     local top=y+(kind=='pile' and 64 or 66)
     for i=1,math.min(2,#(self.noteLines or {})) do Dyna.static(self.noteLines[i],0.28,x+32,top+(i-1)*16,w-64,16,T.jokerGrey,{roomWidth=rw}) end
-    if (self.instructionText or '')~='' then Dyna.static(self.instructionText,0.28,x+32,y+22,w-64,16,T.jokerGrey,{roomWidth=rw,fit=true}) end
+    if (self.instructionText or '')~='' then
+      -- Interface Size grows it about its line's centre (audit FU1), in the band above the cards;
+      -- fit keeps it in the tray's width.
+      local k=Display.tableText
+      if k==1 then Dyna.static(self.instructionText,0.28,x+32,y+22,w-64,16,T.jokerGrey,{roomWidth=rw,fit=true})
+      else Dyna.static(self.instructionText,0.28*k,x+32,y+30-8*k,w-64,16*k,T.jokerGrey,{roomWidth=rw,fit=true}) end
+    end
     -- The pack tray: G.C.BLACK inset with a 0.05 emboss, like the collection.
     local v=self.viewport
     local tx,ty,tw,th=v.x,v.y,v.w,v.h
@@ -626,27 +684,32 @@ function Overlay:draw(shaders)
       if not Sprites.chip(chip,cx,cy-lift,88,sim.reduced and 0 or math.sin((self.time or 0)*0.7+i)*0.06,math.max(0.08,math.abs(flip)),px,0.1+lift/120) then
         g.setColor(T.white);g.circle('fill',cx,cy-lift,40,8)
       end
-      if f.landed then
+      if f.landed and self.captionScale==1 then
         Dyna.static(f.heads and 'HEADS' or 'TAILS',0.42,cx-60,cy+56,120,22,f.heads and T.blue or T.red,{roomWidth=rw})
         Dyna.static(f.who,0.26,cx-70,cy+80,140,16,T.jokerGrey,{roomWidth=rw,fit=true})
+      elseif f.landed then
+        local k=self.captionScale
+        Dyna.static(f.heads and 'HEADS' or 'TAILS',0.42*k,cx-60*k,cy+56,120*k,22*k,f.heads and T.blue or T.red,{roomWidth=rw})
+        Dyna.static(f.who,0.26*k,cx-70*k,cy+56+24*k,140*k,16*k,T.jokerGrey,{roomWidth=rw,fit=true})
       end
     end
   elseif kind=='log' then
     local top=y+74
     local first=(self.page-1)*self.visible
     local seatColour={p1=T.blue,p2=T.red,system=T.jokerGrey}
+    local s=self.logScale or 1
     for i=first+1,math.min(#self.logLines,first+self.visible) do
       local line=self.logLines[i]
-      local ly=top+(i-first-1)*(p and 24 or 25)
+      local ly=top+(i-first-1)*(p and 24 or 25)*s
       if line.turn then
-        Dyna.static(line.turn,0.3,x+32,ly,w-64,20,T.money,{align='center',roomWidth=rw})
+        Dyna.static(line.turn,0.3*s,x+32,ly,w-64,20*s,T.money,{align='center',roomWidth=rw})
       elseif p then
-        Dyna.static(line.text,0.3,x+32,ly,w-64,20,T.white,{align='left',roomWidth=rw})
+        Dyna.static(line.text,0.3*s,x+32,ly,w-64,20*s,T.white,{align='left',roomWidth=rw})
       else
         -- Elapsed stamp, the seat's name in its colour, then the line.
-        Dyna.static(line.elapsed,0.26,x+32,ly+1,56,20,T.jokerGrey,{align='left',roomWidth=rw,shadow=false})
-        Dyna.static(line.name,0.3,x+92,ly,90,20,seatColour[line.who] or T.jokerGrey,{align='left',fit=true,roomWidth=rw})
-        Dyna.static(line.text,0.3,x+32+150,ly,w-64-150,20,T.white,{align='left',roomWidth=rw})
+        Dyna.static(line.elapsed,0.26*s,x+32,ly+1*s,56*s,20*s,T.jokerGrey,{align='left',roomWidth=rw,shadow=false})
+        Dyna.static(line.name,0.3*s,x+32+60*s,ly,90*s,20*s,seatColour[line.who] or T.jokerGrey,{align='left',fit=true,roomWidth=rw})
+        Dyna.static(line.text,0.3*s,x+32+150*s,ly,w-64-150*s,20*s,T.white,{align='left',roomWidth=rw})
       end
     end
     if self.pages>1 then cycle(self,x+w/2-112,y+h-54-48,224,36) end
@@ -656,21 +719,26 @@ function Overlay:draw(shaders)
     local c=self.cards[1]
     if c then c:draw(shaders,self.time or 0,sim.mx or 0,(sim.my or 0)-self:offset(),sim.reduced,rw) end
     if self.popup then
-      local px=p and x+(w-self.popup.w)/2 or x+24+D.W*(c and c.baseScale or 1.6)+24
-      local py=p and y+40+D.H*(c and c.baseScale or 1.2)+12 or y+36
-      self.popup.draw(px,py)
+      local r=self:popupRect()
+      if r.scale==1 then self.popup.draw(r.x,r.y)
+      else
+        g.push();g.translate(r.x,r.y);g.scale(r.scale);g.translate(-r.x,-r.y)
+        self.popup.draw(r.x,r.y)
+        g.pop()
+      end
     end
   elseif kind=='gameover' then
     self.titleText:draw(x+w/2,y+60,rw)
     -- Stats: BLACK box, emboss 0.05, rows of label / value like round_scores_row.
-    local bx,by,bw,bh=x+24,y+110,w-48,#(d.rows or {})*34+20
+    local k=self.rowScale or 1
+    local bx,by,bw,bh=x+24,y+110,w-48,#(d.rows or {})*34*k+20
     Button.panel(bx,by+3,bw,bh,{T.panel[1]*0.7,T.panel[2]*0.7,T.panel[3]*0.7,1})
     Button.panel(bx,by,bw,bh,T.panel)
     local rows=d.rows or {}
     for i,r in ipairs(rows) do
-      local ry=by+12+(i-1)*34
-      Dyna.static(r.label,0.34,bx+16,ry,bw/2,24,T.jokerGrey,{align='left',roomWidth=rw})
-      Dyna.static(r.value,0.4,bx+bw/2,ry-2,bw/2-16,28,r.colour or T.white,{align='right',roomWidth=rw,fit=true})
+      local ry=by+12+(i-1)*34*k
+      Dyna.static(r.label,0.34*k,bx+16,ry,bw/2,24*k,T.jokerGrey,{align='left',roomWidth=rw})
+      Dyna.static(r.value,0.4*k,bx+bw/2,ry-2*k,bw/2-16,28*k,r.colour or T.white,{align='right',roomWidth=rw,fit=true})
     end
     -- A refused rematch or a lost seat says why above the buttons, where the table's banner notice
     -- would be hidden.

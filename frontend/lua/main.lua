@@ -158,7 +158,8 @@ local function layout(w,h,pixelDensity)
   arrangeLayers(portrait)
   state.interfaceSize=preferences.interfaceSize
   local css=layoutScale/density
-  Display.set({scale=css,collection=css*collectionScale,popup=css*popupLayer.scale,portrait=portrait,coarse=state.coarse or false})
+  -- The table stays at 100%; Interface Size grows its text overlays instead (audit FU1).
+  Display.set({scale=css,collection=css*collectionScale,popup=css*popupLayer.scale,tableText=interfaceStep(),portrait=portrait,coarse=state.coarse or false})
   -- Home lays out in its layer's canvas: in landscape smaller than 800 tall the menu rises, with
   -- the logo between it and the top edge, shrunk only when it does not fit.
   local homeWidth,homeHeight=homeLayer.w,homeLayer.h
