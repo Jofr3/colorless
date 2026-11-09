@@ -44,6 +44,7 @@ the script after adding a decision.
 | 2026-10-30 | Frontend & UI audit Phase 5: a 60 fps cap, still frames skipped, and less work per frame and per turn | decisions.md:1144 |
 | 2026-10-30 | Frontend & UI audit Phase 6: full-density rendering, an Interface Size setting, phone legibility and text fie… | decisions.md:1161 |
 | 2026-10-31 | Frontend & UI audit Phase 7: shared page widgets, simulator and page splits, spatial arrows, history tooltips… | decisions.md:1187 |
+| 2026-11-09 | Frontend & UI audit follow-ups: Interface Size on the table and the online lobby, filter option lists, toolti… | decisions.md:1216 |
 
 ## Numbered decisions
 

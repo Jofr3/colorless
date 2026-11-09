@@ -1212,3 +1212,67 @@ The splits are pure moves, proven by recorded draw traces.
   - At 390x844 a two-line sign-in message ran into Continue with Google, clipping descenders. A wrapped message now shrinks until its lines and 3 px shadow fit the 45 px between the faces, centred there; one-line messages are unchanged.
   - A shortened kept deck name read "Long ...." in speech; it now ends in three dots, with no space before them and no period after.
   A re-check in Chromium and Firefox (`tmp/ui/qa7fix/results.md`) confirmed all five, with e2e passing in both. 10 UI-QA7 mutant rows (6 earlier rows re-anchored); all 605 UI- rows are killed.
+
+### 2026-11-09 — Frontend & UI audit follow-ups: Interface Size on the table and the online lobby, filter option lists, tooltips clear of the hand
+
+The audit's open items after Phase 7, minus the manual testing (NVDA, real devices, a saved credential), which the user left out. User decisions: on the table Interface Size enlarges the text overlays, with the board unchanged, and the online lobby gets a compact arrangement so it grows as Settings does; a filter's option list opens by Enter on its cycle or a click on its centre text. Buttons keep their look and text, and 100% Interface Size is byte-identical to before (recorded draw traces). Built by three worktree agents and merged on `ui`.
+
+- **Interface Size on the table (UI-FU1).** The table keeps its board and cards at 100%, and Interface Size now enlarges its text overlays. main.lua's layout hands the step to the table as `Display.tableText` (1, 1.25 or 1.5, in portrait too). Each overlay takes the largest scale from the step down by 0.05 that still fits (`Size.grow`), never less than its 100% size, and covers no visible control it cleared at 100% (`Shared.clears`). What grows:
+  - the card inspector's rules text, scaled as a whole. Its frame grows upward by as much, with the zoomed card riding up with the frame's top. The action rows and Back stay where 100% puts them, and the frame stays at least 10 px inside the board's top.
+  - the hover popup over a card, scaled as a whole about its place, on the table and off its card.
+  - the game log's lines (0.3 × step). A page holds fewer of them (19 → 15/12 in landscape, 24 → 19/16 upright) in the same frame, with the same pager and Back.
+  - the HUD prompt, from its 100% fit, inside its box. A note in the portrait strip grows in no more lines than at 100%, and a note that fit the box never moves to the strip.
+  - the HUD hint (landscape and portrait), the choose-first line, and the rotate hint on a sideways touch phone.
+  - the history tooltips, with label and padding, while a place clear of their icon, the controls and the cards remains.
+  - an untitled card tray's instruction line, which grows about its centre in the band above the cards. A line the tray was already widened for still fits its width, so it stays at 100%.
+  - the coin captions, the game-over rows (inside their box, each label within its half), and the online away text (narrower than the table).
+
+  Not grown: the list menus' and titled trays' notes, whose buttons and cards are laid out under them, card titles, badges, and the juice banners.
+
+  Buttons keep their rectangles, labels and font sizes at every size (checked in the tests, and pixel-checked in the browser). At 100% every path is the old one: the SM14 draw trace, extended with tooltips, a 40-entry log, a long prompt, the strip, the rotate hint and choose-first, in five layouts with and without reduced motion, is byte-identical to `ui` (11,754,759 lines, 612 checkpoints; `tmp/ui/fu1/draw_trace.lua`, `trace.sha256`).
+
+  Growth in `table_text.lua` at 125/150%:
+  - landscape and the 844x390 phone: every overlay ×1.25/×1.5, except the game-over rows (×1.3 at 150%), a long prompt that fills its box (×1.25), and the phone's rotate hint (×1.45).
+  - 480x850 portrait: tooltip ×1.25/×1.25, inspector ×1.25/×1.3, hint ×1.15/×1.15, game-over rows ×1.15/×1.15, strip ×1.25/×1.3, away text ×1.25/×1.45, and the others ×1.25/×1.5.
+
+  Browser check (`tmp/ui/fu1/`: `fu1diff.json`, `shots/`, `diff/`), Chromium 154 at DPR 1 with one saved hot-seat game:
+  - At 1280x800, 480x850 and 844x390, the turn, a tooltip, the log, the hover popup, the inspector and the Tandem Unit prompt are 0 px different from `ui` at 100% (18 pairs, and the touch phone's turn too).
+  - At 125% and 150% only the text panels change, plus the inspector's zoomed card, which rides up with its frame, and the log's pager, which appears once the 15 entries need a second page at 150%. No pixel changed inside any HUD button, overlay Back or action row (178 button checks over 36 scene pairs).
+  - `bun run e2e` passes.
+
+  29 UI-FU1 mutant rows.
+- **The online lobby grows with Interface Size (UI-FU2).** The lobby gets its own layer in main.lua (`onlineLayer`, beside home's and Settings'). It lays out in the virtual canvas divided by the largest Interface Size step whose canvas holds the current step's minimum (`ui/lobby_size.lua`), and draws that much larger about the canvas centre. Press, release, hover and the code and search proxies' boxes go through the same transform; the wheel and keys take no point. A step change refits the layer in the same update, before the frame draws.
+  - What each step reaches at 125% / 150%:
+    - 125% / 150%: the menu (Create and Join tabs), waiting, joining, and the info steps (invalid, full, not found, unreachable, kicked).
+    - 125% / 125%: versus, the countdown, the deck picker, and the set match after the countdown. They need a canvas 640 tall for your seat's deck preview and the picker's two rows of piles. The set match keeps the countdown's size so GO! does not jump.
+    - Portrait stays at 100%.
+  - The compact arrangement applies only in a landscape canvas under 1280x800:
+    - The menu and waiting cards are 500 tall instead of 540. Sign in, its prompt and Back sit 40 higher, and the waiting prompt stays centred between Copy link and Leave.
+    - The versus card's padding is 12 instead of 20.
+    - With a deck, your seat is 330 tall instead of 432, and its deck preview fits the seat's free height: about 0.4 scale instead of 0.79, so the card is about 94 CSS px tall instead of 150 on a 1280x800 screen. Its 60/60 count keeps its 100% size on screen (about 13 CSS px): the pile's `counterScale` sets the count's em from the 1280x800 preview, and the pile shrinks a little more to leave room under it. As first written the count shrank with the pile to about 8 CSS px, under the legibility floor, for a setting meant to enlarge.
+    - The picker is 616 tall, with its tray and pager 12 apart. Its piles are 0.65, about 0.81 on screen against 0.79 at 100%.
+    - Buttons keep their look, text, size and order; only the whole layer scales.
+  - 100% and portrait take the old paths. `tmp/ui/fu2/trace.lua` records every love.graphics call, cursor and print over 30 lobby states at each of 1280x800, 480x850 and 1920x1080, with a hover on every control plus clicks, the wheel and keys. Its 260,562 lines are byte-identical on e256d564 and after the change (sha256 41a21cfe…).
+  - Headless tests:
+    - `online_compact.lua`: every step at 125% and 150% fits inside its canvas; no two controls overlap; text stays clear of controls; the seats, preview, tray and pager keep apart; and each step reaches its factor.
+    - `online_layer.lua`: the real main.lua, checking drawn rects, hover at the drawn corners, clicks, the wheel, a pile pick and the proxy boxes at 150% and 125%. 100% and portrait are unchanged.
+  - Chromium (`tmp/ui/fu2/results.md`):
+    - Every lobby step was shot at 100/125/150% at 1280x800 and 1920x1080, and at 390x844.
+    - At 100%, every lobby scene is pixel-identical to the `ui` build except the random lobby code, the countdown digit's timing and one caret blink.
+    - 390x844 at 150% is identical to 100%.
+    - The code field's proxy rect equals the drawn field at every size (for example 445,268 390x84 at 150%).
+    - A two-context lobby at 150%, driven only by clicks at the drawn controls: create, then Join tab, code field, type, Join; both pick decks in the picker; both Ready; the match starts.
+    - `bun run e2e` passes.
+  - 35 UI-FU2 mutant rows: 34 killed, 1 declared equivalent. That one is the portrait guard: every step's minimum is wider than the portrait canvas.
+- **Filter option lists (UI-FU3).** The builder's searchable, paged, multi-select list (the `choices` dialog, builder.ts's `options`/`option-query`/`option-page`/`option-pick` and its P/Q rows) came over from the React builder, but nothing in Lua opened it, so a filter held one value. Enter or Space on a focused filter cycle (its '>'), or a click on the cycle's centre text, now opens that filter's list. ‹ › clicks and Left/Right still step the cycle. The centre takes no focus and keeps its look (its existing hover tint; no pressed look). Format and Sort have no list: their centres stay inert and Enter still steps them. The cycle says "Energy type: All, left and right change it, Enter for the list". Back and Escape return to the Filters dialog on the same tab; a keyboard close puts focus back on the cycle, a pointer close leaves none. In the list: search, picks that toggle a multi-value filter (types, kinds, rule boxes, rarities) and set a single-value one (category, set, series, illustrator, mark, legal-only), seven rows a page with the pager, chosen rows in the existing blue, and "N selected" with lit pips on the cycle. The catalog query carries every chosen value (`type=Fire&type=Water`), and All clears. Fixed along the way:
+  - the list opened under the last list's title and rows, and was announced before its rows arrived ("Options. Page 1 of 1"). It now opens empty under its own title and is announced once builder.ts's P row for its key lands, followed by the focused control: "Energy type. Page 1 of 2. Find an option: empty. Enter to edit." A keyboard open focuses the search field.
+  - a pick or page turn rebuilt the rows, and focus slid to whatever control now had its index. It now stays on the same control.
+  - picks and page turns were silent. They now say "Water, selected. Energy type: 2 selected", "Water, not selected. Energy type: Fire" and "Page 2 of 2".
+  - a search hid All, so a filter could not be cleared under one. The first row now stays.
+  - closing the list left builder.ts publishing its rows on every emit. Closing sends `options` with no key, and opening another deck drops the list.
+  The chosen marker was tried on chosen rows but covered the label of the row above (rows are 12 px apart), so blue alone marks them. Set and Series stay single-value: GET /cards takes one `set` and one `serie`, so a second set replaces the first. Multi-set search needs an API change.
+  The Filters dialog and the builder with no list open are unchanged. A recorded love.graphics draw trace (`tmp/ui/fu3/trace.lua`: builder, all three Filters tabs, each cycle control hovered, pressed and focused, at 1280x800 and 480x850) is byte-identical before and after. Browser screenshots of the builder and every Filters tab at 1280x800 and 390x844 (reduced motion), plus the hovered centre, are pixel-identical to the `ui` build (`tmp/ui/fu3/pixel/`). Browser QA in Chromium at 1280x800 and 390x844 (`tmp/ui/fu3/`) covered open by Enter and by click, search, two types and two sets picked, the catalog and "2 selected", All, Back to Filters, and ‹ › stepping. New `frontend/lua/tests/builder_choices.lua`, 3 builder.test.ts cases, builder.lua and announce.lua updated. 27 UI-FU3 mutant rows; UI-PGX1-dialog-silent re-anchored.
+- **History tooltips clear of the hand (UI-FU5).** In portrait the tooltips sat above their icons over the hand's lower 4-11 px, since `Tooltip.place` only knew the controls. The table now passes its cards as well (`Card:halfExtents`, the covered box with zoom and turn), so upright the labels go beside their icon, as in landscape. Tests place a tooltip above an open control and check a card's covered box directly. 3 UI-FU5 mutant rows (3 UI-QA7/UI-SM12 rows re-anchored).
+- **Builder Retry's hit area (UI-FU4), not done.** Retry sits in the 26 virtual px between Clear and Back. At the 1280x800 collection scale (0.9) that is about 23.4 CSS px, and 24 needs 26.7, so it can only be reached by moving Clear or Back about 1 px, which the no-button-changes rule forbids. It reaches 24 CSS px from about 1440x900 up.
+
+Verification on the merged `ui`: `bun run check` passes (17,188 tests, 75/75 Lua files), and the full UI- sweep kills 698 rows with 1 declared equivalent (UI-FU2-main-portrait-grows) and 0 gaps.
