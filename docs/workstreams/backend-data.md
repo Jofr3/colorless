@@ -915,21 +915,26 @@ changes `VITE_API_ORIGIN`, the CSP, `APP_ORIGIN` and the Google redirect URI,
 and logs everyone out once.
 
 D1 rows read is the other one anonymous traffic can spend: about 1,000
-free-text searches use the day's 5M, and then sign-in, decks and the lobby fail
-until 00:00 UTC. `GET /cards` therefore refuses a page that skips more than
-1,000 cards (`MAX_CARDS_OFFSET`), and `CATALOG_SEARCH_LIMIT` (namespace 1003)
-allows 30 scanning queries a minute per IP (an IPv6 address counts as its /64):
-any query that bypasses KV and names neither `id` nor `nameExact`, which are
-index lookups. Until its card index has loaded, the builder asks `/cards` only
-for the pages KV caches (pages 1-3 at its page sizes) and serves every other
-page, free text and HP bounds included, from `GET /cards/index` in the browser
-(one KV entry per catalog epoch); once it has loaded, every page comes from it,
-as a KV miss on a cached page still counts much of the table. The limit meets
-only other callers. The same budget covers `/cards/index` when KV
-misses it. The limit slows a careless loop but not a determined one (one
-address can still read about 150k rows a minute). A cacheable filter value that
-matches nothing (`illustrator=junk`) still scans the table on each miss and is
-not limited.
+free-text searches, or about 500-1,000 cacheable `/cards` pages that miss KV
+(5-10k rows each, mostly the count), use the day's 5M, and then sign-in, decks
+and the lobby fail until 00:00 UTC. `GET /cards` therefore refuses a page that
+skips more than 1,000 cards (`MAX_CARDS_OFFSET`) and a filter value over 100
+characters (300 for `name`, `nameExact` and `text`), and `CATALOG_SEARCH_LIMIT`
+(namespace 1003) allows 30 catalog reads a minute per IP that reach D1 (an IPv6
+address counts as its /64). It runs after the KV cache, so a hit never spends
+it and every miss does: a cacheable page that misses, a query that bypasses KV,
+a key too long for KV, and each repeat once the day's KV writes are spent. An
+`id` or `nameExact` query is an index lookup and is never limited. `/facets`
+and `/cards/index` spend the same budget on a miss; `/sets`, `/sets/:id`,
+`/series`, `/cards/:id` and `/cards/full` read a few hundred rows at most and
+are not limited. Until its card index has loaded, the builder asks `/cards`
+only for the pages KV caches (pages 1-3 at its page sizes, three requests per
+settled filter change) and serves every other page, free text and HP bounds
+included, from `GET /cards/index` in the browser (one KV entry per catalog
+epoch); once it has loaded, every page comes from it. A builder therefore
+spends at most a few misses a minute, and a 429 there shows the search's "Try
+again" message. The limit slows a careless loop but not a determined one (one
+address can still read about 150k rows a minute).
 
 **After every deploy**, check that the Worker reaches D1 and that the remote
 migration count matches the files; `release` runs this as `release:health`:
@@ -973,8 +978,8 @@ minutes per isolate, carrying a `suppressed` count. Saved queries:
 | `evt = "decks"` | `rate_limited` and `binding_error` from the deck write limits (`apps/api/src/decks/routes.ts`). |
 | `evt = "lobby"` | Lobby Durable Object events (`apps/api/src/lobby/`, kinds below), and `rate_limited` / `limiter_error` from the per-IP limits on its routes. |
 | `evt = "http"` | `unhandled`: a request that threw (a 500), with the method, route pattern, error and cause names, the SQL without parameters, and `quota: true` when the cause reads as a spent quota. Logged at error level. |
-| `evt = "d1"` | `/health/db` failures, and the daily sweep: one `sweep` line with the rows deleted, or `sweep_failed` (the run also shows as failed under the Worker's Cron Events). `catalog_reads`: each isolate's tally of uncached `/cards` queries, at most one line a minute: `queries`, `rows_read`, and the heaviest query's `max_rows_read` and `max_params` (param names, never values). |
-| `evt = "catalog"` | `rate_limited` / `limiter_error` from `CATALOG_SEARCH_LIMIT` on `/cards`. |
+| `evt = "d1"` | `/health/db` failures, and the daily sweep: one `sweep` line with the rows deleted, or `sweep_failed` (the run also shows as failed under the Worker's Cron Events). `catalog_reads`: each isolate's tally of `/cards` queries that missed KV (cacheable misses and bypasses alike), at most one line a minute: `queries`, `rows_read`, and the heaviest query's `max_rows_read` and `max_params` (param names, never values). |
+| `evt = "catalog"` | `rate_limited` / `limiter_error` from `CATALOG_SEARCH_LIMIT` on `/cards`, `/cards/index` or `/facets` (the `route` field). |
 | `evt = "assets"` | `origin_refused` with a `reason` (`origin_url`, `redirect`, `content_type`, `magic`, `too_large`): the asset mirror would not store what the origin sent. `origin_status` with the `status`: the origin answered something other than 200, 404, 410 or a 5xx (a 429, 403 or 408), served as an uncached 502. `r2_get_failed` with the `error` name: an R2 read threw and the image came from the origin. |
 | `evt = "after_response"` | Other deferred work that failed after its response, such as an R2 asset mirror write. |
 
@@ -1367,7 +1372,8 @@ GET    /health/db        # one D1 read: {ok:true, migrations:<applied count>} or
 # until it is bumped); a hit or miss under a key carries a weak ETag hashed from
 # the key, not the body, so a hit or 304 of the 1.9 MB card index hashes no body
 # (a bypass keeps hono/etag's body digest); KV get/put/epoch failures log
-# `evt = "kv"`; invalid query params → terse 400 JSON, before KV is touched)
+# `evt = "kv"` with the error's names and `quota`; invalid query params → terse
+# 400 JSON, before KV is touched)
 GET    /cards            # CardBrief page `{items, page, pageSize, total}`; filters:
                          #   name (substring, case-insensitive), nameExact, category,
                          #   type, rarity, stage, suffix, trainerType, energyType, set,
@@ -1395,9 +1401,11 @@ GET    /cards            # CardBrief page `{items, page, pageSize, total}`; filt
                          #   counts in its page statement (window count), and the
                          #   builder fetches its pages three to a request;
                          #   400 when (page-1)*pageSize > 1000 (MAX_CARDS_OFFSET);
-                         #   429 {error} + Retry-After: 60 past 30 scanning queries a
-                         #   minute per IP (CATALOG_SEARCH_LIMIT: KV-bypassing and not
-                         #   bounded by id/nameExact; fails open; §3.7.4)
+                         #   400 for a value over 100 characters (300 for name,
+                         #   nameExact, text);
+                         #   429 {error} + Retry-After: 60 past 30 KV misses a minute
+                         #   per IP (CATALOG_SEARCH_LIMIT, after the cache: any miss
+                         #   or bypass not bounded by id/nameExact; fails open; §3.7.4)
 GET    /cards/index      # every card as one compact row (CardIndexPayload: filter
                          #   values plus abilities/attacks/effect text) for the
                          #   builder's in-browser name and rules-text search and the
@@ -1423,6 +1431,7 @@ GET    /facets           # CatalogFacets — the EIGHT filter vocabularies actua
                          #   the section it feeds — the only thing standing
                          #   between an unpopulated column and a filter that
                          #   empties a page (D198, §5.3.3)
+                         #   A KV miss spends CATALOG_SEARCH_LIMIT.
 
 # Assets — lazy tcgdex→R2 mirror (D9, §3.4); strict :file allowlists and tcgdex-id
 # shaped :cardId/:setId, else 404. Fetches only https://assets.tcgdex.net/ (also

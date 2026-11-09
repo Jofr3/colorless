@@ -6,6 +6,8 @@ import {
   MAX_FILTER_VALUES,
   MAX_FILTER_VALUES_TOTAL,
   MAX_ID_VALUES,
+  MAX_PARAM_LENGTH,
+  MAX_SEARCH_TERM_LENGTH,
   setsQuerySchema,
 } from "./query";
 
@@ -145,6 +147,21 @@ describe("cardsQuerySchema", () => {
     for (const params of rejected) {
       expect(parseCards(params).success).toBe(false);
     }
+  });
+
+  it("caps every string value's length: free text at MAX_SEARCH_TERM_LENGTH, the rest at MAX_PARAM_LENGTH", () => {
+    const of = (length: number) => "x".repeat(length);
+    for (const name of ["name", "nameExact", "text"]) {
+      expect(parseCards({ [name]: of(MAX_SEARCH_TERM_LENGTH) }).success).toBe(true);
+      expect(parseCards({ [name]: of(MAX_SEARCH_TERM_LENGTH + 1) }).success).toBe(false);
+    }
+    for (const name of ["set", "serie", "illustrator", "regulationMark", "type", "rarity", "id"]) {
+      expect(parseCards({ [name]: of(MAX_PARAM_LENGTH) }).success).toBe(true);
+      expect(parseCards({ [name]: of(MAX_PARAM_LENGTH + 1) }).success).toBe(false);
+    }
+    // Each repeated value is capped on its own.
+    expect(parseCards({ stage: ["Basic", of(MAX_PARAM_LENGTH + 1)] }).success).toBe(false);
+    expect(setsQuerySchema.safeParse({ serie: of(MAX_PARAM_LENGTH + 1) }).success).toBe(false);
   });
 
   it("caps a page's offset at MAX_CARDS_OFFSET cards", () => {
