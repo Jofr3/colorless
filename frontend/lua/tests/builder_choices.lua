@@ -117,12 +117,13 @@ for _,view in ipairs({{1280,800},{480,850}})do
   local rows={}
   for _,c in ipairs(b.controls)do if c.action=='option-pick' then rows[#rows+1]=c end end
   check(#rows==7 and rows[1].label=='All' and rows[1].chosen and rows[1].colour==T.blue and rows[2].colour==T.red and not rows[2].chosen,tag..': the rows draw what is chosen')
-  local marked={}
+  -- Blue is the mark: a chosen marker above a row would cover the row above it.
+  local marked=0
   local chosen=Button.chosen
-  Button.chosen=function(c,...) marked[#marked+1]=c.label;return chosen(c,...) end
+  Button.chosen=function(c,...) marked=marked+1;return chosen(c,...) end
   b:drawModal(setmetatable({},{__index=function() return {send=noop} end}))
   Button.chosen=chosen
-  check(#marked==1 and marked[1]=='All',tag..': only the chosen row draws the chosen marker')
+  check(marked==0,tag..': the rows draw no chosen marker over each other')
 
   -- The search field edits the list's query.
   b:activate(b.focus,true)

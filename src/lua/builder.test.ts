@@ -731,6 +731,9 @@ describe("Lua deck builder", () => {
     rows = listRows(publish);
     expect(rows.picker?.slice(3)).toEqual(["1", "1", "WAT"]);
     expect(rows.choices).toEqual([["Water", "Water", "1"]]);
+    // All stays offered under a search, so a search never hides the way to clear.
+    await b.command("option-query\twa");
+    expect(listRows(publish).choices.map((c) => c[0])).toEqual(["", "Water"]);
     // Picking a chosen value clears it; All clears every one.
     await b.command("option-pick\tWater");
     expect(b.filters.types).toEqual(["Fire"]);
