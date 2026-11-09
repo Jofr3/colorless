@@ -20,13 +20,25 @@ const SINGLE = /^(?:miniflare|workerd|@cloudflare\/workerd-[a-z0-9-]+)$/;
 /** One resolved entry of bun.lock's `packages` block: `"<path>": ["<name>@<version>", ...`. */
 const ENTRY = /^ {4}"([^"]+)": \["((?:@[^@/"]+\/)?[^@/"]+)@([^"]+)"/;
 
-/** The `name -> versions -> lock paths` of every guarded package in a bun.lock text. */
-export function runtimeVersions(lock: string): Map<string, Map<string, string[]>> {
-  const found = new Map<string, Map<string, string[]>>();
+/** One resolved package of bun.lock: its install path, name and version. */
+export type LockEntry = { path: string; name: string; version: string };
+
+/** Every resolved entry of a bun.lock text's `packages` block, workspace links included. */
+export function lockEntries(lock: string): LockEntry[] {
+  const entries: LockEntry[] = [];
   for (const line of lock.split("\n")) {
     const match = ENTRY.exec(line);
     if (match === null) continue;
     const [, path = "", name = "", version = ""] = match;
+    entries.push({ path, name, version });
+  }
+  return entries;
+}
+
+/** The `name -> versions -> lock paths` of every guarded package in a bun.lock text. */
+export function runtimeVersions(lock: string): Map<string, Map<string, string[]>> {
+  const found = new Map<string, Map<string, string[]>>();
+  for (const { path, name, version } of lockEntries(lock)) {
     if (!SINGLE.test(name)) continue;
     const versions = found.get(name) ?? new Map<string, string[]>();
     versions.set(version, [...(versions.get(version) ?? []), path]);

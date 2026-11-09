@@ -1,12 +1,89 @@
-# Weekly update PRs for npm dependencies (bun.lock) and the pinned GitHub Actions.
+# Weekly update PRs for npm dependencies (bun.lock and every workspace's
+# package.json: the bun ecosystem at / reads the root's `workspaces`) and for
+# the SHA-pinned GitHub Actions. Updates arrive grouped so coupled bumps move
+# together; the monthly routine in docs/conventions.md ("Dependencies") says
+# how each group is gated and merged (dependency audit PRC2, DEP-P1).
 version: 2
 updates:
   - package-ecosystem: bun
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 10
+    # Dev updates wait a week after release. The five packages that ship in the
+    # Worker get theirs at once, so a security patch is not held back
+    # (bunfig.toml keeps its own 3-day gate for manual installs). Security
+    # updates never wait.
+    cooldown:
+      default-days: 7
+      exclude:
+        - hono
+        - zod
+        - drizzle-orm
+        - "@hono/zod-validator"
+        - "@noble/ciphers"
+    # Majors that need a go/no-go branch of their own (dependency audit §5).
+    ignore:
+      # Phase 5: the mutation scripts use the TypeScript 6 compiler API, which
+      # TypeScript 7 does not have (#4 failed on it); taken with a shim.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      # Decision 8: @types/node follows the pinned Node line (.node-version,
+      # 22 LTS), not the newest Node; the move to 24 is planned for Q1 2027.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # Phase 7: Biome 2 rewrites the config and changes lint rules across
+      # the tree.
+      - dependency-name: "@biomejs/biome"
+        update-types: ["version-update:semver-major"]
+      # Phase 6: Vitest 5 moves a config key and the CI cache paths.
+      - dependency-name: vitest
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@vitest/*"
+        update-types: ["version-update:semver-major"]
+    # A dependency joins the first group that matches it.
+    groups:
+      # wrangler, its miniflare and the Workers types move as one, or the lock
+      # gains a second workerd (scripts/lock-check.ts). CI skips build:lua
+      # and e2e, so this group is merged after those run locally.
+      cloudflare:
+        patterns:
+          - wrangler
+          - miniflare
+          - "@cloudflare/*"
+      vite:
+        patterns:
+          - vite
+          - vitest
+          - "@vitest/*"
+      types:
+        patterns:
+          - "@types/*"
+      # What ships in the Worker: merged weekly, as it arrives.
+      production:
+        patterns:
+          - hono
+          - zod
+          - drizzle-orm
+          - "@hono/zod-validator"
+          - "@noble/ciphers"
+        update-types: [minor, patch]
+      # Every other (dev) package, merged in the monthly routine. Groups'
+      # `dependency-type` is not supported for bun, so this catches by name:
+      # the shipped five matched `production` first. A major that no group
+      # takes comes as a PR of its own.
+      dev:
+        patterns:
+          - "*"
+        update-types: [minor, patch]
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns:
+          - "*"

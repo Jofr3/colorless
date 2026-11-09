@@ -506,6 +506,116 @@ the previous Worker keeps serving while `release` migrates. Two rules follow.
   migration records. drizzle-kit does not track triggers; note any next to the
   table in `apps/api/src/db/`.
 
+## Dependencies
+
+bun.lock is the source of truth, and it is always installed frozen: CI,
+`release` and `deploy` run `bun install --frozen-lockfile` first. Only a commit
+meant to change dependencies changes bun.lock (dependency audit, DEP-P1).
+
+**Ranges.**
+
+- Carets by default, for libraries and tools alike. A hand bump raises the floor
+  to the version it locks, so a manifest never says `^4.0.0` while the lock
+  holds 4.109.
+- An exact pin needs a recorded reason, listed here:
+  - `@tcgdex/sdk` (D188): an opt-in ingest transport whose types are never the
+    boundary.
+  - `@noble/ciphers` (MI1): the match RNG's ChaCha20, an inspected security
+    surface.
+  - `miniflare`: equal to the version wrangler itself depends on, so the D1 test
+    harness and `wrangler dev` run one workerd. `scripts/lock-check.ts`
+    (check:static) fails a second miniflare or workerd in the lock.
+  A new exact pin adds its line and decision here.
+- A dependency declared in two workspaces carries the same spec there
+  (wrangler and @cloudflare/workers-types, today). `bun run deps:check` lists
+  any that differ.
+- **The root owns the test and type tooling.** vitest, typescript, biome and
+  @types/node are declared only in the root package.json, although every
+  workspace's tests import vitest and apps/api's `tsc -b` uses the root
+  typescript. Do not add them to a workspace manifest (USE7).
+
+**Toolchain.** `.bun-version` (read by setup-bun) and `packageManager` name the
+same bun, and `.node-version` (read by setup-node) names the Node 22 LTS line:
+tsc, vite, vitest, wrangler and biome start with `#!/usr/bin/env node`, so
+`bun run` executes them under Node. Bump them in a commit of their own and
+keep `engines` in step; Dependabot does not update them. Move Node to 24 in
+Q1 2027, before 22's end of life on 2027-04-30, and @types/node with it: it
+follows the pinned Node major, never the newest.
+
+**Release-age cooldown.** `bunfig.toml` sets `minimumReleaseAge` to 3 days:
+`bun add`, `bun update` and any install that resolves skip versions published
+less than 3 days ago, and say so ("blocked by minimum-release-age"). A frozen
+install of an existing lock is unaffected. An urgent security patch bypasses it
+for one command, `bun update hono --minimum-release-age=0`, and the commit says
+why. Bun 1.4.2 has no `--minimum-release-age-excludes` flag; to exempt a
+package for a while, add it to `minimumReleaseAgeExcludes` in bunfig.toml.
+
+**Dependabot** (`.github/dependabot.yml`) opens weekly PRs in groups, at most
+10 at once:
+
+| Group | What | Cooldown | Merged |
+|---|---|---|---|
+| `production` | hono, zod, drizzle-orm, @hono/zod-validator, @noble/ciphers; minor and patch | none | weekly, as they arrive |
+| `cloudflare` | wrangler, miniflare, @cloudflare/* | 7 days | in the monthly routine |
+| `vite` | vite, vitest, @vitest/* | 7 days | in the monthly routine |
+| `types` | @types/* | 7 days | in the monthly routine |
+| `dev` | every other package; minor and patch | 7 days | in the monthly routine |
+| `actions` | the SHA-pinned GitHub Actions | 7 days | in the monthly routine |
+
+A major that no group takes comes as a PR of its own. Majors of typescript,
+@types/node, @biomejs/biome and vitest are ignored: each needs a go/no-go branch
+(below), and the comment beside each ignore names its phase. GitHub's
+dependency graph does not read bun.lock, so Dependabot raises no alerts for
+transitive or dev packages. The weekly **Dependency report** workflow
+(`.github/workflows/deps-report.yml`) puts the full `bun audit` and
+`bun outdated -r` in its run summary, and never fails.
+
+**The monthly routine.**
+
+1. `bun run deps:check`. It needs the network and never fails. It prints
+   `bun outdated -r`, the full `bun audit` and CI's `--prod` gate, lock-check,
+   the bun.lock packages the registry marks deprecated, the toolchain pins
+   against the local bun and node, specs that differ between workspaces, the
+   `compatibility_date` age, and the advisory and release pages of the five
+   packages the Worker ships. Also read the latest Dependency report run
+   (`gh run list --workflow deps-report.yml`).
+2. Read those five pages since the locked versions. An upstream repository
+   advisory can take days to reach GitHub's database, and `bun audit` reads
+   only that database: hono's of 2026-11-01 reached neither.
+3. Triage the grouped Dependabot PRs. Each one runs full CI; the gates beyond
+   it:
+   - `production`: green CI, then `bun run release`, since it ships in the API
+     Worker.
+   - `cloudflare`: check the branch out, then run
+     `bun install --frozen-lockfile && bun run check && bun run build && bun run e2e`
+     locally. CI skips build:lua (it builds without the Lua package) and never
+     runs e2e. Move the `compatibility_date` with it (below).
+   - `vite`: the same local `check`, `build` and `e2e`, then a web release,
+     since vite builds what the site serves.
+   - `types`, `dev`, `actions`: green CI and a local `bun run check`.
+   - PRs that touch bun.lock conflict with each other: merge one, then comment
+     `@dependabot rebase` on the next.
+4. Dev advisories from the full audit: fix them by an in-range lock refresh,
+   or note why not.
+5. Look at the toolchain pins: a newer bun 1.x or Node 22.x is bumped in a
+   commit of its own.
+6. Record the notable bumps in `docs/decisions.md`.
+
+**Taking a major** happens on a go/no-go branch of its own, never in a group
+PR. Write the go criteria first (the dependency audit's §5, phases 5-7, are
+the model: `tsc -b` clean, the whole suite passing, `mutants:sample` green, the
+CI caches still hitting). Run every gate the routine names for its group. Go
+merges it and records the decision; no-go records why, and the ignore line
+stays until the next attempt.
+
+**compatibility_date.** `wrangler.jsonc` and `apps/api/wrangler.jsonc` set the
+same date, and they move together: with each cloudflare-group bump, and at
+least quarterly (`deps:check` flags a date more than 92 days old). Read
+Cloudflare's compatibility-flags changelog between the old and the new date.
+Then the gates: `bun run check` (its d1 suites run the new workerd), `bun run
+e2e`, and a `wrangler dev` smoke (`bun run dev:all`: sign in, open a deck,
+play a few turns). Record the move in `docs/decisions.md`.
+
 ## Working beside other agents
 
 Two or three agents share this checkout. Work like it:

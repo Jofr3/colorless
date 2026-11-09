@@ -1,0 +1,13 @@
+# Bun's settings for this repository (dependency audit PRCM2).
+
+[install]
+# A release-age cooldown: `bun add`, `bun update` and any install that resolves
+# skip package versions published less than 3 days (259200 s) ago, the window
+# in which most hijacked releases are caught and pulled. A frozen install of an
+# existing bun.lock is unaffected, so CI and `release` behave as before.
+# bun 1.4.2 takes only the number of seconds here, not "3d".
+#
+# An urgent security patch bypasses it for one command:
+#   bun update hono --minimum-release-age=0
+# (docs/conventions.md, "Dependencies").
+minimumReleaseAge = 259200
