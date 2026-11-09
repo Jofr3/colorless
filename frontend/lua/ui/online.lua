@@ -26,6 +26,12 @@ local g=love.graphics
 local Online={}
 Online.__index=Online
 local heights={menu=540,joining=420,waiting=540,starting=420}
+-- Under Settings' Interface Size (UI-FU2) main.lua lays the lobby out in a canvas smaller than
+-- 1280x800 and draws it larger. Laid out there in landscape it takes its compact arrangement:
+-- the menu and waiting cards 40 shorter, the versus card's padding 12, your seat's deck preview
+-- as large as the seat's free height allows, and the picker's tray and pager closer together.
+-- The controls, their sizes and their order are the same.
+local compactHeights={menu=500,waiting=500}
 local info={
   invalid={'Invalid lobby code',"That code doesn't look right. Head back and try again."},
   full={'Lobby is full','Lobby %s already has two players.'},
@@ -91,6 +97,7 @@ function Online:close() self:finish();self.picker=false;self:command('close') en
 function Online:leave() self:finish();self:command('leave','home');self.callbacks.home() end
 function Online:layout(w,h)
   self.width,self.height,self.portrait=w,h,w<600
+  self.compact=not self.portrait and h<800
   self.pressed=nil;self.pileKey=nil
   self:makeCards(false);self:build()
 end
@@ -104,15 +111,20 @@ function Online:frame()
   local versus=not self.picker and (self.step=='versus' or self.step=='countdown')
   -- The versus card keeps a wider margin than the other steps; its side
   -- margin grows the card, not the seats (392 / 424 wide).
-  self.pad=versus and (self.portrait and 24 or 20) or 16
+  local compact=self.compact
+  self.pad=versus and (self.portrait and 24 or compact and 12 or 20) or 16
   self.padX=versus and (self.portrait and 36 or 52) or 16
   self.w=versus and (self.portrait and 392 or 424)+2*self.padX or self.portrait and 440 or 780
-  if self.picker then self.h=h-72
+  if self.picker then self.h=compact and h-24 or h-72
+  elseif versus and compact then
+    -- Your seat's deck preview takes the height the canvas leaves, the card 12 clear of its edges.
+    self.youH=(self.seats.you or {}).hasDeck and math.min(432,h-24-2*self.pad-262) or 208
+    self.h=2*self.pad+262+self.youH
   elseif versus then
     -- Your seat grows a deck preview once you have chosen one.
     self.youH=(self.seats.you or {}).hasDeck and 432 or 208
     self.h=math.min(2*self.pad+262+self.youH,h-40)
-  else self.h=heights[self.step] or 440 end
+  else self.h=compact and compactHeights[self.step] or heights[self.step] or 440 end
   self.x,self.y=(w-self.w)/2,(h-self.h)/2
   local x,y=self.x,self.y
   -- One column: the opponent's seat, VS, then yours.
@@ -120,12 +132,17 @@ function Online:frame()
   self.panels={opponent={x=x+px,y=y+pad,w=self.w-2*px,h=112},you={x=x+px,y=y+pad+176,w=self.w-2*px,h=self.youH or 208}}
   self.vs={x=x+self.w/2,y=y+pad+144}
   if self.portrait then self.area={x=x+16,y=y+136,w=self.w-32,h=self.h-312}
+  elseif compact then self.area={x=x+16,y=y+84,w=self.w-32,h=self.h-202}
   else self.area={x=x+16,y=y+90,w=self.w-32,h=self.h-260} end
 end
 -- The picker's pile size, which your seat's preview shares.
 function Online:pickerScale()
-  local ah=self.height-72-(self.portrait and 312 or 260)
+  local ah=self.compact and self.height-24-202 or self.height-72-(self.portrait and 312 or 260)
   return math.min(0.82,(ah/2-84)/D.H)
+end
+-- The top of the picker's pager: 12 under the tray and over Back in the compact arrangement.
+function Online:pagerY()
+  return self.y+self.h-(self.compact and 106 or 158)
 end
 function Online:makeCards(entering)
   DeckGrid.release(self)
@@ -154,7 +171,7 @@ function Online:build()
         -- A deck that can't be played online stays focusable so its reason is read out.
         add({kind='card',card=i,label=card.item.name,x=b.x,y=b.y,w=b.w,h=b.h,blocked=not card.item.online})
       end
-      DeckPicker.arrows(self,y+h-158,function(label,ax,ay,aw,ah,dir)
+      DeckPicker.arrows(self,self:pagerY(),function(label,ax,ay,aw,ah,dir)
         return add({kind='button',action=dir<0 and 'previous' or 'next',label=label,x=ax,y=ay,w=aw,h=ah})
       end)
     elseif self.deckPhase=='anonymous' or self.deckPhase=='error' then
@@ -522,7 +539,7 @@ function Online:drawPicker()
       if not card.item.online then Alert.drawOnCard(card,self.time,self.reduced,self.width,Alert.pile) end
     end)
     if #self.cards==0 then T.text(#self.decks==0 and 'No decks yet. Build one in Decks.' or 'No matches',28,a.x+16,a.y+80,a.w-32) end
-    DeckPicker.drawPager(self,y+h-158)
+    DeckPicker.drawPager(self,self:pagerY())
   else
     local text=self.deckPhase=='anonymous' and 'Sign in to use your decks.' or self.deckPhase=='error' and "Couldn't load your decks." or 'Loading decks...'
     T.text(text,self.portrait and 26 or 30,a.x+16,a.y+100,a.w-32)
@@ -552,7 +569,7 @@ function Online:draw()
     local px,py=x+(w-pw)/2,y+156
     Button.panel(px,py+3,pw,ph,darken(T.panel,0.3));Button.panel(px,py,pw,ph,T.panel)
     d.code:draw(x+w/2,py+ph/2,self.width)
-    d.prompt:draw(x+w/2,y+420,self.width)
+    d.prompt:draw(x+w/2,self.compact and y+h-100 or y+420,self.width)
   elseif step=='versus' or step=='countdown' then
     self:drawSeat('opponent');self:drawSeat('you')
     if step=='versus' then d.vs:draw(self.vs.x,self.vs.y,self.width) end

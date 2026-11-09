@@ -180,11 +180,11 @@ check(sent('online'):find('select\tdeck1'),'A click on the drawn pile chooses it
 
 -- 125% chosen: every step at 125%.
 files['__settings.txt']='1\tgame';frame()
-local Preferences=require('ui.preferences')
 for _=1,6 do love.keypressed('tab');frame() end
 love.keypressed('left');frame()
 love.keypressed('escape');frame()
-snapshot('menu',{code=''})
+-- Back on the menu the lobby makes a fresh lobby; its answer clears the wait.
+snapshot('menu',{code=''});snapshot('menu',{code=''})
 check(lobby.width==1024 and lobby.height==640,'At 125% the menu lays out in 1024x640, got '..lobby.width..'x'..lobby.height)
 grown('Create lobby',1.25,'125% create')
 
@@ -193,7 +193,8 @@ files['__settings.txt']='2\tgame';frame()
 for _=1,6 do love.keypressed('tab');frame() end
 love.keypressed('left');frame()
 love.keypressed('escape');frame()
-snapshot('menu',{code=''})
+-- Back on the menu the lobby makes a fresh lobby; its answer clears the wait.
+snapshot('menu',{code=''});snapshot('menu',{code=''})
 check(lobby.width==1280 and lobby.height==800,'At 100% the lobby lays out in 1280x800')
 grown('Create lobby',1,'100% create')
 check(drawn['Create lobby'].x==430 and drawn['Create lobby'].y==344,'100% Create lobby where it always was')

@@ -21,6 +21,7 @@ local Pacer = require('ui.frame_pacer')
 local Viewport = require('ui.viewport')
 local Size = require('ui.interface_size')
 local Display = require('ui.display')
+local LobbySize = require('ui.lobby_size')
 local g = love.graphics
 -- Game:main_menu starts REAL at 12 when skipping the introductory splash.
 local state = {time=12,focused=0,hovered=0,muted=false,reduced=false,poll=0,ready=false,parked=false,lastInput='pointer',focusEdge='none'}
@@ -68,11 +69,15 @@ local density=1
 -- w x h canvas, the virtual canvas divided by its scale, and draws scaled up about the canvas
 -- centre, so it covers the same part of the screen. Home grows in landscape (its compact
 -- arrangement still fits 150%), Settings as far as its tallest form fits; the collection panel
--- drops its 0.9 inset; the table, the online lobby and the wipe are as large as the canvas.
+-- drops its 0.9 inset; the online lobby grows per step (onlineLayer); the table and the wipe are
+-- as large as the canvas.
 local homeLayer,popupLayer,tableLayer={scale=1},{scale=1},{scale=1}
 -- The smallest canvas each growing layer fits: home's compact arrangement, and Settings' widest
 -- popup (780) and tallest form (620) with a margin.
 local HOME_MIN,POPUP_MIN={720,520},{812,640}
+-- The online lobby is a layer of its own (UI-FU2): each step grows as far as its compact
+-- arrangement fits (ui/lobby_size.lua), so a step change can move it to another size.
+local onlineLayer={scale=1}
 -- The collection panel's scale over the dimmed home: 0.9 in landscape at 100%.
 local collectionScale=0.9
 -- Home's logo: its centre height and drawn width.
@@ -146,6 +151,14 @@ local function arrangeLayers(portrait)
   fit(homeLayer,HOME_MIN);fit(popupLayer,POPUP_MIN);tableLayer.w,tableLayer.h=virtualWidth,virtualHeight
   collectionScale=(portrait or preferences.interfaceSize>0) and 1 or 0.9
 end
+-- The lobby's scale and canvas for its current step; true when the scale changed.
+local function fitOnline(portrait)
+  local minW,minH=LobbySize.minimum(online.step)
+  local scale=portrait and 1 or Size.factor(preferences.interfaceSize,virtualWidth,virtualHeight,minW,minH)
+  local changed=scale~=onlineLayer.scale
+  onlineLayer.scale,onlineLayer.w,onlineLayer.h=scale,virtualWidth/scale,virtualHeight/scale
+  return changed
+end
 local function layout(w,h,pixelDensity)
   width,height,density=w,h,pixelDensity or 1
   redraw()
@@ -195,7 +208,7 @@ local function layout(w,h,pixelDensity)
   if library then library:layout(virtualWidth,virtualHeight) end
   if builder then builder:layout(virtualWidth,virtualHeight) end
   if sandbox then sandbox:layout(virtualWidth,virtualHeight) end
-  if online then online:layout(virtualWidth,virtualHeight) end
+  if online then fitOnline(portrait);online:layout(onlineLayer.w,onlineLayer.h) end
   if simulator then simulator:layout(virtualWidth,virtualHeight,Screen.unit(w,h)/layoutScale) end
   if wipe then wipe:layout(virtualWidth,virtualHeight,Screen.unit(w,h)/layoutScale,w/layoutScale,h/layoutScale) end
 end
@@ -223,6 +236,7 @@ local function editBox(screen)
   if not x then return nil end
   g.push(); g.origin(); g.translate(offsetX,offsetY); g.scale(layoutScale)
   if screen==popup then applyLayer(popupLayer)
+  elseif screen==online then applyLayer(onlineLayer)
   elseif isCollection(state.page) and screen==collection() then libraryTransform() end
   local left,top=g.transformPoint(x,y)
   local right,bottom=g.transformPoint(x+w,y+h)
@@ -538,7 +552,12 @@ function love.update(dt)
     collection():update(dt,state.time,popup and -1000 or lx,popup and -1000 or ly,state.reduced)
   end
   -- The lobby keeps polling under Settings (sign-in) and during a wipe.
-  if state.page=='online' then online:update(dt,state.time,popup and -1000 or mx,popup and -1000 or my,state.reduced) end
+  if state.page=='online' then
+    local ox,oy=layerPoint(onlineLayer,mx,my)
+    online:update(dt,state.time,popup and -1000 or ox,popup and -1000 or oy,state.reduced)
+    -- A step that fits another size lays the lobby out again before it draws.
+    if fitOnline(virtualWidth<virtualHeight) then online:layout(onlineLayer.w,onlineLayer.h) end
+  end
   if wipe then love.mouse.setCursor(state.arrowCursor);return end
   -- An account asked to choose its public name hears it on the home menu or before an online
   -- lobby, where the name is shown to others; Settings reads the account itself while open.
@@ -648,7 +667,7 @@ function love.draw()
   end
   if state.page=='online' then
     Modal.backdrop(width,height)
-    g.push(); g.translate(offsetX,offsetY); g.scale(layoutScale); room:apply()
+    g.push(); g.translate(offsetX,offsetY); g.scale(layoutScale); room:apply(); applyLayer(onlineLayer)
     online:draw()
     g.pop()
   end
@@ -742,7 +761,7 @@ function love.mousepressed(x,y,button)
   x,y=pointer(x,y)
   if popup then popup:mousepressed(layerPoint(popupLayer,x,y)); return end
   if isTable(state.page) then simulator:mousepressed(x,y);return end
-  if state.page=='online' then online:mousepressed(x,y);return end
+  if state.page=='online' then online:mousepressed(layerPoint(onlineLayer,x,y));return end
   if isCollection(state.page) then collection():mousepressed(libraryPoint(x,y)); return end
   state.pressed=hit(x,y)
 end
@@ -752,7 +771,7 @@ function love.mousereleased(x,y,button,istouch)
   x,y=pointer(x,y)
   if popup then popup:mousereleased(layerPoint(popupLayer,x,y)); return end
   if isTable(state.page) then simulator:mousereleased(x,y);return end
-  if state.page=='online' then online:mousereleased(x,y);return end
+  if state.page=='online' then online:mousereleased(layerPoint(onlineLayer,x,y));return end
   if isCollection(state.page) then collection():mousereleased(libraryPoint(x,y)); return end
   if state.pressed and state.pressed==hit(x,y) then activate(state.pressed) end
   state.pressed=nil

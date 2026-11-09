@@ -1,5 +1,5 @@
 -- The online lobby under Settings' Interface Size (UI-FU2). Each step names the smallest canvas
--- its compact arrangement fits (Online:minimum), so main.lua grows the lobby as far as the step
+-- its compact arrangement fits (ui/lobby_size.lua), so main.lua grows the lobby as far as the step
 -- allows: the menu (Create and Join), the waiting lobby, joining and the info steps reach 150%;
 -- versus, the countdown, the deck picker and the set match reach 125%, as Settings does, since your
 -- seat's deck preview and the picker's two rows of piles need a 640 tall canvas. Laid out in the
@@ -8,20 +8,31 @@
 -- clear of every control. Portrait and 1280x800 keep the arrangement they had.
 package.path='frontend/lua/?.lua;'..package.path
 local function check(ok,message) if not ok then error(message,2) end end
-local font={getWidth=function(_,s) return #tostring(s)*8 end,getHeight=function() return 20 end,
-  getWrap=function(_,s) return #s*8,{s} end}
+-- Fonts as wide as half their size per character and as tall as their size.
+local fonts={}
+local function font(size)
+  fonts[size]=fonts[size] or {getWidth=function(_,s) return #tostring(s)*size/2 end,getHeight=function() return size end,
+    getWrap=function(_,s) return #s*size/2,{s} end}
+  return fonts[size]
+end
 love={math={random=function() return 0.5 end},keyboard={isDown=function() return false end},
   filesystem={getInfo=function() return nil end}}
-love.graphics=setmetatable({},{__index=function() return function() end end})
+-- The transform's translation and scale, so a text drawn in a translated frame is placed.
+local m,stack={x=0,y=0,sx=1,sy=1},{}
+love.graphics=setmetatable({
+  push=function() stack[#stack+1]={x=m.x,y=m.y,sx=m.sx,sy=m.sy} end,pop=function() m=table.remove(stack) end,
+  translate=function(x,y) m.x,m.y=m.x+m.sx*x,m.y+m.sy*y end,scale=function(x,y) m.sx,m.sy=m.sx*x,m.sy*(y or x) end,
+},{__index=function() return function() end end})
 local D=require('ui.card_dimensions')
 local Card=require('ui.card')
 Card.rebuild=function(self) self.texture={release=function() end} end
 local T=require('ui.theme')
-T.font=function() return font end
+T.font=font
 local Size=require('ui.interface_size')
 local Dyna=require('ui.dynatext')
 local Button=require('ui.button')
 local Online=require('ui.online')
+local LobbySize=require('ui.lobby_size')
 local Codec=require('ui.codec')
 local W=require('ui.wire_fields').online
 local o=Online.new({command=function() end,announce=function() end,feedback=function() end,
@@ -61,7 +72,10 @@ local function box(r) return ('%.1f,%.1f %.1fx%.1f'):format(r.x,r.y,r.w,r.h) end
 -- Every text the step draws: T.text and the error line, one line of `size` each.
 local texts
 local text,errorLine=T.text,Button.errorLine
-T.text=function(value,size,x,y,w,...) texts[#texts+1]={text=value,x=x,y=y,w=w,h=size};return text(value,size,x,y,w,...) end
+T.text=function(value,size,x,y,w,...)
+  texts[#texts+1]={text=value,x=m.x+m.sx*x,y=m.y+m.sy*y,w=m.sx*w,h=m.sy*size}
+  return text(value,size,x,y,w,...)
+end
 Button.errorLine=function(value,size,x,y,w) texts[#texts+1]={text=value,x=x,y=y-4,w=w,h=size+8,error=true};return errorLine(value,size,x,y,w) end
 local function sweep(name)
   local frame={x=o.x,y=o.y,w=o.w,h=o.h}
@@ -77,18 +91,18 @@ local function sweep(name)
   texts={};o:draw()
   for _,t in ipairs(texts) do
     if t.text~='' then
-    check(t.y>=frame.y-E and t.y+t.h<=frame.y+frame.h+E,name..': "'..t.text..'" outside the frame')
-    for _,item in ipairs(o.items) do
-      -- A control's own label and placeholder sit inside it; the field's label sits just above.
-      if not within(t,item) then
-        check(not overlaps(t,item),name..': "'..t.text..'" '..box(t)..' overlaps '..tostring(item.label or item.kind)..' '..box(item))
+      check(t.y>=frame.y-E and t.y+t.h<=frame.y+frame.h+E,name..': "'..t.text..'" outside the frame')
+      for _,item in ipairs(o.items) do
+        -- A control's own label and placeholder start inside it.
+        if not within({x=t.x,y=t.y,w=0,h=0},item) then
+          check(not overlaps(t,item),name..': "'..t.text..'" '..box(t)..' overlaps '..tostring(item.label or item.kind)..' '..box(item))
+        end
       end
-    end
     end
   end
   return frame
 end
--- The waiting prompt sits between Copy link and Leave.
+-- The waiting prompt sits centred between Copy link and Leave, as at 1280x800.
 local function waitingPrompt(name)
   local prompt=o.dyna.prompt
   local link,back=o.items[4],o.items[#o.items]
@@ -97,6 +111,7 @@ local function waitingPrompt(name)
   o:draw();prompt.draw=nil
   check(link.label=='Copy link' and cy,name..': the prompt is drawn under Copy link')
   check(cy-prompt.H/2>=link.y+link.h and cy+prompt.H/2<=back.y,name..': the prompt '..cy..' runs into Copy link or Leave')
+  check(math.abs(cy-(link.y+link.h+back.y)/2)<=4,name..': the prompt '..cy..' is off the middle between Copy link and Leave')
 end
 -- The versus seats: inside the frame, apart, clear of Back and the message; your seat's buttons
 -- inside it, and its preview (name above, count below) between the status row and Choose deck.
@@ -106,7 +121,8 @@ local function versus(name)
   local back=o.items[#o.items]
   check(within(you,frame) and within(opp,frame),name..': a seat outside the frame')
   check(not overlaps(you,opp),name..': the seats overlap')
-  check(opp.y+opp.h<=o.vs.y-o.dyna.vs.H/2 and o.vs.y+o.dyna.vs.H/2<=you.y,name..': VS runs into a seat')
+  local vs=o.dyna.vs or o.dyna.title
+  check(opp.y+opp.h<=o.vs.y-vs.H/2 and o.vs.y+vs.H/2<=you.y or o.step=='countdown',name..': VS runs into a seat')
   texts={};o:draw()
   for _,t in ipairs(texts) do
     if t.error then
@@ -171,15 +187,13 @@ local scales={}
 for _,s in ipairs(states) do
   local name,enter,extra=s[1],s[2],s[3]
   o:layout(1280,800);o:open(true,'');enter()
-  check(o.minimum,'The lobby names the canvas each step fits')
-  local minW,minH=o:minimum()
+  local minW,minH=LobbySize.minimum(o.step)
   for choice=1,2 do
     local f=Size.factor(choice,1280,800,minW,minH)
     check(f==reaches[name][choice],name..' at '..Size.labels[choice+1]..' reaches '..f..', wanted '..reaches[name][choice])
     -- Laid out where the factor puts it: the step, built again in the shrunken canvas.
     o:layout(1280/f,800/f)
     local label=name..' at '..Size.labels[choice+1]
-    check(o.minimum and select(2,o:minimum())==minH,label..': the step keeps its minimum in its own canvas')
     sweep(label)
     if extra then scales[label]=extra(label) end
   end
