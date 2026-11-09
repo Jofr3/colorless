@@ -7,6 +7,7 @@ local T=require('ui.theme')
 local Popup=require('ui.popup')
 local Dyna=require('ui.dynatext')
 local Display=require('ui.display')
+local Size=require('ui.interface_size')
 local g=love.graphics
 local Tooltip={DELAY=0.4,GROW=0.12}
 Tooltip.__index=Tooltip
@@ -64,6 +65,23 @@ function Tooltip:box(boardW,boardH)
   local tw,th=Dyna.measure(b.label,scale)
   local w,h=tw+2*PAD_X,th+2*PAD_Y
   local x,y=Tooltip.place(b,w,h,boardW,boardH,self.others,self.cards)
+  -- Interface Size grows the label and its padding (audit FU1) as far as it still finds a place on
+  -- the board clear of its icon, the controls and the cards, when it found one at 100%.
+  local factor=Display.tableText
+  if factor>1 and free(x,y,w,h,b,self.others,self.cards) then
+    local function sized(k)
+      local gw,gh=Dyna.measure(b.label,scale*k)
+      gw,gh=gw+2*PAD_X*k,gh+2*PAD_Y*k
+      local gx,gy=Tooltip.place(b,gw,gh,boardW,boardH,self.others,self.cards)
+      return gx,gy,gw,gh
+    end
+    local k=Size.grow(factor,function(k)
+      local gx,gy,gw,gh=sized(k)
+      return gx>=0 and gy>=0 and gx+gw<=boardW and gy+gh+SHADE<=boardH and free(gx,gy,gw,gh,b,self.others,self.cards)
+        and not Size.overlaps({x=gx,y=gy,w=gw,h=gh+SHADE},{x=b.x,y=b.y-LIFT,w=b.w,h=b.h+LIFT+BELOW})
+    end)
+    if k>1 then x,y,w,h=sized(k);scale=scale*k end
+  end
   local grow=self.reduced and 1 or math.min(1,(self.held-Tooltip.DELAY)/Tooltip.GROW)
   return {x=x,y=y,w=w,h=h,label=b.label,textScale=scale,scale=0.85+0.15*grow}
 end

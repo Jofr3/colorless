@@ -11,7 +11,10 @@ local Modal=require('ui.modal')
 local Dyna=require('ui.dynatext')
 local Energy=require('ui.energy')
 local Popup=require('ui.popup')
-local popupOffset=require('ui.sim_shared').popupOffset
+local Shared=require('ui.sim_shared')
+local popupOffset,clears=Shared.popupOffset,Shared.clears
+local Display=require('ui.display')
+local Size=require('ui.interface_size')
 local Simulator={}
 local g=love.graphics
 -- Card faces: the scan when the browser cache has it, otherwise a pixel
@@ -156,6 +159,62 @@ function Simulator:drawPrizes(owner,rw)
     end
   end
 end
+-- The hover popup's box over its card at `scale` times its size: centred on the card inside the
+-- table, above it (below a card near the top edge or in the opponent's hand), on the board.
+local function hoverPlace(self,c,w,h)
+  local ch=D.H*c.baseScale*c.motion.VT.scale
+  local below=c.y<0.8*165 or (c.item.owner=='opponent' and c.item.zone=='hand')
+  local px=c.x-w/2
+  px=math.max(self.L.table.x+4,math.min(self.boardW-w-4,px))
+  local py=below and c.y+ch/2+10 or c.y-ch/2-(c.lift or 0)-h-10
+  if py<4 then py=c.y+ch/2+10 end
+  if py+h>self.boardH-4 then py=self.boardH-4-h end
+  return px,py
+end
+-- Where the hover popup draws and how large (x, y, w, h, scale). Interface Size grows it as a whole
+-- (audit FU1) as far as it stays on the table, off its card and off every control it cleared at
+-- 100%.
+function Simulator:hoverPopup()
+  local c,box=self.popup,self.popupBox
+  local x,y=hoverPlace(self,c,box.w,box.h)
+  local base={x=x,y=y,w=box.w,h=box.h,scale=1}
+  local factor=Display.tableText
+  if factor==1 then return base end
+  local hw,hh=c:halfExtents()
+  local card={x=c.x-hw,y=c.y-hh,w=2*hw,h=2*hh}
+  local function placed(k)
+    local w,h=box.w*k,box.h*k
+    local px,py=hoverPlace(self,c,w,h)
+    return {x=px,y=py,w=w,h=h,scale=k}
+  end
+  local k=Size.grow(factor,function(k)
+    local r=placed(k)
+    return r.x>=self.L.table.x+4-1e-9 and r.x+r.w<=self.boardW-4+1e-9 and r.y>=4-1e-9 and r.y+r.h<=self.boardH-4+1e-9
+      and (Size.overlaps(base,card) or not Size.overlaps(r,card)) and clears(self.controls,r,base)
+  end)
+  return k==1 and base or placed(k)
+end
+-- The away text's scale over the board centre: Interface Size's step (audit FU1) as far as both
+-- lines stay narrower than the table and cover no control they cleared at 100%.
+function Simulator:awayScale()
+  local factor=Display.tableText
+  if factor==1 then return 1 end
+  local a,L=self.away,self.L
+  local function boxes(k)
+    local out={}
+    for _,line in ipairs({{a.title,-22},{a.detail,22}}) do
+      local t=line[1]
+      out[#out+1]={x=L.banner.x-t.W*k/2,y=L.banner.y+line[2]*k-t.H*k/2,w=t.W*k,h=t.H*k}
+    end
+    return out
+  end
+  local base=boxes(1)
+  return Size.grow(factor,function(k)
+    if math.max(a.title.W,a.detail.W)*k>L.table.w-40 then return false end
+    local grown=boxes(k)
+    return clears(self.controls,grown[1],base[1],base[2]) and clears(self.controls,grown[2],base[1],base[2])
+  end)
+end
 function Simulator:draw(shaders)
   g.push();g.translate(self.ox,self.oy);g.scale(self.zoom)
   local L=self.L;local Z=L.zones;local rw=self.boardW
@@ -252,20 +311,25 @@ function Simulator:draw(shaders)
   self.tooltip:draw(self.boardW,self.boardH,rw)
   -- Hover popup.
   if self.popup and self.popupBox and not self.overlay then
-    local c=self.popup
-    local box=self.popupBox
-    local ch=D.H*c.baseScale*c.motion.VT.scale
-    local below=c.y<0.8*165 or (c.item.owner=='opponent' and c.item.zone=='hand')
-    local px=c.x-box.w/2
-    px=math.max(L.table.x+4,math.min(self.boardW-box.w-4,px))
-    local py=below and c.y+ch/2+10 or c.y-ch/2-(c.lift or 0)-box.h-10
-    if py<4 then py=c.y+ch/2+10 end
-    if py+box.h>self.boardH-4 then py=self.boardH-4-box.h end
-    box.draw(px,py)
+    local hover=self:hoverPopup()
+    if hover.scale==1 then self.popupBox.draw(hover.x,hover.y)
+    else
+      g.push();g.translate(hover.x,hover.y);g.scale(hover.scale);g.translate(-hover.x,-hover.y)
+      self.popupBox.draw(hover.x,hover.y)
+      g.pop()
+    end
   end
   if self.away then
-    self.away.title:draw(L.banner.x,L.banner.y-22,rw)
-    self.away.detail:draw(L.banner.x,L.banner.y+22,rw)
+    local s=self:awayScale()
+    if s==1 then
+      self.away.title:draw(L.banner.x,L.banner.y-22,rw)
+      self.away.detail:draw(L.banner.x,L.banner.y+22,rw)
+    else
+      for _,line in ipairs({{self.away.title,-22},{self.away.detail,22}}) do
+        local y=L.banner.y+line[2]*s
+        g.push();g.translate(L.banner.x,y);g.scale(s);line[1]:draw(0,0,rw,nil,L.banner.x);g.pop()
+      end
+    end
   end
   self.fx:draw(rw)
   if self.overlay and not self.peek then
