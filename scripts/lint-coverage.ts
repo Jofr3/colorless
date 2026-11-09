@@ -3,7 +3,7 @@
  * `bun run lint:coverage`: fails if any source file is invisible to Biome. It passes every tracked
  * script file to Biome in one run and compares the checked-file count, since Biome exits 0 on paths
  * it skips. Files over `files.maxSize` are checked against `biome.json` directly, because Biome
- * counts but refuses them. JSON files are not covered.
+ * counts but refuses them. JSON files are not covered, nor are the GENERATED files.
  */
 
 import { spawnSync } from "node:child_process";
@@ -13,6 +13,13 @@ import { localBin, REPO_ROOT, repoPath, repoSourceFiles } from "./lib/repo";
 
 /** Extensions Biome lints that hold hand-written source in this repo. */
 const EXTENSIONS = ["ts", "tsx", "mts", "cts", "js", "jsx", "mjs", "cjs"];
+
+/** Generated files that biome.json's `files.ignore` lists on purpose: nobody edits them, and a
+    check:static step checks them against their generator instead. */
+const GENERATED = new Set([
+  // `wrangler types` output (bun run --cwd apps/api types), checked by scripts/worker-types.ts.
+  "apps/api/worker-configuration.d.ts",
+]);
 
 /** Cap the per-file drill-down so a wholly-empty `include` prints a page, not a book. */
 const MAX_NAMED = 25;
@@ -69,7 +76,7 @@ function dirOf(file: string): string {
   return i === -1 ? "." : file.slice(0, i);
 }
 
-const files = repoSourceFiles(EXTENSIONS);
+const files = repoSourceFiles(EXTENSIONS).filter((f) => !GENERATED.has(f));
 if (files.length === 0) fail("lint-coverage: found no source files at all — that cannot be right.");
 
 // Size first: a refused file is still COUNTED below, so the count can never

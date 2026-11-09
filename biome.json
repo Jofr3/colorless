@@ -23,7 +23,8 @@
       "**/dist",
       "public",
       "**/*.tsbuildinfo",
-      "**/.wrangler"
+      "**/.wrangler",
+      "apps/api/worker-configuration.d.ts"
     ]
   },
   "formatter": {

@@ -4,8 +4,9 @@
  * workerd and its per-platform binaries. A second copy means the D1 test harness (direct
  * `miniflare`) and `wrangler dev`/deploy (wrangler's own miniflare) run different workerd builds,
  * and every install carries another 120 MB+ binary. Dependabot's wrangler bump #6 did exactly
- * that: it nested `wrangler/miniflare` beside the exact `miniflare` pin. Bump wrangler, miniflare
- * and @cloudflare/workers-types together (dependency audit VER1). A step of `check:static`.
+ * that: it nested `wrangler/miniflare` beside the exact `miniflare` pin. Bump wrangler and miniflare
+ * together, then regenerate the Worker's types (dependency audit VER1, VER8). A step of
+ * `check:static`.
  *
  *   bun scripts/lock-check.ts
  */
@@ -67,8 +68,8 @@ export function lockCheckReport(lock: string): Report {
           ([name, versions]) =>
             `  ${name}: ${[...versions].map(([v, paths]) => `${v} (${paths.join(", ")})`).join("; ")}`,
         ),
-        "Pin apps/api's miniflare to the version wrangler depends on, and bump wrangler, miniflare",
-        "and @cloudflare/workers-types together.",
+        "Pin apps/api's miniflare to the version wrangler depends on, bump wrangler and miniflare",
+        "together, and regenerate the Worker's types (`bun run --cwd apps/api types`).",
       ],
     };
   const versions = (name: string) => [...(found.get(name)?.keys() ?? [])].join("");

@@ -273,9 +273,14 @@ only the conclusion.
   tests, `src/testing/` or the bun-run ingest file helpers) may not use `process`, `Buffer`,
   `require` or the other Node globals (a Biome override): the Worker runs without `nodejs_compat`.
 - `scripts/lock-check.ts` (in `check:static`) fails when bun.lock resolves more than one miniflare
-  or workerd version. Bump wrangler, apps/api's exact miniflare pin (the miniflare version that
-  wrangler itself depends on) and @cloudflare/workers-types together. The D1 harness passes its
-  options through `convertV4MiniflareOptions`.
+  or workerd version. Bump wrangler and apps/api's exact miniflare pin (the miniflare version that
+  wrangler itself depends on) together, then regenerate the Worker's types (below). The D1 harness
+  passes its options through `convertV4MiniflareOptions`.
+- `scripts/worker-types.ts` (in `check:static`) fails when `apps/api/worker-configuration.d.ts`
+  is stale: it runs `wrangler types --check` with the `types` script's flags, and checks the
+  header records that script's command. apps/api and the seam suites take the Workers runtime and
+  the bindings from that file (no @cloudflare/workers-types); `src/env.ts` reads each binding's
+  type from its `GeneratedEnv` and fails to compile on a binding it does not list.
 - **`bun run bench`** (`scripts/bench.ts`) times the engine over seeded games on the committed
   real-card pool `packages/engine/src/fixtures/benchPool.json` (regenerate with `bun scripts/bench/write-pool.ts`):
   applyAction per action and per action type, two redactions, logFromEvents, legality probes and a
@@ -531,7 +536,7 @@ meant to change dependencies changes bun.lock (dependency audit, DEP-P1).
     (check:static) fails a second miniflare or workerd in the lock.
   A new exact pin adds its line and decision here.
 - A dependency declared in two workspaces carries the same spec there
-  (wrangler and @cloudflare/workers-types, today). `bun run deps:check` lists
+  (wrangler, today). `bun run deps:check` lists
   any that differ.
 - **The root owns the test and type tooling.** vitest, typescript, biome and
   @types/node are declared only in the root package.json, although every
@@ -625,6 +630,12 @@ Cloudflare's compatibility-flags changelog between the old and the new date.
 Then the gates: `bun run check` (its d1 suites run the new workerd), `bun run
 e2e`, and a `wrangler dev` smoke (`bun run dev:all`: sign in, open a deck,
 play a few turns). Record the move in `docs/decisions.md`.
+
+**Worker types.** `apps/api/worker-configuration.d.ts` is generated: regenerate
+it with `bun run --cwd apps/api types` whenever apps/api/wrangler.jsonc, its
+`compatibility_date` or wrangler change, and commit it with that change
+(`check:static` fails a stale one). Never edit it or run a bare `wrangler types`,
+which reads `.dev.vars` (DEP-P3b).
 
 ## Working beside other agents
 
