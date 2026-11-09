@@ -4,6 +4,7 @@ import {
   createDeckSaver,
   MAX_RATE_LIMIT_RETRIES,
   MAX_TRANSIENT_RETRIES,
+  MIN_SAVE_SPACING_MS,
   outcomeUnknown,
   rateLimitRetryDelay,
   type SaveStatus,
@@ -93,7 +94,12 @@ describe("createDeckSaver", () => {
       .mockReturnValueOnce(first.promise)
       .mockResolvedValue(undefined);
     const recorder = statusRecorder();
-    const saver = createDeckSaver<Snap>({ save, delay: 600, onStatus: recorder.onStatus });
+    const saver = createDeckSaver<Snap>({
+      save,
+      delay: 600,
+      spacing: 0,
+      onStatus: recorder.onStatus,
+    });
 
     saver.schedule({ v: 1 });
     await vi.advanceTimersByTimeAsync(600);
@@ -163,7 +169,12 @@ describe("createDeckSaver", () => {
       .mockReturnValueOnce(first.promise)
       .mockResolvedValue(undefined);
     const recorder = statusRecorder();
-    const saver = createDeckSaver<Snap>({ save, delay: 600, onStatus: recorder.onStatus });
+    const saver = createDeckSaver<Snap>({
+      save,
+      delay: 600,
+      spacing: 0,
+      onStatus: recorder.onStatus,
+    });
 
     saver.schedule({ v: 1 });
     await vi.advanceTimersByTimeAsync(600);
@@ -227,7 +238,7 @@ describe("createDeckSaver", () => {
       .fn<(snapshot: Snap) => Promise<void>>()
       .mockReturnValueOnce(first.promise)
       .mockResolvedValue(undefined);
-    const saver = createDeckSaver<Snap>({ save, delay: 600, initial: { v: 1 } });
+    const saver = createDeckSaver<Snap>({ save, delay: 600, spacing: 0, initial: { v: 1 } });
 
     saver.schedule({ v: 2 });
     await vi.advanceTimersByTimeAsync(600);
@@ -261,7 +272,7 @@ describe("createDeckSaver", () => {
       .fn<(snapshot: Snap) => Promise<void>>()
       .mockReturnValueOnce(first.promise)
       .mockResolvedValue(undefined);
-    const saver = createDeckSaver<Snap>({ save, delay: 600 });
+    const saver = createDeckSaver<Snap>({ save, delay: 600, spacing: 0 });
 
     saver.schedule({ v: 1 });
     await vi.advanceTimersByTimeAsync(600);
@@ -312,6 +323,52 @@ describe("createDeckSaver", () => {
 
     expect(save).toHaveBeenCalledTimes(1);
     expect(recorder.statuses).toEqual(["saving"]);
+  });
+});
+
+describe("the spacing between save starts", () => {
+  /** How many saves a minute of edits `gap` ms apart sends, each save taking 150 ms. */
+  async function savesPerMinute(gap: number, spacing?: number) {
+    const save = vi.fn(() => new Promise<void>((resolve) => setTimeout(resolve, 150)));
+    const saver = createDeckSaver<number>({ save, initial: 0, spacing });
+    for (let t = 0, n = 1; t < 60_000; t += gap, n++) {
+      saver.schedule(n);
+      await vi.advanceTimersByTimeAsync(gap);
+    }
+    return save.mock.calls.length;
+  }
+
+  it("keeps steady editing at 60 saves a minute or fewer, the API's deck write limit", async () => {
+    expect(MIN_SAVE_SPACING_MS).toBeGreaterThanOrEqual(1000);
+    // Without it, an edit every 650 ms sends a save after each one.
+    expect(await savesPerMinute(650, 0)).toBeGreaterThan(90);
+    for (const gap of [650, 700, 800]) expect(await savesPerMinute(gap)).toBeLessThanOrEqual(60);
+    expect(await savesPerMinute(1500)).toBe(40);
+  });
+
+  it("holds a save until a second after the last one started, edits coalescing meanwhile", async () => {
+    const save = vi.fn(async (_: Snap) => {});
+    const saver = createDeckSaver<Snap>({ save, delay: 600 });
+    saver.schedule({ v: 1 });
+    await vi.advanceTimersByTimeAsync(600);
+    expect(save).toHaveBeenCalledTimes(1);
+    saver.schedule({ v: 2 });
+    await vi.advanceTimersByTimeAsync(200);
+    saver.schedule({ v: 3 });
+    await vi.advanceTimersByTimeAsync(799);
+    expect(save).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(save.mock.calls).toEqual([[{ v: 1 }], [{ v: 3 }]]);
+  });
+
+  it("does not hold a flush, which the page leaving or hiding sends", async () => {
+    const save = vi.fn(async (_: Snap) => {});
+    const saver = createDeckSaver<Snap>({ save, delay: 600 });
+    saver.schedule({ v: 1 });
+    await vi.advanceTimersByTimeAsync(600);
+    saver.schedule({ v: 2 });
+    saver.flush();
+    expect(save.mock.calls).toEqual([[{ v: 1 }], [{ v: 2 }]]);
   });
 });
 
@@ -490,7 +547,12 @@ describe("a rate-limited save", () => {
     save.mockResolvedValueOnce(undefined);
     for (let i = 0; i < MAX_RATE_LIMIT_RETRIES; i++) save.mockRejectedValueOnce(limited(1));
     const recorder = statusRecorder();
-    const saver = createDeckSaver<Snap>({ save, delay: 600, onStatus: recorder.onStatus });
+    const saver = createDeckSaver<Snap>({
+      save,
+      delay: 600,
+      spacing: 0,
+      onStatus: recorder.onStatus,
+    });
 
     saver.schedule({ v: 1 });
     await vi.advanceTimersByTimeAsync(600 + MAX_RATE_LIMIT_RETRIES * 1_000);

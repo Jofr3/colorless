@@ -19,6 +19,7 @@ import { DEFAULT_FILTERS, type Filters } from "../decks/poolFilter";
 import { formatById } from "@colorless/engine/rules";
 import { ENERGY_TYPES, type BuilderCard } from "../decks/cards";
 import {
+  cardIndexLoaded,
   filtersToCardsQuery,
   indexedCard,
   toBuilderCard,
@@ -68,6 +69,9 @@ const SEARCH_DEBOUNCE_MS = 250;
 const SEARCH_BUSY_MS = 150;
 const MAX_IMPORT_COPIES = 99;
 const MAX_CACHED_PAGES = 40;
+/** How soon after the Back press that armed it a second one may leave unsaved: a double click is
+    not two decisions (the Leave match lockout, sim_overlay.lua). */
+const LEAVE_LOCKOUT_MS = 350;
 /** Browser data adapter. Lua owns the editor, its dialogs, and card interaction. */
 /** Messages for a failed load, the ones the Retry button answers. */
 const LOAD_FAILED = {
@@ -83,6 +87,8 @@ const MESSAGE = {
   chooseDeck: "Choose a deck from your library.",
   deckConflict: "Deck changed elsewhere; reloaded the latest.",
   saveFailed: "Could not save. Your edits are kept. Retry.",
+  leaveUnsaved: "Not saved. Press Back again to leave anyway.",
+  deckGone: "This deck no longer exists. Export to keep it.",
   resolveBeforeAdding: "Resolve unavailable cards before adding more.",
   cardsLoading: "Deck cards are still loading.",
   copyLimit: "This card has reached its copy limit.",
@@ -166,10 +172,12 @@ function catalogOptions() {
   return Promise.all([loadFacets(), loadSets(), loadSeries()]);
 }
 
-/** Whether the builder serves `page` of `query` from the card index rather than GET /cards: any
-    page the API would not cache. */
+/** Whether the builder serves `page` of `query` from the card index rather than GET /cards: every
+    page once the index has loaded, as a KV miss on a cached page recounts much of the table; before
+    then, any page the API would not cache. */
 function fromIndex(query: CardsQueryParams, page: number): boolean {
   return (
+    cardIndexLoaded() ||
     page > MAX_CACHED_CARDS_PAGE ||
     UNCACHED_CATALOG_PARAMS.some((param) => query[param] !== undefined)
   );
@@ -223,6 +231,12 @@ export class LuaBuilder {
   private acknowledged = "";
   private dirty = false;
   private leaving = false;
+  /** Set once a save is reported failed, until one lands: Back then arms a leave without saving. */
+  private saveFailed = false;
+  /** When a Back press after a failed save armed the next one to leave without saving. */
+  private leaveArmedAt?: number;
+  /** Set once a save answered 404: the deck is gone, or no longer this account's. */
+  private deckGone = false;
   /** Set while persistNow() fires a save, which then outlives the page. */
   private keepalive = false;
   private importing = false;
@@ -280,8 +294,11 @@ export class LuaBuilder {
       return card ? [{ card, quantity }] : [];
     });
   }
+  /** What a save sends, and what the saves are keyed by. A name blank mid-edit is sent as the kept
+      name, which the server holds anyway, so a lost save made then is still known as this tab's. */
   snapshot() {
-    return toSnapshot(this.name, this.format, this.entries, this.cover);
+    const snapshot = toSnapshot(this.name, this.format, this.entries, this.cover);
+    return snapshot.name ? snapshot : { ...snapshot, name: this.keptName };
   }
   options(): Option[] {
     return [
@@ -571,6 +588,9 @@ export class LuaBuilder {
       this.acknowledged = JSON.stringify(initial);
       this.dirty = false;
       this.saveStatus = "";
+      this.saveFailed = false;
+      this.leaveArmedAt = undefined;
+      this.deckGone = false;
       // Saves are serialized, so each one is made from the version the previous one left.
       let version = data.version;
       // The saves since the last acknowledged one that got no answer: the server may hold any of them.
@@ -584,7 +604,7 @@ export class LuaBuilder {
       this.saver = createDeckSaver({
         initial,
         save: async (snapshot) => {
-          if (!live() || !this.user) throw new Error("Session changed");
+          if (!live() || !this.user || this.deckGone) throw new Error("Session changed");
           const key = JSON.stringify(snapshot);
           try {
             let result: SavedDeck;
@@ -614,6 +634,7 @@ export class LuaBuilder {
               unconfirmed.add(key);
               if (live()) this.acknowledged = "";
             }
+            if (error instanceof api.ApiError && error.status === 404 && live()) this.onDeckGone();
             // Another tab or device saved first. Its copy wins and this one's unsaved edits go
             // (the user's call, over offering to overwrite). The reload starts a new epoch, which
             // silences this saver's status callback and any save queued behind this one.
@@ -633,6 +654,9 @@ export class LuaBuilder {
           // Its Retry goes with the button: a save tried again says so in the caption instead.
           if (status !== "failed" && this.message === MESSAGE.saveFailed) this.message = "";
           if (status === "saved") {
+            this.saveFailed = false;
+            this.leaveArmedAt = undefined;
+            if (this.message === MESSAGE.leaveUnsaved) this.message = "";
             this.dirty = JSON.stringify(this.snapshot()) !== this.acknowledged;
             if (this.leaving && !this.dirty) {
               this.exit();
@@ -644,9 +668,11 @@ export class LuaBuilder {
             }, 2200);
           }
           if (status === "failed") {
+            this.saveFailed = true;
             this.pendingExit = undefined;
             this.leaving = false;
-            this.message = MESSAGE.saveFailed;
+            this.message =
+              this.leaveArmedAt === undefined ? MESSAGE.saveFailed : MESSAGE.leaveUnsaved;
           }
           this.emit();
         },
@@ -787,8 +813,8 @@ export class LuaBuilder {
       this.prefetch(catalog);
     }
   }
-  /** The last page the pager reaches. Only pages the API caches are requested from it (see
-      `fromIndex`), so every result pages to its end. */
+  /** The last page the pager reaches. Only pages the API caches are requested from it, and the
+      card index answers the rest (see `fromIndex`), so every result pages to its end. */
   private lastPage(): number {
     return Math.max(1, Math.ceil(this.total / this.size));
   }
@@ -796,11 +822,11 @@ export class LuaBuilder {
     const query = filtersToCardsQuery(this.filters, formatById(this.format));
     return { query, size: this.size, key: JSON.stringify([query, this.size]) };
   }
-  /** One request per page and query for the pages the API caches in KV; every other page comes
-      from the card index, searched once per query in the browser. An uncached page (free text, an
-      HP bound, or past MAX_CACHED_CARDS_PAGE) would read much of the table and spend the API's
-      per-address search limit, which brisk paging would exhaust. `fresh` refetches a cached
-      page. */
+  /** Until the card index has loaded, one request per page and query for the pages the API caches
+      in KV; every other page comes from the card index, searched once per query in the browser.
+      An uncached page (free text, an HP bound, or past MAX_CACHED_CARDS_PAGE) would read much of
+      the table and spend the API's per-address search limit, which brisk paging would exhaust.
+      `fresh` refetches a cached page. */
   private fetchPage(catalog: Catalog, page: number, fresh = false): Promise<CatalogPage> {
     const { query, key } = catalog;
     if (key !== this.pageKey) {
@@ -826,7 +852,7 @@ export class LuaBuilder {
     if (key === this.pageKey) this.pageRequests.set(page, request);
     return request;
   }
-  /** A free-text query's page, sliced from every match the card index finds for it. */
+  /** A page sliced from every match the card index finds for its query. */
   private indexPage({ query, size, key }: Catalog, page: number): Promise<CatalogPage> {
     if (this.indexMatches?.key !== key) {
       const entry = { key, cards: loadCardIndex().then((loaded) => searchCards(loaded, query)) };
@@ -872,9 +898,9 @@ export class LuaBuilder {
       }
   }
   private changed(message = "") {
-    this.message = message;
+    this.message = message || (this.deckGone ? MESSAGE.deckGone : "");
     this.cover = this.snapshot().chosenCoverCardId;
-    this.dirty = JSON.stringify(this.snapshot()) !== this.acknowledged;
+    this.dirty = !this.deckGone && JSON.stringify(this.snapshot()) !== this.acknowledged;
     // An edit made while a failed save waits to be sent again joins that retry.
     this.saveStatus = !this.dirty ? "" : this.saveStatus === "retrying" ? "retrying" : "pending";
     this.saver?.schedule(this.snapshot());
@@ -898,12 +924,42 @@ export class LuaBuilder {
   retrySave() {
     this.saver?.flush();
   }
+  /** A save that answered 404 can never land: saving stops, the edits stay on screen for Export,
+      and Back leaves. */
+  private onDeckGone() {
+    this.saver?.dispose();
+    this.saver = undefined;
+    this.deckGone = true;
+    this.dirty = false;
+    this.saveStatus = "";
+    this.saveFailed = false;
+    this.leaveArmedAt = undefined;
+    this.pendingExit = undefined;
+    this.leaving = false;
+    this.message = MESSAGE.deckGone;
+    this.emit();
+  }
   navigate(done: () => void) {
-    if (this.dirty) {
+    if (this.dirty) this.leaveWhenSaved(done);
+    else done();
+  }
+  /** Sends the edits and leaves once they land. After a failed save, that press also arms the
+      next one to leave without them, so no failure can hold the page. */
+  private leaveWhenSaved(done?: () => void) {
+    if (this.leaveArmedAt !== undefined) {
+      if (Date.now() - this.leaveArmedAt < LEAVE_LOCKOUT_MS) return;
       this.pendingExit = done;
-      this.leaving = true;
-      this.saver?.flush();
-    } else done();
+      this.exit();
+      return;
+    }
+    this.pendingExit = done;
+    this.leaving = true;
+    if (this.saveFailed) {
+      this.leaveArmedAt = Date.now();
+      this.message = MESSAGE.leaveUnsaved;
+      this.emit();
+    }
+    this.saver?.flush();
   }
   private exit() {
     this.leaving = false;
@@ -982,11 +1038,8 @@ export class LuaBuilder {
     await this.search();
   }
   private onLeave() {
-    if (this.dirty) {
-      this.pendingExit = undefined;
-      this.leaving = true;
-      this.saver?.flush();
-    } else this.exit();
+    if (this.dirty) this.leaveWhenSaved();
+    else this.exit();
   }
   private onClose() {
     this.importGeneration++;

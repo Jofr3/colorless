@@ -4,11 +4,12 @@
 // Writes (POST, PATCH, DELETE) are limited by two Workers Rate Limiting bindings (security audit
 // DK1): 60 a minute per account and 180 a minute per address, so fresh accounts from one address
 // do not multiply the budget. The builder's saver (src/decks/deckSaver.ts) waits 600 ms after the
-// last edit and keeps one save in flight, so even nonstop editing sends about one PATCH a second,
-// and a person building a deck pauses to search; creates and deletes are single clicks. 180 leaves
-// room for three people editing flat out behind one address. A refused save is not lost: the
-// client keeps it and retries after a backoff. The bindings bound bursts, not a day: an account
-// at its limit swapping full 200-entry lists still writes about 36,000 rows a minute.
+// last edit, keeps one save in flight, and starts saves at least a second apart, so even nonstop
+// editing in one tab stays within 60 PATCHes a minute (two tabs on one account share it); creates
+// and deletes are single clicks. 180 leaves room for three people editing flat out behind one
+// address. A refused save is not lost: the client keeps it and retries after a backoff. The
+// bindings bound bursts, not a day: an account at its limit swapping full 200-entry lists still
+// writes about 36,000 rows a minute.
 
 import {
   createDeckRequestSchema,
@@ -163,6 +164,12 @@ function deckCardReplacement(
   ] as const;
 }
 
+/** A write's card list in the order reads serve it (selectDeckCards): by card id, byte order, which
+    a plain comparison gives for the ASCII ids writes accept (cardIdSchema). */
+function inCardIdOrder(cards: readonly DeckCard[]): DeckCard[] {
+  return [...cards].sort((a, b) => (a.cardId < b.cardId ? -1 : a.cardId > b.cardId ? 1 : 0));
+}
+
 /** The (already user-scoped) card list of one deck, in stable id order. */
 function selectDeckCards(db: Db, deckId: string) {
   return db
@@ -298,7 +305,7 @@ deckRoutes.post("/", ...deckWriter, validate("json", createDeckRequestSchema), a
   if (row === undefined) {
     return deckLimitReached();
   }
-  return c.json(deckSchema.parse(mapDeckRow(row, body.cards)), 201);
+  return c.json(deckSchema.parse(mapDeckRow(row, inCardIdOrder(body.cards))), 201);
 });
 
 deckRoutes.patch("/:id", ...deckWriter, validate("json", patchDeckRequestSchema), async (c) => {
@@ -387,7 +394,7 @@ deckRoutes.patch("/:id", ...deckWriter, validate("json", patchDeckRequestSchema)
   const row = updated[0];
   return row === undefined
     ? refusedPatchResponse(c, db, deckId, user.id)
-    : c.json(deckSchema.parse(mapDeckRow(row, body.cards)));
+    : c.json(deckSchema.parse(mapDeckRow(row, inCardIdOrder(body.cards))));
 });
 
 deckRoutes.delete("/:id", ...deckWriter, async (c) => {

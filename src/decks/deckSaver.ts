@@ -59,11 +59,18 @@ export function outcomeUnknown(error: unknown): boolean {
   return !(error instanceof ApiError) || error.status >= 500;
 }
 
+/** The saver's default spacing between save starts: at most 60 a minute. */
+export const MIN_SAVE_SPACING_MS = 1000;
+
 export interface DeckSaverOptions<T> {
   /** Perform the save (the PATCH). Rejections surface as status "failed". */
   save: (snapshot: T) => Promise<unknown>;
   /** Debounce window in ms after the last schedule(). Default 600. */
   delay?: number;
+  /** The least time in ms from one save's start to the next one's, so steady editing stays
+      under the API's 60 deck writes a minute. A flush does not wait for it. Default
+      MIN_SAVE_SPACING_MS. */
+  spacing?: number;
   /** What the server currently holds — seeds the no-op check so the first
       schedule() of the just-loaded state doesn't fire a save. */
   initial?: T;
@@ -95,6 +102,7 @@ export interface DeckSaver<T> {
 
 export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
   const delay = options.delay ?? 600;
+  const spacing = options.spacing ?? MIN_SAVE_SPACING_MS;
   const serialize = options.serialize ?? ((snapshot: T) => JSON.stringify(snapshot));
   const retryDelay = options.retryDelay ?? saveRetryDelay;
 
@@ -107,6 +115,8 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
   /** Rejections in a row, and the time before which a backed-off save may not fire. */
   let rejections = 0;
   let notBefore = 0;
+  /** When the last save started. */
+  let lastStart = Number.NEGATIVE_INFINITY;
 
   const clearTimer = () => {
     if (timer !== null) {
@@ -115,13 +125,14 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
     }
   };
 
-  const fire = () => {
+  /** `flushed` skips the spacing, for a save the page is leaving or hiding behind. */
+  const fire = (flushed = false) => {
     clearTimer();
     if (inFlight || pending === null) return;
     // Backing off: a flush or a newer edit waits out the wait rather than being refused again.
-    const wait = notBefore - Date.now();
+    const wait = Math.max(notBefore, flushed ? 0 : lastStart + spacing) - Date.now();
     if (wait > 0) {
-      timer = setTimeout(fire, wait);
+      timer = setTimeout(() => fire(), wait);
       return;
     }
     const { snapshot, key } = pending;
@@ -134,6 +145,7 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
       return;
     }
     inFlight = true;
+    lastStart = Date.now();
     // A retry goes on saying "retrying", which its failed attempt reported.
     if (!disposed && rejections === 0) options.onStatus?.("saving");
     options.save(snapshot).then(
@@ -172,7 +184,7 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
           // newer edits coalescing into that one retry.
           notBefore = Date.now() + wait;
           clearTimer();
-          timer = setTimeout(fire, wait);
+          timer = setTimeout(() => fire(), wait);
           options.onStatus?.("retrying", error);
           return;
         }
@@ -195,11 +207,11 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
       }
       pending = { snapshot, key };
       clearTimer();
-      timer = setTimeout(fire, delay);
+      timer = setTimeout(() => fire(), delay);
     },
     flush() {
       if (disposed) return;
-      if (pending !== null) fire();
+      if (pending !== null) fire(true);
       else clearTimer();
     },
     idle() {

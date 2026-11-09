@@ -264,6 +264,12 @@ export function loadCardIndex(
   return loadedIndex.index;
 }
 
+/** Whether an index has finished loading, so a search of it needs no request (or one the browser's
+    HTTP cache answers, once INDEX_REUSE_MS has passed). */
+export function cardIndexLoaded(): boolean {
+  return settledIndex !== undefined;
+}
+
 /** Drop the loaded index, so the next search fetches it again. */
 export function forgetCardIndex(): void {
   loadedIndex = undefined;
