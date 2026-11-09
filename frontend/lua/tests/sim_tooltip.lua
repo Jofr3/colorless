@@ -148,8 +148,17 @@ sim:openOptions();run(1/60);check(not shown(),'An overlay over the table hides t
 -- Placement where above does not fit: below, then beside, always inside the board.
 local Tooltip=require('ui.tooltip')
 local function placed(b) local x,y=Tooltip.place(b,100,30,480,850);return {x=x,y=y,w=100,h=30} end
+local open={x=200,y=400,w=44,h=44}
+local box=placed(open);check(clear(box,open) and box.y<open.y and box.x+box.w/2==open.x+open.w/2,'With room, it sits centred above its control, clear of the face')
+-- A card's covered box, as the tooltip keeps clear of it: the face's size, zoomed and turned.
+local D=require('ui.card_dimensions')
+local card=Card.new({id='x',name='X'},1);card:place(100,100,1)
+local hw,hh=card:halfExtents()
+check(math.abs(hw-D.TILE_W*card.unit/2)<1e-9 and math.abs(hh-D.TILE_H*card.unit/2)<1e-9,'An upright card covers its face')
+card.motion.VT.scale=1.2;card.angle=math.pi/2;hw,hh=card:halfExtents()
+check(math.abs(hw-1.2*D.TILE_H*card.unit/2)<1e-6 and math.abs(hh-1.2*D.TILE_W*card.unit/2)<1e-6,'A zoomed, turned card covers its zoomed, turned face')
 local top={x=0,y=2,w=44,h=44}
-local box=placed(top);check(box.y>=top.y+top.h+3 and box.x==4,'A control at the top edge gets its tooltip below, inside the left edge')
+box=placed(top);check(box.y>=top.y+top.h+3 and box.x==4,'A control at the top edge gets its tooltip below, inside the left edge')
 local tall={x=10,y=4,w=44,h=840}
 box=placed(tall);check(box.x>=tall.x+tall.w and clear(box,tall) and box.y>=4,'A control with no room above or below gets it on its right')
 local right={x=430,y=4,w=46,h=840}
