@@ -39,9 +39,11 @@ import { LOG_CHUNK, MatchStore } from "./matchStore";
 
 let h: LobbyHarness;
 let warn: MockInstance<typeof console.warn>;
+let info: MockInstance<typeof console.log>;
 
 beforeEach(() => {
   warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  info = vi.spyOn(console, "log").mockImplementation(() => {});
   h = createLobbyHarness({
     seed: drbgSeed(42),
     displayNames: new Map([
@@ -63,9 +65,9 @@ afterEach(() => {
   resetLogThrottle();
 });
 
-/** The fields of every `lobby` log line of `kind` written so far. */
-function logged(kind: string): Record<string, unknown>[] {
-  return warn.mock.calls
+/** The fields of every `lobby` log line of `kind` written so far at `level` (warn by default). */
+function logged(kind: string, level: "warn" | "info" = "warn"): Record<string, unknown>[] {
+  return (level === "warn" ? warn : info).mock.calls
     .map(([line]) => JSON.parse(String(line)) as Record<string, unknown>)
     .filter((line) => line.evt === "lobby" && line.kind === kind);
 }
@@ -345,6 +347,18 @@ describe("lobby abuse — crafted actions (MI3)", () => {
       },
     ]);
   });
+
+  it("LOB7: a throw on another action type is not hidden behind the first one's line", async () => {
+    const { actorSocket } = await matchInTurnOne();
+    const record = await storedRecord();
+    const broken = { ...record, state: { ...record.state, players: {} } } as MatchRecord;
+    await new MatchStore(h.storage).put(broken);
+    h.hibernate();
+    for (const type of ["endTurn", "endTurn", "concede"] as const)
+      await h.send(actorSocket, { kind: "action", action: { type } });
+    expect(actorSocket.framesOf("reject-action")).toHaveLength(3);
+    expect(logged("action_threw").map((line) => line.type)).toEqual(["endTurn", "concede"]);
+  });
 });
 
 describe("lobby abuse — sockets and lifetime (LB2, LB3)", () => {
@@ -469,7 +483,9 @@ describe("lobby abuse — sockets and lifetime (LB2, LB3)", () => {
     expect(h.storage.data.size).toBe(0);
     expect(h.storage.alarm).toBeNull();
     expect(writes).toEqual({ puts: 0, keys: 0, deletes: 2, alarms: wakes - 1 });
-    expect(logged("lobby_wiped")).toMatchObject([{ cause: "inactive", sockets: 1, inGame: false }]);
+    expect(logged("lobby_wiped", "info")).toMatchObject([
+      { cause: "inactive", sockets: 1, inGame: false },
+    ]);
     expect(await h.upgrade()).toEqual({
       kind: "closed",
       code: LOBBY_WS_NOT_FOUND,
@@ -902,7 +918,7 @@ describe("lobby abuse — the audit trail (LB8)", () => {
     h.world.endedSessions.add(sessionIdOf("bo"));
     await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
     for (let i = 0; i <= FRAME_BURST; i++) await h.send(host, "junk");
-    const lines = warn.mock.calls.map(([line]) => String(line));
+    const lines = [...warn.mock.calls, ...info.mock.calls].map(([line]) => String(line));
     expect(lines.length).toBeGreaterThanOrEqual(3);
     const secrets = ["ana", "bo", sessionIdOf("ana"), sessionIdOf("bo"), "deck-ana", "deck-bo"];
     secrets.push(seatSecret("h"), seatSecret("g"));

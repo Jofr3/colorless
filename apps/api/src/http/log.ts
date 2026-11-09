@@ -6,7 +6,16 @@
 
 export type LogFields = Record<string, string | number | boolean | null | undefined>;
 
-/** One `{ evt, kind, ...fields }` line at warn level. */
+// Levels: logInfo for what went as intended (sign-ins, the sweep's counts, a forfeit), logEvent
+// (warn) for a refusal or a degradation the code handled, logError for a failure nothing handled.
+// Saved queries filter on `evt`, so the level only narrows a search.
+
+/** One `{ evt, kind, ...fields }` line at info level, for success and audit lines. */
+export function logInfo(evt: string, kind: string, fields: LogFields = {}): void {
+  console.log(JSON.stringify({ evt, kind, ...fields }));
+}
+
+/** The same line at warn level, for a refusal or a handled degradation. */
 export function logEvent(evt: string, kind: string, fields: LogFields = {}): void {
   console.warn(JSON.stringify({ evt, kind, ...fields }));
 }
@@ -31,7 +40,23 @@ export function logEventThrottled(
   intervalMs = 10 * 60 * 1000,
   now = Date.now(),
 ): void {
-  throttled(logEvent, evt, kind, fields, intervalMs, now);
+  throttled(logEvent, `${evt}:${kind}`, evt, kind, fields, intervalMs, now);
+}
+
+/**
+ * logEventThrottled with a throttle of its own for each `by` value, for a kind whose distinct
+ * causes must not hide each other (one action type the engine throws on, then another). `by` must
+ * come from a fixed vocabulary, since each value keeps an entry for the isolate's life.
+ */
+export function logEventThrottledBy(
+  by: string,
+  evt: string,
+  kind: string,
+  fields: LogFields = {},
+  intervalMs = 10 * 60 * 1000,
+  now = Date.now(),
+): void {
+  throttled(logEvent, `${evt}:${kind}#${by}`, evt, kind, fields, intervalMs, now);
 }
 
 /** logError, throttled like logEventThrottled: for a misconfiguration every request would hit. */
@@ -42,18 +67,18 @@ export function logErrorThrottled(
   intervalMs = 10 * 60 * 1000,
   now = Date.now(),
 ): void {
-  throttled(logError, evt, kind, fields, intervalMs, now);
+  throttled(logError, `${evt}:${kind}`, evt, kind, fields, intervalMs, now);
 }
 
 function throttled(
   log: (evt: string, kind: string, fields: LogFields) => void,
+  key: string,
   evt: string,
   kind: string,
   fields: LogFields,
   intervalMs: number,
   now: number,
 ): void {
-  const key = `${evt}:${kind}`;
   const suppressedKey = `${key}:suppressed`;
   const last = lastLogged.get(key);
   if (last !== undefined && now - last < intervalMs) {

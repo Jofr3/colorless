@@ -29,16 +29,28 @@ const d1 = useTestD1((db) =>
 );
 
 let warn: MockInstance<typeof console.warn>;
+let info: MockInstance<typeof console.log>;
 
 beforeEach(() => {
   warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  info = vi.spyOn(console, "log").mockImplementation(() => {});
   tokenBodies = [];
 });
 
-/** The structured lines logged so far in this test, only those of `kinds` when any are named. */
+/** The kind of each line logged so far in this test at `level`, in order. */
+function kindsAt(level: "info" | "warn"): unknown[] {
+  return (level === "info" ? info : warn).mock.calls.map(([line]) => JSON.parse(String(line)).kind);
+}
+
+/** The structured info and warn lines logged so far in this test, in order, only those of `kinds`
+    when any are named. */
 function logged(...kinds: string[]): Record<string, unknown>[] {
-  return warn.mock.calls
-    .map(([line]) => JSON.parse(String(line)) as Record<string, unknown>)
+  const calls = [info, warn].flatMap((spy) =>
+    spy.mock.calls.map(([line], i) => ({ line, order: spy.mock.invocationCallOrder[i] ?? 0 })),
+  );
+  return calls
+    .sort((a, b) => a.order - b.order)
+    .map(({ line }) => JSON.parse(String(line)) as Record<string, unknown>)
     .filter((line) => kinds.length === 0 || kinds.includes(String(line.kind)));
 }
 
@@ -553,6 +565,7 @@ describe("DELETE /auth/me", () => {
     // The email is free again.
     expect((await register("misty@example.com", "psyduck-789")).status).toBe(201);
     expect(logged()).toContainEqual({ evt: "auth", kind: "account_deleted", account: UNTAGGED });
+    expect(kindsAt("info")).toContain("account_deleted");
     expect(JSON.stringify(logged())).not.toMatch(/misty|starmie/);
   });
 
@@ -1186,6 +1199,13 @@ describe("OAuth identities and verified emails (AU4) and PKCE (AU12)", () => {
       },
     ]);
     expect(logged("login_ok")).toHaveLength(3);
+    expect(kindsAt("info")).toEqual([
+      "oauth_created",
+      "login_ok",
+      "oauth_linked",
+      "login_ok",
+      "login_ok",
+    ]);
   });
 });
 
@@ -1212,6 +1232,7 @@ describe("POST /auth/logout-all (AU7)", () => {
     expect(logged("logout_all")).toEqual([
       { evt: "auth", kind: "logout_all", account: UNTAGGED, sessions: 2 },
     ]);
+    expect(kindsAt("info")).toContain("logout_all");
     // The password still works: only sessions end.
     expect((await login("misty@example.com", "starmie-456")).status).toBe(200);
   });
@@ -1268,6 +1289,15 @@ describe("audit trail (AU10)", () => {
       "logout",
       "registered",
     ]);
+    // Success lines are info; a refused attempt stays warn, so a level filter finds trouble only.
+    expect(kindsAt("info")).toEqual([
+      "registered",
+      "login_ok",
+      "profile_updated",
+      "logout",
+      "registered",
+    ]);
+    expect(kindsAt("warn")).toEqual(["login_failed"]);
     const tags = lines.map((line) => line.account);
     const mistyTag = tags[0];
     expect(mistyTag).toMatch(/^[A-Za-z0-9_-]{12}$/);

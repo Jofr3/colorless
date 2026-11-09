@@ -50,9 +50,11 @@ const STALE_REASON =
 
 let h: LobbyHarness;
 let warn: MockInstance<typeof console.warn>;
+let info: MockInstance<typeof console.log>;
 
 beforeEach(() => {
   warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  info = vi.spyOn(console, "log").mockImplementation(() => {});
   h = createLobbyHarness({
     seed: drbgSeed(42),
     displayNames: new Map([
@@ -72,9 +74,9 @@ afterEach(() => {
   resetLogThrottle();
 });
 
-/** The fields of every `lobby` log line of `kind` written so far. */
-function logged(kind: string): Record<string, unknown>[] {
-  return warn.mock.calls
+/** The fields of every `lobby` log line of `kind` written so far at `level` (warn by default). */
+function logged(kind: string, level: "warn" | "info" = "warn"): Record<string, unknown>[] {
+  return (level === "warn" ? warn : info).mock.calls
     .map(([line]) => JSON.parse(String(line)) as Record<string, unknown>)
     .filter((line) => line.evt === "lobby" && line.kind === kind);
 }
@@ -401,7 +403,7 @@ describe("LobbyDO — the match RNG (MI1)", () => {
     expect(wire).not.toContain(key);
     expect(wire).not.toContain("rngState");
     expect(wire).not.toContain("chacha20");
-    expect(JSON.stringify(warn.mock.calls)).not.toContain(key);
+    expect(JSON.stringify([warn.mock.calls, info.mock.calls])).not.toContain(key);
   });
 });
 
@@ -616,7 +618,7 @@ describe("LobbyDO — disconnects", () => {
     expect(host.last("match")).toEqual(matchFrameFor(over, "p1"));
     expect(snapshotOf(host).guest?.forfeitAt).toBeNull();
     expect(guest.framesOf("match")).toHaveLength(1);
-    expect(logged("forfeit")).toEqual([
+    expect(logged("forfeit", "info")).toEqual([
       { evt: "lobby", kind: "forfeit", lobby: "ABCD", seat: "p2", cause: "abandoned" },
     ]);
 
@@ -625,7 +627,7 @@ describe("LobbyDO — disconnects", () => {
     await fireAlarmsUntil(() => h.storage.data.size === 0);
     expect(h.storage.alarm).toBeNull();
     expect(h.world.now).toBe(emptiedAt + EMPTY_LOBBY_TTL_MS);
-    expect(logged("lobby_wiped")).toMatchObject([{ lobby: "ABCD", inGame: true }]);
+    expect(logged("lobby_wiped", "info")).toMatchObject([{ lobby: "ABCD", inGame: true }]);
     expect((await h.create()).status).toBe(201);
   });
 
@@ -976,7 +978,7 @@ describe("LobbyDO — lobbies stored before seat secrets (LB6)", () => {
     });
     expect(h.storage.data.size).toBe(0);
     expect(h.storage.alarm).toBeNull();
-    expect(logged("lobby_wiped")).toMatchObject([{ lobby: "ABCD", cause: "legacy" }]);
+    expect(logged("lobby_wiped", "info")).toMatchObject([{ lobby: "ABCD", cause: "legacy" }]);
     expect((await h.create()).status).toBe(201);
   });
 

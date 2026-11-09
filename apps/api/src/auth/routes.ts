@@ -27,7 +27,7 @@ import { bindingRefusal, bindingRefuses } from "../http/bindingLimit";
 import { deadline } from "../http/deadline";
 import { clientIpKey } from "../http/clientIp";
 import { chainMentions, errorFields } from "../http/errors";
-import { logError, logErrorThrottled, logEvent, logEventThrottled } from "../http/log";
+import { logError, logErrorThrottled, logEvent, logEventThrottled, logInfo } from "../http/log";
 import { accountTag, logTag } from "../http/logTag";
 import { validate } from "../http/validation";
 import { privateRevalidate } from "../httpCache";
@@ -255,7 +255,7 @@ authRoutes.post("/register", validate("json", registerRequestSchema), async (c) 
     }
     throw error;
   }
-  logEvent("auth", "registered", { account: await accountTag(c.env, row.id) });
+  logInfo("auth", "registered", { account: await accountTag(c.env, row.id) });
   c.header("Set-Cookie", sessionCookie(session.token));
   return c.json(userSchema.parse(mapUserRow(row)), 201);
 });
@@ -319,7 +319,7 @@ authRoutes.post("/login", validate("json", loginRequestSchema), async (c) => {
   if (inserted.meta.changes === 0) {
     return refuseLogin(c, db, attempt.keys, { reason: "credential_changed", account });
   }
-  logEvent("auth", "login_ok", { method: "password", account, rehashed });
+  logInfo("auth", "login_ok", { method: "password", account, rehashed });
   c.header("Set-Cookie", sessionCookie(session.token));
   return c.json(userSchema.parse(mapUserRow(row)));
 });
@@ -378,7 +378,7 @@ authRoutes.patch("/me", requireUser, validate("json", updateProfileRequestSchema
       .update(users)
       .set({ displayName, namePrompt: false })
       .where(eq(users.id, row.id));
-    logEvent("auth", "profile_updated", { account: await accountTag(c.env, row.id) });
+    logInfo("auth", "profile_updated", { account: await accountTag(c.env, row.id) });
   }
   // The updated row, not a re-read: this session owns the only change.
   return c.json(userSchema.parse(mapUserRow({ ...row, displayName, namePrompt: false })));
@@ -447,7 +447,7 @@ authRoutes.delete("/me", requireUser, validate("json", deleteAccountRequestSchem
     return c.json({ error: "invalid password" }, 401);
   }
   // The tag, not the id: it ties the deletion to the account's earlier lines, and names nobody.
-  logEvent("auth", "account_deleted", { account });
+  logInfo("auth", "account_deleted", { account });
   c.header("Set-Cookie", clearedSessionCookie());
   return c.body(null, 204);
 });
@@ -464,7 +464,7 @@ authRoutes.post("/logout", async (c) => {
         .where(eq(sessions.id, sessionId))
         .returning({ userId: sessions.userId });
       if (ended !== undefined) {
-        logEvent("auth", "logout", { account: await accountTag(c.env, ended.userId) });
+        logInfo("auth", "logout", { account: await accountTag(c.env, ended.userId) });
       }
     } catch (error) {
       logError("auth", "logout_failed", errorFields(error));
@@ -480,7 +480,7 @@ authRoutes.post("/logout", async (c) => {
 authRoutes.post("/logout-all", requireUser, async (c) => {
   const user = c.get("user");
   const ended = await drizzle(c.env.DB).delete(sessions).where(eq(sessions.userId, user.id));
-  logEvent("auth", "logout_all", {
+  logInfo("auth", "logout_all", {
     account: await accountTag(c.env, user.id),
     sessions: ended.meta.changes,
   });
@@ -594,9 +594,17 @@ authRoutes.get("/oauth/:provider/callback", async (c) => {
     );
   }
   if (!code || !state || packed === null || packed.state !== state) {
+    // The state checks first: a provider error with a forged state has no code either.
     logEvent("auth", "oauth_state", {
       provider,
-      reason: packed === null ? "no_cookie" : !code ? "no_code" : !state ? "no_state" : "mismatch",
+      reason:
+        packed === null
+          ? "no_cookie"
+          : !state
+            ? "no_state"
+            : packed.state !== state
+              ? "mismatch"
+              : "no_code",
     });
     return c.redirect(oauthFailureRedirect(c.env, packed?.redirect ?? "/?account", "state"), 302);
   }
@@ -644,9 +652,9 @@ authRoutes.get("/oauth/:provider/callback", async (c) => {
   const { user, outcome } = result;
   const account = await accountTag(c.env, user.id);
   if (outcome.kind === "created") {
-    logEvent("auth", "oauth_created", { provider, account });
+    logInfo("auth", "oauth_created", { provider, account });
   } else if (outcome.kind === "linked") {
-    logEvent("auth", "oauth_linked", {
+    logInfo("auth", "oauth_linked", {
       provider,
       account,
       claimed: outcome.claimed,
@@ -661,7 +669,7 @@ authRoutes.get("/oauth/:provider/callback", async (c) => {
   } catch (error) {
     return oauthUnavailable(c, provider, packed.redirect, error);
   }
-  logEvent("auth", "login_ok", { method: "oauth", provider, account });
+  logInfo("auth", "login_ok", { method: "oauth", provider, account });
   c.header("Set-Cookie", sessionCookie(session.token), { append: true });
   return c.redirect(`${appOrigin(c.env)}${packed.redirect}`, 302);
 });

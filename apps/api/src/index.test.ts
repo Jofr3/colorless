@@ -1,5 +1,8 @@
-import { healthResponseSchema } from "@colorless/schema";
-import { describe, expect, it, vi } from "vitest";
+import { createDeckRequestSchema, healthResponseSchema } from "@colorless/schema";
+import { Hono } from "hono";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { resetLogThrottle } from "./http/log";
+import { invalidRequest, MAX_LOGGED_PATHS } from "./http/validation";
 import app from "./index";
 
 describe("GET /health", () => {
@@ -149,5 +152,60 @@ describe("error responses", () => {
       quota: false,
     });
     log.mockRestore();
+  });
+});
+
+describe("diagnostic log lines", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    resetLogThrottle();
+  });
+
+  const lines = (spy: { mock: { calls: unknown[][] } }) =>
+    spy.mock.calls.map(([line]) => JSON.parse(String(line)) as Record<string, unknown>);
+
+  it("logs a validator 400 with its issue paths, never the values or messages", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const res = await app.request("/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "misty-at-example", password: 7, displayName: 3 }),
+    });
+    expect(res.status).toBe(400);
+    expect(lines(warn)).toEqual([
+      {
+        evt: "http",
+        kind: "invalid_request",
+        route: "/auth/register",
+        target: "body",
+        issues: 3,
+        paths: "email,password,displayName",
+      },
+    ]);
+    expect(JSON.stringify(warn.mock.calls)).not.toContain("misty");
+  });
+
+  it("names at most five issue paths", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const cards = Array.from({ length: 8 }, () => ({ cardId: "", count: 0 }));
+    const parsed = createDeckRequestSchema.safeParse({ name: "x", cards });
+    if (parsed.success) throw new Error("expected a failed parse");
+    const probe = new Hono().post("/decks", (c) => invalidRequest(c, "json", parsed.error));
+    expect((await probe.request("/decks", { method: "POST" })).status).toBe(400);
+    const [line] = lines(warn);
+    expect(line?.issues).toBeGreaterThan(MAX_LOGGED_PATHS);
+    expect(String(line?.paths).split(",")).toHaveLength(MAX_LOGGED_PATHS);
+  });
+
+  it("logs a cross-site refusal with the route pattern, not the path the page chose", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const res = await app.request("/decks/0b6c1f9e-1111-4222-8333-944445555666", {
+      method: "DELETE",
+      headers: { Origin: "https://evil.example" },
+    });
+    expect(res.status).toBe(403);
+    expect(lines(warn)).toEqual([
+      { evt: "http", kind: "cross_site_refused", method: "DELETE", route: "/decks/:id" },
+    ]);
   });
 });

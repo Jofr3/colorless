@@ -1,11 +1,11 @@
 // GET /health/db over a real D1: one read of the migrations table wrangler keeps, and a 503 that
-// names nothing when D1 fails.
+// names nothing when D1 fails, while the log line names the error.
 
 import { dbHealthResponseSchema } from "@colorless/schema";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resetLogThrottle } from "./http/log";
 import app from "./index";
-import { migrationFiles, useTestD1 } from "./testing/d1";
+import { failingD1, migrationFiles, useTestD1 } from "./testing/d1";
 
 const d1 = useTestD1();
 
@@ -20,7 +20,20 @@ describe("GET /health/db", () => {
     const res = await app.request("/health/db", {}, d1().env());
     expect(res.status).toBe(503);
     expect(await res.json()).toEqual({ ok: false });
-    expect(warn).toHaveBeenCalledWith('{"evt":"d1","kind":"health_failed"}');
+    expect(warn.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
+      { evt: "d1", kind: "health_failed", error: "Error", cause: "Error", quota: false },
+    ]);
+  });
+
+  it("logs a spent quota as such, so the runbook can tell it from a missing migration", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const res = await app.request("/health/db", {}, d1().env({ DB: failingD1(d1().db) }));
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ ok: false });
+    expect(warn.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
+      { evt: "d1", kind: "health_failed", error: "Error", quota: true },
+    ]);
+    expect(JSON.stringify(warn.mock.calls)).not.toContain("Exceeded");
   });
 
   it("counts the applied migrations, uncached", async () => {
