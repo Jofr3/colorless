@@ -18,6 +18,7 @@ const emptyBucket = { get: async () => null, put: async () => {} };
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe("GET /assets/cards/:cardId/:file for a missing asset", () => {
@@ -34,10 +35,11 @@ describe("GET /assets/cards/:cardId/:file for a missing asset", () => {
     }
   });
 
-  it("does not cache an origin outage", async () => {
+  it.each([503, 429])("does not cache an origin %i", async (status) => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => new Response("", { status: 503 })),
+      vi.fn(async () => new Response("", { status })),
     );
     const res = await app.request(
       "/assets/cards/sv01-004/high.webp",

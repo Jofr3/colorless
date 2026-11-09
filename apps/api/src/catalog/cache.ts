@@ -9,6 +9,10 @@
 // built from the validated query rather than the raw URL: a param the schema does not know, a
 // default spelled out, or a reordered repeat cannot mint a new entry. An empty result is never
 // stored, so values that match nothing cannot spend writes either.
+//
+// A cached route's ETag comes from its KV key, not its body: what one key serves changes only
+// with a new epoch or CACHE_VERSION, which is a new key, and hashing a body as large as the
+// 1.9 MB card index on every hit and 304 costs several ms of CPU.
 
 import { UNCACHED_CATALOG_PARAMS } from "@colorless/schema";
 import type { Context, MiddlewareHandler, Next } from "hono";
@@ -105,6 +109,14 @@ function canonicalPath(c: Context, route: string): string {
   return route.replace(/:(\w+)/g, (_, name: string) => encodeURIComponent(c.req.param(name) ?? ""));
 }
 
+/** The weak ETag of whatever `key` serves, hit or miss, which hono/etag uses instead of a digest
+    of the body. */
+export async function catalogETag(key: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-1", new TextEncoder().encode(key));
+  const hex = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0"));
+  return `W/"${hex.join("")}"`;
+}
+
 /** Cache-aside under the route's path plus `query`; a null query goes straight to the handler. */
 async function cacheAside(
   c: Context<{ Bindings: Env }>,
@@ -123,6 +135,7 @@ async function cacheAside(
     }
     return;
   }
+  const tag = await catalogETag(key);
   const cached = await kv.get(key).catch(() => {
     logEventThrottled("kv", "get_failed", { route });
     return null;
@@ -130,12 +143,14 @@ async function cacheAside(
   if (cached !== null) {
     return c.body(cached, 200, {
       "Content-Type": "application/json",
+      ETag: tag,
       [CACHE_STATUS_HEADER]: "hit",
     });
   }
   await next();
   if (c.res.status === 200) {
     c.res.headers.set(CACHE_STATUS_HEADER, "miss");
+    c.res.headers.set("ETag", tag);
     const body = c.res.clone();
     await afterResponse(
       c,

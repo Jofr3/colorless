@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { resetLogThrottle } from "../http/log";
 import app from "../index";
 import { seedCards, useTestD1 } from "../testing/d1";
-import { catalogCacheKey } from "./cache";
+import { catalogCacheKey, catalogETag } from "./cache";
 import { CATALOG_EPOCH_KEY } from "./epoch";
 
 const d1 = useTestD1((db) =>
@@ -173,6 +173,63 @@ describe("catalog KV cache over D1", () => {
     expect(deferred).toHaveLength(1);
     release();
     await Promise.all(deferred);
+  });
+});
+
+describe("the KV-keyed ETag", () => {
+  /** The text of every input crypto.subtle.digest is handed from here on. */
+  function digestInputs(): string[] {
+    const inputs: string[] = [];
+    const digest = crypto.subtle.digest.bind(crypto.subtle);
+    vi.spyOn(crypto.subtle, "digest").mockImplementation((algorithm, data) => {
+      inputs.push(new TextDecoder().decode(data as Uint8Array));
+      return digest(algorithm, data);
+    });
+    return inputs;
+  }
+
+  it("tags the card index's miss and hit by key and 304s it without hashing the body", async () => {
+    const { kv } = recordingKv({ [CATALOG_EPOCH_KEY]: "e1" });
+    const env = d1().env({ CACHE: kv });
+    const inputs = digestInputs();
+    const miss = await app.request("/cards/index", {}, env);
+    const tag = await catalogETag(keyOf("/cards/index", "", "e1"));
+    expect(miss.headers.get("x-colorless-cache")).toBe("miss");
+    expect(miss.headers.get("etag")).toBe(tag);
+    const hit = await app.request("/cards/index", {}, env);
+    expect(hit.headers.get("x-colorless-cache")).toBe("hit");
+    expect(hit.headers.get("etag")).toBe(tag);
+    const revalidated = await app.request(
+      "/cards/index",
+      { headers: { "If-None-Match": tag } },
+      env,
+    );
+    expect(revalidated.status).toBe(304);
+    expect(await revalidated.text()).toBe("");
+    expect(revalidated.headers.get("etag")).toBe(tag);
+    expect(inputs.length).toBeGreaterThan(0);
+    expect(inputs.every((input) => input === keyOf("/cards/index", "", "e1"))).toBe(true);
+  });
+
+  it("changes with the epoch, so an old tag gets the new body", async () => {
+    const { kv, store } = recordingKv({ [CATALOG_EPOCH_KEY]: "e1" });
+    const env = d1().env({ CACHE: kv });
+    const now = Date.now();
+    const clock = vi.spyOn(Date, "now").mockReturnValue(now);
+    const tag = (await app.request("/facets", {}, env)).headers.get("etag") ?? "";
+    store.set(CATALOG_EPOCH_KEY, "e2");
+    clock.mockReturnValue(now + 61_000);
+    const res = await app.request("/facets", { headers: { "If-None-Match": tag } }, env);
+    expect(res.status).toBe(200);
+    expect(res.headers.get("etag")).toBe(await catalogETag(keyOf("/facets", "", "e2")));
+    expect(res.headers.get("etag")).not.toBe(tag);
+  });
+
+  it("leaves a bypassed response its body digest", async () => {
+    const { kv } = recordingKv({}, { get: [CATALOG_EPOCH_KEY] });
+    const res = await app.request("/facets", {}, d1().env({ CACHE: kv }));
+    expect(res.headers.get("x-colorless-cache")).toBe("bypass");
+    expect(res.headers.get("etag")).toMatch(/^"[0-9a-f]{40}"$/);
   });
 });
 

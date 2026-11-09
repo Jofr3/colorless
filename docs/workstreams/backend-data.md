@@ -150,8 +150,11 @@ routes (§6) mirror lazily, cache-aside: R2 hit → serve; miss → resolve the
 origin base URL from D1, fetch the original from tcgdex, store it in R2,
 respond. Only `assets.tcgdex.net` over https is fetched, and only an `image/*`
 body of the file's type (by magic bytes) up to 5 MB is stored; the allowlist
-is the files a client uses (`high.webp` for cards). An origin 5xx, a network
-error, a broken body or no full answer within 10 s is a 502, never stored. Rationale: a full SV-era backfill is ~10k images — over Worker
+is the files a client uses (`high.webp` for cards). Only an origin 404 or 410
+is a missing image (404, cached an hour); any other non-200 (a 429, 403 or 408
+is logged as `origin_status`), a network error, a broken body or no full answer
+within 10 s is an uncached 502, never stored. An R2 read that throws is logged
+(`r2_get_failed`) and served from the origin as a miss. Rationale: a full SV-era backfill is ~10k images — over Worker
 subrequest limits, slow via CLI puts, and mostly assets nobody views.
 
 A future **Cron Trigger** (stretch) will run small incremental data deltas
@@ -962,7 +965,7 @@ minutes per isolate, carrying a `suppressed` count. Saved queries:
 | `evt = "http"` | `unhandled`: a request that threw (a 500), with the method, route pattern, error and cause names, the SQL without parameters, and `quota: true` when the cause reads as a spent quota. Logged at error level. |
 | `evt = "d1"` | `/health/db` failures, and the daily sweep: one `sweep` line with the rows deleted, or `sweep_failed` (the run also shows as failed under the Worker's Cron Events). `catalog_reads`: each isolate's tally of uncached `/cards` queries, at most one line a minute: `queries`, `rows_read`, and the heaviest query's `max_rows_read` and `max_params` (param names, never values). |
 | `evt = "catalog"` | `rate_limited` / `limiter_error` from `CATALOG_SEARCH_LIMIT` on `/cards`. |
-| `evt = "assets"` | `origin_refused` with a `reason` (`origin_url`, `redirect`, `content_type`, `magic`, `too_large`): the asset mirror would not store what the origin sent. |
+| `evt = "assets"` | `origin_refused` with a `reason` (`origin_url`, `redirect`, `content_type`, `magic`, `too_large`): the asset mirror would not store what the origin sent. `origin_status` with the `status`: the origin answered something other than 200, 404, 410 or a 5xx (a 429, 403 or 408), served as an uncached 502. `r2_get_failed` with the `error` name: an R2 read threw and the image came from the origin. |
 | `evt = "after_response"` | Other deferred work that failed after its response, such as an R2 asset mirror write. |
 
 Every `evt = "lobby"` line carries the lobby's `code` as `lobby`. None carries
@@ -1351,8 +1354,10 @@ GET    /health/db        # one D1 read: {ok:true, migrations:<applied count>} or
 # entries; bump the version prefix whenever a cached shape — or its values for
 # already-ingested rows — changes (catalog/cacheShape.d1.test.ts pins each
 # version's response schemas and card index columns, so a shape change fails
-# until it is bumped); KV get/put/epoch failures log `evt = "kv"`;
-# invalid query params → terse 400 JSON, before KV is touched)
+# until it is bumped); a hit or miss under a key carries a weak ETag hashed from
+# the key, not the body, so a hit or 304 of the 1.9 MB card index hashes no body
+# (a bypass keeps hono/etag's body digest); KV get/put/epoch failures log
+# `evt = "kv"`; invalid query params → terse 400 JSON, before KV is touched)
 GET    /cards            # CardBrief page `{items, page, pageSize, total}`; filters:
                          #   name (substring, case-insensitive), nameExact, category,
                          #   type, rarity, stage, suffix, trainerType, energyType, set,
@@ -1412,7 +1417,9 @@ GET    /facets           # CatalogFacets — the EIGHT filter vocabularies actua
 # Assets — lazy tcgdex→R2 mirror (D9, §3.4); strict :file allowlists and tcgdex-id
 # shaped :cardId/:setId, else 404. Fetches only https://assets.tcgdex.net/ (also
 # after redirects) and stores only an image/* body whose magic bytes match the
-# file type, at most 5 MB; anything else answers as missing (404, logged)
+# file type, at most 5 MB; anything else answers as missing (404, logged). An
+# origin 404/410 is missing (404, max-age=3600); any other non-200 origin status,
+# a network error or a timeout is an uncached 502 (§3.4)
 GET    /assets/cards/:cardId/:file   # high.webp only (the one file the web app shows)
 GET    /assets/sets/:setId/:file     # logo.webp | symbol.webp
 

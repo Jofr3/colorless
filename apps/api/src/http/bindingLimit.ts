@@ -1,7 +1,8 @@
 // Workers Rate Limiting bindings (wrangler.jsonc `ratelimits`) in front of the auth and deck
-// writes. A binding call is free and touches no D1, so a flood is refused before it spends any of
-// the Free plan's rows written. The binding counts per Cloudflare location and approximately,
-// which is enough to bound a flood; exact budgets live in D1 where one is needed (auth/rateLimit).
+// writes and the catalog's scanning reads; the lobby routes share the period. A binding call is
+// free and touches no D1, so a flood is refused before it spends any of the Free plan's rows
+// written. The binding counts per Cloudflare location and approximately, which is enough to bound
+// a flood; exact budgets live in D1 where one is needed (auth/rateLimit).
 
 import type { Context } from "hono";
 import { logEventThrottled } from "./log";
@@ -12,20 +13,21 @@ export const BINDING_PERIOD_SECONDS = 60;
 /**
  * Whether `key` is over `binding`'s budget, counting this request. Without the binding (unit
  * tests), or when it throws, the request is let through and the error logged as
- * `evt, kind = "binding_error"`: a broken limiter must not close sign-in or deck saves, and the
- * D1 sign-in limiter behind the auth binding still fails closed.
+ * `evt, kind = failureKind`: a broken limiter must not close sign-in, deck saves or the catalog,
+ * and the D1 sign-in limiter behind the auth binding still fails closed.
  */
 export async function bindingRefuses(
   binding: RateLimit | undefined,
   key: string,
   evt: string,
   route: string,
+  failureKind = "binding_error",
 ): Promise<boolean> {
   if (binding === undefined) return false;
   try {
     return !(await binding.limit({ key })).success;
   } catch (error) {
-    logEventThrottled(evt, "binding_error", {
+    logEventThrottled(evt, failureKind, {
       route,
       error: error instanceof Error ? error.name : typeof error,
     });
