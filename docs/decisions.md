@@ -1497,3 +1497,41 @@ Phase 3 of the dependency audit (report `tmp/deps/deps-audit.md`), decision id D
 - **zod 4's deprecated `message` parameter (VER13).** The two refinements that used it, `withoutControlChars` (`packages/schema/src/text.ts`) and the empty-patch guard (`packages/schema/src/decks/requests.ts`), now pass `error`. The issues are byte-identical (`{ code: "custom", path: [], message }`). No test pinned either message, so `text.test.ts` and `decks.test.ts` now pin both word for word. The other `message:` keys are `ctx.addIssue` issue objects, which are not deprecated. conventions.md now says to use `{ error }`.
 - **`wrangler types` (VER8) waits for Phase 2's wrangler and workerd bump**, so the generated types come from the new workerd.
 - 6 DEP-P3 mutant rows, all killed. One is killed by running `worker-bundle.ts --check` itself: a dry run without the deploy script's flags goes over the budget.
+
+### 2026-11-09 — Dependency audit Phase 4: an MIT LICENSE, served third-party notices with a Credits button, and love.js 11.4.1 pinned by hash
+
+Phase 4 of the dependency audit (report `tmp/deps/deps-audit.md`) settles licensing and the build's two inputs from outside the repo (decision id DEP-P4). It ships a web release: a new file under `/love/`, a Credits button and a Credits link. The Worker does not change.
+
+- **The Balatro assets stay, credited (TRN1, decision 1).** The build still copies 37 files from the Balatro source tree: 8 shaders, 2 textures, the font, 25 sound effects and the menu music. Nothing is replaced or gated. The notices, both READMEs, `LICENSE` and `assets/branding/SOURCES.md` credit Balatro to LocalThunk, published by Playstack. They also say that the files remain their owners' and are not covered by this repository's licence. The notices add that the Lua interface follows Balatro's own code in places, and that the wordmark is modelled on Balatro's logo (SOURCES.md records that pass 3 edited the original sprite). Nothing claims a permission. m6x11plus is credited to Daniel Linssen (managore), quoting his page (managore.itch.io/m6x11): "free to use with attribution". It is still Balatro's copy of the font.
+- **MIT for the project's own work (decision 2).** `LICENSE` is MIT, `Copyright (c) 2026 Jofr3`. Jofr3 is the dominant git author: 1825 commits, against 624 by Claude. A section under the licence text limits it to the repository's own code and original assets. It names what it does not cover: the Balatro assets, m6x11plus, LÖVE and love.js, TCGdex data and images (with the transition-card scans), and the Pokémon trademarks and artwork. The root package.json has `"license": "MIT"`. No manifest's dependency block changes, and bun.lock is unchanged. No trademark disclaimer existed anywhere. `LICENSE`, the notices and the root README now carry one fan-project line: "not affiliated with, endorsed, sponsored or approved by" Nintendo, Creatures Inc., GAME FREAK inc., The Pokémon Company, LocalThunk or Playstack.
+- **Third-party notices, served (TRN4).** `scripts/third-party-notices.ts`, run by `build.mjs` after the asset manifest, writes `public/love/THIRD-PARTY-NOTICES.txt` (97 KB). Vite copies it to `dist/love/`, and it is served at `/love/THIRD-PARTY-NOTICES.txt?v=<hash>`: versions.json versions it like every `/love/` file, under the year-long immutable cache. Its sections:
+  1. Colorless's LICENSE.
+  2. Balatro, with each copied file listed by kind from build.mjs's own `assets` list.
+  3. m6x11plus.
+  4. TCGdex's MIT licence, and who owns the card artwork.
+  5. The page's npm packages: @noble/ciphers and zod.
+  6. The Worker's packages: @hono/zod-validator, @noble/ciphers, drizzle-orm, hono and zod.
+  7. love.js (MIT, Tanner Rogalsky), read from the installed package.
+  8. LÖVE 11.4. This section has the libraries love.wasm carries that LÖVE's own licence file leaves out (Lua 5.1, SDL2, FreeType's FTL credit, PhysicsFS, Box2D, the Xiph codecs, and the Bitstream Vera licence taken from love.wasm), then LÖVE 11.4's `license.txt` verbatim.
+
+  Package texts are read from node_modules. drizzle-orm's and @hono/zod-validator's tarballs carry no LICENSE, so their repositories' texts are kept in `scripts/notices/` with LÖVE's, TCGdex's and Vera's (`VENDORED` records each source). The file starts with a UTF-8 BOM: Vite's dev server and preview send `text/plain` with no charset. `wrangler dev` sends `text/plain; charset=utf-8`.
+- **The notices cannot fall behind the bundle.** The page's list is the production dependencies of the root, packages/engine and packages/schema. A Vite plugin (`noticed-packages`) fails a build whose bundle carries any other npm package. It runs in CI's vite build too, which has no Lua build. The Worker's list is worker-bundle.ts's `SHIPPED` allowlist (now exported), which `worker-bundle --check` already enforces.
+- **Credits in the app.** Settings' Game tab has a blue Credits button (200×38) under Interface Size, drawn with the existing `Button.draw`. Its activation prints `COLORLESS:credits`. The shell opens the Credits link's versioned href through a new `openTab` port, which calls `window.open` with `opener` cleared and falls back to this tab when blocked. Settings stays open. The native accessible menu gains `<a id="credits-link">` after Settings, and the noscript page shows it too. Screen readers hear "Credits. Opens in a new tab." The e2e stall check now counts 7 live menu links. Screenshots are in `tmp/deps/qa/p4/`.
+- **love.js pinned (VER10, decision 14).** `scripts/love-inputs.ts` pins love.js 11.4.1 and the sha256 of the four files the build runs or copies:
+  - `index.js` 578f3dab…
+  - `src/game.js` 223c6f5c…
+  - `src/compat/love.js` 12db012a…
+  - `src/compat/love.wasm` ecc9e098…
+
+  build.mjs runs it before staging. A different version or hash stops the build, naming each file, with the fix ("reinstall love.js@11.4.1, or update LOVE_JS for a deliberate runtime change"). The 11.5 GitHub build is not taken.
+- **The Balatro tree is recorded (VER10).** `asset-manifest.json` is now `{inputs, files}`. `inputs.balatroSource.git` holds the tree's commit (f01aba9f… today) and whether `resources/` differs from it. It is null when the tree is not the root of a git checkout. `inputs.balatroSource.resources` is one sha256 over every copied file's name and hash. Nothing reads the manifest, and the deploy still skips it.
+- **README asset list corrected.** It said "six audio files" and seven shaders (background was missing). It now lists the 37 files, records where the music ships, describes the manifest's new shape, and says that 11.4.1 is love.js's final npm release and the loader patch is local.
+- CI is unchanged: it builds with `LOVE_VERSIONS_OPTIONAL=1` and without the source, and that build passes with the new plugin (checked with public/love moved aside).
+- 12 DEP-P4 mutant rows, all killed:
+  - love.js hash and version checks, 2 rows;
+  - source commit and dirty flag, 2 rows;
+  - vendored texts, asset grouping and the web package list, 3 rows;
+  - the Vite notice guard, killed by a production vite build;
+  - the Credits button, 2 rows (credits.lua);
+  - main.lua's wiring (focus_main.lua);
+  - the versioned URL (hostShell.test.ts).

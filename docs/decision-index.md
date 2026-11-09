@@ -53,6 +53,7 @@ the script after adding a decision.
 | 2026-11-09 | Dependency audit Phase 1: grouped Dependabot, Node 24 actions, one bun and one Node from laptop to CI, a rele… | decisions.md:1426 |
 | 2026-11-09 | Dependency refresh: wrangler 4.158 and its own miniflare 5 together, hono past its advisories, in-range dev t… | decisions.md:1448 |
 | 2026-11-09 | Deploy the API Worker minified with its source maps, gate the bundle the deploy builds, and pass zod refineme… | decisions.md:1488 |
+| 2026-11-09 | Dependency audit Phase 4: an MIT LICENSE, served third-party notices with a Credits button, and love.js 11.4.… | decisions.md:1501 |
 
 ## Numbered decisions
 
