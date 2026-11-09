@@ -68079,13 +68079,18 @@ export const MUTANTS: Mutant[] = [
   {
     id: "UI-FU2-main-portrait-grows",
     decision: "UI-FU2",
-    what: "In portrait the lobby grows with Interface Size too, past its 480x850 canvas. Killed by online_layer.lua.",
+    what: "In portrait the lobby is offered Interface Size's steps too. online_layer.lua checks it stays at 100%.",
     file: "frontend/lua/main.lua",
     find: "local scale=portrait and 1 or Size.factor(preferences.interfaceSize,virtualWidth,virtualHeight,minW,minH)",
     replace:
       "local scale=Size.factor(preferences.interfaceSize,virtualWidth,virtualHeight,minW,minH)",
     expectKilledBy: [],
     killedByCommand: ["bun", "scripts/test-lua.ts", "online_layer.lua"],
+    survives: {
+      kind: "equivalent",
+      reason:
+        "Every step's minimum is 812 wide, more than the 480 portrait canvas holds at 100%, so Size.factor already answers 1 there; the guard keeps portrait at 100% if a minimum ever narrows, as the other layers' guards do.",
+    },
   },
   {
     id: "UI-FU2-main-one-minimum",
