@@ -1535,3 +1535,23 @@ Phase 4 of the dependency audit (report `tmp/deps/deps-audit.md`) settles licens
   - the Credits button, 2 rows (credits.lua);
   - main.lua's wiring (focus_main.lua);
   - the versioned URL (hostShell.test.ts).
+
+### 2026-11-09 — Generate the API Worker's types with `wrangler types`, check them in check:static, and drop @cloudflare/workers-types
+
+Phase 3 of the dependency audit (report `tmp/deps/deps-audit.md`), finding VER8, decision id DEP-P3b. Nothing that ships changes: the minified dry-run bundle is byte-identical (sha256 19d3fd35…, 952.2 KiB).
+
+- **Generated runtime and binding types (VER8).** Cloudflare recommends `wrangler types` over the `@cloudflare/workers-types` package for Worker code. The package's v5 has only the latest runtime types, while `wrangler types` matches the compatibility_date and the installed workerd. `apps/api/worker-configuration.d.ts` (16,285 lines, workerd 1.20261104.1 at 2026-06-01) is committed. `bun run --cwd apps/api types` regenerates it with `rm -f worker-configuration.d.ts && wrangler types --env-file=/dev/null --env-interface=GeneratedEnv`:
+  - `--env-file=/dev/null`: a bare `wrangler types` reads `apps/api/.dev.vars`, so a local secret's name would be committed. The main checkout has one.
+  - `rm -f`: wrangler keeps an existing runtime body whose header still matches, so a hand edit survived regeneration.
+  - `--env-interface=GeneratedEnv`: no global `Env` that is stricter than ours, so a file that forgets to import `Env` fails to compile.
+- **`Env` reads its bindings from the generated file.** `apps/api/src/env.ts` keeps its shape and comments, with each binding typed as `GeneratedEnv["..."]`. The 6 RateLimit bindings and the vars stay optional, because the code handles their absence and unit tests run without them, so no test subtype is needed. The secrets stay hand-listed: wrangler.jsonc does not name them. A binding added to wrangler.jsonc that `Env` does not list fails to compile, naming it; a removed or renamed one fails at its lookup.
+- **tsconfigs.** apps/api and `tsconfig.seam.json` list the generated file under `include`, not `types`. `tsc -b` decides a project is up to date from its included files only: listed under `types`, a regenerated file left the old build standing. The packages already had `"types": []`, and the root and the other tsconfigs did not use the Workers types.
+- **@cloudflare/workers-types removed.** Nothing references it now; it is an optional peer of wrangler and drizzle-orm. It is gone from both manifests, and bun.lock loses only its entry. The re-resolve that removed it needed `--minimum-release-age=0`, because the cooldown also refuses re-resolving a locked version under 3 days old (hono 4.13.17); no locked version moved. The conventions now say so. "Bump together" (conventions, lock-check) is now wrangler and miniflare, then regenerate the types.
+- **Staleness check.** `scripts/worker-types.ts`, in `check:static`, needs no network: it passes under `unshare -rn`. It takes about 1.5 s alone and 2.5–3.3 s in parallel with the other steps. It checks two things:
+  1. The header records exactly the `types` script's command.
+  2. `wrangler types --check` passes with the script's flags. Wrangler 4.158's `--check` reuses the header's `--env-file` but not its `--env-interface`, so a bare `--check` reports the committed file as stale.
+
+  A changed compatibility_date and a renamed binding both fail it. `--check` compares the bindings hash and the runtime header, not the body, so a hand edit to the runtime part is not caught; the `types` script's `rm -f` means a regeneration removes one.
+- **Biome.** The file is in `files.ignore` (it raises 21 lint and format errors). `lint-coverage.ts` lists it in a `GENERATED` set of files it does not require Biome to see.
+- **Measured.** `bun run check`: green. `worker-bundle --check`: 952.2 KiB, byte-identical.
+- 2 DEP-P3b mutant rows, both killed. One accepts any `wrangler types` header and is killed by `workerTypes.test.ts`. The other runs a bare `--check` and is killed by running `worker-types.ts` itself.

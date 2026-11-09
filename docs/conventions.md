@@ -536,8 +536,7 @@ meant to change dependencies changes bun.lock (dependency audit, DEP-P1).
     (check:static) fails a second miniflare or workerd in the lock.
   A new exact pin adds its line and decision here.
 - A dependency declared in two workspaces carries the same spec there
-  (wrangler, today). `bun run deps:check` lists
-  any that differ.
+  (wrangler, today). `bun run deps:check` lists any that differ.
 - **The root owns the test and type tooling.** vitest, typescript, biome and
   @types/node are declared only in the root package.json, although every
   workspace's tests import vitest and apps/api's `tsc -b` uses the root
@@ -564,6 +563,10 @@ install of an existing lock is unaffected. An urgent security patch bypasses it
 for one command, `bun update hono --minimum-release-age=0`, and the commit says
 why. Bun 1.4.2 has no `--minimum-release-age-excludes` flag; to exempt a
 package for a while, add it to `minimumReleaseAgeExcludes` in bunfig.toml.
+The gate also applies to versions already in the lock: any install that
+re-resolves (adding or removing a dependency) is refused while a locked version
+is under 3 days old. Pass `--minimum-release-age=0` for that one install and
+check that the lock diff moves nothing else (DEP-P3b).
 
 **Dependabot** (`.github/dependabot.yml`) opens weekly PRs in groups, at most
 10 at once:
