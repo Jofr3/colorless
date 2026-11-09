@@ -107,4 +107,19 @@ describe("userSchema", () => {
     });
     expect(parsed).not.toHaveProperty("passwordHash");
   });
+
+  it("returns any stored email up to 254 characters, even one z.email() refuses", () => {
+    const user = {
+      id: "u1",
+      displayName: "Ash",
+      emailVerified: true,
+      avatarSeed: "1a2b3c4d",
+      hasPassword: false,
+      createdAt: "2026-07-09T00:00:00.000Z",
+    };
+    for (const email of ["ivan@example.xn--p1ai", "a&b@example.com", "x".repeat(254)])
+      expect(userSchema.safeParse({ ...user, email }).success, email).toBe(true);
+    for (const email of ["", "x".repeat(255)])
+      expect(userSchema.safeParse({ ...user, email }).success, email).toBe(false);
+  });
 });

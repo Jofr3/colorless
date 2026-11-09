@@ -7,7 +7,10 @@ import * as z from "zod";
 
 export const userSchema = z.object({
   id: z.string(),
-  email: z.email(),
+  /** Not z.email(): Google sign-in stores the address Google gives, which z.email() can refuse
+      (a punycode top-level domain, an '&' in the local part), and every user response is parsed
+      against this schema. Register and login still check the address they take. */
+  email: z.string().min(1).max(254),
   displayName: z.string(),
   emailVerified: z.boolean(),
   /** The account's generated-avatar token (P5-2), derived server-side from the

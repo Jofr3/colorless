@@ -69011,4 +69011,27 @@ export const MUTANTS: Mutant[] = [
       "      version: 0,\n    }),\n  ]);\n  await newDeckCardsInsert(db, deckId, body.cards);",
     expectKilledBy: ["apps/api/src/decks/routes.d1.test.ts"],
   },
+  {
+    id: "API-AUTH1-strict-email",
+    decision: "API-P4",
+    what: "The user response schema checks its email with z.email() again, so a Google account whose verified address z.email() refuses gets a 500 on every GET and PATCH /auth/me.",
+    file: "packages/schema/src/auth/user.ts",
+    symbol: "userSchema",
+    find: "  email: z.string().min(1).max(254),",
+    replace: "  email: z.email(),",
+    expectKilledBy: [
+      "apps/api/src/auth/routes.d1.test.ts",
+      "packages/schema/src/auth/auth.test.ts",
+    ],
+  },
+  {
+    id: "API-AUTH1-oauth-uncapped",
+    decision: "API-P4",
+    what: "Google sign-in stores an email of any length, which the user response schema then refuses. Killed by the over-long Google email test.",
+    file: "apps/api/src/auth/oauth.ts",
+    symbol: "googleUserinfoSchema",
+    find: "  email: z.string().max(254).nullish(),",
+    replace: "  email: z.string().nullish(),",
+    expectKilledBy: ["apps/api/src/auth/routes.d1.test.ts"],
+  },
 ];

@@ -410,8 +410,11 @@ data loss rather than a validation failure.
   with `?authError=unavailable` (logged `evt = "auth", kind =
   "oauth_unavailable"` at error level), never a JSON 500 at the API origin.
   Each Google request (token exchange, userinfo) gives up after 10 s, body
-  included, as an `exchange` or `profile` failure. A single user may hold both
-  a password and OAuth identities.
+  included, as an `exchange` or `profile` failure. The account keeps the
+  address Google gives (a longer one than 254 characters is a `profile`
+  failure); `userSchema` returns any non-empty email up to that length, since
+  Google verifies some `z.email()` refuses (API audit AUTH1). A single user may
+  hold both a password and OAuth identities.
 - **Providers activate by configuration alone** — with secrets absent the
   routes answer `503 {"error":"provider not configured"}`. To activate, register
   a Google OAuth client (<https://console.cloud.google.com/auth/clients>, Web application)

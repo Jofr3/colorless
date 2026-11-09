@@ -218,7 +218,8 @@ export type OAuthProfile = {
 // account gets a generated handle rather than the user's real name (security audit AU3).
 const googleUserinfoSchema = z.object({
   sub: z.string().min(1),
-  email: z.string().nullish(),
+  // At most the length userSchema returns.
+  email: z.string().max(254).nullish(),
   email_verified: z.boolean().nullish(),
 });
 
