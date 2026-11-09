@@ -684,8 +684,9 @@ describe("Lua deck builder", () => {
     const choices = String(publish.mock.lastCall?.[0])
       .split("\n")
       .filter((l) => l.startsWith("Q\t"));
-    expect(choices).toHaveLength(1);
-    expect(choices[0]).toContain("Water");
+    // All, then the match.
+    expect(choices).toHaveLength(2);
+    expect(choices[1]).toContain("Water");
     await b.command("option-pick\t");
     expect(b.filters.types).toEqual([]);
   });
@@ -730,7 +731,10 @@ describe("Lua deck builder", () => {
     await b.command("option-query\tWAT");
     rows = listRows(publish);
     expect(rows.picker?.slice(3)).toEqual(["1", "1", "WAT"]);
-    expect(rows.choices).toEqual([["Water", "Water", "1"]]);
+    expect(rows.choices).toEqual([
+      ["", "All", "0"],
+      ["Water", "Water", "1"],
+    ]);
     // All stays offered under a search, so a search never hides the way to clear.
     await b.command("option-query\twa");
     expect(listRows(publish).choices.map((c) => c[0])).toEqual(["", "Water"]);

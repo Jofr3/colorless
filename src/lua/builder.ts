@@ -458,7 +458,12 @@ export class LuaBuilder {
     if (option) {
       const choices = option.values
         .map((v, i) => ({ value: v, label: option.labels?.[i] ?? (v || "All") }))
-        .filter((c) => c.label.toLocaleLowerCase().includes(this.optionQuery.toLocaleLowerCase()));
+        // The first row, All, clears the filter, so a search keeps it.
+        .filter(
+          (c, i) =>
+            (i === 0 && c.label === "All") ||
+            c.label.toLocaleLowerCase().includes(this.optionQuery.toLocaleLowerCase()),
+        );
       this.optionPage = Math.max(
         1,
         Math.min(Math.max(1, Math.ceil(choices.length / 7)), this.optionPage),

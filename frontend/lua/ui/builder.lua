@@ -752,7 +752,7 @@ function Builder:drawControlFaces(controls,active)
       b.label,b.fontSize=Fit.label(b.label,b.fontSize,b.w-16)
       Button.draw(b,lit and not b.disabled,active and self.pressed==i,lit and self.hover==0,self.width);b.label=original
       if b.icon then Button.icon(b,b.icon,active and self.pressed==i,self.width) end
-      if (b.action=='deck-type' and b.arg==self.deckType) or (b.action=='filter-tab' and b.arg==self.filterPage) or b.chosen then Button.chosen(b,self.time,active and self.pressed==i,self.width,self.reduced)end
+      if (b.action=='deck-type' and b.arg==self.deckType) or (b.action=='filter-tab' and b.arg==self.filterPage) then Button.chosen(b,self.time,active and self.pressed==i,self.width,self.reduced)end
     end
   end
 end
