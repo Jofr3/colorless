@@ -924,18 +924,23 @@ export class LuaBuilder {
   retrySave() {
     this.saver?.flush();
   }
-  /** A save that answered 404 can never land: saving stops, the edits stay on screen for Export,
-      and Back leaves. */
-  private onDeckGone() {
+  /** Stops saving and forgets the unsaved edits, so the page's close, reload and online handlers
+      have nothing left to send. */
+  private dropEdits() {
     this.saver?.dispose();
     this.saver = undefined;
-    this.deckGone = true;
     this.dirty = false;
     this.saveStatus = "";
     this.saveFailed = false;
     this.leaveArmedAt = undefined;
     this.pendingExit = undefined;
     this.leaving = false;
+  }
+  /** A save that answered 404 can never land: saving stops, the edits stay on screen for Export,
+      and Back leaves. */
+  private onDeckGone() {
+    this.dropEdits();
+    this.deckGone = true;
     this.message = MESSAGE.deckGone;
     this.emit();
   }
@@ -948,6 +953,10 @@ export class LuaBuilder {
   private leaveWhenSaved(done?: () => void) {
     if (this.leaveArmedAt !== undefined) {
       if (Date.now() - this.leaveArmedAt < LEAVE_LOCKOUT_MS) return;
+      // Leaving anyway gives the edits up: none is sent later, when the page closes or the
+      // network comes back.
+      this.dropEdits();
+      this.message = "";
       this.pendingExit = done;
       this.exit();
       return;

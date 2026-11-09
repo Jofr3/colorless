@@ -1322,6 +1322,7 @@ Four branches from `api`, built by worktree agents, merged on `api`, and followi
   - A save that lands disarms it.
   - There is no timed window, so a slow retry cannot disarm it.
   - "Retrying..." does not arm it.
+  - Leaving anyway gives the edits up. The saver is disposed and nothing is marked unsaved, so the page's close, reload and online handlers send nothing later. Browser QA found that, as first written, an abandoned edit was saved once the API answered again (B1).
 - A blank name is saved as the kept name (DECK2). The PATCH body and every saver key come from one snapshot that puts the kept name in place of a blank one, so a lost save made then is still recognised as this tab's own. Blanking the name alone sends nothing.
 - Saves start at least 1 s apart (DECK3). The saver's `MIN_SAVE_SPACING_MS = 1000` keeps steady editing within the 60 a minute deck write limit (it was about 93 a minute). An explicit flush (Back, page hide) does not wait. The routes.ts comment now says so.
 - The library tells a 429 apart (DECK8): "Too many changes. Wait a minute."

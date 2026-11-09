@@ -295,6 +295,14 @@ describe("Lua deck builder", () => {
     expect(back).toHaveBeenCalledTimes(1);
     expect(api.patchDeck).toHaveBeenCalledTimes(2);
     expect(b.entries.get("a")).toBe(1);
+    // The edits given up are never sent: not as the page closes or hides, not when the
+    // network comes back, and not by a retry that was waiting.
+    expect(b.hasUnsavedEdits()).toBe(false);
+    await b.command("close");
+    b.persistNow();
+    b.retrySave();
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(api.patchDeck).toHaveBeenCalledTimes(2);
   });
   it("takes a double click on Back after a failed save as one press", async () => {
     vi.mocked(api.patchDeck).mockRejectedValue(new api.ApiError(500, { error: "internal" }));

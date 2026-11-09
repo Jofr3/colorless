@@ -69422,4 +69422,14 @@ export const MUTANTS: Mutant[] = [
     replace: "    : c.json(deckSchema.parse(mapDeckRow(row, body.cards)));",
     expectKilledBy: ["apps/api/src/decks/routes.d1.test.ts"],
   },
+  {
+    id: "API-DECK1-leave-anyway-keeps-edits",
+    decision: "API-P2",
+    what: "Leaving anyway after a failed save keeps the saver and the unsaved edits, so the page's close, reload and online handlers send the given-up edits later (QA bug B1). Killed by the second-Back test.",
+    file: "src/lua/builder.ts",
+    symbol: "LuaBuilder",
+    find: '      this.dropEdits();\n      this.message = "";\n      this.pendingExit = done;',
+    replace: "      this.pendingExit = done;",
+    expectKilledBy: ["src/lua/builder.test.ts"],
+  },
 ];
