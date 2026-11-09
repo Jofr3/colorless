@@ -147,7 +147,7 @@ do
   check(says(function(c) return c.action=='add' and c.arg=='sv04-031' end)=='Add one Charcadet, 3 in deck','Plus says what it adds')
   check(says(function(c) return c.action=='deck-page' and c.arg==1 end)=='Next page, page 1 of 2','The deck pager says its page')
   b:openModal('filters')
-  check(says(function(c) return c.cycleKey=='supertype' and c.label=='>' end)=='Category: All, left and right change it','A filter says its option and value')
+  check(says(function(c) return c.cycleKey=='supertype' and c.label=='>' end)=='Category: All, left and right change it, Enter for the list','A filter says its option and value')
   check(stops(b,function(c) return c.cycleKey=='supertype' end)==1,'A filter is one Tab stop')
   -- Left and Right on a focused filter step it, and its new value is announced.
   b.focus=index(b,function(c) return c.cycleKey=='supertype' and c.label=='>' end)

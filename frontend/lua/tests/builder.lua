@@ -154,15 +154,25 @@ print('PASS: HP sliders support drag, ten-point keyboard steps, unbounded endpoi
 
 tabs.filterPage=1;tabs:openModal('filters')
 local beforeFilterClick=#commands
+local lists=0
 for i,c in ipairs(tabs.controls)do
  if c.cycleCentre then
-  assert(tabs:hit(c.x+c.w/2,c.y+c.h/2)~=i,'Filter value must not be clickable')
   assert(tabs:hit(c.x+c.w/2,c.y+c.h/2,false,true)==i,'Filter value must retain hover detection')
-  tabs:activate(i);assert(tabs.modal.mode=='filters')
+  assert(require('ui.controls').unfocusable(c),'Filter value must not take focus')
+  if c.arg=='format' then
+   assert(tabs:hit(c.x+c.w/2,c.y+c.h/2)~=i,'The Format value has no list to click')
+   tabs:activate(i);assert(tabs.modal.mode=='filters')
+  else
+   -- UI-FU3: a click on a filter's value opens its list.
+   assert(tabs:hit(c.x+c.w/2,c.y+c.h/2)==i,'Filter value must answer a click')
+   tabs:activate(i);assert(tabs.modal.mode=='choices' and commands[#commands][1]=='options' and commands[#commands][2]==c.arg)
+   lists=lists+1;tabs:closeModal();tabs:openModal('filters')
+  end
  end
 end
-assert(#commands==beforeFilterClick,'Filter values must not send picker or format commands')
-print('PASS: filter centers are inert; arrow controls remain available')
+assert(lists==6,'Every Cards tab filter but Format opens its list')
+for i=beforeFilterClick+1,#commands do assert(commands[i][1]~='cycle' and commands[i][1]~='format','Filter values must not step the cycle') end
+print('PASS: filter centers open their lists; arrow controls remain available')
 
 local flagged=snapshot(5000,8)..'\nD\tx1\tOld card\tPokemon\tBasic\t2\t2\t60\tE\t1\t4\t1\nD\tx2\tNew card\tPokemon\tBasic\t2\t2\t60\tH\t1\t4\t0'
 tabs.deckType='all';tabs.deckView='list';tabs.deckPage=1;tabs:sync(flagged);tabs:closeModal()

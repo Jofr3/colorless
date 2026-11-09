@@ -24,6 +24,7 @@ import { clearCardPoolCache, fetchCardPool } from "../game/cardPool";
 import { deckStore } from "../decks/deckStore";
 import { MAX_TRANSIENT_RETRIES } from "../decks/deckSaver";
 import { cardIndexPayload } from "../test/fixtures";
+import { ENERGY_TYPES } from "../decks/cards";
 vi.mock("../lib/api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../lib/api")>();
   return {
@@ -687,6 +688,98 @@ describe("Lua deck builder", () => {
     expect(choices[0]).toContain("Water");
     await b.command("option-pick\t");
     expect(b.filters.types).toEqual([]);
+  });
+  /** The list rows of the last publish: its P row's fields and each Q row's [value, label, selected]. */
+  const listRows = (publish: ReturnType<typeof vi.fn>) => {
+    const lines = String(publish.mock.lastCall?.[0])
+      .split("\n")
+      .map((l) => decodeFields(l) ?? []);
+    const picker = lines.find((l) => l[0] === "P");
+    const choices = lines.filter((l) => l[0] === "Q").map((l) => l.slice(1));
+    const option = (key: string) => lines.find((l) => l[0] === "O" && l[1] === key);
+    return { picker, choices, option };
+  };
+  it("pages, marks and counts a multi-value list end to end (UI-FU3)", async () => {
+    const { b, publish } = await setup();
+    await b.command("options\ttypes");
+    let rows = listRows(publish);
+    // All and the eleven types: seven a page.
+    expect(rows.picker).toEqual(["P", "types", "Energy type", "1", "2", ""]);
+    expect(rows.choices).toHaveLength(7);
+    expect(rows.choices[0]).toEqual(["", "All", "1"]);
+    await b.command("option-pick\tFire");
+    await b.command("option-pick\tWater");
+    rows = listRows(publish);
+    expect(rows.choices.filter((c) => c[2] === "1").map((c) => c[0])).toEqual(["Fire", "Water"]);
+    // The cycle shows the count and lights both pips.
+    expect(rows.option("types")?.[3]).toBe("2 selected");
+    expect(rows.option("types")?.[6]).toBe(
+      `${ENERGY_TYPES.indexOf("Fire") + 2},${ENERGY_TYPES.indexOf("Water") + 2}`,
+    );
+    expect(api.getCards).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: ["Fire", "Water"], page: 1 }),
+    );
+    await b.command("option-page\t1");
+    rows = listRows(publish);
+    expect(rows.picker?.[3]).toBe("2");
+    expect(rows.choices.map((c) => c[0])).toEqual(ENERGY_TYPES.slice(6));
+    // Past the last page stays on it.
+    await b.command("option-page\t1");
+    expect(listRows(publish).picker?.[3]).toBe("2");
+    // A search starts on page 1 again.
+    await b.command("option-query\tWAT");
+    rows = listRows(publish);
+    expect(rows.picker?.slice(3)).toEqual(["1", "1", "WAT"]);
+    expect(rows.choices).toEqual([["Water", "Water", "1"]]);
+    // Picking a chosen value clears it; All clears every one.
+    await b.command("option-pick\tWater");
+    expect(b.filters.types).toEqual(["Fire"]);
+    expect(listRows(publish).option("types")?.[3]).toBe("Fire");
+    await b.command("option-pick\t");
+    expect(b.filters.types).toEqual([]);
+    expect(api.getCards).toHaveBeenLastCalledWith(expect.objectContaining({ type: undefined }));
+  });
+  it("sets a single-value filter from its list and searches it (UI-FU3)", async () => {
+    vi.mocked(api.getSets).mockResolvedValue([
+      { id: "sv01", name: "Scarlet & Violet" },
+      { id: "sv02", name: "Paldea Evolved" },
+    ] as Awaited<ReturnType<typeof api.getSets>>);
+    const { b, publish } = await setup();
+    await tick();
+    await b.command("options\tsetId");
+    await b.command("option-pick\tsv01");
+    await b.command("option-pick\tsv02");
+    expect(b.filters.setId).toBe("sv02");
+    const rows = listRows(publish);
+    expect(rows.choices.map((c) => [c[1], c[2]])).toEqual([
+      ["All", "0"],
+      ["Scarlet & Violet", "0"],
+      ["Paldea Evolved", "1"],
+    ]);
+    expect(rows.option("setId")?.[3]).toBe("Paldea Evolved");
+    expect(api.getCards).toHaveBeenLastCalledWith(expect.objectContaining({ set: "sv02" }));
+    await b.command("option-pick\t");
+    expect(b.filters.setId).toBe("");
+    // An unknown value changes nothing.
+    await b.command("option-pick\tnope");
+    expect(b.filters.setId).toBe("");
+  });
+  it("publishes no list once it closes or another deck opens (UI-FU3)", async () => {
+    const { b, publish } = await setup();
+    await b.command("options\ttypes");
+    await b.command("option-query\tfi");
+    await b.command("option-page\t1");
+    expect(listRows(publish).picker).toBeDefined();
+    await b.command("options\t");
+    expect(listRows(publish).picker).toBeUndefined();
+    expect(listRows(publish).choices).toEqual([]);
+    await b.command("options\ttypes");
+    await b.command("option-query\tfi");
+    await b.command("open\ttwo");
+    expect(b.optionKey).toBe("");
+    expect(b.optionQuery).toBe("");
+    expect(b.optionPage).toBe(1);
+    expect(listRows(publish).picker).toBeUndefined();
   });
   it("prefetches neighbouring catalog pages so paging never shows the loading state", async () => {
     vi.mocked(api.getCards).mockImplementation(async (query) => {
