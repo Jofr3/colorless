@@ -248,10 +248,11 @@ describe("GET /auth/oauth/:provider/callback", () => {
         const location = new URL((await refused(query, headers)) ?? "");
         expect(location.searchParams.get("authError")).toBe("state");
       }
-      expect(logged().map((line) => line.kind)).toEqual([
-        "oauth_state",
-        "oauth_state",
-        "oauth_state",
+      // The reason names the state's fault, not the code an error callback never carries.
+      expect(logged().map(({ kind, reason }) => `${kind} ${reason}`)).toEqual([
+        "oauth_state no_cookie",
+        "oauth_state mismatch",
+        "oauth_state no_state",
       ]);
     });
   });

@@ -13,11 +13,11 @@
 // number; the reprint post-pass (`*_effective` = OR over the print_key group); `print_key` matching
 // what the current `printKey` and `normalizeCardText` compute from the stored columns (a mismatch
 // after either changes means a full re-ingest is owed); and with `--upstream`, card ids tcgdex no
-// longer lists (report only).
+// longer lists (report only; every card of a set that now answers 404), and any set it could not
+// read.
 
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { tcgdexSetSchema } from "@colorless/schema";
 import {
   CARD_KEY_COLUMNS,
   CONSISTENCY_CHECKS,
@@ -25,6 +25,7 @@ import {
   printKeyMismatches,
 } from "../src/db/consistency";
 import { createSource } from "../src/ingest/source";
+import { staleCardIds } from "../src/ingest/staleCards";
 import { type D1Target, d1Query, type Row } from "./d1";
 
 const SAMPLE_ROWS = 5;
@@ -46,24 +47,6 @@ if (args.remote && args["persist-to"] !== undefined) {
 }
 const target: D1Target = args.remote ? "--remote" : "--local";
 const persistTo = args["persist-to"] === undefined ? undefined : resolve(args["persist-to"]);
-
-async function staleCardIds(cards: readonly Row[]): Promise<Row[]> {
-  const bySet = new Map<string, Set<string>>();
-  for (const card of cards) {
-    const setId = String(card.set_id);
-    const ids = bySet.get(setId) ?? new Set<string>();
-    ids.add(String(card.id));
-    bySet.set(setId, ids);
-  }
-  const source = createSource("fetch");
-  const stale: Row[] = [];
-  for (const [setId, stored] of bySet) {
-    const set = tcgdexSetSchema.parse(await source.getSet(setId));
-    const upstream = new Set(set.cards.map((card) => card.id));
-    for (const id of stored) if (!upstream.has(id)) stale.push({ set_id: setId, id });
-  }
-  return stale;
-}
 
 const where = args.remote ? "REMOTE, read-only" : persistTo ? `local, ${persistTo}` : "local";
 console.log(`db-check: D1 "colorless" (${where})`);
@@ -92,10 +75,11 @@ failures.push({
   rows: printKeyMismatches(cards),
 });
 if (args.upstream) {
-  failures.push({
-    name: "card tcgdex no longer lists (report only)",
-    rows: await staleCardIds(cards),
-  });
+  const { stale, unreadable } = await staleCardIds(cards, createSource("fetch"));
+  failures.push(
+    { name: "card tcgdex no longer lists (report only)", rows: stale },
+    { name: "set tcgdex could not be read (its cards were not checked)", rows: unreadable },
+  );
 }
 
 for (const { name, rows } of failures) {

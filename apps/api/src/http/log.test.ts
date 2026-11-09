@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { logErrorThrottled, logEvent, logEventThrottled, resetLogThrottle } from "./log";
+import {
+  logErrorThrottled,
+  logEvent,
+  logEventThrottled,
+  logEventThrottledBy,
+  logInfo,
+  resetLogThrottle,
+} from "./log";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -24,6 +31,30 @@ describe("logEvent", () => {
       '{"evt":"kv","kind":"put_failed"}',
       '{"evt":"kv","kind":"get_failed"}',
       '{"evt":"kv","kind":"put_failed","suppressed":2}',
+    ]);
+  });
+
+  it("writes success and audit lines at info level", () => {
+    const info = vi.spyOn(console, "log").mockImplementation(() => {});
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    logInfo("d1", "sweep", { sessions: 3 });
+    expect(info).toHaveBeenCalledWith('{"evt":"d1","kind":"sweep","sessions":3}');
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("throttles each `by` value of one kind on its own", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    logEventThrottledBy("endTurn", "lobby", "action_threw", { type: "endTurn" }, 1000, 0);
+    logEventThrottledBy("endTurn", "lobby", "action_threw", { type: "endTurn" }, 1000, 10);
+    logEventThrottledBy("attack", "lobby", "action_threw", { type: "attack" }, 1000, 20);
+    // The plain throttle of the kind is a third, separate one.
+    logEventThrottled("lobby", "action_threw", {}, 1000, 30);
+    logEventThrottledBy("endTurn", "lobby", "action_threw", { type: "endTurn" }, 1000, 1500);
+    expect(warn.mock.calls.map(([line]) => line)).toEqual([
+      '{"evt":"lobby","kind":"action_threw","type":"endTurn"}',
+      '{"evt":"lobby","kind":"action_threw","type":"attack"}',
+      '{"evt":"lobby","kind":"action_threw"}',
+      '{"evt":"lobby","kind":"action_threw","type":"endTurn","suppressed":1}',
     ]);
   });
 

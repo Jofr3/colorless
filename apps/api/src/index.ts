@@ -20,7 +20,7 @@ import { catalogRoutes } from "./catalog/routes";
 import { deckRoutes } from "./decks/routes";
 import { appCorsOrigins, type Env } from "./env";
 import { errorFields } from "./http/errors";
-import { logError, logEvent, logEventThrottled } from "./http/log";
+import { logError, logEventThrottled, logInfo } from "./http/log";
 import { lobbyRoutes, lobbySocketRoutes } from "./lobby/routes";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -87,7 +87,11 @@ app.use("*", async (c, next) => {
     const origin = c.req.header("Origin");
     const foreignOrigin = origin !== undefined && !appCorsOrigins(c.env).includes(origin);
     if (foreignOrigin || c.req.header("Sec-Fetch-Site") === "cross-site") {
-      logEventThrottled("http", "cross_site_refused", { method: c.req.method, route: c.req.path });
+      // The route pattern, as on every other line, not the path a foreign page chose.
+      logEventThrottled("http", "cross_site_refused", {
+        method: c.req.method,
+        route: routePath(c, -1),
+      });
       return c.json({ error: "forbidden origin" }, 403);
     }
   }
@@ -147,8 +151,9 @@ app.get("/health/db", async (c) => {
       migrations: number;
     }>();
     payload = { ok: true, migrations: row?.migrations ?? 0 };
-  } catch {
-    logEventThrottled("d1", "health_failed");
+  } catch (error) {
+    // Names, the SQL and the quota flag tell a missing migration from a spent quota.
+    logEventThrottled("d1", "health_failed", errorFields(error));
     return c.json(dbHealthResponseSchema.parse({ ok: false }), 503);
   }
   return c.json(dbHealthResponseSchema.parse(payload));
@@ -158,9 +163,9 @@ app.get("/health/db", async (c) => {
     so the run also shows as failed under the Worker's Cron Events. */
 async function scheduled(controller: ScheduledController, env: Env): Promise<void> {
   try {
-    logEvent("d1", "sweep", await sweepExpired(env.DB, controller.scheduledTime));
+    logInfo("d1", "sweep", await sweepExpired(env.DB, controller.scheduledTime));
   } catch (error) {
-    logEvent("d1", "sweep_failed", { error: error instanceof Error ? error.name : typeof error });
+    logError("d1", "sweep_failed", { error: error instanceof Error ? error.name : typeof error });
     throw error;
   }
 }

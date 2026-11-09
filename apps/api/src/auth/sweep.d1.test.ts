@@ -58,12 +58,12 @@ async function remaining(table: "sessions" | "auth_rate_limits") {
 describe("the daily sweep", () => {
   it("deletes expired sessions and passed counters in chunks, and logs the counts", async () => {
     await seed(1203, 7);
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const info = vi.spyOn(console, "log").mockImplementation(() => {});
     const controller = { scheduledTime: NOW, cron: "17 4 * * *", noRetry: () => {} };
     await worker.scheduled(controller, d1().env());
     expect(await remaining("sessions")).toBe(7);
     expect(await remaining("auth_rate_limits")).toBe(7);
-    expect(warn.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
+    expect(info.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
       { evt: "d1", kind: "sweep", sessions: 1203, rateLimits: 1203 },
     ]);
   });
@@ -78,11 +78,11 @@ describe("the daily sweep", () => {
   });
 
   it("logs and rethrows a D1 failure, so the cron run shows as failed", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
     const env = d1().env({ DB: failingD1(d1().db, { error: new TypeError("down") }) });
     const controller = { scheduledTime: NOW, cron: "17 4 * * *", noRetry: () => {} };
     await expect(worker.scheduled(controller, env)).rejects.toThrow("down");
-    expect(warn.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
+    expect(error.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
       { evt: "d1", kind: "sweep_failed", error: "TypeError" },
     ]);
   });

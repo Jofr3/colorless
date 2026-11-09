@@ -59,16 +59,19 @@ export class SourceRequestError extends Error {
   readonly retryable: boolean;
   /** How long the server asked us to wait, from Retry-After. */
   readonly retryAfterMs: number | undefined;
+  /** The HTTP status, when the server answered one (the fetch transport only). */
+  readonly status: number | undefined;
 
   constructor(
     message: string,
     retryable: boolean,
-    options: { retryAfterMs?: number; cause?: unknown } = {},
+    options: { retryAfterMs?: number; cause?: unknown; status?: number } = {},
   ) {
     super(message, { cause: options.cause });
     this.name = "SourceRequestError";
     this.retryable = retryable;
     this.retryAfterMs = options.retryAfterMs;
+    this.status = options.status;
   }
 }
 
@@ -181,7 +184,7 @@ export function createFetchSource(options: FetchSourceOptions = {}): CatalogSour
       throw new SourceRequestError(
         `HTTP ${status} for ${path}`,
         status === 408 || status === 429 || status >= 500,
-        { retryAfterMs: retryAfterMs(response.headers.get("retry-after")) },
+        { retryAfterMs: retryAfterMs(response.headers.get("retry-after")), status },
       );
     }
     try {

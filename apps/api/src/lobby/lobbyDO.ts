@@ -27,7 +27,13 @@ import type { Env } from "../env";
 import { avatarSeedFrom } from "../auth/avatar";
 import { resolveAccountFromCookie, type SessionAccount } from "../auth/resolveSession";
 import { describeError } from "../http/errors";
-import { type LogFields, logEvent, logEventThrottled } from "../http/log";
+import {
+  type LogFields,
+  logEvent,
+  logEventThrottled,
+  logEventThrottledBy,
+  logInfo,
+} from "../http/log";
 import {
   attachAccount,
   attachConnectedAt,
@@ -530,10 +536,12 @@ export class LobbyDO {
     const outcome = applyMatchAction(record, seat, frame.action, this.deps.now());
     if (!outcome.ok) {
       // A throw is refused like any move, and logged (throttled: a client can repeat the frame).
-      // `type` passed the allowlist to reach the engine, so it is one of a fixed set of names.
+      // `type` passed the allowlist to reach the engine, so it is one of a fixed set of names, and
+      // each has its own throttle: a second engine bug is not hidden behind the first.
       if ("thrown" in outcome) {
         const error = describeError(outcome.thrown);
-        await this.log("action_threw", { type: frame.action.type, error }, true);
+        const type = frame.action.type;
+        await this.log("action_threw", { type, error }, type);
       }
       this.send(ws, { kind: "reject-action", reason: outcome.reason });
       return;
@@ -749,7 +757,7 @@ export class LobbyDO {
     sockets = 0,
   ): Promise<void> {
     const created = await this.state.storage.get(CREATED_KEY);
-    await this.log("lobby_wiped", {
+    await this.info("lobby_wiped", {
       cause,
       sockets,
       ageMs: typeof created === "number" ? now - created : null,
@@ -1569,7 +1577,7 @@ export class LobbyDO {
     if (!outcome.ok) return;
     await this.match.put(outcome.record);
     await this.touchActivity();
-    await this.log("forfeit", { seat, cause });
+    await this.info("forfeit", { seat, cause });
     const logFrom = outcome.logTrimmed ? undefined : load.record.log.length;
     await this.broadcastMatch(outcome.record, snapshot, { logFrom });
   }
@@ -1615,13 +1623,28 @@ export class LobbyDO {
   }
 
   /**
-   * One `lobby` log line, tagged with this lobby's code (log.ts says what fields may carry: never a
-   * player-typed string). `throttled` caps a line that repeats for as long as an outage lasts.
+   * One `lobby` log line at warn level, tagged with this lobby's code (log.ts says what fields may
+   * carry: never a player-typed string). `throttled` caps a line that repeats for as long as an
+   * outage lasts; a string throttles each such value on its own, so one cause cannot hide another.
    */
-  private async log(kind: string, fields: LogFields = {}, throttled = false): Promise<void> {
-    const lobby = this.snapshot?.code ?? (await this.read(CODE_KEY, storedCodeSchema)) ?? null;
-    if (throttled) logEventThrottled("lobby", kind, { lobby, ...fields });
-    else logEvent("lobby", kind, { lobby, ...fields });
+  private async log(
+    kind: string,
+    fields: LogFields = {},
+    throttled: boolean | string = false,
+  ): Promise<void> {
+    const line = { lobby: await this.logCode(), ...fields };
+    if (typeof throttled === "string") logEventThrottledBy(throttled, "lobby", kind, line);
+    else if (throttled) logEventThrottled("lobby", kind, line);
+    else logEvent("lobby", kind, line);
+  }
+
+  /** A `lobby` line at info level, for the lobby's normal course (a forfeit, its expiry). */
+  private async info(kind: string, fields: LogFields = {}): Promise<void> {
+    logInfo("lobby", kind, { lobby: await this.logCode(), ...fields });
+  }
+
+  private async logCode(): Promise<string | null> {
+    return this.snapshot?.code ?? (await this.read(CODE_KEY, storedCodeSchema)) ?? null;
   }
 }
 

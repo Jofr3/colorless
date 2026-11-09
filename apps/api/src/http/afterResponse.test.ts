@@ -21,9 +21,23 @@ describe("afterResponse", () => {
     });
     const res = await app.request("/things/7");
     expect(res.status).toBe(200);
-    expect(warn).toHaveBeenCalledWith(
-      '{"evt":"after_response","kind":"failed","route":"/things/:id"}',
-    );
+    expect(warn.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
+      { evt: "after_response", kind: "failed", route: "/things/:id", error: "Error", quota: false },
+    ]);
+  });
+
+  it("flags a failure that reads as a spent quota, without its message", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const app = new Hono().get("/", async (c) => {
+      await afterResponse(c, async () => {
+        throw new TypeError("KV put() limit exceeded for the day.");
+      });
+      return c.text("ok");
+    });
+    expect((await app.request("/")).status).toBe(200);
+    expect(warn.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
+      { evt: "after_response", kind: "failed", route: "/", error: "TypeError", quota: true },
+    ]);
   });
 
   it("hands a failure to the caller's onError instead", async () => {

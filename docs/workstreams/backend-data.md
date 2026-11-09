@@ -314,9 +314,12 @@ data loss rather than a validation failure.
   60` (`kind = "pepper_unavailable"`), never a 401, and counts no failure.
   Constant-time
   compare; login burns a dummy verify on unknown emails (timing parity) and
-  answers one uniform 401. *Caveat:* 100k iterations ≈ tens of ms CPU — if
+  answers one uniform 401. *Caveat:* 100k iterations ≈ tens of ms CPU (about
+  42 ms per PBKDF2 measured in local workerd, 2026-11-09; a login that
+  re-hashes runs two) — if
   free-plan Workers CPU limits 500 the auth routes in production, lower the
-  count or move to WASM Argon2. Register/login are rate-limited per scope in
+  count or move to WASM Argon2. The 30 days to 2026-11-09 showed no
+  `exceededCpu` outcome on any route. Register/login are rate-limited per scope in
   the D1 table `auth_rate_limits` (`apps/api/src/auth/rateLimit.ts`): login
   (and deletion) 10 attempts per 15 min per (IP, email) and 50 per IP across
   emails; register 5 per hour per IP (security audit AUX1: each allowed
@@ -480,10 +483,10 @@ data loss rather than a validation failure.
      just marks the seat disconnected (lobby survives, host can return).
   3. *Empty-lobby expiry* — 10 min after the last socket goes (also arms at
      create), `storage.deleteAll()` wipes the lobby and frees the code; a socket
-     upgrade for a never-created/expired code is refused (404), which the client
-     reads as silence → "not found". A lobby nobody has said hello in derives
-     its expiry from `created` instead of storing `cleanupAt` (security LB3), so
-     a create writes 2 keys and an alarm and its wipe deletes 2 keys: 5 rows
+     upgrade for a never-created/expired code is accepted and closed at once
+     with 4004 (`LOBBY_WS_NOT_FOUND`), which the client shows as "not found".
+     A lobby nobody has said hello in derives its expiry from `created`
+     instead of storing `cleanupAt` (security LB3), so a create writes 2 keys and an alarm and its wipe deletes 2 keys: 5 rows
      written, down from 8.
   4. *Inactivity ceiling* — a lobby with sockets but no commit or accepted
      action or seated hello for an hour (`INACTIVE_LOBBY_MS`, judged from an `activeAt` stamp
@@ -647,7 +650,7 @@ earliest line for it in `tmp/d1-bookmarks.log`). From `apps/api` unless noted:
 | `check`, `release:gate`, `build` | Nothing changed. | Fix what it printed and release again. |
 | `db:migrate:remote` | The files before the failing one are applied; the failing one rolled back (one transaction per file). The old Worker reads the expanded schema fine. | A transient error: release again. A SQL error: fix the file (it is not applied remotely), commit, push, release again. |
 | `api:deploy` | New schema, old Worker. | Release again, or `bun run api:deploy`, then `bun run release:health`, then `bun run deploy:web` from the repo root (rebuild with `bun run deploy` if the tree changed since `build`). |
-| `release:health` | New Worker, which cannot read D1 or sees another migration count. | A D1 error (`evt = "d1"` in Workers Logs, §3.7.4) that is a spent quota or binding problem: fix it, rerun `bun run release:health`. Bad code: `bunx wrangler deployments list`, then `bunx wrangler rollback <version id> -m "<why>"` to the version before the release, and check `/health/db` again. The schema stays: the old Worker reads it (expand, then contract). |
+| `release:health` | New Worker, which cannot read D1 or sees another migration count. | A D1 error: `evt = "d1", kind = "health_failed"` in Workers Logs (§3.7.4) carries the error and cause names and `quota`. `quota: true` is a spent daily quota (wait for 00:00 UTC); otherwise it is a binding or schema problem (`bunx wrangler d1 migrations list colorless --remote`): fix it, rerun `bun run release:health`. Bad code: `bunx wrangler deployments list`, then `bunx wrangler rollback <version id> -m "<why>"` to the version before the release, and check `/health/db` again. The schema stays: the old Worker reads it (expand, then contract). |
 | `deploy:web` | New API, old web app; fine when the API change kept the old client working, as an API-first release should. | `bun run deploy` from the repo root. A bad web build: `bunx wrangler deployments list` and `bunx wrangler rollback <version id>` from the repo root (Worker `colorless`). |
 
 Never revert or edit a migration file that is applied remotely: undo it with a
@@ -872,16 +875,21 @@ and reset at 00:00 UTC; past one, the binding fails until then:
 
 | Resource | Free limit / day | Main spenders |
 | --- | ---: | --- |
-| D1 rows read | 5,000,000 | free-text builder searches (about 5,100 rows each), deep /cards pages, decklist import, catalog KV misses |
+| D1 rows read | 5,000,000 | free-text searches (about 5,100 rows each), deep /cards pages, decklist import, catalog KV misses (a /cards miss runs its page and a `count(*)`, each about 5k rows unless the filter is `set`, `id` or `nameExact`; pages 1-3 of one new filter cost 15-30k) |
 | D1 rows written | 100,000 | remote ingest, deck saves, sessions, sign-in counters (two per allowed attempt, one more per failed login below the per-email cap), the daily sweep (at most 20,000) |
 | KV reads | 100,000 | every KV-cached catalog request |
 | KV writes | 1,000 | catalog KV misses (only /facets, /series, /sets, /sets/:id and /cards pages 1-3 at page size 4, 8 or 50; never an empty result) |
 | Worker requests | 100,000 | every API request, including WebSocket upgrades and the asset mirror; nothing limits traffic before the Worker on workers.dev |
 | Durable Object requests | 100,000 | lobby creation, each WebSocket upgrade and each incoming frame |
 | Durable Object rows written | 100,000 | lobby snapshot and match writes (one per accepted change, a socket's frames capped at 40 then 5 a second), each liveness `setAlarm` (one per 30 s while a lobby has sockets, for at most an hour without play), and about 5 per lobby created and wiped |
+| Workers Logs events | 200,000 | one per Worker and Durable Object invocation, plus one per log line. Past it only the logs stop (the API keeps serving); kept 3 days. Workers Logs moves to Cloudflare Observability pricing on 2026-12-01: recheck this figure then |
 
-The KV write quota is the tight one, and only the catalog cache spends it.
-Sign-in no longer touches KV. The Workers Rate Limiting bindings are free and
+D1 rows read run out first: about 200-330 new catalog filters missing KV
+spend the day's 5M (the peak day to 2026-11-09 read 2.4M, mostly builder
+pages and their counts). The builder no longer spends them once its card
+index has loaded: from then on it slices every page from the index in the
+browser (API audit CAT1). The KV write quota is the other tight one, and only
+the catalog cache spends it. Sign-in no longer touches KV. The Workers Rate Limiting bindings are free and
 store nothing; they bound bursts, not a day:
 
 | Binding | Limit | Key | On a binding error |
@@ -891,6 +899,7 @@ store nothing; they bound bursts, not a day:
 | `AUTH_LIMIT` | 10 / 60 s | scope (register, login, delete) + IP | open; the D1 sign-in limiter behind it fails closed |
 | `DECK_WRITE_LIMIT` | 60 / 60 s | account | open |
 | `DECK_WRITE_IP_LIMIT` | 180 / 60 s | IP | open |
+| `CATALOG_SEARCH_LIMIT` | 30 / 60 s | IP | open |
 
 IP keys count an IPv6 address as its /64. Deck writes are POST, PATCH and
 DELETE `/decks`; the builder saves at most once a second (600 ms debounce, one
@@ -945,7 +954,8 @@ cd apps/api && bun run release:health
 curl -fsS https://colorless-api.jofrescari.workers.dev/health/db
 # {"ok":true,"migrations":13}, where 13 = `ls apps/api/drizzle/*.sql | wc -l`.
 # 503 {"ok":false}: a D1 error (binding, schema, quota); the reason is not in
-# the body, look for `evt = "d1"` in Workers Logs and in `wrangler tail`.
+# the body, look for `evt = "d1", kind = "health_failed"` in Workers Logs and
+# in `wrangler tail`: `quota: true` means the day's D1 quota is spent.
 ```
 
 `GET /health` never touches D1, so it stays green through all of these.
@@ -969,26 +979,37 @@ Workers & Pages → Usage shows the account-wide totals.
 **Workers Logs** (`colorless-api` → Observability; `observability.enabled` in
 `apps/api/wrangler.jsonc`). Every line from `apps/api/src/http/log.ts` is JSON
 with an `evt` field, and repeating failures are throttled to one line per 10
-minutes per isolate, carrying a `suppressed` count. Saved queries:
+minutes per isolate (per `evt` and `kind`, so one route's line can hide
+another's), carrying a `suppressed` count. Levels: info for what went as
+intended (sign-ins and the other account successes, the sweep's counts, a
+lobby forfeit or wipe), warn for a refusal or a degradation the code handled,
+error for a failure nothing handled. Filter on level `warn` or `error` to see
+only trouble; the saved queries filter on `evt` and see every level. A failure
+line's error fields come from `errorFields` (`apps/api/src/http/errors.ts`):
+`error` and `cause` names, `query` (the SQL without its parameters) and
+`quota: true` when the error reads as a spent daily quota, never a message or
+a bound value. Saved queries:
 
 | Query | What it finds |
 | --- | --- |
-| `evt = "kv"` | Catalog cache `get_failed`, `put_failed` and `epoch_failed`, with the route. `put_failed` on every route at once means the day's KV writes are spent. |
-| `evt = "auth"` | The account audit trail (`apps/api/src/auth/routes.ts`, §3.5): `registered`, `login_ok`, `login_failed` (`reason`; `capped: true` past the per-email cap), `logout`, `logout_all` (`sessions` ended), `profile_updated`, `delete_failed`, `account_deleted`, `oauth_created`, `oauth_linked` (`claimed`, `identitiesRemoved`, `sessionsRevoked`), `oauth_refused` and the other OAuth failures. `account` is the keyed tag of the user id (`apps/api/src/http/logTag.ts`, secret `LOG_TAG_KEY`; `untagged` without it): filter on one tag to follow an account across addresses. `rate_limited` (with `by: "binding"` when `AUTH_LIMIT` refused it) carries `net`, the same kind of tag for the address; `limiter_error` from the D1 limiter and `binding_error` from the binding. Error level: `pepper_missing` (no `PASSWORD_PEPPER`; set it) and `pepper_unavailable` (a stored hash needs a pepper the Worker lacks: restore the secret or `PASSWORD_PEPPER_PREVIOUS`). No line carries an email, IP or user id. |
+| `evt = "kv"` | Catalog cache `get_failed`, `put_failed` and `epoch_failed`, with the route and the error fields: `quota: true` means the day's KV quota is spent. |
+| `evt = "auth"` | The account audit trail (`apps/api/src/auth/routes.ts`, §3.5): `registered`, `login_ok`, `login_failed` (`reason`; `capped: true` past the per-email cap), `logout`, `logout_all` (`sessions` ended), `profile_updated`, `delete_failed`, `account_deleted`, `oauth_created`, `oauth_linked` (`claimed`, `identitiesRemoved`, `sessionsRevoked`), `oauth_refused` and the other OAuth failures: `oauth_denied` (the provider's `?error=` for this browser's sign-in, its code in `providerError`; `access_denied` is a Cancel), `oauth_state` (`reason`: `no_cookie`, `no_state`, `mismatch` or `no_code`), `oauth_exchange` and `oauth_profile` (the provider's `status` and `providerError`). The successes are info level, the rest warn. `account` is the keyed tag of the user id (`apps/api/src/http/logTag.ts`, secret `LOG_TAG_KEY`; `untagged` without it): filter on one tag to follow an account across addresses. `rate_limited` (with `by: "binding"` when `AUTH_LIMIT` refused it) carries `net`, the same kind of tag for the address; `limiter_error` from the D1 limiter and `binding_error` from the binding. Error level: `pepper_missing` (no `PASSWORD_PEPPER`; set it) and `pepper_unavailable` (a stored hash needs a pepper the Worker lacks: restore the secret or `PASSWORD_PEPPER_PREVIOUS`). No line carries an email, IP or user id. |
 | `evt = "decks"` | `rate_limited` and `binding_error` from the deck write limits (`apps/api/src/decks/routes.ts`). |
 | `evt = "lobby"` | Lobby Durable Object events (`apps/api/src/lobby/`, kinds below), and `rate_limited` / `limiter_error` from the per-IP limits on its routes. |
-| `evt = "http"` | `unhandled`: a request that threw (a 500), with the method, route pattern, error and cause names, the SQL without parameters, and `quota: true` when the cause reads as a spent quota. Logged at error level. |
-| `evt = "d1"` | `/health/db` failures, and the daily sweep: one `sweep` line with the rows deleted, or `sweep_failed` (the run also shows as failed under the Worker's Cron Events). `catalog_reads`: each isolate's tally of `/cards` queries that missed KV (cacheable misses and bypasses alike), at most one line a minute: `queries`, `rows_read`, and the heaviest query's `max_rows_read` and `max_params` (param names, never values). |
+| `evt = "http"` | `unhandled`: a request that threw (a 500), with the method, route pattern and the error fields. Logged at error level. `invalid_request` (throttled): a validator 400, with the route pattern, `target` (`body` or `query`), the `issues` count and the first five issue `paths` (`cards.3.cardId`), never the values or messages; a run of them after a release means the client sends what the server rejects. `cross_site_refused` (throttled): an unsafe request from another site (§3.5), with the method and route pattern. |
+| `evt = "d1"` | `health_failed`: a `/health/db` failure, with the error fields (`quota: true` is a spent quota, otherwise a binding or schema problem). The daily sweep: one info-level `sweep` line with the rows deleted, or an error-level `sweep_failed` with the error name (the run also shows as failed under the Worker's Cron Events). `catalog_reads` (info level): each isolate's tally of `/cards` queries that missed KV (cacheable misses and bypasses alike), at most one line a minute: `queries`, `rows_read`, and the heaviest query's `max_rows_read` and `max_params` (param names, never values). |
 | `evt = "catalog"` | `rate_limited` / `limiter_error` from `CATALOG_SEARCH_LIMIT` on `/cards`, `/cards/index` or `/facets` (the `route` field). |
 | `evt = "assets"` | `origin_refused` with a `reason` (`origin_url`, `redirect`, `content_type`, `magic`, `too_large`): the asset mirror would not store what the origin sent. `origin_status` with the `status`: the origin answered something other than 200, 404, 410 or a 5xx (a 429, 403 or 408), served as an uncached 502. `r2_get_failed` with the `error` name: an R2 read threw and the image came from the origin. |
-| `evt = "after_response"` | Other deferred work that failed after its response, such as an R2 asset mirror write. |
+| `evt = "after_response"` | `failed`: other deferred work that failed after its response, such as an R2 asset mirror write, with the route and the error fields. |
 
 Every `evt = "lobby"` line carries the lobby's `code` as `lobby`. None carries
 an account id, a session id, an email, a seat secret, a deck id or a name:
 `signedIn` and `seated` say only whether there was one. The refusals and
 closes a client can repeat are throttled (marked *t*); the throttle is per
-`kind`, so one cause can hide another's line for 10 minutes, counted in
-`suppressed`. The security audit trail (LB8) is the first six:
+`kind` (per `kind` and action `type` for `action_threw`), so one cause can hide
+another's line for 10 minutes, counted in `suppressed`. `forfeit` and
+`lobby_wiped` are info level, the rest warn. The security audit trail (LB8) is
+the first six:
 
 | `kind` | Fields | When |
 | --- | --- | --- |
@@ -1002,7 +1023,7 @@ closes a client can repeat are throttled (marked *t*); the throttle is per
 | `lobby_wiped` | `cause`, `sockets`, `ageMs`, `inGame` | The lobby was deleted: `empty` (its expiry), `inactive` (an hour without play; `sockets` were closed with 4000) or `legacy` (stored before the LB6 cutover). |
 | `handoff_failed`, `handoff_deferred` | `cause`, `error` / `attempts` | A match could not start: `d1_error`, `deck_unresolved` or `match_refused` (the engine refused the decks, or starting the match threw, with `error`); or the lobby kept changing under the handoff. |
 | `forfeit` | `seat`, `cause` | A seat conceded by leaving (`left`) or by its forfeit clock (`abandoned`). |
-| `action_threw` *t* | `type`, `error` | The engine threw on an action; it was refused like any move (MI3). |
+| `action_threw` *t* | `type`, `error` | The engine threw on an action; it was refused like any move (MI3). Throttled per action `type`, so a throw on another type still logs (API audit LOB7). |
 | `match_migrated`, `match_retired` | `from`, `to` / `cause` | A stored match was migrated to this build's version, or retired as unreadable. |
 | `alarm_failed` | `error` | An alarm pass threw; the alarm is re-armed, no sooner than 5 s later until a pass succeeds (LOB1). |
 
@@ -1533,9 +1554,14 @@ POST   /lobby                    # mint an unused code (draw + claim via the DO,
                                  #   retry on 409 collision) → 201 {code}; 503
                                  #   after five straight collisions; 10/min/IP
 GET    /lobby/:code/ws           # strict code check (404) → upgrade check (426)
-                                 #   → 60/min/IP (429)
-                                 #   → forward to the code's LobbyDO; 404 from
-                                 #   the DO for never-created/expired lobbies.
+                                 #   → Origin check (403 {"error":"forbidden
+                                 #   origin"}) → 60/min/IP (429)
+                                 #   → forward to the code's LobbyDO: a code
+                                 #   that names no lobby (never created or
+                                 #   expired) gets a 101 closed at once with
+                                 #   4004; 503 {error} when the lobby is full
+                                 #   ("lobby full") or the session lookup
+                                 #   fails ("lobby unavailable, try again").
                                  #   Mounted BEFORE the CORS middleware: ws
                                  #   handshakes aren't CORS-guarded and the 101
                                  #   response's headers are immutable
