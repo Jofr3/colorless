@@ -105,6 +105,14 @@ function Card:hit(x,y)
   return math.abs(dx)<=CARD_W*self.unit/2+buffer and math.abs(dy)<=CARD_H*self.unit/2+buffer
 end
 
+-- Half the width and height of the box the card covers now, rotation and zoom included.
+function Card:halfExtents()
+  local scale=self.motion and self.motion.VT.scale or 1
+  local w,h=CARD_W*self.unit/2*scale,CARD_H*self.unit/2*scale
+  local c,s=math.abs(math.cos(self.angle)),math.abs(math.sin(self.angle))
+  return w*c+h*s,w*s+h*c
+end
+
 -- Card:juice_up converts its arguments before calling Moveable:juice_up.
 function Card:juiceUp(time,scale,rotation,reduced)
   local sign=love.math.random()>0.5 and 1 or -1
