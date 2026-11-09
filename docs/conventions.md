@@ -546,6 +546,12 @@ keep `engines` in step; Dependabot does not update them. Move Node to 24 in
 Q1 2027, before 22's end of life on 2027-04-30, and @types/node with it: it
 follows the pinned Node major, never the newest.
 
+**Install scripts.** `trustedDependencies` is `[]`, so bun's default trust list
+applies: today only workerd's postinstall runs (it hard-links the platform
+binary that is already installed). An empty list does not mean "no scripts".
+Add a package only when it cannot work without its own script, with the reason
+(DEP-P2, TRN5); `bun pm untrusted` lists the blocked ones.
+
 **Release-age cooldown.** `bunfig.toml` sets `minimumReleaseAge` to 3 days:
 `bun add`, `bun update` and any install that resolves skip versions published
 less than 3 days ago, and say so ("blocked by minimum-release-age"). A frozen
