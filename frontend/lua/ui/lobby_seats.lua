@@ -18,6 +18,14 @@ local function mix(a,b,t) return {a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t,a[3]+(b[
 -- Your deck preview: the picker's titled pile, centred in the seat.
 function Online:deckBox(p)
   local scale=self:pickerScale()
+  if self.compact then
+    -- In the compact arrangement (UI-FU2) the pile shrinks to the seat's free height: its name
+    -- 100 below the seat's top as at 1280x800 (32 above the stack, which rises 15 per unit of
+    -- scale over the card's half height), its count (116 per unit below the centre) 8 above
+    -- Choose deck.
+    scale=math.min(scale,(p.h-240)/(D.HALF_H+15+116))
+    return {cx=p.x+p.w/2,cy=p.y+132+(D.HALF_H+15)*scale,scale=scale}
+  end
   return {cx=p.x+p.w/2,cy=p.y+144+D.HALF_H*scale,scale=scale}
 end
 -- Your chosen deck's pile, drawn as in the picker.
