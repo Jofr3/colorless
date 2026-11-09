@@ -179,7 +179,9 @@ export class LuaLibrary {
           ? "Your session expired. Sign in again."
           : status === 409
             ? `Your library is full (${MAX_DECKS_PER_USER} decks). Delete one to make room.`
-            : "Could not save the change. Please try again.";
+            : status === 429
+              ? "Too many changes. Wait a minute."
+              : "Could not save the change. Please try again.";
     }
     if (!live()) return;
     this.busy = false;

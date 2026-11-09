@@ -893,8 +893,9 @@ store nothing; they bound bursts, not a day:
 | `DECK_WRITE_IP_LIMIT` | 180 / 60 s | IP | open |
 
 IP keys count an IPv6 address as its /64. Deck writes are POST, PATCH and
-DELETE `/decks`; the builder saves at most about once a second (600 ms debounce,
-one save in flight), and the client backs off on a 429. An account at its limit
+DELETE `/decks`; the builder saves at most once a second (600 ms debounce, one
+save in flight, save starts at least 1 s apart), and the client backs off on a
+429. An account at its limit
 swapping 200-entry lists still writes about 36,000 D1 rows a minute, so the
 deck bindings do not protect the daily write quota from a determined account
 (security audit DK1, decision 4: bindings now, a denormalized list later).
@@ -919,10 +920,12 @@ until 00:00 UTC. `GET /cards` therefore refuses a page that skips more than
 1,000 cards (`MAX_CARDS_OFFSET`), and `CATALOG_SEARCH_LIMIT` (namespace 1003)
 allows 30 scanning queries a minute per IP (an IPv6 address counts as its /64):
 any query that bypasses KV and names neither `id` nor `nameExact`, which are
-index lookups. The builder asks `/cards` only for the pages KV caches (pages 1-3
-at its page sizes) and serves every other page, free text and HP bounds included,
-from `GET /cards/index` in the browser (one KV entry per catalog epoch), so the
-limit meets only other callers. The same budget covers `/cards/index` when KV
+index lookups. Until its card index has loaded, the builder asks `/cards` only
+for the pages KV caches (pages 1-3 at its page sizes) and serves every other
+page, free text and HP bounds included, from `GET /cards/index` in the browser
+(one KV entry per catalog epoch); once it has loaded, every page comes from it,
+as a KV miss on a cached page still counts much of the table. The limit meets
+only other callers. The same budget covers `/cards/index` when KV
 misses it. The limit slows a careless loop but not a determined one (one
 address can still read about 150k rows a minute). A cacheable filter value that
 matches nothing (`illustrator=junk`) still scans the table on each miss and is

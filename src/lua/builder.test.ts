@@ -155,6 +155,7 @@ function versionedServer() {
     }
     server.deck = {
       ...server.deck,
+      name: body.name ?? server.deck.name,
       cards: body.cards ?? server.deck.cards,
       chosenCoverCardId: body.chosenCoverCardId ?? null,
       version: (server.deck.version ?? 0) + 1,
@@ -249,6 +250,93 @@ describe("Lua deck builder", () => {
     expect(back).toHaveBeenCalledTimes(1);
     expect(b.message).toBe("");
   });
+  it("stops saving a deck a save finds gone, offers its decklist, and lets Back leave (DECK1)", async () => {
+    vi.mocked(api.patchDeck).mockRejectedValue(new api.ApiError(404, { error: "deck not found" }));
+    const { b, publish, back } = await setup();
+    const header = () => decodeFields(String(publish.mock.lastCall?.[0]).split("\n")[0] ?? "");
+    await b.command("add\ta");
+    // Back pressed before the save answers waits for it, then stays to show why it failed.
+    await b.command("leave");
+    await tick();
+    expect(api.patchDeck).toHaveBeenCalledTimes(1);
+    expect(back).not.toHaveBeenCalled();
+    expect(b.message).toBe("This deck no longer exists. Export to keep it.");
+    expect(header()?.[wireColumn(WIRE_ROWS.builder.header, "saveStatus")]).toBe("");
+    expect(b.hasUnsavedEdits()).toBe(false);
+    // Later edits are kept on screen, not sent, and the notice stays.
+    await b.command("add\ta");
+    await vi.advanceTimersByTimeAsync(20_000);
+    expect(api.patchDeck).toHaveBeenCalledTimes(1);
+    expect(b.message).toBe("This deck no longer exists. Export to keep it.");
+    await b.command("export");
+    expect(b.transfer).toContain("2 Pikachu");
+    const navigated = vi.fn();
+    b.navigate(navigated);
+    expect(navigated).toHaveBeenCalledTimes(1);
+    await b.command("leave");
+    expect(back).toHaveBeenCalledTimes(1);
+    expect(api.patchDeck).toHaveBeenCalledTimes(1);
+  });
+  it("lets a second Back leave without saving once a save has failed (DECK1)", async () => {
+    vi.mocked(api.patchDeck).mockRejectedValue(new api.ApiError(500, { error: "internal" }));
+    const { b, back } = await setup();
+    await b.command("add\ta");
+    await tick();
+    expect(b.saveStatus).toBe("failed");
+    expect(b.message).toBe("Could not save. Your edits are kept. Retry.");
+    // The first Back tries the save again, and says what the next one does.
+    await b.command("leave");
+    expect(b.message).toBe("Not saved. Press Back again to leave anyway.");
+    await tick();
+    expect(api.patchDeck).toHaveBeenCalledTimes(2);
+    expect(back).not.toHaveBeenCalled();
+    expect(b.message).toBe("Not saved. Press Back again to leave anyway.");
+    await b.command("leave");
+    expect(back).toHaveBeenCalledTimes(1);
+    expect(api.patchDeck).toHaveBeenCalledTimes(2);
+    expect(b.entries.get("a")).toBe(1);
+  });
+  it("takes a double click on Back after a failed save as one press", async () => {
+    vi.mocked(api.patchDeck).mockRejectedValue(new api.ApiError(500, { error: "internal" }));
+    const { b, back } = await setup();
+    await b.command("add\ta");
+    await tick();
+    await b.command("leave");
+    await vi.advanceTimersByTimeAsync(200);
+    await b.command("leave");
+    expect(back).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(200);
+    const navigated = vi.fn();
+    b.navigate(navigated);
+    expect(navigated).toHaveBeenCalledTimes(1);
+    expect(back).not.toHaveBeenCalled();
+  });
+  it("arms no leave without saving until a save has failed, and disarms once one lands", async () => {
+    let fail = true;
+    vi.mocked(api.patchDeck).mockImplementation(async () => {
+      if (fail) throw new api.ApiError(500, { error: "internal" });
+      return deck([{ cardId: "a", count: 1 }]);
+    });
+    const { b, back } = await setup();
+    await b.command("add\ta");
+    await tick();
+    fail = false;
+    await b.command("retry-save");
+    await tick();
+    expect(b.saveStatus).toBe("saved");
+    // The landed save disarmed it: Back after this new failure only tries again, and arms.
+    fail = true;
+    await b.command("add\tb");
+    await b.command("leave");
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(b.message).toBe("Could not save. Your edits are kept. Retry.");
+    await b.command("leave");
+    expect(back).not.toHaveBeenCalled();
+    expect(b.message).toBe("Not saved. Press Back again to leave anyway.");
+    await vi.advanceTimersByTimeAsync(1_000);
+    await b.command("leave");
+    expect(back).toHaveBeenCalledTimes(1);
+  });
   it("drops the failed save's Retry from its message while the save is tried again", async () => {
     for (let i = 0; i <= 2 * MAX_TRANSIENT_RETRIES + 1; i++) {
       vi.mocked(api.patchDeck).mockRejectedValueOnce(new TypeError("Failed to fetch"));
@@ -306,7 +394,8 @@ describe("Lua deck builder", () => {
     await b.command("remove\ta");
     expect(b.hasUnsavedEdits()).toBe(true);
     resolve(deck([{ cardId: "a", count: 1 }]));
-    await tick();
+    // The follow-up goes a second after the first save started.
+    await vi.advanceTimersByTimeAsync(1_000);
     expect(api.patchDeck).toHaveBeenCalledTimes(2);
     expect(vi.mocked(api.patchDeck).mock.lastCall?.[2]).toEqual({ keepalive: false });
     expect(b.hasUnsavedEdits()).toBe(false);
@@ -399,7 +488,7 @@ describe("Lua deck builder", () => {
     b.navigate(navigate);
     expect(navigate).not.toHaveBeenCalled();
     resolve(deck());
-    await tick();
+    await vi.advanceTimersByTimeAsync(1_000);
     expect(api.patchDeck).toHaveBeenCalledTimes(2);
     expect(navigate).toHaveBeenCalledTimes(1);
   });
@@ -587,6 +676,37 @@ describe("Lua deck builder", () => {
     expect(server.deck.version).toBe(3);
     expect(back).toHaveBeenCalledTimes(1);
   });
+  it("takes a lost save made while the name field was blank as its own (DECK2)", async () => {
+    const server = versionedServer();
+    server.loseNext = true;
+    const { b } = await setup();
+    await b.command("add\ta");
+    // The name is cleared and left blank past the save's debounce.
+    await b.command(encodeFields(["name", "", "input"]));
+    await tick();
+    expect(vi.mocked(api.patchDeck).mock.lastCall?.[1].name).toBe("Electric Dreams");
+    expect(server.deck.cards).toEqual([{ cardId: "a", count: 1 }]);
+    await b.command(encodeFields(["name", "Bolt", "input"]));
+    await b.command("add\tb");
+    await vi.advanceTimersByTimeAsync(2_500);
+    expect(b.message).toBe("");
+    expect(b.name).toBe("Bolt");
+    expect(server.deck).toMatchObject({
+      name: "Bolt",
+      cards: [
+        { cardId: "a", count: 1 },
+        { cardId: "b", count: 1 },
+      ],
+    });
+    expect(api.getDeck).toHaveBeenCalledTimes(1);
+  });
+  it("sends nothing for a name cleared and not yet typed again", async () => {
+    const { b } = await setup();
+    await b.command(encodeFields(["name", "", "input"]));
+    await tick();
+    expect(b.hasUnsavedEdits()).toBe(false);
+    expect(api.patchDeck).not.toHaveBeenCalled();
+  });
   it("still reloads on a 409 carrying a deck this tab never sent, after a lost response", async () => {
     const server = versionedServer();
     server.loseNext = true;
@@ -641,6 +761,8 @@ describe("Lua deck builder", () => {
     await b.command(encodeFields(["import", "2 Abra"]));
     expect(b.message).toBe("Deck imported.");
     expect(retry()).toBe("0");
+    // The import loaded the card index; without it, the search asks GET /cards.
+    forgetCardIndex();
     vi.mocked(api.getCards).mockRejectedValueOnce(new Error("offline"));
     await b.command("retry");
     expect(b.message).toBe("Card search failed. Try again.");
@@ -747,6 +869,7 @@ describe("Lua deck builder", () => {
     expect(api.getCards).toHaveBeenLastCalledWith(expect.objectContaining({ type: undefined }));
   });
   it("sets a single-value filter from its list and searches it (UI-FU3)", async () => {
+    heldIdle();
     vi.mocked(api.getSets).mockResolvedValue([
       { id: "sv01", name: "Scarlet & Violet" },
       { id: "sv02", name: "Paldea Evolved" },
@@ -789,6 +912,7 @@ describe("Lua deck builder", () => {
     expect(listRows(publish).picker).toBeUndefined();
   });
   it("prefetches neighbouring catalog pages so paging never shows the loading state", async () => {
+    // Pages 1 to 3 come from /cards while the card index has not loaded.
     vi.mocked(api.getCards).mockImplementation(async (query) => {
       const page = query?.page ?? 1;
       return { items: [card(`p${page}a`), card(`p${page}b`)], total: 40, page, pageSize: 8 };
@@ -822,6 +946,33 @@ describe("Lua deck builder", () => {
     expect(b.results.map((c) => c.cardId)).toEqual(["p1a", "p1b"]);
     await tick();
     expect(pages()).toEqual([1, 2, 3]);
+  });
+  it("slices every page from the card index once it has loaded, asking /cards for none (CAT1)", async () => {
+    vi.mocked(api.getCards).mockImplementation(catalogOf(() => 40));
+    const images = vi.fn();
+    const { b } = await setup(images);
+    await tick();
+    expect(api.getCardIndex).toHaveBeenCalledTimes(1);
+    const seen = vi.mocked(api.getCards).mock.calls.length;
+    // The index holds forty Abra and a Pikachu, all Pokemon, none of them Trainers.
+    await b.command("cycle\tsupertype\t1");
+    expect(b.filters.supertype).toBe("Pokémon");
+    expect(b.busy).toBe(false);
+    expect(b.results.map((c) => c.cardId)).toEqual(ids(0, 8));
+    expect(b.total).toBe(41);
+    // The prefetched pages come from it too, and page with no loading state.
+    expect(images.mock.lastCall?.[0].map((image: { id: string }) => image.id)).toEqual(ids(0, 24));
+    await b.command("page\t1");
+    expect(b.results.map((c) => c.cardId)).toEqual(ids(8, 16));
+    await b.command("sort");
+    await b.command("format");
+    await b.command("cycle\tsupertype\t1");
+    expect(b.filters.supertype).toBe("Trainer");
+    expect(b.results).toEqual([]);
+    expect(b.total).toBe(0);
+    await b.command(encodeFields(["filter", "hpMin", "10"]));
+    await tick();
+    expect(vi.mocked(api.getCards).mock.calls.length).toBe(seen);
   });
   it("searches names and rules text in the card index, loaded once, without asking /cards", async () => {
     vi.mocked(api.getCards).mockImplementation(catalogOf(() => 40));
@@ -945,6 +1096,33 @@ describe("Lua deck builder", () => {
     expect(b.results.map((c) => c.cardId)).toEqual(ids(0, 8));
     expect(b.total).toBe(40);
     expect(api.getCardIndex).toHaveBeenCalledTimes(1);
+  });
+  it("asks /cards for a filter change while the card index is still loading, not waiting on it", async () => {
+    const idle = heldIdle();
+    vi.mocked(api.getCards).mockImplementation(catalogOf(() => 40));
+    let deliver!: (payload: CardIndexPayload) => void;
+    vi.mocked(api.getCardIndex).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          deliver = resolve;
+        }),
+    );
+    const { b } = await setup();
+    idle[0]?.();
+    expect(api.getCardIndex).toHaveBeenCalledTimes(1);
+    await b.command("cycle\tsupertype\t2");
+    expect(b.busy).toBe(false);
+    expect(api.getCards).toHaveBeenCalledWith(
+      expect.objectContaining({ category: "Trainer", page: 1 }),
+    );
+    expect(b.total).toBe(40);
+    deliver(ABRA_INDEX);
+    await tick();
+    const seen = vi.mocked(api.getCards).mock.calls.length;
+    await b.command("cycle\tsupertype\t-1");
+    expect(b.filters.supertype).toBe("Pokémon");
+    expect(b.total).toBe(41);
+    expect(vi.mocked(api.getCards).mock.calls.length).toBe(seen);
   });
   it("does not load the card index for a builder left before the browser was idle", async () => {
     const idle = heldIdle();
@@ -1208,6 +1386,9 @@ describe("results while a search is out", () => {
       .filter((r) => r[0] === "C")
       .map((r) => r[1]),
   });
+  // The card index never loads unless a free-text search asks for it, so filter changes ask GET
+  // /cards, as before it has loaded.
+  beforeEach(() => vi.stubGlobal("requestIdleCallback", () => {}));
   /** The next GET /cards, held until the test answers it. */
   function holdNextPage() {
     let settle!: { resolve: (page: CardsPage) => void; reject: (error: unknown) => void };

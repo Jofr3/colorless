@@ -556,6 +556,21 @@ describe("deck card lists", () => {
     expect((await getDeck(deck.id)).cards).toEqual([]);
   });
 
+  it("answers a write with its cards in the order a read serves them", async () => {
+    const deck = await createDeck("Order", [card("sv01-230", 10), card("sv01-004", 4)]);
+    expect(deck.cards).toEqual([card("sv01-004", 4), card("sv01-230", 10)]);
+    const res = await patchDeck(deck.id, {
+      cards: [card("sv01-230", 12), card("sv01-007", 2), card("sv01-004", 4)],
+    });
+    const patched = (await res.json()) as Deck;
+    expect(patched.cards).toEqual((await getDeck(deck.id)).cards);
+    expect(patched.cards.map((entry) => entry.cardId)).toEqual([
+      "sv01-004",
+      "sv01-007",
+      "sv01-230",
+    ]);
+  });
+
   it("writes one card row beyond the deck row when one count changes", async () => {
     const entries = [
       card("sv01-004", 4),

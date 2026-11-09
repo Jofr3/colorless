@@ -307,6 +307,19 @@ describe("Lua deck library", () => {
     expect(library.result).toBe("error");
     expect(library.message).toBe("Your library is full (500 decks). Delete one to make room.");
   });
+  it("says to wait when the account's deck writes are rate limited, and to retry when one is gone", async () => {
+    stubFetch({
+      ...reads,
+      "PATCH /decks/b": () => json({ error: "too many requests" }, 429),
+      "DELETE /decks/a": () => json({ error: "deck not found" }, 404),
+    });
+    const { library } = await setup();
+    await library.command("rename\tdeck\tb\tRenamed");
+    expect(library.result).toBe("error");
+    expect(library.message).toBe("Too many changes. Wait a minute.");
+    await library.command("delete\tdeck\ta");
+    expect(library.message).toBe("Could not save the change. Please try again.");
+  });
   it("falls back from saved Manual and ignores stale manual sort/reorder commands", async () => {
     localStorage.setItem("decks.sortKey", "manual");
     const { calls } = stubFetch(reads);
