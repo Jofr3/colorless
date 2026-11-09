@@ -137,8 +137,14 @@ local function versus(name)
     local _,choose=action('choose')
     local s=pile.baseScale
     local top=pile.homeY-D.HALF_H*s-15*s-32
-    -- The count under the pile: 0.95 of the card's half height, its row and the 0.08 gap.
-    local bottom=pile.homeY+115.9*s
+    -- The count under the pile: 0.95 of the card's half height, its row (0.83 of its em) and the
+    -- 0.08 gap. Its em is 0.3 of the pile's unit, or more where the pile shrinks (FU2b).
+    local em=pile.counterScale or 0.3
+    local bottom=pile.homeY+(0.08+0.95*D.TILE_H/2+0.06+0.83*em)*pile.unit
+    -- However far the preview shrinks, the count draws on screen at least as large as at 100%.
+    local f=1280/o.width
+    local s0=(234-84)/D.H
+    check(0.83*em*pile.unit*f>=0.83*0.3*D.W*s0/D.TILE_W-1e-6,name..': the preview\'s count shrinks on screen ('..(0.83*em*pile.unit*f)..')')
     check(top>=you.y+96,name..': the preview\'s name runs into the status row ('..top..' < '..(you.y+96)..')')
     check(bottom<=choose.y,name..': the preview runs into Choose deck ('..bottom..' > '..choose.y..')')
     check(pile.homeX==you.x+you.w/2,name..': the preview is centred in your seat')

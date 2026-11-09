@@ -65,7 +65,9 @@ end
 local function drawCounter(card,count,limit)
   -- On a phone held upright the count is at least Display.MIN_TEXT_CSS (audit QA11); its em is
   -- the scale times the pile's unit.
+  -- A pile drawn smaller than its page's own size may keep its count larger (`counterScale`).
   local scale=Display.phone() and math.max(0.3,Display.MIN_TEXT_CSS/(card.unit*Display.collection)) or nil
+  if card.counterScale then scale=math.max(scale or 0.3,card.counterScale) end
   local nodes,bottom=Labels.counter(count,limit,scale)
   local gap=0.08*card.unit -- extra clearance below the pile in the library
   g.push(); g.translate(card.homeX,card.homeY+gap)

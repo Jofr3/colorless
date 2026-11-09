@@ -21,10 +21,15 @@ function Online:deckBox(p)
   if self.compact then
     -- In the compact arrangement (UI-FU2) the pile shrinks to the seat's free height: its name
     -- 100 below the seat's top as at 1280x800 (32 above the stack, which rises 15 per unit of
-    -- scale over the card's half height), its count (116 per unit below the centre) 8 above
-    -- Choose deck.
-    scale=math.min(scale,(p.h-240)/(D.HALF_H+15+116))
-    return {cx=p.x+p.w/2,cy=p.y+132+(D.HALF_H+15)*scale,scale=scale}
+    -- scale over the card's half height), its count 8 above Choose deck. The count keeps the
+    -- size it has on screen at 100% (FU2b): its em is a fixed `em` pixels of this smaller canvas,
+    -- 0.83 of it tall, under a row 0.08 + 0.95 half card + 0.06 tiles below the centre.
+    local tile=D.W/D.TILE_W
+    local full=math.min(0.82,((800-72-260)/2-84)/D.H) -- the preview's scale at 1280x800
+    local em=0.3*tile*full*self.width/1280
+    local row=(0.14+0.95*D.TILE_H/2)*tile
+    scale=math.min(scale,(p.h-240-0.83*em)/(D.HALF_H+15+row))
+    return {cx=p.x+p.w/2,cy=p.y+132+(D.HALF_H+15)*scale,scale=scale,counterScale=em/(tile*scale)}
   end
   return {cx=p.x+p.w/2,cy=p.y+144+D.HALF_H*scale,scale=scale}
 end
@@ -43,7 +48,7 @@ function Online:makePiles()
     local item={count=deck and deck.count or Limits.deckSize,name=you.deckName~='' and you.deckName or deck and deck.name or ''}
     item.drawFace=function(w,h) CardBack.draw(nil,w,h) end
     local box=self:deckBox(self.panels.you)
-    local pile=Pile.new(item,1);pile:place(box.cx,box.cy,box.scale,false,self.width)
+    local pile=Pile.new(item,1);pile:place(box.cx,box.cy,box.scale,false,self.width);pile.counterScale=box.counterScale
     self.piles.you=pile
   end
 end
