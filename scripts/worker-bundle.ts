@@ -1,7 +1,10 @@
 #!/usr/bin/env bun
-// The API Worker as `wrangler deploy` would upload it, built by a dry run (nothing is uploaded).
-// Prints its minified size and the zod locales it carries. `--check` fails when the bundle
-// passes `BUDGET_KIB` or carries a zod locale other than English: a single `import { z } from "zod"`
+// The API Worker as `wrangler deploy` would upload it, built by a dry run (nothing is uploaded)
+// with the flags of the apps/api `deploy` script, so it measures what ships. Prints its size and
+// the zod locales it carries. `--check` fails when the `deploy` script does not minify or
+// apps/api/wrangler.jsonc does not upload source maps (which Workers Logs needs to resolve a
+// minified stack trace to source; dependency audit USE1), and when the bundle passes `BUDGET_KIB`
+// or carries a zod locale other than English: a single `import { z } from "zod"`
 // keeps every locale, where `import * as z from "zod"` lets the bundler drop the unused ones. It
 // also fails when the bundle carries a test-only module (`TEST_ONLY`), or a package that is not a
 // production dependency of the api, engine or schema workspace (`SHIPPED`): a dev dependency such
@@ -12,12 +15,13 @@
 //   bun scripts/worker-bundle.ts [--check]
 
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { fail, isRecord, parseJson } from "./lib/cli";
 import { localBin, repoPath } from "./lib/repo";
 
-/** The minified bundle's ceiling, with room for the engine to grow between reviews of it. */
+/** The deployed (minified) bundle's ceiling, with room for the engine to grow between reviews of
+    it. */
 const BUDGET_KIB = 1024;
 
 const LOCALE = /\/zod\/(?:.*\/)?locales\/([^/]+)\.js$/;
@@ -45,6 +49,41 @@ export function bundledPackages(sources: readonly string[]): string[] {
   return [...names].sort();
 }
 
+/** The flags the `deploy` script passes to `wrangler deploy`, from the `&&`-joined step that runs
+    it, or undefined when no step does. */
+export function deployFlags(script: string): string[] | undefined {
+  for (const step of script.split("&&")) {
+    const [bin, command, ...flags] = step.trim().split(/\s+/);
+    if (bin === "wrangler" && command === "deploy") return flags;
+  }
+  return undefined;
+}
+
+/** Whether a wrangler.jsonc sets `"upload_source_maps": true` on a line of its own (a
+    commented-out line does not count). */
+export function uploadsSourceMaps(config: string): boolean {
+  return /^\s*"upload_source_maps"\s*:\s*true\b/m.test(config);
+}
+
+/** What `--check` refuses in the deploy itself: a `deploy` script that does not run
+    `wrangler deploy --minify` (the budget would gate a bundle that never ships), or a config that
+    does not upload the source maps a minified bundle's stack traces need. */
+export function deployProblems(
+  flags: readonly string[] | undefined,
+  sourceMaps: boolean,
+): string[] {
+  const minify =
+    flags === undefined
+      ? ["the apps/api `deploy` script runs no `wrangler deploy` step"]
+      : flags.includes("--minify")
+        ? []
+        : ["the apps/api `deploy` script runs `wrangler deploy` without `--minify`"];
+  return [
+    ...minify,
+    ...(sourceMaps ? [] : ['apps/api/wrangler.jsonc does not set `"upload_source_maps": true`']),
+  ];
+}
+
 /** The production dependencies the Worker may carry: every non-workspace `dependencies` entry of
     the `SHIPPED` workspaces. */
 export function shippedDependencies(manifests: readonly unknown[]): Set<string> {
@@ -57,15 +96,20 @@ export function shippedDependencies(manifests: readonly unknown[]): Set<string> 
   return names;
 }
 
-/** Builds the Worker into a temporary directory and reads its size, its zod locales and the
-    test-only modules and npm packages it carries. */
-function measure(): { kib: number; locales: string[]; testOnly: string[]; packages: string[] } {
+/** Builds the Worker into a temporary directory with the `deploy` script's flags and reads its
+    size, its zod locales and the test-only modules and npm packages it carries. */
+function measure(flags: readonly string[]): {
+  kib: number;
+  locales: string[];
+  testOnly: string[];
+  packages: string[];
+} {
   mkdirSync(repoPath("tmp"), { recursive: true });
   const out = mkdtempSync(join(repoPath("tmp"), "worker-bundle-"));
   try {
     const run = spawnSync(
       localBin("wrangler"),
-      ["deploy", "--dry-run", "--minify", "--outdir", out],
+      ["deploy", ...flags, "--dry-run", "--outdir", out],
       {
         cwd: repoPath("apps/api"),
         encoding: "utf8",
@@ -74,6 +118,8 @@ function measure(): { kib: number; locales: string[]; testOnly: string[]; packag
     );
     if (run.status !== 0)
       throw new Error(`wrangler deploy --dry-run failed:\n${run.stdout}\n${run.stderr}`);
+    if (!existsSync(join(out, "index.js.map")))
+      throw new Error('the dry run wrote no index.js.map; set "upload_source_maps": true');
     const map = parseJson(
       readFileSync(join(out, "index.js.map"), "utf8"),
       "index.js.map",
@@ -96,20 +142,29 @@ function measure(): { kib: number; locales: string[]; testOnly: string[]; packag
 }
 
 function main(): void {
-  const { kib, locales, testOnly, packages } = measure();
-  console.log(
-    `worker bundle: ${kib.toFixed(1)} KiB minified (budget ${BUDGET_KIB} KiB); zod locales: ${locales.join(", ") || "none"}; packages: ${packages.join(", ")}.`,
-  );
-  if (!process.argv.includes("--check")) return;
-  const allowed = shippedDependencies(
-    SHIPPED.map((dir) =>
-      parseJson(
-        readFileSync(repoPath(`${dir}/package.json`), "utf8"),
-        `${dir}/package.json`,
-        isRecord,
-      ),
+  const manifests = SHIPPED.map((dir) =>
+    parseJson(
+      readFileSync(repoPath(`${dir}/package.json`), "utf8"),
+      `${dir}/package.json`,
+      isRecord,
     ),
   );
+  // SHIPPED[0] is apps/api, whose `deploy` script uploads the Worker.
+  const scripts = isRecord(manifests[0]?.scripts) ? manifests[0].scripts : {};
+  const flags = deployFlags(typeof scripts.deploy === "string" ? scripts.deploy : "");
+  const check = process.argv.includes("--check");
+  // Before the build: with `"upload_source_maps": false` the dry run writes no map to read.
+  const deploy = deployProblems(
+    flags,
+    uploadsSourceMaps(readFileSync(repoPath("apps/api/wrangler.jsonc"), "utf8")),
+  );
+  if (check && deploy.length > 0) fail(`worker-bundle: FAIL — ${deploy.join("; ")}.`);
+  const { kib, locales, testOnly, packages } = measure(flags ?? []);
+  console.log(
+    `worker bundle: ${kib.toFixed(1)} KiB as deployed (${["wrangler deploy", ...(flags ?? [])].join(" ")}; budget ${BUDGET_KIB} KiB); zod locales: ${locales.join(", ") || "none"}; packages: ${packages.join(", ")}.`,
+  );
+  if (!check) return;
+  const allowed = shippedDependencies(manifests);
   const foreign = packages.filter((name) => !allowed.has(name));
   const problems = [
     ...(kib > BUDGET_KIB ? [`the bundle is ${kib.toFixed(1)} KiB, over ${BUDGET_KIB} KiB`] : []),

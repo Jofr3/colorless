@@ -6,6 +6,11 @@
   // No per-version preview URLs, so an old API version never runs against production D1.
   // (Workers with a Durable Object get none today; this keeps it that way.)
   "preview_urls": false,
+  // The `deploy` script minifies (`wrangler deploy --minify`; `wrangler dev` stays readable), so
+  // the source maps go up with it and Workers Logs resolves a stack trace to source. Function and
+  // class names survive minification (wrangler's keep_names default), which error logging reads.
+  // `scripts/worker-bundle.ts --check` fails without either (dependency audit USE1).
+  "upload_source_maps": true,
   "observability": {
     "enabled": true
   },

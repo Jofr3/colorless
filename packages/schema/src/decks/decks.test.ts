@@ -120,6 +120,16 @@ describe("patchDeckRequestSchema", () => {
     expect(patchDeckRequestSchema.safeParse({}).success).toBe(false);
   });
 
+  it("names an empty patch in its message, word for word", () => {
+    expect(patchDeckRequestSchema.safeParse({ version: 3 }).error?.issues).toEqual([
+      expect.objectContaining({
+        code: "custom",
+        path: [],
+        message: "empty patch: provide at least one field",
+      }),
+    ]);
+  });
+
   it("takes a version alongside a change, but not as the whole patch", () => {
     expect(patchDeckRequestSchema.parse({ name: "Zard", version: 3 }).version).toBe(3);
     expect(patchDeckRequestSchema.safeParse({ version: 3 }).success).toBe(false);

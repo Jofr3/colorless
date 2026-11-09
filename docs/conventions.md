@@ -262,9 +262,12 @@ only the conclusion.
   the preferences record; the page stores it as Lua writes it. Adapters guard async replies
   with `epochGuard()` (`src/lua/epochGuard.ts`).
 - Import zod as `import * as z from "zod"`, never `import { z }`: the named import keeps every zod
-  locale in the Worker bundle. `scripts/worker-bundle.ts --check` (in `check:static`) builds the
-  Worker with a wrangler dry run and fails on a non-English locale or a bundle over its budget.
-  It also fails on an npm package in the bundle that is not in the `dependencies` of apps/api,
+  locale in the Worker bundle. Give a refinement its message as `{ error }`, not zod 4's
+  deprecated `{ message }`. `scripts/worker-bundle.ts --check` (in `check:static`) builds the
+  Worker with a wrangler dry run that takes the apps/api `deploy` script's flags, so it measures
+  what ships, and fails on a non-English locale or a bundle over its budget. It fails, before
+  building, when that script's `wrangler deploy` lacks `--minify` or apps/api/wrangler.jsonc does
+  not set `"upload_source_maps": true`. It also fails on an npm package in the bundle that is not in the `dependencies` of apps/api,
   packages/engine or packages/schema, so a dev dependency such as @tcgdex/sdk cannot ship by one
   value import, and a shipped package's own dependencies must be declared. Worker source (not its
   tests, `src/testing/` or the bun-run ingest file helpers) may not use `process`, `Buffer`,

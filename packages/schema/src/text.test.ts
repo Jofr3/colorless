@@ -52,4 +52,15 @@ describe("the control-character rule for names", () => {
     expect(schema.safeParse("   ").success).toBe(false);
     expect(schema.parse("  Ash  ")).toBe("Ash");
   });
+
+  it("refuses with its own message, word for word", () => {
+    const result = withoutControlChars(z.string()).safeParse("a\tb");
+    expect(result.error?.issues).toEqual([
+      expect.objectContaining({
+        code: "custom",
+        path: [],
+        message: "Must not contain control or formatting characters",
+      }),
+    ]);
+  });
 });
