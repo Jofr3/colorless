@@ -19,7 +19,7 @@ import type { Context, MiddlewareHandler, Next } from "hono";
 import type { Env } from "../env";
 import { bindingRefusal, bindingRefuses } from "../http/bindingLimit";
 import { clientIpKey } from "../http/clientIp";
-import { logEvent, logEventThrottled } from "../http/log";
+import { logEventThrottled, logInfo } from "../http/log";
 
 /** wrangler.jsonc `CATALOG_SEARCH_LIMIT.simple.limit`; its period is BINDING_PERIOD_SECONDS. */
 export const SEARCH_LIMIT_PER_MINUTE = 30;
@@ -80,7 +80,7 @@ export function recordCatalogReads(query: CardsQuery, rowsRead: number, now = Da
       .join(",");
   }
   if (lastLogged !== undefined && now - lastLogged < READS_LOG_INTERVAL_MS) return;
-  logEvent("d1", "catalog_reads", {
+  logInfo("d1", "catalog_reads", {
     queries: tally.queries,
     rows_read: tally.rowsRead,
     max_rows_read: tally.maxRowsRead,

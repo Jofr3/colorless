@@ -1349,3 +1349,43 @@ Four branches from `api`, built by worktree agents, merged on `api`, and followi
 - The Google start probe has a deadline (EDGE2). It runs under `withDeadline` (20 s, like WC3), so it cannot wedge the account form. `createLobbyCode` keeps the HTTP status, and a 429 reads "Too many new lobbies. Try again in a minute."
 - Sign-in reads Retry-After (AUTH5). A 429 reads "Too many attempts. Try again in N minutes.", rounded up; a wait under 60 s, or no header, stays "Wait a moment." The delete form uses the same copy. A 503 on sign-in reads "Sign-in is unavailable right now. Try again later." instead of "Could not connect".
 - 14 API-P4 mutant rows, all killed. AUTH1 is its own commit (e7d346a9), so it could go out alone.
+
+### 2026-11-09 — Backend and API audit Phase 5 and CAT2: every catalog miss spends the search budget, and failures say why
+
+The last two branches of the 2026-11-09 audit, built by worktree agents and merged on `api` after Phases 0-4 were released. CAT2 waited for CAT1's web release, which went live with Phases 0-4. Both are API-only, with no migration, binding, secret or wrangler change.
+
+**Every catalog KV miss spends the search budget (API-CAT2, decision 7a, after CAT1's web release went live).**
+- `CATALOG_SEARCH_LIMIT` (30 a minute per IP) now runs after the KV cache on `GET /cards`, so a hit never spends it and every miss does. That covers:
+  - cacheable pages;
+  - KV bypasses;
+  - keys past KV's 512 bytes;
+  - each repeat once the day's KV writes are spent.
+  `id` and `nameExact` lookups stay exempt. `GET /facets` spends it on a miss. `/sets`, `/series`, `/sets/:id`, `/cards/:id` and `/cards/full` stay unlimited (small tables or index lookups).
+- `catalog_reads` tallies every `/cards` miss, so cacheable misses show in Workers Logs.
+- Catalog query values are capped at 100 characters, and `name`, `nameExact` and `text` at 300 (the builder's field limit). A longer value is a 400. Free text is 300 rather than about 100 because the client parses its local searches with the same schema.
+- KV `get_failed`, `put_failed` and `epoch_failed` carry `errorFields`, so a spent KV quota reads `quota: true` (OPS1, catalog half).
+- Client cost:
+  - A builder spends at most about 5 misses before its card index loads, and none after.
+  - Deck hydration (`?id=`), the online picker and the sandbox (`/cards/full`) are never limited.
+  - A 429 shows the search's existing retry message.
+  - No wrangler change.
+- 13 API-CAT2 mutant rows, all killed. The API-P3 rows still die.
+**Logging, diagnostics and docs (API-P5).**
+- Failure lines carry their cause (OPS1). `health_failed`, the `after_response` failure line and the catalog KV `get_failed`, `put_failed` and `epoch_failed` lines spread `errorFields`: error and cause names, the SQL and the quota flag, never a message or a bound value. So release:health's 503 and a KV failure tell a spent quota apart from a schema or binding fault, and the runbook rows diagnose by `quota: true`.
+- Validator 400s are logged (EDGE4). A throttled `http invalid_request` line carries the route pattern, the `target`, the issue count and the first five issue paths. It never logs messages, which can quote the input. `cross_site_refused` logs the route pattern instead of the raw path (OPS4).
+- Three levels (OPS2, decision 10a):
+  - `logInfo` (console.log) for success and audit lines: the sweep, sign-ins and account changes, lobby forfeit and wipe, and the `catalog_reads` tally.
+  - warn for refusals and handled degradations.
+  - error for failures nothing handled, now including `sweep_failed`.
+  Saved queries filter on `evt`, so none change.
+- `action_threw` is throttled per action type (LOB7, `logEventThrottledBy`), so one engine bug's line no longer hides another's for 10 minutes.
+- `db-check --upstream` reads each set on its own (OPS3, `src/ingest/staleCards.ts`). A 404 reports that set's cards as stale ("set gone"), any other failure becomes a row, and the run always prints its results. `SourceRequestError` now carries the HTTP status.
+- `oauth_state` checks the state before the code, so an error callback with a forged state logs `mismatch`, not `no_code` (browser QA nit).
+- Docs:
+  - backend-data.md §6 lists the WebSocket refusals (403, a 101 closed with 4004, the 503s) and the `CATALOG_SEARCH_LIMIT` binding row.
+  - D1 reads run out first, and the per-miss cost (CAT1).
+  - The Workers Logs cap of 200,000 events a day, kept 3 days, to recheck at the 2026-12-01 pricing change (OPS5).
+  - About 42 ms per PBKDF2 in local workerd (AUTH8).
+  - The new log kinds and levels in the saved-query table.
+  - `ApiError`'s status comment.
+- 17 API-P5 mutant rows, all killed. `MI3-throw-refused-silently` was re-pointed at the new `action_threw` line.

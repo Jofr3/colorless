@@ -69724,4 +69724,14 @@ export const MUTANTS: Mutant[] = [
       '          : !code\n            ? "no_code"\n            : !state\n              ? "no_state"\n              : "mismatch",',
     expectKilledBy: ["apps/api/src/auth/routes.test.ts"],
   },
+  {
+    id: "API-OPS2-catalog-reads-warn",
+    decision: "API-P5",
+    what: "The catalog_reads tally stays at warn level, so a level filter for degradations still shows every minute's read tally. Killed by the catalog tally test.",
+    file: "apps/api/src/catalog/searchLimit.ts",
+    symbol: "recordCatalogReads",
+    find: '  logInfo("d1", "catalog_reads", {',
+    replace: '  logEventThrottled("d1", "catalog_reads", {',
+    expectKilledBy: ["apps/api/src/catalog/routes.d1.test.ts"],
+  },
 ];

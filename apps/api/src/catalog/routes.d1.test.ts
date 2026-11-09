@@ -113,8 +113,8 @@ describe("the per-IP limit on catalog reads that miss KV", () => {
 
   const from = (ip: string) => ({ headers: { "cf-connecting-ip": ip } });
 
-  const logged = (warn: MockInstance<typeof console.warn>, evt: string) =>
-    warn.mock.calls
+  const logged = (spy: MockInstance<typeof console.warn>, evt: string) =>
+    spy.mock.calls
       .map(([line]) => JSON.parse(String(line)) as Record<string, unknown>)
       .filter((line) => line.evt === evt);
 
@@ -244,8 +244,8 @@ describe("the per-IP limit on catalog reads that miss KV", () => {
     ]);
   });
 
-  it("logs what every KV miss reads, at most once a minute per isolate", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  it("logs what every KV miss reads, at most once a minute per isolate, at info level", async () => {
+    const info = vi.spyOn(console, "log").mockImplementation(() => {});
     const now = Date.now();
     const clock = vi.spyOn(Date, "now").mockReturnValue(now);
     const env = d1().env();
@@ -258,7 +258,7 @@ describe("the per-IP limit on catalog reads that miss KV", () => {
     await app.request("/cards?text=burn&pageSize=24", {}, env);
     clock.mockReturnValue(now + 61_000);
     await app.request("/cards?hpMin=60&pageSize=8&page=2&total=2", {}, env);
-    const lines = logged(warn, "d1").filter((line) => line.kind === "catalog_reads");
+    const lines = logged(info, "d1").filter((line) => line.kind === "catalog_reads");
     expect(lines).toEqual([
       expect.objectContaining({ queries: 1, max_params: "name,page,pageSize,sort" }),
       expect.objectContaining({ queries: 3, max_params: expect.any(String) }),
