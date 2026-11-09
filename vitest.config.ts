@@ -44,10 +44,8 @@ export default defineConfig({
   test: {
     // Transformed modules are cached on disk by content hash. The mutation harness
     // points this at its own directory so mutated sources never land here.
-    experimental: {
-      fsModuleCache: true,
-      fsModuleCachePath: process.env.VITEST_MODULE_CACHE_PATH,
-    },
+    fsModuleCache: true,
+    fsModuleCachePath: process.env.VITEST_MODULE_CACHE_PATH,
     projects: [
       {
         test: {

@@ -1571,3 +1571,16 @@ Phase 5 of the dependency audit (report `tmp/deps/deps-audit.md`), finding VER4,
   The configs already avoided what TS 7 rejects: no `baseUrl`, `moduleResolution: bundler`, ES2022.
 - **CI.** The tsc cache key prefix is now `tsc7-`, so no TS 6 build info is restored into TS 7. Dependabot still ignores typescript majors: an 8 gets its own branch, as 7 did.
 - 2 DEP-P5 mutant rows, both killed: `symbol.ts` and `binding-gate.ts` importing plain `typescript` again.
+
+### 2026-11-09 — Vitest 5, with the module cache's new key and path
+
+Phase 6 of the dependency audit (report `tmp/deps/deps-audit.md`), finding VER6: a go/no-go branch. Decision id DEP-P6. Dev only: nothing that ships changes.
+
+- **vitest 4.1.12 → 5.1.0** (2026-11-02), with @vitest/mocker and @vitest/spy following. Engines `^22.12 || ^24 || >=26` match the pinned Node 22.
+- **The module cache left `experimental`.** `vitest.config.ts` sets `fsModuleCache` and `fsModuleCachePath` at the top level; the old place still works but prints a deprecation. The cache is now `node_modules/.vitest-cache` (75 MB after a full run), so ci.yml's vitest cache step caches that path instead of `.experimental-vitest-cache`, which Vitest 5 no longer writes. CI would otherwise have missed silently. The mutation harness still points `VITEST_MODULE_CACHE_PATH` at `tmp/mutation-vitest-cache`. A sample run wrote only there and left `node_modules/.vitest-cache` untouched.
+- **Go criteria, all met:**
+  - The whole suite passes: 744 files, 17,298 tests, the same counts as Vitest 4. A full `bunx vitest run` took 1m12s.
+  - The same seeded mutant sample (`sample.ts --random 40 --seed dep-p6`) selects the same 40 rows and gives the same verdict per row on both versions: 38 killed, 2 known survivors.
+  - The one `nameFilter` row (API-OPS2-login-warn) still selects its tests under Vitest 5's `-t` and is killed.
+  - `clearMocks` now defaults to true. The shared projects already restore mocks after each test, and nothing failed.
+- Dependabot still ignores vitest majors: a 6 gets its own branch, as 5 did. No mutant rows: the change is configuration, and the sample comparison above is its check.

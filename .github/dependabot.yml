@@ -37,7 +37,8 @@ updates:
       # the tree.
       - dependency-name: "@biomejs/biome"
         update-types: ["version-update:semver-major"]
-      # Phase 6: Vitest 5 moves a config key and the CI cache paths.
+      # A vitest major (6) gets its own go/no-go branch, as 5 did (DEP-P6):
+      # check its cache paths (ci.yml) and that a seeded mutant sample matches.
       - dependency-name: vitest
         update-types: ["version-update:semver-major"]
       - dependency-name: "@vitest/*"
