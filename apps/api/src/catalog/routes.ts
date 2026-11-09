@@ -8,8 +8,9 @@
 // boundary (the /health pattern) so row/schema drift fails loudly instead of
 // leaking. Paired queries (page + count, set + its cards)
 // go through db.batch() — one D1 round trip — except a free-text page, which
-// carries its own count (cardsCountedPageStatement). A /cards query that scans
-// is limited per IP and its rows read are logged (./searchLimit.ts).
+// carries its own count (cardsCountedPageStatement). A /cards or /facets request
+// that misses KV is limited per IP, and what /cards reads then is logged
+// (./searchLimit.ts).
 
 import {
   CACHED_CARDS_PAGE_SIZES,
@@ -39,13 +40,7 @@ import { cards, series, sets } from "../db/schema";
 import type { Env } from "../env";
 import { validate } from "../http/validation";
 import { facetVocabulary } from "../sentinel";
-import {
-  bypassesCache,
-  catalogHttpCache,
-  catalogPathCache,
-  catalogQueryCache,
-  catalogUncached,
-} from "./cache";
+import { catalogHttpCache, catalogPathCache, catalogQueryCache, catalogUncached } from "./cache";
 import {
   type CardBriefRow,
   cardBriefColumns,
@@ -56,7 +51,12 @@ import {
   mapSetRow,
 } from "./map";
 import { buildCardsWhere, cardIdIn, cardsOrder } from "./query";
-import { catalogSearchLimit, countingReads, recordCatalogReads } from "./searchLimit";
+import {
+  catalogScanLimit,
+  catalogSearchLimit,
+  countingReads,
+  recordCatalogReads,
+} from "./searchLimit";
 
 export const catalogRoutes = new Hono<{ Bindings: Env }>();
 
@@ -149,15 +149,13 @@ export function cardsCacheable(query: CardsQuery): boolean {
 }
 
 /**
- * Whether a /cards query reads D1 on every request with nothing bounding its reads: it bypasses
- * KV, and it names neither ids nor an exact name. Those two are index lookups that read about one
- * row per match whatever else the query carries (queryPlan.d1.test.ts), and the decklist import
- * sends one exact lookup per line, so they are not limited.
+ * Whether a /cards query that missed KV spends the search budget: any query that names neither
+ * ids nor an exact name. Those two are index lookups that read about one row per match whatever
+ * else the query carries (queryPlan.d1.test.ts), and deck hydration and the decklist import send
+ * them, so they are not limited.
  */
 export function cardsQueryScans(query: CardsQuery): boolean {
-  return (
-    query.id === undefined && query.nameExact === undefined && bypassesCache(query, cardsCacheable)
-  );
+  return query.id === undefined && query.nameExact === undefined;
 }
 
 /** A set's cards in collector order. */
@@ -173,13 +171,13 @@ catalogRoutes.get(
   "/cards",
   catalogHttpCache,
   validate("query", cardsQuerySchema),
-  catalogSearchLimit(cardsQueryScans),
   catalogQueryCache(cardsQuerySchema, cardsCacheable),
+  catalogSearchLimit(cardsQueryScans),
   async (c) => {
     const query = c.req.valid("query");
     const reads = { rows: 0 };
     const { rows, total } = await cardsPage(drizzle(countingReads(c.env.DB, reads)), query);
-    if (bypassesCache(query, cardsCacheable)) recordCatalogReads(query, reads.rows);
+    recordCatalogReads(query, reads.rows);
     const payload: Paginated<CardBrief> = {
       items: rows.map(mapCardBriefRow),
       page: query.page,
@@ -311,8 +309,9 @@ export function facetsStatement(db: DrizzleD1Database) {
 }
 
 // GET /facets: the filter vocabularies present in the catalog. This list must come from the data,
-// never from a constant: the suffix filter stays unreachable until rows carry a suffix.
-catalogRoutes.get("/facets", catalogPathCache, async (c) => {
+// never from a constant: the suffix filter stays unreachable until rows carry a suffix. A miss
+// reads the whole table, so it spends the search budget.
+catalogRoutes.get("/facets", catalogPathCache, catalogScanLimit("/facets"), async (c) => {
   const row = await facetsStatement(drizzle(c.env.DB)).get();
   // An aggregate without GROUP BY always yields one row, "[]" columns on an empty table.
   if (row === undefined) throw new Error("facet aggregate returned no row");

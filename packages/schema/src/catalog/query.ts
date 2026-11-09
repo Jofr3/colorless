@@ -4,8 +4,22 @@
 import * as z from "zod";
 import { cardCategorySchema } from "./card";
 
+/**
+ * The longest value a catalog param other than free text takes: an id, a vocabulary value, an
+ * exact illustrator. The longest stored one is a 44-character illustrator (2026-11-09). A longer
+ * value only lengthens the KV key, which past 512 bytes skips KV.
+ */
+export const MAX_PARAM_LENGTH = 100;
+
+/** The longest free-text term (name, nameExact, text): the builder's search fields hold 300
+    characters, and a decklist line at most 120. */
+export const MAX_SEARCH_TERM_LENGTH = 300;
+
 /** A query-string field that must be non-empty when present. */
-const param = z.string().min(1);
+const param = z.string().min(1).max(MAX_PARAM_LENGTH);
+
+/** A typed search term, non-empty when present. */
+const term = z.string().min(1).max(MAX_SEARCH_TERM_LENGTH);
 
 /** A field that may repeat (`?type=Fire&type=Water`). hono's query validator hands a repeated key
     to zod as an array and a single occurrence as a string; both normalize to a non-empty
@@ -57,9 +71,9 @@ export const cardsQuerySchema = z
       MAX_ID_VALUES; unknown ids are omitted). Composes with every other filter. */
     id: repeatable.pipe(z.array(param).max(MAX_ID_VALUES)).optional(),
     /** Case-insensitive substring of the card name. */
-    name: param.optional(),
+    name: term.optional(),
     /** Case-insensitive whole-name equality: the import flow's exact-card lookup. */
-    nameExact: param.optional(),
+    nameExact: term.optional(),
     category: cardCategorySchema.optional(),
     /** Energy type(s) the card must have one of, e.g. "Water" (repeatable). */
     type: multiParam.optional(),
@@ -85,7 +99,7 @@ export const cardsQuerySchema = z
      * and Special Energy effect text. The ability and attack halves match inside stored JSON, so a
      * term can hit a key name.
      */
-    text: param.optional(),
+    text: term.optional(),
     /** Exact regulation mark, e.g. "H". */
     regulationMark: param.optional(),
     /**

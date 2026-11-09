@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { resetLogThrottle } from "../http/log";
 import app from "../index";
 import { seedCards, useTestD1 } from "../testing/d1";
+import { fakeRateLimit } from "../testing/rateLimit";
 import { resetCatalogReads } from "./searchLimit";
 
 const d1 = useTestD1(async (db) => {
@@ -98,27 +99,17 @@ describe("GET /facets", () => {
   });
 });
 
-describe("the per-IP limit on scanning /cards queries", () => {
+describe("the per-IP limit on catalog reads that miss KV", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     resetLogThrottle();
     resetCatalogReads();
   });
 
-  /** A rate-limit binding allowing `limit` calls per key, recording each key it is asked for. */
-  function fakeLimiter(limit: number) {
-    const counts = new Map<string, number>();
-    const keys: string[] = [];
-    const binding = {
-      limit: async ({ key }: { key: string }) => {
-        keys.push(key);
-        const count = (counts.get(key) ?? 0) + 1;
-        counts.set(key, count);
-        return { success: count <= limit };
-      },
-    };
-    return { binding, keys };
-  }
+  const fakeLimiter = fakeRateLimit;
+
+  /** Lets the KV write a miss queued land before the next request reads it. */
+  const settle = () => new Promise((resolve) => setTimeout(resolve, 50));
 
   const from = (ip: string) => ({ headers: { "cf-connecting-ip": ip } });
 
@@ -160,13 +151,79 @@ describe("the per-IP limit on scanning /cards queries", () => {
     expect(limiter.keys).toEqual(["2001:db8:0:0::/64", "2001:db8:0:0::/64"]);
   });
 
-  it("leaves cacheable pages, id hydration and exact names uncounted", async () => {
+  it("spends the budget on a cacheable page's KV miss and never on its hit", async () => {
+    const limiter = fakeLimiter(1);
+    const env = d1().env({ CATALOG_SEARCH_LIMIT: limiter.binding });
+    const first = await app.request("/cards?category=Pokemon&pageSize=8", from("203.0.113.9"), env);
+    expect(first.headers.get("x-colorless-cache")).toBe("miss");
+    await settle();
+    const hit = await app.request("/cards?category=Pokemon&pageSize=8", from("203.0.113.9"), env);
+    expect(hit.status).toBe(200);
+    expect(hit.headers.get("x-colorless-cache")).toBe("hit");
+    expect(limiter.keys).toHaveLength(1);
+    const miss = await app.request("/cards?category=Trainer&pageSize=8", from("203.0.113.9"), env);
+    expect(miss.status).toBe(429);
+    expect(miss.headers.get("Retry-After")).toBe("60");
+  });
+
+  it("limits a cacheable page on every repeat once KV writes fail", async () => {
+    const limiter = fakeLimiter(1);
+    const cache = {
+      get: async () => null,
+      put: () => Promise.reject(new Error("KV put() limit exceeded for the day.")),
+    };
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const env = d1().env({ CATALOG_SEARCH_LIMIT: limiter.binding, CACHE: cache });
+    expect((await app.request("/cards?rarity=Common", from("203.0.113.9"), env)).status).toBe(200);
+    expect((await app.request("/cards?rarity=Common", from("203.0.113.9"), env)).status).toBe(429);
+  });
+
+  it("limits a cacheable query whose key is too long for KV", async () => {
+    const limiter = fakeLimiter(1);
+    const env = d1().env({ CATALOG_SEARCH_LIMIT: limiter.binding });
+    // 100 characters, the cap, percent-encode to 600 bytes, past KV's 512-byte key limit.
+    const query = `/cards?illustrator=${encodeURIComponent("é".repeat(100))}`;
+    const first = await app.request(query, from("203.0.113.9"), env);
+    expect(first.headers.get("x-colorless-cache")).toBe("bypass");
+    expect((await app.request(query, from("203.0.113.9"), env)).status).toBe(429);
+  });
+
+  it("answers an over-long filter value with the usual 400 before anything is read", async () => {
     const limiter = fakeLimiter(0);
     const env = d1().env({ CATALOG_SEARCH_LIMIT: limiter.binding });
+    const res = await app.request(`/cards?set=${"x".repeat(101)}`, {}, env);
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({
+      error: "invalid query",
+      issues: [expect.stringMatching(/^set: /)],
+    });
+    expect(limiter.keys).toEqual([]);
+  });
+
+  it("spends the budget on a /facets KV miss only", async () => {
+    const limiter = fakeRateLimit(1);
+    const env = () => d1().env({ CATALOG_SEARCH_LIMIT: limiter.binding });
+    expect((await app.request("/facets", {}, env())).status).toBe(200);
+    await settle();
+    const hit = await app.request("/facets", {}, env());
+    expect(hit.headers.get("x-colorless-cache")).toBe("hit");
+    expect(limiter.keys).toHaveLength(1);
+    for (const { name } of (await d1().kv.list()).keys) await d1().kv.delete(name);
+    const refused = await app.request("/facets", {}, env());
+    expect(refused.status).toBe(429);
+    expect(refused.headers.get("Retry-After")).toBe("60");
+  });
+
+  it("leaves id hydration, exact names and cheap catalog reads uncounted", async () => {
+    const limiter = fakeLimiter(0);
+    const env = d1().env({ CATALOG_SEARCH_LIMIT: limiter.binding });
+    for (const path of ["/sets", "/sets?serie=sv", "/sets/sv01", "/series", "/cards/sv01-004"]) {
+      expect((await app.request(path, from("203.0.113.9"), env)).status).toBe(200);
+    }
+    expect(
+      (await app.request("/cards/full?id=sv01-004&id=sv01-016", from("203.0.113.9"), env)).status,
+    ).toBe(200);
     for (const query of [
-      "",
-      "category=Pokemon&pageSize=8&page=3",
-      "set=sv01&sort=name",
       "id=sv01-004&id=sv01-016&pageSize=100",
       "id=sv01-004&name=char&page=9",
       "nameExact=Pidgey&pageSize=100",
@@ -187,21 +244,24 @@ describe("the per-IP limit on scanning /cards queries", () => {
     ]);
   });
 
-  it("logs what uncached queries read, at most once a minute per isolate", async () => {
+  it("logs what every KV miss reads, at most once a minute per isolate", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const now = Date.now();
     const clock = vi.spyOn(Date, "now").mockReturnValue(now);
     const env = d1().env();
     await app.request("/cards?name=char", {}, env);
-    // A cacheable shape is not tallied; the next uncached one waits for the minute to pass.
+    // A cacheable miss is tallied and its hit is not; the tally waits for the minute to pass.
     await app.request("/cards?category=Pokemon", {}, env);
+    await settle();
+    const hit = await app.request("/cards?category=Pokemon", {}, env);
+    expect(hit.headers.get("x-colorless-cache")).toBe("hit");
     await app.request("/cards?text=burn&pageSize=24", {}, env);
     clock.mockReturnValue(now + 61_000);
     await app.request("/cards?hpMin=60&pageSize=8&page=2&total=2", {}, env);
     const lines = logged(warn, "d1").filter((line) => line.kind === "catalog_reads");
     expect(lines).toEqual([
       expect.objectContaining({ queries: 1, max_params: "name,page,pageSize,sort" }),
-      expect.objectContaining({ queries: 2, max_params: expect.any(String) }),
+      expect.objectContaining({ queries: 3, max_params: expect.any(String) }),
     ]);
     for (const line of lines) {
       expect(line.rows_read).toBeGreaterThan(0);

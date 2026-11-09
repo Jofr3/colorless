@@ -119,7 +119,8 @@ describe("catalog KV cache over D1", () => {
   it("bypasses KV for a key past its 512-byte cap, reading only the epoch", async () => {
     const { kv, calls } = recordingKv();
     const res = await app.request(
-      `/cards?illustrator=${"x".repeat(600)}`,
+      // At the 100-character cap, percent-encoded to 600 bytes.
+      `/cards?illustrator=${encodeURIComponent("é".repeat(100))}`,
       {},
       d1().env({ CACHE: kv }),
     );
@@ -352,13 +353,27 @@ describe("catalog KV failure logs", () => {
       .map(([line]) => JSON.parse(String(line)) as Record<string, unknown>)
       .filter((line) => line.evt === "kv");
 
-  it("logs a failed put with its route, once per throttle window", async () => {
+  it("logs a failed put with its route and error, once per throttle window", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const { kv } = recordingKv({}, { put: true });
     const env = d1().env({ CACHE: kv });
     await app.request("/cards?category=Pokemon", {}, env);
     await app.request("/cards?category=Trainer", {}, env);
-    expect(kvLines(warn)).toEqual([{ evt: "kv", kind: "put_failed", route: "/cards" }]);
+    expect(kvLines(warn)).toEqual([
+      { evt: "kv", kind: "put_failed", route: "/cards", error: "Error", quota: false },
+    ]);
+  });
+
+  it("flags a put refused by the spent daily quota, never logging the message", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const kv = {
+      get: async () => null,
+      put: () => Promise.reject(new TypeError("KV put() limit exceeded for the day.")),
+    };
+    await app.request("/series", {}, d1().env({ CACHE: kv }));
+    expect(kvLines(warn)).toEqual([
+      { evt: "kv", kind: "put_failed", route: "/series", error: "TypeError", quota: true },
+    ]);
   });
 
   it("logs a failed get and a failed epoch read", async () => {
@@ -372,8 +387,8 @@ describe("catalog KV failure logs", () => {
       200,
     );
     expect(kvLines(warn)).toEqual([
-      { evt: "kv", kind: "get_failed", route: "/sets/:id" },
-      { evt: "kv", kind: "epoch_failed", route: "/facets" },
+      { evt: "kv", kind: "get_failed", route: "/sets/:id", error: "Error", quota: false },
+      { evt: "kv", kind: "epoch_failed", route: "/facets", error: "Error", quota: false },
     ]);
   });
 });

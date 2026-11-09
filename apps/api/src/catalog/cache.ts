@@ -2,8 +2,8 @@
 // headers are rebuilt on a hit, which is safe because every catalog response is JSON.
 // KV is best effort: a failed read is a miss, and the write runs after the response, so a KV
 // outage or a spent write quota costs the cache and never the request. Each failure is logged
-// (throttled) as `evt = "kv"`, because a spent quota (1,000 writes/day on the Free plan, the
-// whole account's) is otherwise invisible.
+// (throttled) as `evt = "kv"` with the error's names and quota flag (errorFields), because a
+// spent quota (1,000 writes/day on the Free plan, the whole account's) is otherwise invisible.
 //
 // Every miss spends one of those writes, so only shapes that recur are cached, and the key is
 // built from the validated query rather than the raw URL: a param the schema does not know, a
@@ -21,6 +21,7 @@ import { routePath } from "hono/route";
 import type * as z from "zod";
 import type { Env } from "../env";
 import { afterResponse } from "../http/afterResponse";
+import { errorFields } from "../http/errors";
 import { logEventThrottled } from "../http/log";
 import {
   CACHE_STATUS_HEADER,
@@ -74,7 +75,8 @@ export function cacheQuery(
 }
 
 /** KV rejects keys over 512 bytes. A key that long BYPASSES the cache instead of erroring the
-    GET. Keys are percent-encoded (ASCII), so length == bytes. */
+    GET, and a limit mounted after the cache still sees it. Keys are percent-encoded (ASCII), so
+    length == bytes. */
 const KV_MAX_KEY_BYTES = 512;
 
 type EpochRead = { epoch: string | null; readAt: number } | { failedAt: number };
@@ -96,9 +98,9 @@ async function catalogEpoch(kv: KVNamespace, route: string): Promise<string | nu
     const epoch = await kv.get(CATALOG_EPOCH_KEY, { cacheTtl: EPOCH_EDGE_TTL_SECONDS });
     epochReads.set(kv, { epoch, readAt: now });
     return epoch;
-  } catch {
+  } catch (error) {
     epochReads.set(kv, { failedAt: now });
-    logEventThrottled("kv", "epoch_failed", { route });
+    logEventThrottled("kv", "epoch_failed", { route, ...errorFields(error) });
     return undefined;
   }
 }
@@ -136,8 +138,8 @@ async function cacheAside(
     return;
   }
   const tag = await catalogETag(key);
-  const cached = await kv.get(key).catch(() => {
-    logEventThrottled("kv", "get_failed", { route });
+  const cached = await kv.get(key).catch((error: unknown) => {
+    logEventThrottled("kv", "get_failed", { route, ...errorFields(error) });
     return null;
   });
   if (cached !== null) {
@@ -158,7 +160,7 @@ async function cacheAside(
         const text = await body.text();
         if (!emptyResult(text)) await kv.put(key, text, { expirationTtl: CACHE_TTL_SECONDS });
       },
-      () => logEventThrottled("kv", "put_failed", { route }),
+      (error) => logEventThrottled("kv", "put_failed", { route, ...errorFields(error) }),
     );
   }
 }
