@@ -1555,3 +1555,19 @@ Phase 3 of the dependency audit (report `tmp/deps/deps-audit.md`), finding VER8,
 - **Biome.** The file is in `files.ignore` (it raises 21 lint and format errors). `lint-coverage.ts` lists it in a `GENERATED` set of files it does not require Biome to see.
 - **Measured.** `bun run check`: green. `worker-bundle --check`: 952.2 KiB, byte-identical.
 - 2 DEP-P3b mutant rows, both killed. One accepts any `wrangler types` header and is killed by `workerTypes.test.ts`. The other runs a bare `--check` and is killed by running `worker-types.ts` itself.
+
+### 2026-11-09 — TypeScript 7 for every typecheck, with the TypeScript 6 parser kept for the mutation scripts
+
+Phase 5 of the dependency audit (report `tmp/deps/deps-audit.md`), finding VER4, user decision 9: a go/no-go branch. Decision id DEP-P5. Dev only: nothing that ships changes.
+
+- **TypeScript 6.0.3 → 7.0.2.** The 6.x line ended at 6.0.3 (2026-04-16), and 7.0.2 dates from 2026-07-08. TS 7 is the Go-native compiler. Its npm package exports only the version at `.` and keeps the API under `./unstable/*`. That is why Dependabot #4 failed: its only errors were in the 3 mutation scripts that call the compiler API (`binding-gate.ts`, `reanchor.ts`, `symbol.ts`; `createSourceFile`, `forEachChild`, `ScriptTarget`, the `is*` guards). Those 3 now import `@typescript/typescript6` 6.0.2 (Microsoft's TS 6 under its own name; it resolves `typescript@6.0.3` as `@typescript/old`). Every typecheck runs TS 7. Port the scripts and drop the alias when TS 7.1's API is stable; 7.1.0-beta came out on 2026-10-20.
+- **Go criteria, all met:**
+  - `tsc -b` has 0 errors on all 8 projects (`typecheck-coverage` lists the same 1051 files).
+  - A planted type error is caught in a TS file and in a `// @ts-check` JS file.
+  - `mutants:precheck` reports the corpus runnable.
+  - The binding-gate and symbol suites pass.
+  - `bun run check` is green: 742 files, 17,298 tests, 76/76 Lua.
+  - `tsc -b --force` takes 6.7 s, against 47.7 s on TS 6 (7.1x). An incremental `tsc -b` in check:static takes 1.3 s.
+  The configs already avoided what TS 7 rejects: no `baseUrl`, `moduleResolution: bundler`, ES2022.
+- **CI.** The tsc cache key prefix is now `tsc7-`, so no TS 6 build info is restored into TS 7. Dependabot still ignores typescript majors: an 8 gets its own branch, as 7 did.
+- 2 DEP-P5 mutant rows, both killed: `symbol.ts` and `binding-gate.ts` importing plain `typescript` again.

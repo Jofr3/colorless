@@ -541,6 +541,11 @@ meant to change dependencies changes bun.lock (dependency audit, DEP-P1).
   @types/node are declared only in the root package.json, although every
   workspace's tests import vitest and apps/api's `tsc -b` uses the root
   typescript. Do not add them to a workspace manifest (USE7).
+- **TypeScript 7 checks; TypeScript 6 parses.** `tsc` is TypeScript 7, the Go
+  compiler, which has no stable compiler API yet. The mutation scripts that
+  parse source (`binding-gate.ts`, `reanchor.ts`, `symbol.ts`) import
+  `@typescript/typescript6` instead, the TS 6 API under its own name. Nothing
+  else may import it. Port them and drop it when TS 7.1's API is stable (DEP-P5).
 
 **Toolchain.** `.bun-version` (read by setup-bun) and `packageManager` name the
 same bun, and `.node-version` (read by setup-node) names the Node 22 LTS line:

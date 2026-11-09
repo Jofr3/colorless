@@ -70091,4 +70091,22 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: [],
     killedByCommand: ["bun", "scripts/worker-types.ts"],
   },
+  {
+    id: "DEP-P5-symbol-ts7-api",
+    decision: "DEP-P5",
+    what: "symbol.ts imports the TypeScript 7 package, whose default export carries only the version, so every row's declaration lookup throws and reanchor cannot refuse a move into another function. Killed by symbol.test.ts.",
+    file: "scripts/mutation/symbol.ts",
+    find: 'import ts from "@typescript/typescript6";',
+    replace: 'import ts from "typescript";',
+    expectKilledBy: ["scripts/mutation/symbol.test.ts"],
+  },
+  {
+    id: "DEP-P5-binding-gate-ts7-api",
+    decision: "DEP-P5",
+    what: "binding-gate.ts imports the TypeScript 7 package, which has no createSourceFile, so the gate cannot parse the bindings it vouches for. Killed by binding-gate.test.ts.",
+    file: "scripts/mutation/binding-gate.ts",
+    find: 'import ts from "@typescript/typescript6";',
+    replace: 'import ts from "typescript";',
+    expectKilledBy: ["scripts/mutation/binding-gate.test.ts"],
+  },
 ];

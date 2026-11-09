@@ -55,6 +55,7 @@ the script after adding a decision.
 | 2026-11-09 | Deploy the API Worker minified with its source maps, gate the bundle the deploy builds, and pass zod refineme… | decisions.md:1488 |
 | 2026-11-09 | Dependency audit Phase 4: an MIT LICENSE, served third-party notices with a Credits button, and love.js 11.4.… | decisions.md:1501 |
 | 2026-11-09 | Generate the API Worker's types with wrangler types, check them in check:static, and drop @cloudflare/workers… | decisions.md:1539 |
+| 2026-11-09 | TypeScript 7 for every typecheck, with the TypeScript 6 parser kept for the mutation scripts | decisions.md:1559 |
 
 ## Numbered decisions
 

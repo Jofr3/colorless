@@ -24,8 +24,9 @@ updates:
         - "@noble/ciphers"
     # Majors that need a go/no-go branch of their own (dependency audit §5).
     ignore:
-      # Phase 5: the mutation scripts use the TypeScript 6 compiler API, which
-      # TypeScript 7 does not have (#4 failed on it); taken with a shim.
+      # A typescript major (8) gets its own go/no-go branch, as 7 did (DEP-P5).
+      # The mutation scripts parse with @typescript/typescript6 until TS 7.1's
+      # compiler API is stable.
       - dependency-name: typescript
         update-types: ["version-update:semver-major"]
       # Decision 8: @types/node follows the pinned Node line (.node-version,

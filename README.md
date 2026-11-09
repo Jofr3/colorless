@@ -9,7 +9,7 @@ engine and the API are TypeScript.
 
 - Frontend: Lua on LÖVE 11.4 via love.js (`frontend/lua/`), hosted by
   `index.html` with a small TypeScript bridge (`src/lua/bridge.ts`) bundled by Vite 8
-- Rules engine and shared schemas: TypeScript 6 (`packages/engine`, `packages/schema`)
+- Rules engine and shared schemas: TypeScript 7 (`packages/engine`, `packages/schema`)
 - API: a Cloudflare Worker with Hono, D1 and Durable Objects (`apps/api`)
 - Hosting: a static-assets Cloudflare Worker (`wrangler.jsonc`) serves the built frontend
 

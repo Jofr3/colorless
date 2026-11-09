@@ -11,7 +11,9 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import ts from "typescript";
+// TypeScript 7 (the Go compiler) has no stable compiler API yet, so the parser comes from
+// TypeScript 6 under its own name; port to TS 7.1's API when it is stable (DEP-P5).
+import ts from "@typescript/typescript6";
 import { isRecord, type Report, runReport, wiringProblems } from "../lib/cli";
 import { repoPath, sourceCache } from "../lib/repo";
 import { MUTANTS } from "./mutants";

@@ -69,10 +69,10 @@ jobs:
             **/*.tsbuildinfo
             packages/*/dist
             !**/node_modules/**
-          key: ${{ runner.os }}-tsc-${{ hashFiles('bun.lock') }}-${{ github.sha }}
+          key: ${{ runner.os }}-tsc7-${{ hashFiles('bun.lock') }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-tsc-${{ hashFiles('bun.lock') }}-
-            ${{ runner.os }}-tsc-
+            ${{ runner.os }}-tsc7-${{ hashFiles('bun.lock') }}-
+            ${{ runner.os }}-tsc7-
 
       # `tsc -b` skips a project whose build info is newer than its sources.
       # Backdating the restored files makes every project compare its sources

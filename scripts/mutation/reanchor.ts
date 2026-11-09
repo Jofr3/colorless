@@ -17,7 +17,9 @@
 
 import { execFileSync } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
-import ts from "typescript";
+// TypeScript 7 (the Go compiler) has no stable compiler API yet, so the parser comes from
+// TypeScript 6 under its own name; port to TS 7.1's API when it is stable (DEP-P5).
+import ts from "@typescript/typescript6";
 import { REPO_ROOT, repoPath, sourceCache } from "../lib/repo";
 import { MUTANTS, type Mutant } from "./mutants";
 import { currentSymbol, enclosingSymbol } from "./symbol";
