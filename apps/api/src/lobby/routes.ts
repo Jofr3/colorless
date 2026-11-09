@@ -17,6 +17,7 @@
 import { generateLobbyCode, isValidLobbyCode } from "@colorless/schema";
 import { type Context, Hono } from "hono";
 import { appCorsOrigins, type Env } from "../env";
+import { BINDING_PERIOD_SECONDS } from "../http/bindingLimit";
 import { clientIpKey } from "../http/clientIp";
 import { logEventThrottled } from "../http/log";
 import {
@@ -28,8 +29,6 @@ import {
 } from "./doProtocol";
 
 const CREATE_ATTEMPTS = 5;
-/** Both bindings' `simple.period` in wrangler.jsonc, so the longest a refusal lasts. */
-const LIMIT_PERIOD_SECONDS = 60;
 
 /**
  * A 429 once the caller's address is over `binding`'s budget, else null. The binding counts per
@@ -53,7 +52,7 @@ async function overIpLimit(
     return null;
   }
   logEventThrottled("lobby", "rate_limited", { route });
-  c.header("Retry-After", String(LIMIT_PERIOD_SECONDS));
+  c.header("Retry-After", String(BINDING_PERIOD_SECONDS));
   return c.json({ error: "too many requests" }, 429);
 }
 

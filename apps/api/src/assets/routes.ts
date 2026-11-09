@@ -59,11 +59,13 @@ function assetResponse(
 }
 
 /**
- * The shared R2-then-origin flow. `resolveOriginUrl` is only consulted on an R2 miss. An unknown
- * row, a missing asset URL or an origin 404 is `null` (the app's 404); an origin 5xx, a network
- * error or no answer within ORIGIN_TIMEOUT_MS is a 502, so an upstream outage does not read as a
- * missing image. The R2 write goes to
- * `later`, which runs it after the response and drops its failure.
+ * The shared R2-then-origin flow. `resolveOriginUrl` is only consulted on an R2 miss, and an R2
+ * read that throws counts as one (logged), since the origin can still serve the image. An unknown
+ * row, a missing asset URL or an origin 404 or 410 is `null` (the app's 404, cached an hour); any
+ * other origin status but 200, a network error or no answer within ORIGIN_TIMEOUT_MS is an
+ * uncached 502, so a rate limit or an outage upstream does not read as a missing image. Such a
+ * status below 500 is logged, since nothing else shows it. The R2 write goes to `later`, which
+ * runs it after the response and drops its failure.
  *
  * What is stored stays for good, so only an image of `contentType` from the asset origin is: the
  * URL and the final URL after redirects must be https on ASSET_ORIGIN's host, the response must
@@ -77,7 +79,12 @@ export async function serveMirroredAsset(
   resolveOriginUrl: () => Promise<string | null>,
   later: (work: () => Promise<unknown>) => Promise<void>,
 ): Promise<Response | null> {
-  const cached = await env.ASSETS.get(key);
+  const cached = await env.ASSETS.get(key).catch((error: unknown) => {
+    logEventThrottled("assets", "r2_get_failed", {
+      error: error instanceof Error ? error.name : typeof error,
+    });
+    return null;
+  });
   if (cached) {
     return assetResponse(cached.body, contentType, "hit");
   }
@@ -98,8 +105,12 @@ export async function serveMirroredAsset(
     if (origin.status >= 500) {
       return upstreamFailure();
     }
-    if (origin.status !== 200) {
+    if (origin.status === 404 || origin.status === 410) {
       return null;
+    }
+    if (origin.status !== 200) {
+      logEventThrottled("assets", "origin_status", { status: origin.status });
+      return upstreamFailure();
     }
     // A constructed Response (tests) has no url; a fetched one names where redirects ended.
     if (!isAssetOriginUrl(origin.url || originUrl)) return refused("redirect");

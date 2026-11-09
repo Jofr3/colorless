@@ -29,8 +29,9 @@ const RETAINED_HEADERS = [
   CACHE_STATUS_HEADER,
 ];
 
-/** ETag every response from the body's digest and answer a matching
-    If-None-Match with a bodiless 304. */
+/** ETag every response from the body's digest, unless the handler set one (the
+    catalog KV cache tags by key), and answer a matching If-None-Match with a
+    bodiless 304. */
 export const conditionalGet = etag({ retainedHeaders: RETAINED_HEADERS });
 
 /** Stamp `Cache-Control` on 200s only — errors stay uncached. */

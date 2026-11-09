@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Env } from "../env";
 import app from "../index";
+import { catalogETag } from "./cache";
 
 /** In-memory stand-in for the CACHE KV namespace. */
 function fakeKv(seed: Record<string, string> = {}) {
@@ -162,7 +163,7 @@ describe("catalog browser cache", () => {
     expect(res.headers.get("cache-control")).toBe(
       "public, max-age=300, stale-while-revalidate=3600",
     );
-    expect(res.headers.get("etag")).toMatch(/^"[0-9a-f]+"$/);
+    expect(res.headers.get("etag")).toBe(await catalogETag("catalog:v12:/cards?set=sv01"));
   });
 
   it("answers a matching If-None-Match with a 304 that keeps its CORS headers", async () => {

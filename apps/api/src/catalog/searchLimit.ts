@@ -12,20 +12,19 @@
 // The same budget covers GET /cards/index when KV misses it.
 
 import type { CardsQuery } from "@colorless/schema";
-import type { Context, MiddlewareHandler } from "hono";
+import type { Context, MiddlewareHandler, Next } from "hono";
 import type { Env } from "../env";
+import { bindingRefusal, bindingRefuses } from "../http/bindingLimit";
 import { clientIpKey } from "../http/clientIp";
 import { logEvent, logEventThrottled } from "../http/log";
 
-/** wrangler.jsonc `CATALOG_SEARCH_LIMIT.simple`: the limit and its period, so the longest a
-    refusal lasts. */
+/** wrangler.jsonc `CATALOG_SEARCH_LIMIT.simple.limit`; its period is BINDING_PERIOD_SECONDS. */
 export const SEARCH_LIMIT_PER_MINUTE = 30;
-const LIMIT_PERIOD_SECONDS = 60;
 
 /**
  * A 429 once the caller's address is over its search budget for queries `scans` picks, else
- * next. The binding counts per Cloudflare location and approximately. Without the binding (unit
- * tests), or when it throws, the request proceeds: a broken limiter must not close the builder.
+ * next. Without the binding (unit tests), or when it throws, the request proceeds
+ * (bindingRefuses): a broken limiter must not close the builder.
  */
 export function catalogSearchLimit(
   scans: (query: CardsQuery) => boolean,
@@ -33,37 +32,22 @@ export function catalogSearchLimit(
   return async (c, next) => {
     const binding = c.env.CATALOG_SEARCH_LIMIT;
     if (binding === undefined || !scans(c.req.valid("query"))) return next();
-    if (await withinLimit(c, binding, "/cards")) return next();
-    return refused(c, "/cards");
+    return limited(c, binding, "/cards", next);
   };
 }
 
 /** The same budget for a route that reads the whole catalog whenever it runs: mounted after the
     route's KV cache, so only a miss spends it. */
 export function catalogScanLimit(route: string): MiddlewareHandler<{ Bindings: Env }> {
-  return async (c, next) => {
-    const binding = c.env.CATALOG_SEARCH_LIMIT;
-    if (binding === undefined || (await withinLimit(c, binding, route))) return next();
-    return refused(c, route);
-  };
+  return (c, next) => limited(c, c.env.CATALOG_SEARCH_LIMIT, route, next);
 }
 
-function refused(c: Context, route: string) {
-  logEventThrottled("catalog", "rate_limited", { route });
-  c.header("Retry-After", String(LIMIT_PERIOD_SECONDS));
-  return c.json({ error: "too many searches; try again in a minute" }, 429);
-}
-
-async function withinLimit(c: Context, binding: RateLimit, route: string): Promise<boolean> {
-  try {
-    return (await binding.limit({ key: clientIpKey(c) })).success;
-  } catch (error) {
-    logEventThrottled("catalog", "limiter_error", {
-      route,
-      error: error instanceof Error ? error.name : typeof error,
-    });
-    return true;
+async function limited(c: Context, binding: RateLimit | undefined, route: string, next: Next) {
+  if (!(await bindingRefuses(binding, clientIpKey(c), "catalog", route, "limiter_error"))) {
+    return next();
   }
+  logEventThrottled("catalog", "rate_limited", { route });
+  return bindingRefusal(c, "too many searches; try again in a minute");
 }
 
 /** How often an isolate writes its tally of uncached /cards reads. */

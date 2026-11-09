@@ -1,6 +1,6 @@
 import { cardsQuerySchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { cacheQuery, catalogCacheKey } from "./cache";
+import { CACHE_VERSION, cacheQuery, catalogCacheKey, catalogETag } from "./cache";
 
 const DEFAULTS = cardsQuerySchema.parse({});
 /** The cache query for a raw /cards query string, as the route validates it. */
@@ -25,6 +25,18 @@ describe("catalogCacheKey", () => {
     expect(catalogCacheKey("/cards", "set=sv01", "m3k1")).toBe("catalog:v12:m3k1:/cards?set=sv01");
     expect(catalogCacheKey("/cards", "", "m3k1")).not.toBe(catalogCacheKey("/cards", "", "m3k2"));
     expect(catalogCacheKey("/cards", "set=sv01", null)).toBe("catalog:v12:/cards?set=sv01");
+  });
+});
+
+describe("catalogETag", () => {
+  it("is a weak tag that stays with its key and changes with the epoch or the version", async () => {
+    const key = catalogCacheKey("/cards/index", "", "e1");
+    const tag = await catalogETag(key);
+    expect(tag).toMatch(/^W\/"[0-9a-f]{40}"$/);
+    expect(await catalogETag(key)).toBe(tag);
+    expect(await catalogETag(catalogCacheKey("/cards/index", "", "e2"))).not.toBe(tag);
+    expect(await catalogETag(key.replace(CACHE_VERSION, `${CACHE_VERSION}x`))).not.toBe(tag);
+    expect(await catalogETag(catalogCacheKey("/facets", "", "e1"))).not.toBe(tag);
   });
 });
 

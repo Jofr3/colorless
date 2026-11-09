@@ -80,15 +80,39 @@ describe("serveMirroredAsset on an R2 miss", () => {
     expect(puts).toEqual(["cards/x/high.webp"]);
   });
 
-  it("is not found for an unknown row or an origin 404", async () => {
+  it.each([404, 410])("is not found for an unknown row or an origin %i", async (status) => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.stubGlobal(
       "fetch",
-      vi.fn(async () => new Response("", { status: 404 })),
+      vi.fn(async () => new Response("", { status })),
     );
     const { env, puts } = emptyBucket();
     expect(await serve(env, null)).toBeNull();
     expect(await serve(env)).toBeNull();
     expect(puts).toEqual([]);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["a 429", new Response("", { status: 429, headers: { "Retry-After": "30" } })],
+    ["a 403", new Response("", { status: 403 })],
+    ["a 408", new Response("", { status: 408 })],
+    ["a 204", new Response(null, { status: 204 })],
+  ])("answers an origin %s with a logged 502 and stores nothing", async (_label, upstream) => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => upstream),
+    );
+    const { env, puts } = emptyBucket();
+    const res = await serve(env);
+    expect(res?.status).toBe(502);
+    expect(res?.headers.get("cache-control")).toBeNull();
+    expect(await res?.json()).toEqual({ error: "asset origin unavailable" });
+    expect(puts).toEqual([]);
+    expect(warn.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
+      { evt: "assets", kind: "origin_status", status: upstream.status },
+    ]);
   });
 
   it.each([
@@ -145,6 +169,27 @@ describe("serveMirroredAsset on an R2 miss", () => {
     const { env, puts } = emptyBucket();
     expect((await serve(env))?.status).toBe(502);
     expect(puts).toEqual([]);
+  });
+});
+
+describe("serveMirroredAsset when R2 cannot be read", () => {
+  it("serves the image from the origin and logs the failure", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fetch = vi.fn(async () => image());
+    vi.stubGlobal("fetch", fetch);
+    const { env, puts } = emptyBucket();
+    env.ASSETS.get = async () => {
+      throw new TypeError("R2 get failed");
+    };
+    const res = await serve(env);
+    expect(res?.status).toBe(200);
+    expect(res?.headers.get("x-colorless-cache")).toBe("miss");
+    expect(await res?.text()).toBe(WEBP);
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(puts).toEqual(["cards/x/high.webp"]);
+    expect(warn.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
+      { evt: "assets", kind: "r2_get_failed", error: "TypeError" },
+    ]);
   });
 });
 
