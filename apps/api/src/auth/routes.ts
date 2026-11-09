@@ -537,6 +537,10 @@ type Upstream = {
 function providerErrorOf(json: unknown): string | null {
   const code =
     typeof json === "object" && json !== null && "error" in json ? json.error : undefined;
+  return errorCodeOf(code);
+}
+
+function errorCodeOf(code: unknown): string | null {
   return typeof code === "string" && /^[\w.-]{1,64}$/.test(code) ? code : null;
 }
 
@@ -577,6 +581,18 @@ authRoutes.get("/oauth/:provider/callback", async (c) => {
   c.header("Set-Cookie", clearedStateCookie());
   const state = c.req.query("state");
   const code = c.req.query("code");
+  // The provider refused the authorization (RFC 6749 §4.1.2.1), for this browser's own flow. A
+  // Cancel on the consent screen goes back with no authError: the person knows they cancelled.
+  const refusal = c.req.query("error");
+  if (refusal !== undefined && packed !== null && packed.state === state) {
+    logEvent("auth", "oauth_denied", { provider, providerError: errorCodeOf(refusal) });
+    return c.redirect(
+      refusal === "access_denied"
+        ? `${appOrigin(c.env)}${packed.redirect}`
+        : oauthFailureRedirect(c.env, packed.redirect, "exchange"),
+      302,
+    );
+  }
   if (!code || !state || packed === null || packed.state !== state) {
     logEvent("auth", "oauth_state", {
       provider,

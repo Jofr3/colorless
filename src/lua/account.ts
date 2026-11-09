@@ -22,6 +22,8 @@ import { startOAuth } from "../lib/startOAuth";
 import { decodeFields, encodeFields } from "./wire";
 import { WIRE_ROWS, wireRow } from "./wireFields";
 
+const SIGN_IN_UNAVAILABLE = "Sign-in is unavailable right now. Try again later.";
+
 const OAUTH_ERROR_MESSAGES: Record<OAuthFailure, string> = {
   state: "Google sign-in expired. Try again.",
   exchange: "Google sign-in failed. Try again.",
@@ -29,7 +31,7 @@ const OAUTH_ERROR_MESSAGES: Record<OAuthFailure, string> = {
   "no-email": "Google did not share an email address.",
   "email-in-use": "That email already has an account. Sign in with your password.",
   "email-unverified": "Google has not verified that email address.",
-  unavailable: "Sign-in is unavailable right now. Try again later.",
+  unavailable: SIGN_IN_UNAVAILABLE,
 };
 
 const EMAIL_MISMATCH = "That is not this account's email.";
@@ -73,6 +75,15 @@ function formProblems(issues: readonly FormIssue[], mode: "login" | "register", 
   }
   const fields = AUTH_FIELD_ORDER.filter((field) => byField.has(field));
   return { message: fields.map((field) => byField.get(field)).join(" "), fields };
+}
+
+/** What a 429 says, by the wait its Retry-After gave, in whole minutes rounded up. A wait under a
+ * minute, or none said, is a moment. */
+function tooManyAttempts(error: unknown): string {
+  const seconds = error instanceof ApiError ? (error.retryAfterSeconds ?? 0) : 0;
+  if (seconds < 60) return "Too many attempts. Wait a moment.";
+  const minutes = Math.ceil(seconds / 60);
+  return `Too many attempts. Try again in ${minutes} ${minutes === 1 ? "minute" : "minutes"}.`;
 }
 
 /** How long a session check answers the page's navigation refreshes. A revoked session still
@@ -324,7 +335,7 @@ export class LuaAccount {
             : status === 403
               ? EMAIL_MISMATCH
               : status === 429
-                ? "Too many attempts. Wait a moment."
+                ? tooManyAttempts(error)
                 : "Could not delete your account. Try again.";
         this.invalid = status === 401 ? ["password"] : status === 403 ? ["email"] : [];
         this.failures++;
@@ -386,10 +397,12 @@ export class LuaAccount {
           : status === 409
             ? "That email already has an account."
             : status === 429
-              ? "Too many attempts. Wait a moment."
+              ? tooManyAttempts(error)
               : status === 400
                 ? "Check the fields and try again."
-                : "Could not connect. Please try again.";
+                : status === 503
+                  ? SIGN_IN_UNAVAILABLE
+                  : "Could not connect. Please try again.";
       this.invalid = status === 409 ? ["email"] : [];
       this.failures++;
     } finally {

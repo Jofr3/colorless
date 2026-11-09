@@ -17,6 +17,12 @@ const setup = () => {
   return { account: new LuaAccount(publish), publish };
 };
 const session = { "GET /auth/me": () => json(USER) };
+/** A JSON refusal that says how long to wait. */
+const refusal = (status: number, retryAfter: string) =>
+  new Response(JSON.stringify({ error: "refused" }), {
+    status,
+    headers: { "content-type": "application/json", "Retry-After": retryAfter },
+  });
 
 describe("Lua account adapter", () => {
   it("distinguishes anonymous sessions from a failed connection", async () => {
@@ -310,7 +316,7 @@ describe("Lua authentication", () => {
     [401, "Wrong email or password."],
     [409, "That email already has an account."],
     [429, "Too many attempts. Wait a moment."],
-    [503, "Could not connect. Please try again."],
+    [503, "Sign-in is unavailable right now. Try again later."],
   ])("reports HTTP %s inline and enables retry", async (status, message) => {
     stubFetch({ "POST /auth/login": () => json({}, status) });
     const { account } = setup();
@@ -318,6 +324,50 @@ describe("Lua authentication", () => {
     expect(account.message).toBe(message);
     expect(account.busy).toBe(false);
     expect(account.user).toBeNull();
+  });
+  it.each([
+    ["30", "Too many attempts. Wait a moment."],
+    ["60", "Too many attempts. Try again in 1 minute."],
+    ["61", "Too many attempts. Try again in 2 minutes."],
+    ["3480", "Too many attempts. Try again in 58 minutes."],
+    ["3600", "Too many attempts. Try again in 60 minutes."],
+  ])("says how long a limit of Retry-After %s s lasts", async (retryAfter, message) => {
+    stubFetch({ "POST /auth/register": () => refusal(429, retryAfter) });
+    const { account } = setup();
+    await account.authenticate("register", USER.email, "test-password", "");
+    expect(account.message).toBe(message);
+  });
+  it("tells a server that is down from one that cannot be reached", async () => {
+    stubFetch({ "POST /auth/login": () => refusal(503, "60") });
+    const { account } = setup();
+    await account.authenticate("login", USER.email, "test-password", "");
+    expect(account.message).toBe("Sign-in is unavailable right now. Try again later.");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => {
+        throw new TypeError("network down");
+      }),
+    );
+    await account.authenticate("login", USER.email, "test-password", "");
+    expect(account.message).toBe("Could not connect. Please try again.");
+  });
+  it("frees the form when the Google start probe never answers", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(() => new Promise<Response>(() => {})),
+      );
+      const { account } = setup();
+      const pending = account.google();
+      expect(account.busy).toBe(true);
+      await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS);
+      await pending;
+      expect(account.busy).toBe(false);
+      expect(account.message).toBe("Could not start Google sign-in. Try again.");
+    } finally {
+      vi.useRealTimers();
+    }
   });
   it("ignores a second submit while sign-in is pending", async () => {
     let resolve: (response: Response) => void = () => {};
@@ -424,6 +474,9 @@ describe("Lua account deletion", () => {
     await account.deleteAccount("wrong", "");
     expect(account.message).toBe("Too many attempts. Wait a moment.");
     expect(account.user?.id).toBe(USER.id);
+    answer = () => refusal(429, "600");
+    await account.deleteAccount("wrong", "");
+    expect(account.message).toBe("Too many attempts. Try again in 10 minutes.");
     answer = () => json({ error: "unauthorized" }, 401);
     await account.deleteAccount("right", "");
     expect(account.message).toBe("Your session expired. Sign in again.");
@@ -468,6 +521,8 @@ describe("Lua account deletion", () => {
       "Signing out everywhere...",
       "Signed out on every device.",
       "Could not sign out everywhere. Try again.",
+      "Too many attempts. Try again in 60 minutes.",
+      "Sign-in is unavailable right now. Try again later.",
     ];
     for (const message of messages) expect(messageWidth(message), message).toBeLessThan(limit);
   });

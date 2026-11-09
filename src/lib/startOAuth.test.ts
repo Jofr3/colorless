@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { REQUEST_TIMEOUT_MS } from "./api";
 import { startOAuth } from "./startOAuth";
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 describe("startOAuth", () => {
@@ -21,6 +23,7 @@ describe("startOAuth", () => {
     expect(fetchMock).toHaveBeenCalledWith(target, {
       redirect: "manual",
       credentials: "include",
+      signal: expect.any(AbortSignal),
     });
   });
 
@@ -64,6 +67,29 @@ describe("startOAuth", () => {
       }),
     );
     expect(await startOAuth("google", navigate)).toBe("failed");
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it("gives up on a probe that never answers, and aborts it", async () => {
+    vi.useFakeTimers();
+    let signal: AbortSignal | undefined;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_: RequestInfo | URL, init?: RequestInit) => {
+        signal = init?.signal ?? undefined;
+        return new Promise<Response>(() => {});
+      }),
+    );
+    const navigate = vi.fn();
+    let outcome: string | undefined;
+    void startOAuth("google", navigate).then((result) => {
+      outcome = result;
+    });
+    await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS - 1);
+    expect(outcome).toBeUndefined();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(outcome).toBe("failed");
+    expect(signal?.aborted).toBe(true);
     expect(navigate).not.toHaveBeenCalled();
   });
 });

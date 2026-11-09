@@ -935,6 +935,37 @@ describe("GET /auth/oauth/google/callback find-or-create", () => {
     expect(await userRows()).toEqual([]);
   });
 
+  // Addresses Google can verify that z.email() refuses (audit AUTH1).
+  it.each(["ivan@example.xn--p1ai", "a&b@example.com"])(
+    "keeps a Google account with the email %s usable",
+    async (email) => {
+      const res = await oauthCallback({ sub: "g-odd", email, email_verified: true });
+      expect(authErrorOf(res)).toBeNull();
+      const cookie = sessionCookieOf(res);
+      const session = await me(cookie);
+      expect(session.status).toBe(200);
+      expect(await session.json()).toMatchObject({ email });
+      const renamed = await app.request(
+        "/auth/me",
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", Cookie: cookie ?? "" },
+          body: JSON.stringify({ displayName: "Ivan" }),
+        },
+        d1().env(),
+      );
+      expect(renamed.status).toBe(200);
+      expect(await renamed.json()).toMatchObject({ email, displayName: "Ivan" });
+    },
+  );
+
+  it("refuses a Google email longer than any account can return", async () => {
+    const email = `${"x".repeat(243)}@example.com`;
+    const res = await oauthCallback({ sub: "g-long", email, email_verified: true });
+    expect(authErrorOf(res)).toBe("profile");
+    expect(await userRows()).toEqual([]);
+  });
+
   it("retries a callback that lost the insert race and signs into the winner's account", async () => {
     const db = d1().db;
     const winner = crypto.randomUUID();

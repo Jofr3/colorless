@@ -399,9 +399,13 @@ data loss rather than a validation failure.
   relative `?redirect=` path ride in one short-lived http-only cookie
   (`state.verifier.b64url(redirect)`), and only the verifier's SHA-256 goes to
   Google; the token exchange sends the verifier. A sign-in started before the
-  PKCE deploy fails once with `?authError=state`. On callback: verify state →
-  exchange code → fetch profile (Google `openid email profile` via OIDC
-  userinfo) → find-or-create: linked `oauth_identities` row → that user; else
+  PKCE deploy fails once with `?authError=state`. A provider `?error=` for this
+  browser's state (`oauth_denied`, its code logged) goes back with no
+  `authError` for `access_denied` (Cancel on the consent screen) and with
+  `exchange` for any other; without the matching state it is a `state`
+  failure. On callback: verify state →
+  exchange code → fetch profile (Google `openid email` via OIDC userinfo;
+  no `profile` scope, since no profile claim is read) → find-or-create: linked `oauth_identities` row → that user; else
   user by **provider-verified** email → link (unverified match ⇒
   `?authError=email-in-use`, no takeover); else, only for a provider-verified
   email, create user + identity (unverified ⇒ `?authError=email-unverified`, no
@@ -413,8 +417,11 @@ data loss rather than a validation failure.
   with `?authError=unavailable` (logged `evt = "auth", kind =
   "oauth_unavailable"` at error level), never a JSON 500 at the API origin.
   Each Google request (token exchange, userinfo) gives up after 10 s, body
-  included, as an `exchange` or `profile` failure. A single user may hold both
-  a password and OAuth identities.
+  included, as an `exchange` or `profile` failure. The account keeps the
+  address Google gives (a longer one than 254 characters is a `profile`
+  failure); `userSchema` returns any non-empty email up to that length, since
+  Google verifies some `z.email()` refuses (API audit AUTH1). A single user may
+  hold both a password and OAuth identities.
 - **Providers activate by configuration alone** — with secrets absent the
   routes answer `503 {"error":"provider not configured"}`. To activate, register
   a Google OAuth client (<https://console.cloud.google.com/auth/clients>, Web application)

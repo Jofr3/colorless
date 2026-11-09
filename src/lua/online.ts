@@ -303,7 +303,10 @@ export class LuaOnline {
       } catch (error) {
         reportError("create lobby code", error);
         if (op === this.op)
-          this.message = "Couldn't reach the lobby server. Try again in a moment.";
+          this.message =
+            error instanceof api.ApiError && error.status === 429
+              ? "Too many new lobbies. Try again in a minute."
+              : "Couldn't reach the lobby server. Try again in a moment.";
       }
       this.busy = false;
       const live = code !== "" && op === this.op && this.surface === "modal" && !this.client;
