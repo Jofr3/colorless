@@ -198,7 +198,7 @@ for _,view in ipairs({{1280,800},{480,850}})do
   local si=arrow(b,'setId','>');check(si,tag..': the Print tab has Set')
   b.focus=si;b:keypressed('return')
   check(lastSent()[1]=='options' and lastSent()[2]=='setId' and b.optionLabel=='Set',tag..': Enter opens the Set list')
-  b:sync(snapshot(nil,list(1,1,'',{{'','All',true},{'sv01','Scarlet & Violet'}},'setId','Set')))
+  b:sync(snapshot({value='2 selected',index=2,selected='2,3'},list(1,1,'',{{'','All',true},{'sv01','Scarlet & Violet'}},'setId','Set')))
   check(said[#said]=='Set. Page 1 of 1. Find an option: empty. Enter to edit.',tag..': the Set list announces: '..last())
   b:keypressed('escape');check(b.modal.mode=='filters' and b.filterPage==2 and b.controls[b.focus].cycleKey=='setId',tag..': Escape returns to the same tab and cycle')
   b:closeModal()
