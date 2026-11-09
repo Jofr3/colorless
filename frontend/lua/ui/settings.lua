@@ -239,6 +239,12 @@ function Settings:build()
     end
     self.items[#self.items+1]=item
   end
+  -- Credits opens the third-party notices in a new browser tab (dependency audit TRN4), as
+  -- Balatro's options carry a Credits button; blue, like the other button that leaves the game.
+  if self.tab==TAB.game then
+    self.items[#self.items+1]={kind='credits',label='Credits',x=self.x+(self.w-200)/2,y=self.y+472,
+      w=200,h=38,fontSize=24,colour=T.blue}
+  end
   if self.tab==TAB.account then
     local a=self.account
     local w=math.min(360,self.w-64)
@@ -285,6 +291,7 @@ function Settings:describe(item)
   if self.auth then return item.label end
   if item.kind=='tab' then return item.label..' settings' end
   if item.kind=='back' then return 'Back' end
+  if item.kind=='credits' then return 'Credits. Opens in a new tab.' end
   if item.kind=='action' then return item.label end
   if item.kind=='prompt-later' then return 'Later. Asks again next time.' end
   if item.kind=='name' then return item.label..': '..self.account.draftName..'. Enter to edit.' end
@@ -378,6 +385,7 @@ function Settings:activate(index,dir)
   elseif item.kind=='toggle' then
     self:change(item,1-self:value(item))
     self.callbacks.announce(self:describe(item))
+  elseif item.kind=='credits' then self.callbacks.credits()
   elseif item.kind=='back' then self.callbacks.close() end
 end
 function Settings:cancelInteractions() self.drag=nil;self.pressed=nil;self.pressedPart=nil end
@@ -481,7 +489,7 @@ function Settings:draw()
   for i,item in ipairs(self.items) do
     local active=Controls.lit(self.hover,self.focus,i)
     local pressed=self.pressed==i and self.hover==i
-    if item.kind=='tab' or item.kind=='back' or item.kind=='action' or item.kind=='prompt-later' or
+    if item.kind=='tab' or item.kind=='back' or item.kind=='action' or item.kind=='prompt-later' or item.kind=='credits' or
       (self.auth and item.kind~='auth-field') then
       local disabled=self:disabled(item)
       local colour=item.colour

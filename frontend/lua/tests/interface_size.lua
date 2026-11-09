@@ -66,7 +66,7 @@ for _,size in ipairs({{1280,800},{480,850},{1024,640}}) do
   check(item.w==264 and item.h==38.4 and item.x==popup.x+(popup.w-264)/2,'It is the CRT Bloom cycle\'s size, centred')
   check(item.y==popup.y+404,'It takes the next row under Reduced Motion')
   check(item.y-32>motion.y+motion.h+6 and item.y+item.h+6<back.y,'It fits between Reduced Motion and Back')
-  check(index==#popup.items-1,'Tab reaches it after Reduced Motion and before Back')
+  check(index==#popup.items-2,'Tab reaches it after Reduced Motion and before Credits and Back')
   check(not narrow or item.x>=popup.x,'It fits the portrait popup')
 end
 popup:layout(1280,800);popup.tab=Settings.tabs.game;popup:build()

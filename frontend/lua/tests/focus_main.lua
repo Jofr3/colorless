@@ -93,6 +93,13 @@ focusAndOpen('Account',4)
 love.mousepressed(4,4,1);love.mousereleased(4,4,1);frame()
 only(nil,'A pointer close leaves no control focused')
 files['__settings.txt']='1\taccount';frame();assert(popup,'A host request opens Settings')
+-- Settings' Credits asks the page to open the notices (shell.ts `credits`) and leaves Settings open.
+local printed={}
+print=function(line) printed[#printed+1]=line end
+local opened=popup
+popup.callbacks.credits();print=noop;frame()
+assert(#printed==1 and printed[1]=='COLORLESS:credits','Credits asks the page to open the notices')
+assert(popup==opened and popup.callbacks,'Settings stays open behind the new tab')
 love.keypressed('escape');frame()
 only('Account','A host-opened Account tab returns focus to Account')
 
