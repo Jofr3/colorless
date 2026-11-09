@@ -3,6 +3,7 @@
 local T=require('ui.theme')
 local Fit=require('ui.text_fit')
 local PageText=require('ui.page_text')
+local Pager=require('ui.pager')
 local Filters={methods={}}
 local Builder=Filters.methods
 Filters.SORT_LABELS={name='Name',['hp-desc']='HP',set='Set'}
@@ -15,6 +16,9 @@ function Builder:filterCycle(label,value,key,y,count,index,selected,x,width)
   local action=(key=='format' or key=='sort') and key or 'cycle'
   local own=action~='cycle'
   -- One focus stop per filter: '>' takes focus and Left/Right step it; '<' answers the pointer.
+  -- A filter's list (UI-FU3) opens by Enter on '>' or a click on the centre, which takes no focus
+  -- and keeps its look; Format and Sort have none, so their centres stay inert.
+  local list=not own or nil
   self:add('<',x,y,28.8,38.4,action,T.red,own and -1 or {key,-1},{skipFocus=true,cycleKey=key,optionTitle=label,optionValue=value}).fontSize=24
   self.filterTexts=self.filterTexts or {}
   local text=self.filterTexts[key] or PageText.new();self.filterTexts[key]=text
@@ -26,8 +30,47 @@ function Builder:filterCycle(label,value,key,y,count,index,selected,x,width)
   end
   text:set(display,self.time)
   self:add(value,x+36,y,centreWidth,38.4,'filter-value',T.red,key,
-    {cycleCentre=true,inert=true,cycleWidth=width,optionTitle=label,cycleText=text,pipCount=count or 0,pipIndex=index or 1,pipSelected=selected})
-  self:add('>',x+width-28.8,y,28.8,38.4,action,T.red,own and 1 or {key,1},{cycleKey=key,optionTitle=label,optionValue=value}).fontSize=24
+    {cycleCentre=true,inert=own or nil,skipFocus=list,opensList=list,cycleWidth=width,optionTitle=label,cycleText=text,pipCount=count or 0,pipIndex=index or 1,pipSelected=selected})
+  self:add('>',x+width-28.8,y,28.8,38.4,action,T.red,own and 1 or {key,1},{cycleKey=key,optionTitle=label,optionValue=value,opensList=list}).fontSize=24
+end
+-- What a focused cycle says: its title and value, and how the keys work it.
+function Builder:cycleSpeech(b)
+  return b.optionTitle..': '..b.optionValue..', left and right change it'..(b.opensList and ', Enter for the list' or '')
+end
+-- Opens filter `key`'s list (the choices dialog) under its `title`. It opens empty, as builder.ts
+-- sends its rows on `options`, and is announced once they arrive; from the keyboard, focus starts
+-- on its search field.
+function Builder:openList(key,title,keyboard)
+  self.choices={};self.optionKey='';self.optionLabel=title;self.optionPage=1;self.optionPages=1
+  self.fields.optionQuery='';self.picked=nil
+  self:openModal('choices',{key=key,label=title},keyboard and function(c) return c.input and c.arg=='optionQuery' end or nil)
+  self:command('options',key)
+end
+-- Back or Escape in a list: back to the Filters dialog, its tab kept. A keyboard close hands focus
+-- back to the cycle that opened the list; a pointer close leaves none. builder.ts drops the list.
+function Builder:closeList(keyboard)
+  local key=self.modal and self.modal.key
+  self.picked=nil
+  self:closeModal()
+  self:openModal('filters',nil,keyboard and function(c) return c.cycleKey==key end or nil)
+  self:command('options','')
+end
+-- What a sync changed in the open list: the state of the row just picked, then (after the filter's
+-- own line) a page turn. Returns the two lines, either nil.
+function Builder:listChanges(was)
+  local m=self.modal
+  if not m or m.mode~='choices' then return end
+  local picked
+  if self.picked then
+    for _,c in ipairs(self.choices) do
+      if c.value==self.picked then picked=c.label..(c.selected and ', selected.' or ', not selected.');self.picked=nil;break end
+    end
+  end
+  local page
+  if self.optionKey==was.optionKey and self.optionPage~=was.optionPage and self.fields.optionQuery==was.optionQuery then
+    page=Pager.page(self.optionPage,self.optionPages)
+  end
+  return picked,page
 end
 -- The dialog's controls, in the dialog `m` with its content `bw` wide from `x`.
 function Builder:buildFilters(m,x,bw)

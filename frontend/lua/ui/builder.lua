@@ -60,7 +60,7 @@ local function caption(text,size,x,y,w,colour,align)
   T.text(text,size,x,y,w,colour,align)
 end
 function Builder.new(callbacks)
-  local self=setmetatable({callbacks=callbacks,phase='loading',time=0,hover=0,focus=0,controls={},cards={},deckCards={},deckView='list',items={},deck={},options={},fields={},art={},pageText=PageText.new(),deckPageText=PageText.new(),page=1,pages=1,total=0,count=0,name='',format='standard',message='',saveStatus='',details='',transfer='',deckPage=1,deckType='all',tab='catalog',filterPage=1,editing='',values={},validation='',groups={0,0,0},choices={},optionLabel='',optionPage=1,optionPages=1},Builder)
+  local self=setmetatable({callbacks=callbacks,phase='loading',time=0,hover=0,focus=0,controls={},cards={},deckCards={},deckView='list',items={},deck={},options={},fields={},art={},pageText=PageText.new(),deckPageText=PageText.new(),page=1,pages=1,total=0,count=0,name='',format='standard',message='',saveStatus='',details='',transfer='',deckPage=1,deckType='all',tab='catalog',filterPage=1,editing='',values={},validation='',groups={0,0,0},choices={},optionKey='',optionLabel='',optionPage=1,optionPages=1},Builder)
   self.transferArea=TextArea.new('Paste a decklist here...')
   return self
 end
@@ -170,17 +170,20 @@ function Builder:baseline()
   for _,item in ipairs(self.deck)do deck[item.id]={quantity=item.quantity,name=item.name} end
   for _,o in ipairs(self.options)do options[o.key]=o.value end
   return {phase=self.phase,page=self.page,format=self.format,sort=self.fields.sort or 'name',query=self.fields.query or '',deck=deck,options=options,
-    results=#self.items,busy=self.busy,count=self.count}
+    results=#self.items,busy=self.busy,count=self.count,optionKey=self.optionKey,optionPage=self.optionPage,optionQuery=self.fields.optionQuery}
 end
 -- What a sync changed that the page draws: an option's value, the sort, the
 -- catalog page, a deck quantity, an empty search.
 function Builder:changes(was)
   local say={}
   local function add(text) if text and text~='' then say[#say+1]=text end end
+  local picked,listPage=self:listChanges(was)
+  add(picked)
   if self.format~=was.format then add('Format: '..formatName(self.format)) end
   for _,o in ipairs(self.options)do
     if was.options[o.key] and was.options[o.key]~=o.value then add(o.label..': '..o.value) end
   end
+  add(listPage)
   local sort=self.fields.sort or 'name'
   if sort~=was.sort then add('Sort: '..(SORT_LABELS[sort] or sort)) end
   -- A new search or sort starts on page 1 without saying so.
@@ -213,6 +216,7 @@ function Builder:sync(raw)
   end
   self.cover=f[H.cover];self.importing=f[H.importing]=='1';self.dirty=f[H.dirty]=='1';self.retry=f[H.retry]=='1'
   self.options={};self.choices={};self.deck={};self.items={};self.selectedItem=nil
+  local optionKey=''
   local signature={tostring(self.page)}
   for i=2,#lines do local r=lines[i]
     if r[1]=='C' or r[1]=='D' or r[1]=='S' then
@@ -229,10 +233,11 @@ function Builder:sync(raw)
     elseif r[1]=='O' then local o=W.option
       self.options[#self.options+1]={key=r[o.key],label=r[o.label],value=r[o.value],count=tonumber(r[o.count]) or 0,index=tonumber(r[o.index]) or 1,selected=r[o.selected]}
     elseif r[1]=='P' then local p=W.picker
-      self.optionLabel=r[p.label];self.optionPage=tonumber(r[p.page]);self.optionPages=tonumber(r[p.pages]);self.fields.optionQuery=r[p.query]
+      optionKey=r[p.key];self.optionLabel=r[p.label];self.optionPage=tonumber(r[p.page]);self.optionPages=tonumber(r[p.pages]);self.fields.optionQuery=r[p.query]
     elseif r[1]=='Q' then local q=W.choice;self.choices[#self.choices+1]={value=r[q.value],label=r[q.label],selected=r[q.selected]=='1'}
     elseif r[1]=='F' then self.fields[r[W.field.key]]=r[W.field.value] end
   end
+  self.optionKey=optionKey
   signature=table.concat(signature,'|')
   if signature~=self.signature then self.signature=signature;self:makeCards(true)
   else for i,c in ipairs(self.cards)do c.item.quantity=self.items[i].quantity;c.item.remaining=self.items[i].remaining end end
@@ -252,10 +257,19 @@ function Builder:sync(raw)
   if self.saveStatus=='failed' then self.saveFailed=true
   elseif self.saveStatus=='saved' and self.saveFailed then self.saveFailed=nil;say[#say+1]='Deck saved.'
   elseif self.phase~='ready' then self.saveFailed=nil end
-  self:build()
   local m=self.modal
+  -- A list's rows rebuild under the control that had focus, wherever it now is.
+  local held=m and m.mode=='choices' and self.controls[self.focus]
+  self:build()
+  if held then
+    for i,c in ipairs(self.controls)do if c.action==held.action and c.arg==held.arg then self.focus=i;break end end
+  end
   if m and m.mode=='detail' and not m.heardDetails and self:detailsFor(m.id) then
     m.heardDetails=true;say[#say+1]=self:modalSpeech()
+  end
+  -- A list is announced once its rows arrive.
+  if m and m.mode=='choices' and not m.heard and m.key and self.optionKey==m.key then
+    m.heard=true;say[#say+1]=self:openingSpeech()
   end
   if #say>0 then self.callbacks.announce(table.concat(say,' ')) end
 end
@@ -376,12 +390,20 @@ end
 function Builder:retryCoversLine()
   return self.portrait and self.tab~='deck' and (self.saveStatus=='failed' or self.retry) and true or false
 end
-function Builder:openModal(mode,item)
+-- Opens dialog `mode`; `focus`, when given, picks the control that takes keyboard focus.
+function Builder:openModal(mode,item,focus)
   self:command('finish-input');self.editing='';self.focus=0;self.pressed=nil
-  self.modal={mode=mode,item=item,id=item and item.id,motion=Modal.motion(self.reduced)}
+  self.modal={mode=mode,item=item,id=item and item.id,key=item and item.key,motion=Modal.motion(self.reduced)}
   self:build()
+  if focus then self:focusFirst(focus) end
   if mode=='detail' then self.modal.heardDetails=self:detailsFor(self.modal.id)~=nil end
-  self.callbacks.announce(self:modalSpeech())
+  -- A list is announced by sync, once its rows arrive.
+  if mode~='choices' or not self.modal.key then self.callbacks.announce(self:openingSpeech()) end
+end
+-- What a dialog says as it opens: what it draws, then the control focus starts on.
+function Builder:openingSpeech()
+  local focused=self.controls[self.focus]
+  return self:modalSpeech()..(focused and ' '..self:describe(focused) or '')
 end
 -- The card's rules text once it has arrived for `id`, else nil.
 function Builder:detailsFor(id)
@@ -455,7 +477,7 @@ function Builder:describe(b)
     return label..': '..(value~='' and value or 'empty')..'. Enter to edit.'
   end
   if b.speech then return b.speech end
-  if b.cycleKey then return b.optionTitle..': '..b.optionValue..', left and right change it' end
+  if b.cycleKey then return self:cycleSpeech(b) end
   if a=='card' then return cardSpeech(self.cards[b.card].item) end
   if a=='detail' or a=='deck-card' then return entrySpeech(b.arg,self.format) end
   if a=='remove' or a=='discard' or a=='add' then
@@ -486,7 +508,8 @@ function Builder:pendingEntry(id)
   for _,item in ipairs(self.deck)do if item.id==id then return item.pending==true end end
   return false
 end
-function Builder:activate(i)
+-- Acts on control i; `keyboard` when Enter or Space did.
+function Builder:activate(i,keyboard)
   local b=self.controls[i];if not b or b.disabled or b.inert then return end
   local a,v=b.action,b.arg
   if (a=='discard' or a=='remove') and self:pendingEntry(v) then return end
@@ -497,11 +520,14 @@ function Builder:activate(i)
   elseif a=='hp-slider' then self.callbacks.announce(b.label..': use Left and Right to adjust, Home and End for the endpoints')
   elseif a=='card' then local item=self.cards[b.card].item;self:command('detail',item.id);self:openModal('detail',item)
   elseif a=='detail' or a=='deck-card' then self:command('detail',v.id);self:openModal('detail',v)
-  elseif a=='close' then local choices=self.modal and self.modal.mode=='choices';self:closeModal();if choices then self:openModal('filters')end
+  elseif a=='close' then if self.modal and self.modal.mode=='choices' then self:closeList(keyboard) else self:closeModal() end
   elseif a=='signin' then self.callbacks.signin()
   elseif a=='filters' then self:openModal('filters')
   elseif a=='filter-tab' then self.filterPage=v;self:build();self.callbacks.announce(b.label..' tab')
+  elseif a=='cycle' and keyboard and b.opensList then self:openList(v[1],b.optionTitle,true)
   elseif a=='cycle' then self:command('cycle',v[1],v[2])
+  elseif a=='filter-value' then self:openList(v,b.optionTitle,keyboard)
+  elseif a=='option-pick' then self.picked=v;self:command(a,v)
   elseif a=='transfer' then
     self.clipboard=nil;self.transfer='';self.transferBaseline=nil;self.exportRaw=nil
     self:openModal('transfer');self:command('export')
@@ -674,13 +700,13 @@ function Builder:keypressed(key)
     local dir=key=='left' and -1 or 1
     if control.action=='cycle' then self:command('cycle',control.cycleKey,dir) else self:command(control.action,dir) end
   elseif self:shortcut(key) then return
-  elseif key=='escape' then if self.modal then local choices=self.modal.mode=='choices';self:closeModal();if choices then self:openModal('filters')end else self:command('leave')end
+  elseif key=='escape' then if self.modal and self.modal.mode=='choices' then self:closeList(true) elseif self.modal then self:closeModal() else self:command('leave')end
   elseif key=='tab' or key=='right' or key=='down' or key=='left' or key=='up' then
     if #self.controls==0 then return end
     local found
     self.focus,found=Controls.move(self.focus,key,self.controls,nil,Controls.first(self.controls))
     if found then self.callbacks.announce(self:describe(self.controls[self.focus])) end
-  elseif key=='return' or key=='space'then self:activate(self.focus)
+  elseif key=='return' or key=='space'then self:activate(self.focus,true)
   elseif not self.modal and (key=='pagedown' or key=='pageup')then self:command('page',key=='pageup' and -1 or 1)end
 end
 function Builder:wheelmoved(y)
@@ -726,7 +752,7 @@ function Builder:drawControlFaces(controls,active)
       b.label,b.fontSize=Fit.label(b.label,b.fontSize,b.w-16)
       Button.draw(b,lit and not b.disabled,active and self.pressed==i,lit and self.hover==0,self.width);b.label=original
       if b.icon then Button.icon(b,b.icon,active and self.pressed==i,self.width) end
-      if (b.action=='deck-type' and b.arg==self.deckType) or (b.action=='filter-tab' and b.arg==self.filterPage) then Button.chosen(b,self.time,active and self.pressed==i,self.width,self.reduced)end
+      if (b.action=='deck-type' and b.arg==self.deckType) or (b.action=='filter-tab' and b.arg==self.filterPage) or b.chosen then Button.chosen(b,self.time,active and self.pressed==i,self.width,self.reduced)end
     end
   end
 end

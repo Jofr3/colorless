@@ -963,6 +963,10 @@ export class LuaBuilder {
     this.leaving = false;
     this.page = 1;
     this.filters = { ...DEFAULT_FILTERS };
+    // A list left open on another deck closes with it.
+    this.optionKey = "";
+    this.optionQuery = "";
+    this.optionPage = 1;
     await this.load();
   }
   private async onSize(size: string) {
