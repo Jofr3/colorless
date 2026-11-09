@@ -170,6 +170,10 @@ describe("Lua online adapter", () => {
       "0",
       "Couldn't reach the lobby server. Try again in a moment.",
     ]);
+    // The per-network create limit says so rather than blaming the server.
+    stubFetch({ "POST /lobby": () => json({ error: "too many lobbies" }, 429) });
+    await online.command("create");
+    expect(header()[H("message")]).toBe("Too many new lobbies. Try again in a minute.");
     stubFetch({ "POST /lobby": () => json({ code: "0O1I" }, 201) });
     await online.command("create");
     expect(header()[H("step")]).toBe("menu");
