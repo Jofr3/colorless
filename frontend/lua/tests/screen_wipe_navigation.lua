@@ -54,41 +54,53 @@ love.mousepressed(200,200,1);love.mousereleased(200,200,1);love.keypressed('esca
 assert(scenes.simulator.inputs==0,'All input paths must be locked during the wipe')
 frames(36);assert(scenes.simulator.opens==0,'Destination cannot open before coverage')
 frames(12);assert(scenes.simulator.opens==1,'Destination must open while covered')
+-- The destination takes input as soon as it is on screen, while the card still dissolves.
+assert(count('COLORLESS:transition:closed')==1,'The shell hears the wipe close once the destination shows')
+love.mousepressed(200,200,1);love.mousereleased(200,200,1);love.keypressed('escape');love.wheelmoved(0,1)
+assert(scenes.simulator.inputs==4,'Input unlocks once the destination is on screen')
 love.resize(390,844);frames(120)
 assert(count('COLORLESS:transition:closed')==1,'Resize must not replay or strand the wipe')
-love.keypressed('escape');assert(scenes.simulator.inputs==1,'Input unlocks after removal')
+love.keypressed('escape');assert(scenes.simulator.inputs==5,'Input stays unlocked after removal')
 -- A second history destination before coverage replaces the first one.
 route(3,'home');route(4,'decks');frames(140)
 assert(scenes.library.opens==1 and scenes.simulator.opens==1)
 assert(count('COLORLESS:transition:open')==2 and count('COLORLESS:transition:closed')==2)
+-- A page asked for while the card still dissolves, as a Back pressed at once, is kept and opens
+-- after the wipe is gone, under a wipe of its own.
+route(41,'simulator');frames(50)
+assert(scenes.simulator.opens==2 and count('COLORLESS:transition:closed')==3,'The table is on screen, dissolving')
+route(42,'decks');frames(2)
+assert(scenes.library.opens==1 and count('COLORLESS:transition:open')==3,'The next page waits out the dissolve')
+frames(200)
+assert(scenes.library.opens==2 and count('COLORLESS:transition:open')==4 and count('COLORLESS:transition:closed')==4,'The waiting page opens after it')
 -- Reduced motion switches immediately once the mailbox is processed.
 files['__viewport.txt']='1280 800 1';frames(16)
 route(5,'simulator');frames(5)
-assert(scenes.simulator.opens==2)
-assert(count('COLORLESS:transition:open')==3 and count('COLORLESS:transition:closed')==3)
+assert(scenes.simulator.opens==3)
+assert(count('COLORLESS:transition:open')==5 and count('COLORLESS:transition:closed')==5)
 -- The lobby modal opens over home without a wipe; its code retargets in place.
 files['__viewport.txt']='1280 800 0'
 local homes=count('COLORLESS:announce:Home')
 route(6,'home');frames(140)
 assert(count('COLORLESS:announce:Home')==homes+1,'Arriving home announces it once')
 route(7,'online');frames(5)
-assert(scenes.online.opens==1 and count('COLORLESS:transition:open')==4,'Home to online must not wipe')
+assert(scenes.online.opens==1 and count('COLORLESS:transition:open')==6,'Home to online must not wipe')
 route(8,'online\tABCD');frames(5)
 assert(scenes.online.opens==1 and scenes.online.target=='ABCD','Online to online retargets without reopening')
 love.keypressed('escape');assert(scenes.online.inputs==1,'Online receives input')
 -- The live match is a table page: online to match wipes and opens it online.
 route(9,'match\tABCD')
-assert(count('COLORLESS:transition:open')==5 and scenes.simulator.opens==2,'Online to match wipes before opening')
+assert(count('COLORLESS:transition:open')==7 and scenes.simulator.opens==3,'Online to match wipes before opening')
 frames(140)
-assert(scenes.simulator.opens==3 and scenes.online.closes==1,'The lobby closes while covered')
+assert(scenes.simulator.opens==4 and scenes.online.closes==1,'The lobby closes while covered')
 local a=scenes.simulator.args;assert(a[3]=='online' and a[4]=='ABCD','Match opens the online table')
-love.keypressed('escape');assert(scenes.simulator.inputs==2,'The match table receives input')
+love.keypressed('escape');assert(scenes.simulator.inputs==6,'The match table receives input')
 -- A rematch hands back to the lobby modal with another wipe.
 route(10,'online\tABCD');frames(140)
-assert(count('COLORLESS:transition:open')==6 and scenes.online.opens==2 and scenes.simulator.last=='close','Match to online wipes and closes the table')
+assert(count('COLORLESS:transition:open')==8 and scenes.online.opens==2 and scenes.simulator.last=='close','Match to online wipes and closes the table')
 -- The page mailbox is followed on the next frame, without waiting for the viewport poll.
 files['__page.txt']='11\tdecks\t';love.update(1/60)
-assert(scenes.library.opens==2,'A route change applies on the next frame')
+assert(scenes.library.opens==3,'A route change applies on the next frame')
 -- A Settings request opens Settings on the named tab, once per request.
 files['__settings.txt']='1\taccount';love.update(1/60)
 assert(scenes.settings.tab==4 and count('COLORLESS:settings:open')==1,'Settings opens on the Account tab')

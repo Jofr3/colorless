@@ -882,7 +882,9 @@ export class LuaBuilder {
       this.pages.delete(far);
     }
   }
-  /** Warm the neighbouring pages and queue their artwork behind this page's. */
+  /** Warm the neighbouring pages the card index answers and queue their artwork behind this
+      page's. A page that would come from /cards is left until it is opened: every KV miss spends
+      the API's per-address search limit, and a prefetch may never be looked at. */
   private prefetch(catalog: Catalog) {
     if (catalog.key !== this.pageKey) return;
     const live = this.epoch.current();
@@ -890,6 +892,7 @@ export class LuaBuilder {
     for (let d = 1; d <= PREFETCH_PAGES; d++)
       for (const page of [this.page + d, this.page - d]) {
         if (page < 1 || page > last || this.pages.has(page)) continue;
+        if (!fromIndex(catalog.query, page)) continue;
         this.fetchPage(catalog, page)
           .then(() => {
             if (live() && catalog.key === this.pageKey) this.publishImages();

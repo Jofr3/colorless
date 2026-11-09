@@ -1389,3 +1389,18 @@ The last two branches of the 2026-11-09 audit, built by worktree agents and merg
   - The new log kinds and levels in the saved-query table.
   - `ApiError`'s status comment.
 - 17 API-P5 mutant rows, all killed. `MI3-throw-refused-silently` was re-pointed at the new `action_threw` line.
+
+### 2026-11-09 — Builder prefetch from the index only, page input once the wipe has committed, and springs that do not ring on slow frames
+
+Two items left open after the backend and API audit, fixed at the user's request.
+
+- **The builder prefetches only pages the card index answers (API-FU).** Before the index loads, only the visible page costs a GET /cards. That is 1 KV miss per filter change instead of 3, so quick filtering before the index loads no longer approaches CATALOG_SEARCH_LIMIT. Once the index has loaded, neighbours are prefetched from it as before. Prefetching from the still-loading index was not done: it would load and parse the 1.9 MB index while the builder opens, which the idle-deferred load avoids. The cost is that, before the index loads, pages 2-3 show "Searching..." for about a second. Browser QA, throttled: 8 filter changes made exactly 1 GET /cards each.
+- **Input waits only while the wipe's card covers the screen.** `main.lua` ignored every press, key and wheel for the whole 1.8 s wipe, including the 1.1 s dissolve after the destination is already on screen. Now `covering()` locks input only until the wipe commits, and the shell hears `transition:closed` at that frame. A page asked for during the dissolve waits in `pendingPage` and opens after the wipe, under its own wipe.
+  - `screen_wipe_navigation.lua` pinned "input unlocks after removal". It now pins unlocking at commit, and gains a during-dissolve case.
+  - UI-LCX2-parked-drag was re-pointed to `covering()`.
+  - Right after the commit the dissolving card still covers much of the screen, so a click can act on a control not yet visible. That trade-off is accepted.
+- **The dropped tap was the springs, not the wipe.** The builder never wipes. Its entrance slide is a `Motion` spring stepped once per frame, and main.lua caps a frame's dt at 0.1 s. At that step the explicit spring overshoots and rings: it crossed its place 13 times and settled after about 1 s of game time, which is 1-3 s of real time at the 100-300 ms frames seen while the card index parses. So Back and the name field moved out from under a still pointer between press and release.
+  - `Motion:update` now runs a frame as equal substeps of at most `MAX_STEP = 1/50` s. At 50 frames a second or faster that is one step, so 60 fps motion and every recorded draw trace are unchanged. At 0.1 s frames the slide crosses its place twice and settles by 0.3 s, the 60 fps path.
+  - `tests/motion.lua`'s step-by-step comparison with Balatro's `moveable.lua` now steps the reference with the same substeps, and a new case fails if any frame length makes a spring ring.
+  - Browser QA on fresh page loads, every click a real 40 ms press: Back right after an add dropped 0/14 (was 1/10), and a first click on the name field 1/40 (was 10/40). The one miss was the earliest click of the run, 167 ms after Lua was ready, while the slide was still genuinely moving in. In-app opens: 0/10.
+- 4 API-FU mutant rows, all killed. All 136 rows on `main.lua` and `builder.ts` behave as before (135 killed, plus UI-FU2-main-portrait-grows, declared equivalent). Web-only: no API change.

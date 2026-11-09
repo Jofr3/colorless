@@ -919,41 +919,39 @@ describe("Lua deck builder", () => {
     expect(b.optionPage).toBe(1);
     expect(listRows(publish).picker).toBeUndefined();
   });
-  it("prefetches neighbouring catalog pages so paging never shows the loading state", async () => {
-    // Pages 1 to 3 come from /cards while the card index has not loaded.
-    vi.mocked(api.getCards).mockImplementation(async (query) => {
-      const page = query?.page ?? 1;
-      return { items: [card(`p${page}a`), card(`p${page}b`)], total: 40, page, pageSize: 8 };
-    });
+  it("prefetches neighbouring pages from the card index only, never from /cards", async () => {
+    const idle = heldIdle();
+    vi.mocked(api.getCards).mockImplementation(catalogOf(() => 40));
     const images = vi.fn();
     const { b, publish } = await setup(images);
     await tick();
+    // Before the index loads, only the page on screen comes from /cards: a prefetch there would
+    // spend the per-address search limit on a page that may never be opened.
     const pages = () => vi.mocked(api.getCards).mock.calls.map(([q]) => q?.page);
-    expect(pages()).toEqual([1, 2, 3]);
-    const totals = () => vi.mocked(api.getCards).mock.calls.map(([q]) => q?.total);
-    // The API caches a browsing query's first pages, so their prefetches send no total.
-    expect(totals()).toEqual([undefined, undefined, undefined]);
+    expect(pages()).toEqual([1]);
+    expect(images.mock.lastCall?.[0].map((image: { id: string }) => image.id)).toEqual(ids(0, 8));
+    idle[0]?.();
+    await tick();
+    // Once it has loaded, opening a page warms its neighbours from it, art queued behind its own,
+    // so the next page shows with no loading state.
+    await b.command("page\t1");
+    await tick();
+    expect(b.results.map((c) => c.cardId)).toEqual(ids(8, 16));
     expect(images.mock.lastCall?.[0].map((image: { id: string }) => image.id)).toEqual([
-      "p1a",
-      "p1b",
-      "p2a",
-      "p2b",
-      "p3a",
-      "p3b",
+      ...ids(8, 24),
+      ...ids(0, 8),
+      ...ids(24, 32),
     ]);
     publish.mockClear();
     await b.command("page\t1");
-    expect(b.results.map((c) => c.cardId)).toEqual(["p2a", "p2b"]);
+    expect(b.results.map((c) => c.cardId)).toEqual(ids(16, 24));
     expect(publish).toHaveBeenCalledTimes(1);
     expect(b.busy).toBe(false);
+    await b.command("page\t-2");
+    expect(b.results.map((c) => c.cardId)).toEqual(ids(0, 8));
+    expect(b.busy).toBe(false);
     await tick();
-    // Page 4 is past the API's cached pages, so it comes from the card index.
-    expect(pages()).toEqual([1, 2, 3]);
-    expect(api.getCardIndex).toHaveBeenCalledTimes(1);
-    await b.command("page\t-1");
-    expect(b.results.map((c) => c.cardId)).toEqual(["p1a", "p1b"]);
-    await tick();
-    expect(pages()).toEqual([1, 2, 3]);
+    expect(pages()).toEqual([1]);
   });
   it("slices every page from the card index once it has loaded, asking /cards for none (CAT1)", async () => {
     vi.mocked(api.getCards).mockImplementation(catalogOf(() => 40));

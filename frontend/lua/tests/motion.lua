@@ -40,12 +40,18 @@ for _,dt in ipairs({1/30,1/60,1/120,1/144,0.09}) do
       expected:juice_up(0.11,-0.16)
     end
     actual:update(dt,time,hover,drag,false)
-    local moveDt=math.min(1/20,dt)
-    G.exp_times={xy=math.exp(-50*dt),r=math.exp(-190*dt),scale=math.exp(-60*dt),max_vel=70*moveDt}
+    -- A frame longer than 1/50 s runs Balatro's step as equal substeps (ui/motion.lua MAX_STEP),
+    -- so the reference takes the same substeps; 1/60 s and faster is one step, Balatro's own.
+    local steps=math.ceil(dt/(1/50)-1e-9)
+    local step=dt/steps
+    local moveDt=math.min(1/20,step)
+    G.exp_times={xy=math.exp(-50*step),r=math.exp(-190*step),scale=math.exp(-60*step),max_vel=70*moveDt}
     expected:move_juice(moveDt)
-    expected:move_xy(moveDt)
-    expected:move_r(moveDt,expected.velocity)
-    expected:move_scale(moveDt)
+    for _=1,steps do
+      expected:move_xy(moveDt)
+      expected:move_r(moveDt,expected.velocity)
+      expected:move_scale(moveDt)
+    end
     for _,key in ipairs({'x','y','r','scale'}) do
       near(actual.VT[key],expected.VT[key],'VT.'..key)
       near(actual.velocity[key],expected.velocity[key],'velocity.'..key)
@@ -59,4 +65,22 @@ reduced:update(1/60,1,true,false,true)
 near(reduced.VT.x,9,'reduced motion position')
 near(reduced.VT.scale,1.05,'reduced motion hover scale')
 assert(reduced.juice==nil)
+-- A slow frame does not make a spring ring. A dialog sliding in from 10 tiles away overshoots by
+-- 0.35 tiles at 60 fps, crosses its place twice and settles by 0.25 s. At main.lua's longest frame
+-- (0.1 s) one step crossed it 13 times and settled only after 1 s, moving a button out from under
+-- a tap while the card index parsed. Substeps keep every frame length to the 60 fps path.
+for _,dt in ipairs({1/60,1/30,0.1}) do
+  local m=Motion.new(0,10,0);m.T.y=0
+  local worst,crossings,last=0,0,10
+  for frame=1,math.ceil(1/dt) do
+    m:update(dt,frame*dt,false,false,false)
+    worst=math.min(worst,m.VT.y)
+    if (last>0)~=(m.VT.y>0) and m.VT.y~=0 then crossings=crossings+1 end
+    last=m.VT.y
+    if frame*dt>=0.5 then assert(math.abs(m.VT.y)<0.05,'Settled by 0.5 s at dt '..dt..': '..m.VT.y) end
+  end
+  assert(worst>-0.4,'Overshoot under 0.4 tiles at dt '..dt..': '..worst)
+  assert(crossings<=2,'No ringing at dt '..dt..': '..crossings..' crossings')
+  checks=checks+1
+end
 print('PASS: '..checks..' motion comparisons against Balatro, plus reduced motion')

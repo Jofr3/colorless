@@ -62,6 +62,11 @@ local preferences=Preferences.new()
 local account=Account.new()
 local openSettings,closeSettings,applyPreferences,startWipe,applyPage,requestPage,cancelInteractions,parkPointer
 local wipe,pendingPage
+-- Input waits only while the wipe's card covers the screen. Once the destination is on screen it
+-- takes input, though the card is still dissolving: a tap in that second used to be dropped, and
+-- on slow frames the dissolve stretched it further. A page asked for meanwhile waits in
+-- pendingPage until the wipe is gone.
+local function covering() return wipe~=nil and not wipe.committed end
 local scene, width, height, layoutScale, offsetX, offsetY, virtualWidth, virtualHeight
 -- Device pixels per CSS pixel: width and height are the canvas's device pixels (audit BT6).
 local density=1
@@ -385,7 +390,7 @@ end
 -- canvas for its links, on 'first' the next Shift+Tab (src/host/shell.ts tabLeaves); under a
 -- popup, during a wipe, off home or with nothing focused Tab stays in the canvas.
 local function focusEdge()
-  if state.page~='home' or popup or wipe or state.focused==0 then return 'none' end
+  if state.page~='home' or popup or covering() or state.focused==0 then return 'none' end
   if state.focused==#menu+#controls then return 'last' end
   return state.focused==1 and 'first' or 'none'
 end
@@ -434,7 +439,7 @@ closeSettings=function()
 end
 -- `opener`: the home control that asked; otherwise the one for the requested tab.
 openSettings=function(keyboard,tab,opener)
-  if popup or wipe then return end
+  if popup or covering() then return end
   keyboard=keyboard or state.focused>0
   state.settingsOpener=opener or (tab=='account' and #menu+1 or #menu+2)
   state.pressed=nil; state.focused=0; state.hovered=0
@@ -540,13 +545,18 @@ function love.update(dt)
   state.time=state.time+dt
   menuLogo:update(dt,state.reduced)
   screen:update(state.time,offsetX+room.cursorX*layoutScale,offsetY+room.cursorY*layoutScale,state.reduced,preferences)
-  if wipe and wipe:update(dt) then
-    wipe:release();wipe=nil
-    Bridge.emit('transition','closed')
-    if pendingPage then requestPage(pendingPage.page,pendingPage.deckId) end
+  if wipe then
+    local covered=wipe.committed
+    local done=wipe:update(dt)
+    -- The destination is on screen, and takes input, from the frame the wipe commits.
+    if wipe.committed and not covered then Bridge.emit('transition','closed') end
+    if done then
+      wipe:release();wipe=nil
+      if pendingPage then requestPage(pendingPage.page,pendingPage.deckId) end
+    end
   end
   local mx,my=pointer(love.mouse.getPosition())
-  if wipe or (state.parked and not love.mouse.isDown(1)) then mx,my=-1000,-1000 end
+  if covering() or (state.parked and not love.mouse.isDown(1)) then mx,my=-1000,-1000 end
   if isTable(state.page) then simulator:update(dt,state.time,popup and -1000 or mx,popup and -1000 or my,state.reduced) end
   if isCollection(state.page) then
     local lx,ly=libraryPoint(mx,my)
@@ -559,7 +569,7 @@ function love.update(dt)
     -- A step that fits another size lays the lobby out again before it draws.
     if fitOnline(virtualWidth<virtualHeight) then online:layout(onlineLayer.w,onlineLayer.h) end
   end
-  if wipe then love.mouse.setCursor(state.arrowCursor);return end
+  if covering() then love.mouse.setCursor(state.arrowCursor);return end
   -- An account asked to choose its public name hears it on the home menu or before an online
   -- lobby, where the name is shown to others; Settings reads the account itself while open.
   if not popup and (state.page=='home' or state.page=='online') then
@@ -756,7 +766,7 @@ function love.mousefocus(focused)
 end
 function love.touchreleased() parkPointer() end
 function love.mousepressed(x,y,button)
-  if button~=1 or wipe then return end
+  if button~=1 or covering() then return end
   state.parked=false; state.lastInput='pointer'
   unlockAudio(); state.focused=0
   x,y=pointer(x,y)
@@ -767,7 +777,7 @@ function love.mousepressed(x,y,button)
   state.pressed=hit(x,y)
 end
 function love.mousereleased(x,y,button,istouch)
-  if button~=1 or wipe then return end
+  if button~=1 or covering() then return end
   if istouch then parkPointer() end
   x,y=pointer(x,y)
   if popup then popup:mousereleased(layerPoint(popupLayer,x,y)); return end
@@ -778,7 +788,7 @@ function love.mousereleased(x,y,button,istouch)
   state.pressed=nil
 end
 function love.keypressed(key)
-  if wipe then return end
+  if covering() then return end
   state.lastInput='key'
   if not love.mouse.isDown(1) then parkPointer() end
   unlockAudio()
@@ -817,7 +827,7 @@ function love.focus(focused)
 end
 
 function love.wheelmoved(x,y)
-  if wipe then return end
+  if covering() then return end
   if isTable(state.page) and not popup then simulator:wheelmoved(y);return end
   if state.page=='online' and not popup then online:wheelmoved(y);return end
   if isCollection(state.page) and not popup then collection():wheelmoved(y) end

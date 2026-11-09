@@ -3,6 +3,9 @@
 -- Equations and update order: engine/moveable.lua and game.lua (LÖVE 11.4).
 local Motion = {}
 Motion.__index = Motion
+-- The longest step the springs take. Stable well past 1/60 s, and long enough that a 60 Hz frame
+-- running a little late is still one step. main.lua caps a frame's dt at 0.1 s: five steps.
+local MAX_STEP = 1/50
 
 function Motion.new(x, y, rotation)
   return setmetatable({
@@ -84,10 +87,18 @@ function Motion:update(realDt, time, hovered, dragging, reduced)
     return
   end
   if realDt<=0 then return end
-  local dt = math.min(1/20,realDt)
   self:move_juice(time)
-  self:move_xy(dt,math.exp(-50*realDt))
-  self:move_r(dt,math.exp(-190*realDt))
-  self:move_scale(math.exp(-60*realDt),hovered,dragging)
+  -- The springs are explicit steps that overshoot and ring at the 0.1 s a slow frame can hand them
+  -- (a button rang about 30 px around its place for a second while the card index parsed, moving
+  -- out from under a tap), so a longer frame runs as equal substeps of at most MAX_STEP. At 50
+  -- frames a second or faster that is one step, as before.
+  local steps = math.ceil(realDt/MAX_STEP-1e-9)
+  local step = realDt/steps
+  local dt = math.min(1/20,step)
+  for _=1,steps do
+    self:move_xy(dt,math.exp(-50*step))
+    self:move_r(dt,math.exp(-190*step))
+    self:move_scale(math.exp(-60*step),hovered,dragging)
+  end
 end
 return Motion
