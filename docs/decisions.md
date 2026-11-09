@@ -855,6 +855,7 @@ Phase 1 of the 2026-10-27 security audit. Server-only and web-only fixes, with n
 - **Shuffled decks at handoff (MIX1).** `handoffToMatch` crypto-shuffles both deck lists before `beginMatch` mints uids, so uid order no longer reveals the list. This is not the RNG change (MI1, Phase 4).
 - **Request edge.**
   - Dependencies: hono 4.13, zod 4.6, @hono/zod-validator 0.9. `bun audit --prod` is clean, and the CI static job now gates on it, through bun 1.4.2, since 1.3.13's audit has no `--prod`.
+    - Amended 2026-11-09 (dependency audit PRC5, DEP-P0/DEP-P1): the reason given for the prod-only gate ("dev tools are left to Dependabot") does not hold. GitHub's dependency graph does not read bun.lock: it lists the manifest ranges and no transitive package, so Dependabot raised 0 alerts while `bun audit` reported 42. The `--prod` gate stays. The whole tree is reported weekly by `.github/workflows/deps-report.yml` and monthly by `bun run deps:check`. Since DEP-P1 the gate runs on the pinned bun (1.4.2), not through `bunx`.
   - CORS: preflights allow only `Content-Type` and GET, HEAD, POST, PATCH and DELETE.
   - Requests: 64 KB body cap with a JSON 413 (the largest real request is about 8 KB); at most 20 validation issues; `/decks` POST and PATCH check the session before validating.
   - Responses: every one carries `nosniff` and `Cross-Origin-Resource-Policy: same-site`, and framework errors are JSON.
@@ -1421,3 +1422,78 @@ The dependency audit (report `tmp/deps/deps-audit.md`, 35 findings) found the np
   4. Deploy the Worker with `--minify` and uploaded source maps.
   The remaining decisions take the report's recommendations.
 - 3 DEP-P0 mutant rows, all killed.
+
+### 2026-11-09 — Dependency audit Phase 1: grouped Dependabot, Node 24 actions, one bun and one Node from laptop to CI, a release-age gate, and a monthly routine
+
+Phase 1 of the dependency audit (report `tmp/deps/deps-audit.md`) changes how updates arrive and are taken. It changes dev and CI only; nothing that ships changes, and bun.lock is byte-identical (decision id DEP-P1).
+
+- **Grouped Dependabot (PRC2, decision 5).** Dependabot had 8 PRs open since 2026-10-28, with none merged, and sat at its limit of 5, so its weekly runs did nothing. Coupled bumps came apart (wrangler #6 without workers-types #8), and majors that cannot pass (TypeScript 7, #4) used up slots. `.github/dependabot.yml` now groups the bun updates into `cloudflare` (wrangler, miniflare, @cloudflare/*), `vite` (vite, vitest, @vitest/*), `types` (@types/*), `production` (hono, zod, drizzle-orm, @hono/zod-validator, @noble/ciphers; minor and patch) and `dev` (everything else; minor and patch). The limit is 10. Majors of typescript (Phase 5), vitest (Phase 6), @biomejs/biome (Phase 7) and @types/node (decision 8) are ignored, each with a comment naming its phase. The bun ecosystem supports `cooldown`: dev updates wait 7 days, and the five shipped packages are excluded, so a security patch for the Worker arrives in the next weekly run. Actions are grouped with a 7-day cooldown. Groups' `dependency-type` is not supported for bun, so the dev catch-all is the pattern `*` after the named groups. The bun ecosystem at `/` already covers the workspaces: #5, #6 and #8 edit apps/api/package.json. check-jsonschema validates the file.
+- **Node 24 actions (VER11).** actions/checkout v4.4.0 and actions/cache v4.3.0 were Node 20 actions that GitHub force-ran on Node 24. ci.yml and deps-report.yml now pin checkout v7.0.1 (`3d3c42e5`) and cache v6.1.0 (`55cc8345`), the SHAs of Dependabot #2 and #1. Both tags point directly at those commits. Their release notes change no input this repository uses. Cache v5 and v6 move to Node 24 and ESM, and keys, paths and restore-keys work as before. Checkout v6 keeps credentials in a separate file, and v7 refuses fork checkouts under `pull_request_target`/`workflow_run`; CI uses `pull_request`. `fetch-depth` and `filter` are unchanged. actionlint is clean.
+- **One bun (VER12).** CI installed and tested on 1.3.13 and audited through `bunx bun@1.4.2`, while local dev and `release` ran 1.4.2. `.bun-version` and `packageManager` are now 1.4.2 and `engines.bun` is `>=1.4`. Bun 1.4.2 has `audit --prod` (it checks 5 packages) and `outdated -r`, so CI and the Dependency report call plain `bun`. `bun install --frozen-lockfile` and a plain `bun install` both leave bun.lock byte-identical (sha256 6309797726ea…).
+- **One Node (PRC4, decision 8).** tsc, vite, vitest, wrangler and biome start with `#!/usr/bin/env node`, so CI ran whatever Node the runner image shipped. `.node-version` is `22.23`, the local minor. It resolves to 22.23.4, the current 22 LTS and a security release, which the runner image already has. Every ci.yml job runs `actions/setup-node` v7.1.0 (`949feb24`) from that file: static, lua, test, mutants and bench all start Node tools. setup-node caches automatically only for npm, so it adds no cache. `engines.node` is `>=22.12`, vite's floor. @types/node stays as it is until Phase 2 sets `^22`.
+- **A release-age gate (PRCM2).** `bunfig.toml` sets `[install] minimumReleaseAge = 259200`. Bun 1.4.2 takes only the number of seconds; `"3d"` fails to load. Tested in a scratch project. `bun add hono@^4.13.0` got 4.13.16 instead of the 2-day-old 4.13.17, an exact `hono@4.13.17` was refused ("blocked by minimum-release-age"), and `--minimum-release-age=0` installed 4.13.17. A frozen install of a lock that holds 4.13.17 succeeded, with an empty cache too. Bun 1.4.2 has no `--minimum-release-age-excludes` flag, but bunfig's `minimumReleaseAgeExcludes` works (with `["hono"]`, the same add got 4.13.17). The urgent-patch override is `--minimum-release-age=0` for one command.
+- **Frozen installs in release (PRC8, decision 7).** `release` and `deploy` start with `bun install --frozen-lockfile`. It does not dirty the tree, so the clean-tree gate still passes. `release` makes no other network call for dependencies.
+- **`bun run deps:check` (PRC8, PRC11).** `scripts/deps-check.ts` is a report and always exits 0. It needs the network, so it is not in `check:static`. It prints `bun outdated -r`, the full `bun audit` and CI's `--prod` gate, and lock-check's verdict. It scans every bun.lock package against the registry for deprecated or unpublished versions. Today that finds drizzle-kit's two @esbuild-kit loaders, as the audit did. It compares the local bun and node with the pins, lists specs that differ between workspaces (none today), and reports both `compatibility_date`s, flagging one older than 92 days (2026-06-01, 161 days, today). It ends with the advisory and release pages of the five packages the Worker ships, derived from the manifests. A run takes about 9 s.
+- **The routine is written down (PRC7, PRC8, PRC11, USE7; decisions 12 and 17).** A "Dependencies" section in `docs/conventions.md` covers:
+  - Range policy: carets, hand bumps raise the floor, and exact pins only with a reason (@tcgdex/sdk D188, @noble/ciphers MI1, miniflare equal to wrangler's own). A dependency declared twice uses one spec.
+  - The root owns vitest, typescript, biome and @types/node.
+  - The toolchain pins.
+  - The release-age gate and its override.
+  - The Dependabot groups.
+  - The monthly routine, with the gates per group. `production` merges weekly and then releases. `cloudflare` and `vite` need a local `check`, `build` and `e2e`, because CI skips build:lua and e2e.
+  - How a major is taken: a go/no-go branch.
+  - The `compatibility_date` process: both dates move together, with each cloudflare bump and at least quarterly. The gates are `bun run check` with its d1 suites, e2e and a `wrangler dev` smoke.
+- 6 DEP-P1 mutant rows, all killed.
+
+### 2026-11-09 — Dependency refresh: wrangler 4.158 and its own miniflare 5 together, hono past its advisories, in-range dev tools, @types/node on the Node 22 line, and bun's default install-script trust
+
+Phase 2 of the dependency audit (report `tmp/deps/deps-audit.md`) is the one lock refresh. It changes only the dependency blocks of the two manifests, bun.lock, the 3 Miniflare constructors, and one conventions line (decision id DEP-P2). It supersedes Dependabot #3 (vite), #5 (drizzle-orm), #6 (wrangler) and #8 (@cloudflare/workers-types).
+
+- **The D1 harness follows wrangler's own miniflare (VER1, user decision 3).** Wrangler moved to miniflare 5 at 4.117.0 (2026-07-31). Every stable wrangler since has shipped it, so `wrangler dev` and deploy already run on it. apps/api pinned miniflare 4.20260708.0 exactly, which held wrangler at 4.109.0. A wrangler bump alone would have nested a second miniflare and a second workerd (about 150 MB more per install, as Dependabot #6 did). Miniflare 5 rejects the v4 single-worker options ("Unrecognized keys: modules, script, d1Databases ... expected array at workers"). So the 3 `new Miniflare(...)` calls (`apps/api/src/testing/d1.ts`, `db/migrations.d1.test.ts`, `db/namePromptMigration.d1.test.ts`) now pass their options through miniflare 5's `convertV4MiniflareOptions`. The pin stays exact, at the version wrangler itself depends on: wrangler pins its miniflare exactly, so any other version is a second copy. lock-check (DEP-P0) fails when the pin and wrangler drift apart. Bump wrangler, miniflare and @cloudflare/workers-types together. Miniflare 5 is published as a beta, but stable wrangler ships it. `convertV4MiniflareOptions` is a compatibility layer and may be removed in a later release; getPlatformProxy (option B) stays the fallback. The 23 D1 files (338 tests) pass. `wrangler dev` still persists under `apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject`, so `scripts/lib/localD1.ts` finds the local database unchanged.
+- **Versions, before → after.**
+  - wrangler 4.109.0 → 4.158.0 in both manifests. The range floor moves from `^4.0.0` to `^4.158.0`, so a re-resolve can never land below the harness's miniflare 5.
+  - miniflare 4.20260708.0 → 5.20261104.0-beta (exact, the registry's dependency of wrangler 4.158.0); workerd 1.20260708.1 → 1.20261104.1.
+  - @cloudflare/workers-types 5.20260708.1 → 5.20261104.1. This is the floor of wrangler 4.158.0's peer range `^5.20261104.1`, and the date matches workerd. 5.20261106.1 was the newest version at least 3 days old.
+  - hono 4.13.13 → 4.13.17 (VER2: GHSA-h7mg-cq63-vhpq and the other 4.13.16 fixes).
+  - drizzle-orm 0.45.2 → 0.45.4; drizzle-kit 0.31.10 → 0.31.11. Both stay on 0.x (user decision 13).
+  - vite 8.0.10 → 8.3.7 (rolldown 1.0.0-rc.17 → 1.2.18); vitest 4.1.9 → 4.1.12 (not 5).
+  - @types/node 25.6.0 → 22.20.5. The range is `^22.20.5`, the Node 22 line that dev and CI run (PRC4, user decision 8). No type changes were needed.
+  - zod 4.6.7 and @hono/zod-validator 0.9.1 were already the latest; @hono/zod-validator stays (USE3 not done, user decision 16). typescript 6.0.3 and biome 1.9.4 stay.
+  - Transitive packages refreshed in range with `bun update`, run after the shim was in: undici 7.28.0 → 7.30.1, sharp 0.34.5 → 0.35.5, postcss 8.5.13 → 8.5.32, nanoid 3.3.12 → 3.3.20, @vitest/mocker 4.1.9 → 4.1.12, esbuild (wrangler's) 0.28.1 → 0.28.2. bun.lock has 249 entries before and 246 after.
+  - Every version respects the 3-day release-age cooldown that Phase 1 introduces (PRCM2):
+    - wrangler 4.158.0 and miniflare 5.20261104.0-beta: 2026-11-05.
+    - workerd 1.20261104.1 and workers-types 5.20261104.1: 2026-11-04.
+
+    wrangler 4.159.0 (2026-11-09, miniflare 5.20261109.0-beta) was skipped because it was published the same day. This is the set the audit tested. To re-lock one set without moving the rest, pin the three packages exactly, run `bun install`, then restore the caret ranges; `bun install` keeps the locked versions.
+- **`bun audit`: 42 → 1 (VER1, VER3).** Before: 42 (15 high, 23 moderate, 4 low). After: 1 moderate, esbuild 0.18.20 (GHSA-67mh-4wv8-2f99). drizzle-kit 0.31's deprecated @esbuild-kit/core-utils pins it. It affects only esbuild's `serve`, which drizzle-kit never calls. This is the known residual until drizzle 1.0 (VER9, decision 13); no override is forced. `bun audit --prod` stays clean (5 packages).
+- **`"trustedDependencies": []` (TRN5).** The old `["@biomejs/biome"]` trusted only Biome 1.9.4's postinstall, which does nothing. Because a list was set, bun's default trust no longer applied. Measured with clean `bun install --frozen-lockfile --verbose` runs on bun 1.4.2:
+  - With the old list, only biome's script ran.
+  - With the field absent or `[]`, bun's default trust applies, and only workerd's postinstall runs. It checks that the platform package is present and hard-links the native binary over its JS shim. It downloads from npm only when that package is missing.
+  - Bun runs no postinstall for esbuild, although esbuild is default-trusted. sharp 0.35.5 has no install script.
+  - The audit's verifier wrote that `[]` keeps behaviour unchanged. That is not true here, because workerd's script now runs.
+  - Biome's script is blocked and listed by `bun pm untrusted`.
+
+  After a clean install, biome, wrangler (`--version`, `dev`, the dry-run bundle), esbuild (a transform), workerd (`--version`) and drizzle-kit all work. The field still lists nothing: no package needs a script to work.
+- **Measured.**
+  - `bun run check`: green. 740 files and 17,258 tests in 72.3 s.
+  - `bun run e2e`: PASS in 90.6 s; boot ready in 2360 ms.
+  - `bun run build`: OK.
+  - `worker-bundle --check`: 951.4 → 952.3 KiB of the 1024 KiB budget.
+  - `node_modules` on a fresh install: 436 → 457 MB. The workerd binary is about 30 MB larger, while miniflare and wrangler shrank by 12 MB. The audit's "634 MB" duplicate case does not happen.
+  - Web entry chunk: 193.22 → 203.78 kB (gzip 59.85 → 63.62), because rolldown folds the api and deckRules chunks into it. There are 10 chunks before and 8 after, and total JS shrinks. Accepted (user decision 11).
+  - `bun run bench:boot` (measured with wrangler 4.159; the vite build does not involve wrangler), ready at 20 Mbps (median of 3): 1852 → 1836 ms. At 5 Mbps: 4547 → 4546 ms. love-start: 769 → 774 ms and 957 → 926 ms. Nothing gates on these numbers; love.wasm and game.data dominate boot.
+  - `bun run api:dev` smoke: it migrates the local D1 and serves `/health` 200 and `/health/db` 200 (`{"ok":true,"migrations":13}`).
+- 1 DEP-P2 mutant row, killed. It removes the conversion in `createTestD1`; consistency.d1 and routeAccess.d1 fail with miniflare 5's "Unrecognized keys" error.
+
+### 2026-11-09 — Deploy the API Worker minified with its source maps, gate the bundle the deploy builds, and pass zod refinement messages as `error`
+
+Phase 3 of the dependency audit (report `tmp/deps/deps-audit.md`), decision id DEP-P3. It ships: the API Worker gets smaller, and @colorless/schema changes in both the API and the web app.
+
+- **The Worker shipped unminified while the budget gated a minified build (USE1).** The apps/api `deploy` script ran a bare `wrangler deploy` (1937.8 KiB, 421.7 KiB gzip). `worker-bundle.ts --check` measured a `--minify` dry run (951.4 KiB, 257.3 KiB gzip) that never shipped, so its 1024 KiB budget would already have failed the real artifact. Per audit decision 4:
+  - The `deploy` script now runs `wrangler deploy --minify`. `wrangler dev` (and so `bun run dev` and the e2e suites) stays unminified, which a `minify` key in wrangler.jsonc would not.
+  - `apps/api/wrangler.jsonc` sets `"upload_source_maps": true`, so Workers Logs resolves a minified stack trace to source. wrangler 4.109's config schema has the key; a misspelled one draws "Unexpected fields found". `keep_names` stays at wrangler's default (true), so `error.name` in the error log keeps its names. `observability` is unchanged (`unstable_readConfig` reads `{ enabled: true }` as before).
+  - The uploaded map is 5.2 MB (about 1.3 MB gzip), beside a 257 KiB gzip script.
+- **The gate builds what the deploy builds.** `worker-bundle.ts` now reads the flags of the `wrangler deploy` step in the apps/api `deploy` script and runs its dry run with them, so the bundle it measures is the one that ships. `--check` also fails, before building, when that step lacks `--minify` or wrangler.jsonc does not set `"upload_source_maps": true` on a live line. Dropping `--minify` fails twice: once by name, and once over budget at 1937.8 KiB. Setting `"upload_source_maps": false` fails by name; wrangler then writes no map, which the gate needs to read.
+- **zod 4's deprecated `message` parameter (VER13).** The two refinements that used it, `withoutControlChars` (`packages/schema/src/text.ts`) and the empty-patch guard (`packages/schema/src/decks/requests.ts`), now pass `error`. The issues are byte-identical (`{ code: "custom", path: [], message }`). No test pinned either message, so `text.test.ts` and `decks.test.ts` now pin both word for word. The other `message:` keys are `ctx.addIssue` issue objects, which are not deprecated. conventions.md now says to use `{ error }`.
+- **`wrangler types` (VER8) waits for Phase 2's wrangler and workerd bump**, so the generated types come from the new workerd.
+- 6 DEP-P3 mutant rows, all killed. One is killed by running `worker-bundle.ts --check` itself: a dry run without the deploy script's flags goes over the budget.

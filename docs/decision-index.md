@@ -26,30 +26,33 @@ the script after adding a decision.
 | 2026-10-27 | Account deletion, library controls, and fewer catalog and deck reads | decisions.md:824 |
 | 2026-10-27 | Security safety nets before the fixes | decisions.md:835 |
 | 2026-10-27 | Security hot fixes: lobby origins, the print bridge, seat ownership and the request edge | decisions.md:846 |
-| 2026-10-27 | A same-site Lax session cookie and a cross-site guard | decisions.md:872 |
-| 2026-10-27 | Quota and abuse limits: searches in the browser, rate-limit bindings, bounded lobbies | decisions.md:880 |
-| 2026-10-27 | A cryptographic match RNG and secret seat credentials | decisions.md:913 |
-| 2026-10-27 | Auth hardening, an audit trail, and private default names | decisions.md:932 |
-| 2026-10-28 | Online lobby reliability: a client-to-DO seam suite and the fixes it found | decisions.md:958 |
-| 2026-10-28 | Deck saves that survive a lost response, and client request deadlines | decisions.md:981 |
-| 2026-10-28 | API failure paths: D1 write failures and stalled upstreams degrade to sensible answers | decisions.md:998 |
-| 2026-10-28 | Data ops and the release pipeline: a restore recipe proven locally, recovery per release step | decisions.md:1012 |
-| 2026-10-28 | Engine safety nets: real-card fuzz, a wider shape pin, and version 41 retired | decisions.md:1031 |
-| 2026-10-28 | The Lua frontend's browser smoke, named mailbox rows, and a page that says what happened | decisions.md:1053 |
-| 2026-10-28 | Online lobby follow-ups: a faster sweep while two seats are held, and a definite "not found" | decisions.md:1066 |
-| 2026-10-29 | Frontend & UI audit Phase 1: the deck pages speak, keyboard focus shows, and a loading deck is not "unavailab… | decisions.md:1082 |
-| 2026-10-29 | Frontend & UI audit Phase 2: the table speaks, plays by keyboard, and holds online buttons while sending | decisions.md:1096 |
-| 2026-10-29 | Frontend & UI audit Phase 3: the host page checks, counts and compresses its boot, and the canvas follows the… | decisions.md:1113 |
-| 2026-10-30 | Frontend & UI audit Phase 4: data in flight keeps what is on screen, and the Sandbox button no longer waits o… | decisions.md:1129 |
-| 2026-10-30 | Frontend & UI audit Phase 5: a 60 fps cap, still frames skipped, and less work per frame and per turn | decisions.md:1144 |
-| 2026-10-30 | Frontend & UI audit Phase 6: full-density rendering, an Interface Size setting, phone legibility and text fie… | decisions.md:1161 |
-| 2026-10-31 | Frontend & UI audit Phase 7: shared page widgets, simulator and page splits, spatial arrows, history tooltips… | decisions.md:1187 |
-| 2026-11-09 | Frontend & UI audit follow-ups: Interface Size on the table and the online lobby, filter option lists, toolti… | decisions.md:1216 |
-| 2026-11-09 | Backend and API audit safety nets, and what production says | decisions.md:1280 |
-| 2026-11-09 | Backend and API audit Phases 1-4: a lobby alarm that backs off, builder pages from the card index, saves that… | decisions.md:1306 |
-| 2026-11-09 | Backend and API audit Phase 5 and CAT2: every catalog miss spends the search budget, and failures say why | decisions.md:1353 |
-| 2026-11-09 | Builder prefetch from the index only, page input once the wipe has committed, and springs that do not ring on… | decisions.md:1393 |
-| 2026-11-09 | Dependency audit safety nets: Lua for the mutants job, a weekly full-tree report, one Workers runtime in the… | decisions.md:1408 |
+| 2026-10-27 | A same-site Lax session cookie and a cross-site guard | decisions.md:873 |
+| 2026-10-27 | Quota and abuse limits: searches in the browser, rate-limit bindings, bounded lobbies | decisions.md:881 |
+| 2026-10-27 | A cryptographic match RNG and secret seat credentials | decisions.md:914 |
+| 2026-10-27 | Auth hardening, an audit trail, and private default names | decisions.md:933 |
+| 2026-10-28 | Online lobby reliability: a client-to-DO seam suite and the fixes it found | decisions.md:959 |
+| 2026-10-28 | Deck saves that survive a lost response, and client request deadlines | decisions.md:982 |
+| 2026-10-28 | API failure paths: D1 write failures and stalled upstreams degrade to sensible answers | decisions.md:999 |
+| 2026-10-28 | Data ops and the release pipeline: a restore recipe proven locally, recovery per release step | decisions.md:1013 |
+| 2026-10-28 | Engine safety nets: real-card fuzz, a wider shape pin, and version 41 retired | decisions.md:1032 |
+| 2026-10-28 | The Lua frontend's browser smoke, named mailbox rows, and a page that says what happened | decisions.md:1054 |
+| 2026-10-28 | Online lobby follow-ups: a faster sweep while two seats are held, and a definite "not found" | decisions.md:1067 |
+| 2026-10-29 | Frontend & UI audit Phase 1: the deck pages speak, keyboard focus shows, and a loading deck is not "unavailab… | decisions.md:1083 |
+| 2026-10-29 | Frontend & UI audit Phase 2: the table speaks, plays by keyboard, and holds online buttons while sending | decisions.md:1097 |
+| 2026-10-29 | Frontend & UI audit Phase 3: the host page checks, counts and compresses its boot, and the canvas follows the… | decisions.md:1114 |
+| 2026-10-30 | Frontend & UI audit Phase 4: data in flight keeps what is on screen, and the Sandbox button no longer waits o… | decisions.md:1130 |
+| 2026-10-30 | Frontend & UI audit Phase 5: a 60 fps cap, still frames skipped, and less work per frame and per turn | decisions.md:1145 |
+| 2026-10-30 | Frontend & UI audit Phase 6: full-density rendering, an Interface Size setting, phone legibility and text fie… | decisions.md:1162 |
+| 2026-10-31 | Frontend & UI audit Phase 7: shared page widgets, simulator and page splits, spatial arrows, history tooltips… | decisions.md:1188 |
+| 2026-11-09 | Frontend & UI audit follow-ups: Interface Size on the table and the online lobby, filter option lists, toolti… | decisions.md:1217 |
+| 2026-11-09 | Backend and API audit safety nets, and what production says | decisions.md:1281 |
+| 2026-11-09 | Backend and API audit Phases 1-4: a lobby alarm that backs off, builder pages from the card index, saves that… | decisions.md:1307 |
+| 2026-11-09 | Backend and API audit Phase 5 and CAT2: every catalog miss spends the search budget, and failures say why | decisions.md:1354 |
+| 2026-11-09 | Builder prefetch from the index only, page input once the wipe has committed, and springs that do not ring on… | decisions.md:1394 |
+| 2026-11-09 | Dependency audit safety nets: Lua for the mutants job, a weekly full-tree report, one Workers runtime in the… | decisions.md:1409 |
+| 2026-11-09 | Dependency audit Phase 1: grouped Dependabot, Node 24 actions, one bun and one Node from laptop to CI, a rele… | decisions.md:1426 |
+| 2026-11-09 | Dependency refresh: wrangler 4.158 and its own miniflare 5 together, hono past its advisories, in-range dev t… | decisions.md:1448 |
+| 2026-11-09 | Deploy the API Worker minified with its source maps, gate the bundle the deploy builds, and pass zod refineme… | decisions.md:1488 |
 
 ## Numbered decisions
 
