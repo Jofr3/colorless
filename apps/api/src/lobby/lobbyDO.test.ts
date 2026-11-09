@@ -34,7 +34,7 @@ import {
   SEATED_LIVENESS_SWEEP_MS,
   SOCKET_SILENCE_MS,
 } from "./logic";
-import { lobbyDepsFromEnv } from "./lobbyDO";
+import { ALARM_RETRY_MS, lobbyDepsFromEnv } from "./lobbyDO";
 import {
   freshMatchRng,
   MATCH_RECORD_VERSION,
@@ -1017,17 +1017,48 @@ describe("LobbyDO — failures", () => {
     ]);
   });
 
-  it("logs an alarm that throws and re-arms it, so the countdown is not stranded", async () => {
-    const { host } = await readiedLobby();
-    const endsAt = h.storage.alarm;
-    const seed = h.deps.randomSeed;
-    h.deps.randomSeed = () => {
-      throw new Error("no entropy");
+  it("drops both back with a reason when starting the match throws", async () => {
+    const { host, guest } = await readiedLobby();
+    h.deps.shuffleDeck = () => {
+      throw new Error("engine threw");
     };
     await h.fireAlarm();
-    expect(logged("alarm_failed")).toMatchObject([{ lobby: "ABCD", error: "Error: no entropy" }]);
-    expect(h.storage.alarm).toBe(endsAt);
-    h.deps.randomSeed = seed;
+    const error = {
+      kind: "match-error",
+      reason: "This match couldn't start. Ready up to try again.",
+    };
+    expect(host.last("match-error")).toEqual(error);
+    expect(guest.last("match-error")).toEqual(error);
+    const snapshot = snapshotOf(host);
+    expect(snapshot.phase).toBe("selecting");
+    expect([snapshot.host.ready, snapshot.guest?.ready]).toEqual([false, false]);
+    expect(matchKeys()).toEqual([]);
+    expect(logged("handoff_failed")).toMatchObject([
+      { cause: "match_refused", error: "Error: engine threw" },
+    ]);
+    expect(logged("alarm_failed")).toEqual([]);
+    expect(h.storage.alarm).toBe(h.world.now + SEATED_LIVENESS_SWEEP_MS);
+  });
+
+  it("logs an alarm that throws and re-arms it a delay later, so the countdown is not stranded", async () => {
+    const { host } = await readiedLobby();
+    const put = h.storage.put.bind(h.storage);
+    let fail = true;
+    h.storage.put = async (key, value) => {
+      if (fail && typeof key === "object" && "match" in key) throw new Error("SQLITE_TOOBIG");
+      await put(key, value);
+    };
+    // The countdown's deadline is past, yet each failed pass waits before the next.
+    for (const pass of [1, 2]) {
+      await h.fireAlarm();
+      expect(logged("alarm_failed")).toHaveLength(pass);
+      expect(h.storage.alarm).toBe(h.world.now + ALARM_RETRY_MS);
+    }
+    expect(logged("alarm_failed")[0]).toMatchObject({
+      lobby: "ABCD",
+      error: "Error: SQLITE_TOOBIG",
+    });
+    fail = false;
     await h.fireAlarm();
     expect(snapshotOf(host).phase).toBe("in-game");
   });

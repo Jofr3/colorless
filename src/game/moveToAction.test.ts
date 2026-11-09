@@ -221,6 +221,22 @@ describe("moveToAction — turn:action", () => {
     );
     expect(action).toBeNull();
   });
+
+  it("reorders the Bench, but not onto the card's own slot", () => {
+    const turn = turnState();
+    const state = mustApply(turn, {
+      type: "playBasicToBench",
+      seat: "p1",
+      uid: handUid(turn, "p1", "fix-basic-1"),
+    }).state;
+    const view = contextOf(state, "p1");
+    const uid = view.board.you.bench[0]?.id ?? "";
+    const from: CardPlacement = { owner: "you", zone: "bench", index: 0 };
+    const toSlot = (index: number) =>
+      moveToAction(request(uid, from, { owner: "you", zone: "bench", index }), view);
+    expect(toSlot(1)).toEqual({ type: "reorderBench", seat: "p1", uid, index: 1 });
+    expect(toSlot(0)).toBeNull();
+  });
 });
 
 describe("moveToAction — everything else springs back", () => {
