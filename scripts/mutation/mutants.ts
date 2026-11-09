@@ -69804,4 +69804,17 @@ export const MUTANTS: Mutant[] = [
     replace: "names.add(name);",
     expectKilledBy: ["scripts/workerBundle.test.ts"],
   },
+  {
+    id: "DEP-P2-miniflare-v4-options",
+    decision: "DEP-P2",
+    what: "The D1 harness hands Miniflare 5 its v4 single-worker options unconverted, so the constructor rejects modules/script/d1Databases and every route suite on the shared harness fails to start. Killed by consistency.d1.test.ts and routeAccess.d1.test.ts.",
+    file: "apps/api/src/testing/d1.ts",
+    symbol: "createTestD1",
+    find: "  const mf = new Miniflare(\n    convertV4MiniflareOptions({",
+    replace: "  const mf = new Miniflare(\n    ({",
+    expectKilledBy: [
+      "apps/api/src/db/consistency.d1.test.ts",
+      "apps/api/src/routeAccess.d1.test.ts",
+    ],
+  },
 ];

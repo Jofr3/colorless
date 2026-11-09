@@ -270,8 +270,9 @@ only the conclusion.
   tests, `src/testing/` or the bun-run ingest file helpers) may not use `process`, `Buffer`,
   `require` or the other Node globals (a Biome override): the Worker runs without `nodejs_compat`.
 - `scripts/lock-check.ts` (in `check:static`) fails when bun.lock resolves more than one miniflare
-  or workerd version. Bump wrangler, apps/api's exact miniflare pin and
-  @cloudflare/workers-types together.
+  or workerd version. Bump wrangler, apps/api's exact miniflare pin (the miniflare version that
+  wrangler itself depends on) and @cloudflare/workers-types together. The D1 harness passes its
+  options through `convertV4MiniflareOptions`.
 - **`bun run bench`** (`scripts/bench.ts`) times the engine over seeded games on the committed
   real-card pool `packages/engine/src/fixtures/benchPool.json` (regenerate with `bun scripts/bench/write-pool.ts`):
   applyAction per action and per action type, two redactions, logFromEvents, legality probes and a

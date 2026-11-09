@@ -5,7 +5,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { Miniflare } from "miniflare";
+import { convertV4MiniflareOptions, Miniflare } from "miniflare";
 import { afterAll, beforeAll, beforeEach } from "vitest";
 import { generateSessionToken, hashSessionToken, SESSION_TTL_MS } from "../auth/session";
 import type { Env } from "../env";
@@ -45,12 +45,16 @@ export type TestD1 = {
 };
 
 export async function createTestD1(): Promise<TestD1> {
-  const mf = new Miniflare({
-    modules: true,
-    script: "",
-    d1Databases: ["DB"],
-    kvNamespaces: ["CACHE"],
-  });
+  // Miniflare 5 takes a `workers` array; the shim keeps the v4 single-worker shape. The exact
+  // miniflare pin equals wrangler's own (dependency audit VER1).
+  const mf = new Miniflare(
+    convertV4MiniflareOptions({
+      modules: true,
+      script: "",
+      d1Databases: ["DB"],
+      kvNamespaces: ["CACHE"],
+    }),
+  );
   const db = (await mf.getD1Database("DB")) as unknown as D1Database;
   const kv = (await mf.getKVNamespace("CACHE")) as unknown as KVNamespace;
   await db.batch(
