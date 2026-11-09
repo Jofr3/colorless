@@ -49,6 +49,7 @@ the script after adding a decision.
 | 2026-11-09 | Backend and API audit Phases 1-4: a lobby alarm that backs off, builder pages from the card index, saves that… | decisions.md:1306 |
 | 2026-11-09 | Backend and API audit Phase 5 and CAT2: every catalog miss spends the search budget, and failures say why | decisions.md:1353 |
 | 2026-11-09 | Builder prefetch from the index only, page input once the wipe has committed, and springs that do not ring on… | decisions.md:1393 |
+| 2026-11-09 | Dependency audit safety nets: Lua for the mutants job, a weekly full-tree report, one Workers runtime in the… | decisions.md:1408 |
 
 ## Numbered decisions
 

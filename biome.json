@@ -75,6 +75,34 @@
       }
     },
     {
+      "include": ["apps/api/src/**"],
+      "ignore": [
+        "apps/api/src/**/*.test.ts",
+        "apps/api/src/testing/**",
+        "apps/api/src/ingest/payloadCache.ts",
+        "apps/api/src/ingest/sqlFile.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": [
+                  "process",
+                  "Buffer",
+                  "__dirname",
+                  "__filename",
+                  "require",
+                  "global"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "include": ["frontend/lua/**"],
       "linter": {
         "rules": {

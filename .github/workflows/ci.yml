@@ -194,6 +194,12 @@ jobs:
           key: ${{ runner.os }}-mutation-vitest-${{ hashFiles('bun.lock') }}-${{ steps.week.outputs.week }}-${{ github.sha }}
           restore-keys: ${{ runner.os }}-mutation-vitest-${{ hashFiles('bun.lock') }}-${{ steps.week.outputs.week }}-
 
+      # Rows killed by a Lua suite run `bun scripts/test-lua.ts`, which needs the
+      # interpreter: without it every such row reports "baseline is RED" and fails
+      # the job (main was red from 2026-10-29 to 2026-11-09; dependency audit PRC1).
+      - name: Install Lua
+        run: sudo apt-get install -y lua5.1
+
       - name: Mutant sample
         run: bun scripts/mutation/sample.ts --base "$BASE"
         env:

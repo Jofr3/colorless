@@ -264,6 +264,14 @@ only the conclusion.
 - Import zod as `import * as z from "zod"`, never `import { z }`: the named import keeps every zod
   locale in the Worker bundle. `scripts/worker-bundle.ts --check` (in `check:static`) builds the
   Worker with a wrangler dry run and fails on a non-English locale or a bundle over its budget.
+  It also fails on an npm package in the bundle that is not in the `dependencies` of apps/api,
+  packages/engine or packages/schema, so a dev dependency such as @tcgdex/sdk cannot ship by one
+  value import, and a shipped package's own dependencies must be declared. Worker source (not its
+  tests, `src/testing/` or the bun-run ingest file helpers) may not use `process`, `Buffer`,
+  `require` or the other Node globals (a Biome override): the Worker runs without `nodejs_compat`.
+- `scripts/lock-check.ts` (in `check:static`) fails when bun.lock resolves more than one miniflare
+  or workerd version. Bump wrangler, apps/api's exact miniflare pin and
+  @cloudflare/workers-types together.
 - **`bun run bench`** (`scripts/bench.ts`) times the engine over seeded games on the committed
   real-card pool `packages/engine/src/fixtures/benchPool.json` (regenerate with `bun scripts/bench/write-pool.ts`):
   applyAction per action and per action type, two redactions, logFromEvents, legality probes and a
