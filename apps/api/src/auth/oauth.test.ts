@@ -47,7 +47,7 @@ describe("oauthConfig", () => {
       clientId: "g-id",
       tokenUrl: "https://oauth2.googleapis.com/token",
       userinfoUrl: "https://openidconnect.googleapis.com/v1/userinfo",
-      scope: "openid email profile",
+      scope: "openid email",
     });
   });
 });
@@ -59,7 +59,7 @@ describe("buildAuthorizeUrl / tokenRequest", () => {
     authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
     tokenUrl: "https://oauth2.googleapis.com/token",
     userinfoUrl: "https://openidconnect.googleapis.com/v1/userinfo",
-    scope: "openid email profile",
+    scope: "openid email",
   };
 
   it("builds the authorize URL with all required, properly-encoded params", () => {
@@ -77,7 +77,7 @@ describe("buildAuthorizeUrl / tokenRequest", () => {
     expect(url.searchParams.get("redirect_uri")).toBe(
       "http://localhost:8787/auth/oauth/google/callback",
     );
-    expect(url.searchParams.get("scope")).toBe("openid email profile");
+    expect(url.searchParams.get("scope")).toBe("openid email");
     expect(url.searchParams.get("state")).toBe("st4te");
     expect(url.searchParams.get("code_challenge")).toBe("ch4llenge");
     expect(url.searchParams.get("code_challenge_method")).toBe("S256");

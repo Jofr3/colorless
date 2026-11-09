@@ -151,7 +151,7 @@ describe("GET /auth/oauth/:provider (start)", () => {
     expect(location.searchParams.get("redirect_uri")).toBe(
       "http://localhost:8787/auth/oauth/google/callback",
     );
-    expect(location.searchParams.get("scope")).toBe("openid email profile");
+    expect(location.searchParams.get("scope")).toBe("openid email");
     const state = location.searchParams.get("state");
     expect(state).toMatch(/^[A-Za-z0-9_-]{22}$/);
     const cookie = res.headers.get("Set-Cookie") ?? "";
@@ -205,6 +205,55 @@ describe("GET /auth/oauth/:provider/callback", () => {
         reason,
       })),
     );
+  });
+
+  describe("a provider that refuses the authorization", () => {
+    const env = envWith({ GOOGLE_CLIENT_ID: "g-id", GOOGLE_CLIENT_SECRET: "g-secret" });
+    const cookie = `oauth_state=${packStateCookieValue("real", "v".repeat(43), "/decks")}`;
+    async function refused(query: string, headers: Record<string, string> = { Cookie: cookie }) {
+      const fetchSpy = vi.fn();
+      vi.stubGlobal("fetch", fetchSpy);
+      const res = await app.request(`/auth/oauth/google/callback${query}`, { headers }, env);
+      expect(res.status).toBe(302);
+      expect(res.headers.getSetCookie()).toEqual([expect.stringMatching(/^oauth_state=;/)]);
+      expect(fetchSpy).not.toHaveBeenCalled();
+      return res.headers.get("Location");
+    }
+
+    it("sends a Cancel back to where sign-in started, with no error to show", async () => {
+      expect(await refused("?error=access_denied&state=real")).toBe("http://localhost:5175/decks");
+      expect(logged()).toEqual([
+        { evt: "auth", kind: "oauth_denied", provider: "google", providerError: "access_denied" },
+      ]);
+    });
+
+    it.each([
+      ["server_error", "server_error"],
+      ["admin_policy_enforced", "admin_policy_enforced"],
+      ["user misty@example.com is blocked", null],
+    ])("reads the provider error %s as a failed sign-in", async (error, providerError) => {
+      const query = `?${new URLSearchParams({ error, state: "real" })}`;
+      expect(await refused(query)).toBe("http://localhost:5175/decks?authError=exchange");
+      expect(logged()).toEqual([
+        { evt: "auth", kind: "oauth_denied", provider: "google", providerError },
+      ]);
+    });
+
+    it("treats an error without this browser's state as a bad state", async () => {
+      for (const [query, headers] of [
+        ["?error=access_denied&state=real", {}],
+        ["?error=access_denied&state=forged", { Cookie: cookie }],
+        ["?error=access_denied", { Cookie: cookie }],
+      ] as const) {
+        const location = new URL((await refused(query, headers)) ?? "");
+        expect(location.searchParams.get("authError")).toBe("state");
+      }
+      expect(logged().map((line) => line.kind)).toEqual([
+        "oauth_state",
+        "oauth_state",
+        "oauth_state",
+      ]);
+    });
   });
 
   it.each([

@@ -35,7 +35,7 @@ const PROVIDER_ENDPOINTS: Record<
     authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
     tokenUrl: "https://oauth2.googleapis.com/token",
     userinfoUrl: "https://openidconnect.googleapis.com/v1/userinfo",
-    scope: "openid email profile",
+    scope: "openid email",
   },
 };
 
@@ -214,7 +214,7 @@ export type OAuthProfile = {
   emailVerified: boolean;
 };
 
-// Google OIDC userinfo (openid email profile scopes). The profile's `name` is not read: a new
+// Google OIDC userinfo (openid email scopes). No profile claim is asked for or read: a new
 // account gets a generated handle rather than the user's real name (security audit AU3).
 const googleUserinfoSchema = z.object({
   sub: z.string().min(1),
