@@ -1302,3 +1302,49 @@ Phase 0 of the 2026-11-09 backend and API audit (39 findings: 4 medium, 16 low, 
   - **CPU.** In 30 days colorless-api answered about 2,900 requests with no `exceededCpu` outcome and no error. CPU was p50 3.4 ms, p99 23 ms and max 111 ms. The account is on Workers Free (10 ms per request), and the platform still served those requests. So EDGE1 (the card index ETag) keeps its place in Phase 3.
   - **D1 reads.** The peak was 2.44M rows read in one day (2026-10-23, 1,422 queries), 49% of the 5M free quota. The top queries are the builder's catalog pages and their `count(*)` over `cards`, about 5,084 rows per run, a full scan. This is CAT1's mechanism in production data, so CAT1 stays first in Phase 2.
   - **Workers Logs.** The Workers Free cap is 200,000 events a day with 3 days of retention. Cloudflare moves Workers Logs to Observability pricing on 2026-12-01, so recheck the allowance then (OPS5, Phase 5).
+
+### 2026-11-09 — Backend and API audit Phases 1-4: a lobby alarm that backs off, builder pages from the card index, saves that can end, cheaper catalog tags, and sign-in that reads its errors
+
+Four branches from `api`, built by worktree agents, merged on `api`, and following the decisions recorded in the Phase 0 entry above. The API deploys before the web app. No migration, binding or secret is needed. CAT2 (the catalog limiter after the cache) waits until this web release is live.
+
+**Lobby alarm and online moves (API-P1).**
+- A failed alarm pass waits 5 s (LOB1). The catch in `alarm()` sets an in-memory `retryNotBefore` (`ALARM_RETRY_MS`), and `scheduleMaintenance` never arms an earlier alarm. A good pass clears it. The alarm still always re-arms and never rethrows (2026-10-27). A deterministic throw now costs one pass every 5 s instead of a back-to-back loop over D1.
+- A match that throws while starting is a failed start. The seed, both shuffles and `beginMatch` sit in a try that reports `match_refused` with the error, mirroring MI3. Both players read "This match couldn't start. Ready up to try again." and are un-readied. `match.put` stays outside the guard, and the floor covers it.
+- A Bench card dropped on its own slot sends nothing (LOB2). `moveToAction` returns null, so the online table never waits on a reply the server does not send.
+- Comments on where events interleave are corrected (LOB4). onAction and onBye await only storage, and the file header names the three D1 awaits where other events can run.
+- Tests: two lobbyDO tests, one replacing the old "re-arms at the past deadline" test, plus one moveToAction test. 5 API-P1 mutant rows, all killed. No row for clearing the floor: once the delayed alarm fires, the floor is already in the past, so that mutation changes nothing a test can see (D420).
+
+**Builder: catalog pages from the card index, and saves that can end (API-P2).**
+- Pages come from the card index (CAT1). Once the builder's card index has loaded (`cardIndexLoaded()`), every page is sliced from it, so filter changes and prefetches send no GET /cards. Before then, pages 1-3 still come from the API. The trade-off is accepted: a re-ingest reaches an open builder up to INDEX_REUSE_MS later. This removes the catalog `count(*)` scans that Phase 0 found dominate D1 reads.
+- A save answered 404 ends saving (DECK1). The builder says "This deck no longer exists. Export to keep it.", keeps later edits on screen unsent, and lets Back and in-app navigation leave. There is no "Save as a new deck". A 404 caused by another account signing in shows the same notice.
+- A second Back leaves after a failed save. After any reported save failure, the first Back retries the save and arms the next press ("Not saved. Press Back again to leave anyway."), and the next press leaves without the edits.
+  - A press within 350 ms of arming is ignored, as with Leave match.
+  - A save that lands disarms it.
+  - There is no timed window, so a slow retry cannot disarm it.
+  - "Retrying..." does not arm it.
+- A blank name is saved as the kept name (DECK2). The PATCH body and every saver key come from one snapshot that puts the kept name in place of a blank one, so a lost save made then is still recognised as this tab's own. Blanking the name alone sends nothing.
+- Saves start at least 1 s apart (DECK3). The saver's `MIN_SAVE_SPACING_MS = 1000` keeps steady editing within the 60 a minute deck write limit (it was about 93 a minute). An explicit flush (Back, page hide) does not wait. The routes.ts comment now says so.
+- The library tells a 429 apart (DECK8): "Too many changes. Wait a minute."
+- Write answers use read order (DECK5). POST and PATCH answer with cards in card id order, as reads do.
+- 13 API-P2 mutant rows, all killed. The 83 existing rows on the touched files still die.
+
+**Catalog and asset server (API-P3).**
+- A cache hit is tagged by its key (EDGE1, CAT3). A KV-cached catalog response carries a weak ETag hashed from its KV key, on hits and misses alike, so hono/etag no longer hashes the 1.9 MB card index on every hit and 304. Measured locally (Node, not edge CPU), a hit fell from about 5.6 to 2.6 ms and a 304 from about 11 to 0.9 ms.
+  - The key holds CACHE_VERSION and the catalog epoch, so a re-ingest or a version bump changes the tag.
+  - A bypassed response keeps the body digest.
+  - Each browser refetches every catalog route once after the deploy.
+- Only 404 and 410 from the asset origin mean a missing image (CAT4). Those are still cached for an hour. Any other status below 500 that is not a 200 is an uncached 502, logged as `assets origin_status`. A short tcgdex rate limit no longer hides art for an hour.
+- An R2 read error falls through to the origin (CAT5). It is logged, throttled, as `assets r2_get_failed`, and the image is served from the origin instead of a 500.
+- One binding period (EDGE6). The lobby and catalog limits use `BINDING_PERIOD_SECONDS`. The catalog limiter runs on the shared `bindingRefuses` and keeps its `limiter_error` kind. Behaviour is unchanged.
+- Left for later:
+  - CAT2 (the limiter after the cache, a `/facets` limit, a miss tally) waits until Phase 2's web release is live.
+  - Answering a 304 before the KV read was optional and was not done.
+- Nine API-P3 mutant rows, all killed.
+
+**Accounts and sign-in (API-P4).**
+- Any stored email is returned (AUTH1). `userSchema.email` is now a non-empty string of at most 254 characters instead of `z.email()`. Google verifies some addresses that `z.email()` refuses (`ivan@example.xn--p1ai`, `a&b@example.com`), and those accounts got a 500 on every /auth/me. Google sign-in refuses an address over 254 characters as `profile`. Register and login keep the strict check.
+- Cancel on Google is not an error (EDGE3, decision 1a). The callback reads `?error=` only with this browser's matching state, and logs `oauth_denied` with the code (null if it does not look like a code). `access_denied` returns to where sign-in started with no `authError`, and any other code reads as `exchange`. Without the matching state it is still a `state` failure, so the new branch skips no check.
+- Google sign-in asks only for `openid email` (AUTH6). No profile claim has been read since AU3. The userinfo call stays.
+- The Google start probe has a deadline (EDGE2). It runs under `withDeadline` (20 s, like WC3), so it cannot wedge the account form. `createLobbyCode` keeps the HTTP status, and a 429 reads "Too many new lobbies. Try again in a minute."
+- Sign-in reads Retry-After (AUTH5). A 429 reads "Too many attempts. Try again in N minutes.", rounded up; a wait under 60 s, or no header, stays "Wait a moment." The delete form uses the same copy. A 503 on sign-in reads "Sign-in is unavailable right now. Try again later." instead of "Could not connect".
+- 14 API-P4 mutant rows, all killed. AUTH1 is its own commit (e7d346a9), so it could go out alone.
