@@ -1798,3 +1798,116 @@ Phase 0 changes no runtime behaviour; nothing to release.
   - "Saved queries" is now "Log queries", since none are saved in the dashboard.
 - **DEP-P3 amended (ERR1).** The source map serves only uncaught exceptions, which here means the cron and the Durable Object. The same claim in the comment above `upload_source_maps` in `apps/api/wrangler.jsonc` is left for Phase 1, which owns that file.
 - 7 OBS-P0 mutant rows, all killed. Three are on API source and are killed by running the guard, each for its own reason: an `email` field on `login_ok`, a raw `console.warn` for `login_failed`, and a renamed lobby kind with no runbook row. Three are on the guard and are killed by `scripts/logGuard.test.ts`: shorthand keys unread, the deny-list compared with case, and kinds taken from the whole of backend-data.md. The seventh, `logErrorThrottledBy` logging at warn, is killed by `log.test.ts`.
+
+### 2026-11-10 — Observability audit Phase 1: an unhandled error names its frames, info lines get a level, Workers Issues and query redaction on
+
+Phase 1 of the observability and monitoring audit (report `tmp/obs/obs-audit.md`, findings ERR1, LOG1, LOG2, LOG3, OPS3; decisions 1a, 2a, 8a). Decision id OBS-P1.
+
+- **Frames on a failure nothing handled (ERR1 step 2).** `apps/api/src/http/errors.ts` has `errorFrames` and `unhandledErrorFields` (`errorFields` plus `frames`).
+  - `frames` holds up to 5 of the stack's innermost `at` lines, each cut to 200 characters and joined with newlines.
+  - They are read only from below the message. A DrizzleQueryError's message spans lines and carries its params, and a param can hold a line that looks like a frame. A stack that no longer contains the message gives no frames.
+  - Only `http unhandled` (onError) and `d1 sweep_failed` carry it. `sweep_failed` used to log the error name alone and now logs the full error fields as well.
+  - Warn lines (kv, health, after_response, auth) keep `errorFields` alone. A handled degradation's stack only shows a binding, and leaving them as they were keeps their tests.
+  - The report proposed putting `frames` in `errorFields` itself. Under 8a that would have added frames to every warn line.
+  - Logged frames come from the minified bundle and the source map does not resolve them. Function names survive minification (keep_names). If a line has to be mapped, rebuild the map from the release tag with `wrangler deploy --minify --dry-run --outdir`.
+- **Workers Issues on (ERR1 step 1, decision 2a).** `observability.issues.enabled: true` in `apps/api/wrangler.jsonc`.
+  - Verified in three places: the wrangler 4.158 schema (`config-schema.json`, `Observability.issues.enabled`); wrangler's validator, which lists `issues` among the known `observability` keys and checks `enabled` as a boolean; and Cloudflare's configuration and Issues docs ("Requires Wrangler 4.134.0 or later"; "the next deployment turns off Issues" if it is missing from config).
+  - The upload sends the `observability` object whole. `wrangler deploy --dry-run` printed no config warning.
+- **Source-map comment fixed (ERR1).** The comment above `upload_source_maps` now says the map serves uncaught exceptions only, which here means the cron and the Durable Object. This matches the DEP-P3 amendment in OBS-P0.
+- **Query strings redacted (LOG1, decision 1a).** `observability.redact_query_string: true` in `apps/api/wrangler.jsonc`.
+  - It appears in the same schema and validator. The live script settings already had a `redact_query_string: false` key.
+  - The log.ts and logTag.ts headers now say the no-IP rule covers the app's lines, and that Cloudflare's invocation event holds the client IP and geolocation.
+  - Not verified until a release: whether it also strips `$workers.event.search`.
+- **Info lines get a level (LOG2).** `logInfo` writes with `console.info` and keeps its signature.
+  - In production a `console.log` line arrived with no level at all, while `console.warn` lines carried `source.level` and `$metadata.level`.
+  - The report's other option, a `level: "info"` field in the JSON, was not taken. It would add a field to every info line, and how Workers Logs treats a JSON `level` is just as unverified.
+  - The console spies on info lines follow: `log.test.ts`, `auth/routes.d1.test.ts`, `auth/sweep.d1.test.ts`, `catalog/routes.d1.test.ts`, and one line each in `lobby/lobbyDO.test.ts` and `lobby/lobbyAbuse.test.ts`. No lobby source was touched; Phase 2 owns the DO's levels.
+- **Level rule narrowed (LOG3 log.ts part, decision 8a).**
+  - log.ts's header now reads: info for what went as intended; warn for an expected degradation (a spent quota, a limiter or binding failure, a D1 or origin failure the code answers for) or a refusal; error for a code defect or an unexpected exception.
+  - "Saved queries" is now "log queries".
+  - `auth logout_failed` and `auth oauth_unavailable`, both D1 failures the route answers for, moved from error to warn. The API's error level is now `http unhandled`, `d1 sweep_failed` and the two pepper lines. Phase 2 moves the DO's code-bug lines to error with `logErrorThrottledBy`.
+- **OAuth `cause` (ERR5 nit).** `oauth_exchange` and `oauth_profile` with `status: null` carry `cause: "timeout"` when the 10 s deadline aborted the fetch, or `"network"` for any other failure.
+- **Web Worker logs (OPS3 config line).** The root `wrangler.jsonc` sets `observability.enabled: true`. Its script runs only on non-navigation asset misses, about 10 events a month. The `--release` report that reads them is Phase 3's.
+- **Runbook, backend-data.md §3.7.4.** Changed:
+  - the level sentence (8a, `console.info`);
+  - `frames` on the `http` and `d1` rows;
+  - the redacted query string in the "What the logs hold" paragraph;
+  - the Workers Issues paragraph: on, free during the beta, the Real-Time Issue notification set by hand;
+  - a new paragraph on the web Worker's logs;
+  - the auth row's level moves and `cause`;
+  - "Workers Issues first" in the player-report table.
+  No evt or kind was added or renamed.
+- **Mutants.** 7 OBS-P1 rows from the phase, all killed:
+  - `OBS-P1-frames-from-whole-stack`: the frames filter reads the whole stack, so a frame-shaped param leaks.
+  - `OBS-P1-frames-unbounded`
+  - `OBS-P1-unhandled-without-frames`: onError back on `errorFields`.
+  - `OBS-P1-sweep-failed-name-only`
+  - `OBS-P1-info-via-console-log`
+  - `OBS-P1-logout-failed-at-error`: via `logErrorThrottled`, the pepper lines' function.
+  - `OBS-P1-oauth-cause-always-network`
+
+  Two existing rows were re-transcribed onto the lines this change moved, with the same mutation, and both are still killed: `REL-AP3-logout-keeps-cookie` and `API-OPS2-info-is-warn`. API-P5's 17 rows are all still killed.
+- **Guarded at merge.** `scripts/worker-bundle.ts --check` now also fails when `apps/api/wrangler.jsonc` drops `observability.enabled`, `redact_query_string` or `issues.enabled` (`observabilityProblems`, which reads Issues' own `enabled` apart from the logs' one). 3 more OBS-P1 rows, all killed: `OBS-P1-redaction-dropped` and `OBS-P1-issues-dropped` by running the check, `OBS-P1-issues-enabled-stands-in` by workerBundle.test.ts.
+- **Release, and after it.** The API and the web both need a release. After it:
+  - run `bun tmp/obs/probe/logs/levels.ts 24`; the next `d1 sweep` line should show `meta.level=info`. If it has no level, fall back to a `level: "info"` field;
+  - run `bun tmp/obs/probe/logs/telemetry.ts invocations 1`; `queryKeys` should be empty;
+  - open `colorless-api` → Observability → Issues and check whether a `console.error` line shows there;
+  - the user creates one "Real-Time Issue" notification to the account email (decision 2a). The read token cannot create it.
+  - Recheck Issues pricing with the 2026-12-01 Workers Logs change, and remove it with one config line if it stops being free.
+
+### 2026-11-10 — Observability audit Phase 2: `frame_failed` under the lobby code, the DO's code-bug lines at error, and `match_started` / `match_ended`
+
+Phase 2 of the observability and monitoring audit (report `tmp/obs/obs-audit.md`), findings ERR3, LOG3 (the Durable Object part) and MET3, under decisions 6a (match counts in log lines only, no Analytics Engine) and 8a (error is a code defect or an unexpected exception, warn an expected degradation or a refusal). Decision id OBS-P2. It changes the API Worker's Durable Object; it ships with Phase 1's API release.
+
+- **`frame_failed` (ERR3).** `webSocketMessage` now runs the overflow answer, the snapshot read and the dispatch inside one try. A throw logs `lobby` `frame_failed { lobby, frame, error }` and is then rethrown, so the invocation still ends as an exception and Workers Issues sees it as before.
+  - `frame` is the frame's kind (`hello`, `intent`, `action`, `reject`, `bye`, `rematch`), and `error` is `describeError`, like every lobby line. The line is error level, throttled per frame kind with `logErrorThrottledBy`, so a client's hello retry does not hide the move that failed first.
+  - The dispatch moved into `dispatch()`, with each arm `return await`. The old switch returned its handler's promise unawaited, and a try around it would have caught nothing (mutant row `OBS-P2-frame-dispatch-unawaited`).
+  - The line cannot throw over the error it reports. `failureFields` reads the code from the in-memory snapshot first, and when a storage read for it fails too, the code is null. The whole line is also inside its own try. `alarm_failed` uses `failureFields` as well, so a failed alarm pass can no longer throw from its own log line past the `catch` that re-arms it.
+  - The SQLITE_TOOBIG snapshot test now asserts the line. A new test makes every storage read fail on a woken instance: the frame's own error is rethrown (`read 1 failed`, not the code read's `read 2`), `lobby` is null, and a second intent is throttled while a hello still logs.
+  - No reject is sent to the socket (the report's optional step). A frame can fail after one of its writes landed (an action's match write, then its activity stamp), and a `reject-action` would then spring back a move that was stored. The client resyncs on its next hello once storage recovers.
+- **Code-bug lines at error (LOG3, rule 8a).** `action_threw` (still throttled per action `type`, now through `logErrorThrottledBy`), `alarm_failed` (not throttled, as before), and `handoff_failed` when starting the match threw (`match_refused` from the `beginMatch` catch; `failedStart` takes a `threw` flag) now log at error. They call log.ts directly with literal `evt` and `kind`, so the log guard checks them against the runbook with no new forwarders. Expected refusals and degradations stay warn: `handoff_failed` for `d1_error`, `deck_unresolved` and an engine-refused deck, `ws_refused`, `rematch_unchecked`, `hello_refused` and the rest. log.ts and its level comment are unchanged (Phase 1 owns them).
+- **`match_started` and `match_ended` (MET3, decision 6a).** Both are info level and carry no name, seat, deck or account.
+  - `match_started { lobby }` is logged once the handoff has written the new match. Several under one lobby code are rematches.
+  - `match_ended { lobby, cause, turns, durationMs }` is logged when a write takes a game into `gameOver` (it checks the game was not over before). `cause` is the engine's reason for a win (`prizesTaken`, `noPokemon`, `deckOut`, `cardEffect`, `conceded` for the Concede button), `tie`, or the server's forfeit `left` or `abandoned`, which also log `forfeit`. `turns` is `state.turn`, and `durationMs` is the time since `startedAt`.
+  - A match that never finishes has no `match_ended`: one retired as unreadable (`match_retired`), wiped with its lobby, or ended by the host's kick. That count is started minus ended.
+  - That is 2 events per match (3 with a forfeit). The e2e run's API log under workerd showed `match_started`, `match_ended {cause: "conceded", turns: 0}` and the rematch's `match_started`.
+- **Runbook (backend-data.md §3.7.4).** The lobby table's level sentence names the info and error kinds. There are new rows for `match_started`, `match_ended` (with the count query `evt = "lobby" AND kind IN (match_started, match_ended)` grouped by `cause`) and `frame_failed` *t*. `action_threw`, `alarm_failed` and `handoff_failed` say they log at error. The "A match froze or will not start" row now starts from `frame_failed`. The `$workers.outcome = "exception"` row still says an exception names no lobby code. That stays true of the exception event itself, and the row is left for Phase 1's edits of that table.
+- **Mutant rows.** 3 existing rows had their `find` re-anchored onto the moved lines, with the same mutations: `MI3-throw-refused-silently`, `API-LOB1-start-throw-escapes`, and `API-LOB7-lobby-per-kind` (which now shares one `by` value across action types). All 3 are still killed, and so are 16 other lobbyDO.ts rows (run with `--only`).
+- 11 OBS-P2 mutant rows, all killed by the lobby suites:
+  - `frame_failed` itself, 4 rows:
+    - dispatch unawaited;
+    - error swallowed;
+    - code read through the unguarded `fields`;
+    - one throttle for every frame kind.
+  - the level moves back to warn, 3 rows: `action_threw`, `alarm_failed`, and the handoff throw without its flag;
+  - a D1 handoff failure raised to error;
+  - no `match_started`;
+  - the forfeit cause lost to the engine's `conceded`;
+  - no `match_ended` from the server's concede.
+
+  A row that drops the "not already over" check was not written: the engine refuses every action once the game is over, so it would be equivalent.
+
+### 2026-11-10 — Observability audit Phase 4: a 6-hourly production watch from GitHub Actions, retried, that never fails on a 4xx
+
+Phase 4 of the observability audit (OPS1, with OPS5 merged into it; decisions 3a and 4a). Decision id OBS-P4. No runtime change; nothing to release.
+
+- **`scripts/prod-watch.ts`.** Read-only GETs with no secret, all at once, each with a 10 s timeout:
+  - API `/health`: 200 and a `/health` body with a version tag (any tag: `healthTagProblem(body, "*")`);
+  - API `/health/db`: 200, `ok: true` and a migration count. A count other than drizzle/'s file count is printed as a note, not a failure: between a push and its release the two differ, and that is not an outage. `release:health` keeps the strict comparison;
+  - API `/sets` 200 JSON and `/auth/me` 401 JSON: releaseChecks.ts's `API_PROBES` and `probeProblem`;
+  - web `/`: 200, a `<meta name="build">`, an `/assets/` script, and every `/assets/` and `/love/` file the page references answering HEAD 200 with a non-HTML type for a script or a style (`buildMetaOf`, `pageReferences`, `assetProblem`). The build is not compared with HEAD, for the same reason as the migration count.
+  - The origins default to `.env.production`'s; `--api` and `--site` override them.
+- **Retry and fail rules (OPS5).** A check that is not ok is tried again after 15 s and after 45 s, and its last try decides. The run fails, printing `PROD DOWN — …` and exiting 1, only when a check's last try met a 5xx, no answer, a timeout or a wrong body. A 4xx is never an alert, since rate limiting answers 429: the check is held, printed as a `PROD HELD` warning annotation, and the run passes with a `PROD HELD — …` line. The one exception is a file the page references answering 404: the deployed page names a file its own deployment lacks (the blank page), which is a broken deploy, not a refusal. Otherwise the line is `PROD OK — …`, with each check's time.
+- **`.github/workflows/prod-watch.yml`, "Production watch".** `schedule` at minute 41 every 6 hours (off the hour, where GitHub delays and drops scheduled runs) plus `workflow_dispatch`; `contents: read`; `persist-credentials: false`; checkout and setup-bun pinned to the same SHAs as ci.yml; one job, `Probe production`, `timeout-minutes: 5`. A failure is mailed as "Run failed: Production watch", never CI's subject, and its annotation is titled `PROD DOWN`.
+  - The job does not use `.github/actions/setup`. The probe imports only Node built-ins, releaseChecks.ts (which imports nothing) and `scripts/lib/repo.ts`, so it needs Bun and no Node, install or cache. Measured: run from a `git archive` tree with no node_modules, it prints `PROD OK`.
+  - So `scripts/import-graph.ts` gains one `ALLOWED_CROSSINGS` entry, `scripts/prod-watch.ts -> ../apps/api/src/releaseChecks`: a workspace package does not resolve without an install. A future import of a package would break the workflow (a module error, mailed under the same subject), so keep the probe's imports to these.
+- **Cost.** A healthy run is about 20 s, billed 1 minute: 4 × 30.4 ≈ 122 minutes a month of the account's shared 2,000 (October used 1,850). A failing run waits 60 s for its retries, so about 2 billed minutes. Production load: 11 requests a run (4 on the API, the page and its 6 files), 44 a day, more only on retries.
+- **Decision 4a.** The threshold report stays by hand; no Cloudflare token or other secret is added to Actions.
+- **Verified.** Against production: `PROD OK — /health 0a8feadf 227 ms · /health/db 13 migrations 153 ms · /sets 200 152 ms · /auth/me 401 100 ms · web 0a8feadf + 6 files 196 ms`. Against an unresolvable API host and a local server answering 503: `PROD DOWN`, exit 1, after 60 s of retries. A local server answering 200 with no build meta: `PROD DOWN — web /: no <meta name="build">`. One answering 429 everywhere: `PROD HELD`, exit 0. actionlint 1.7.12 (CI's pinned version and sha256) with shellcheck 0.11.0: 0 errors in 3 files. The `workflow_dispatch` run is the user's, after the push.
+- 10 OBS-P4 mutant rows on `scripts/prod-watch.ts`, all killed by `scripts/prodWatch.test.ts`: only 429 held, 5xx held, a held try not retried, two tries instead of three, a migration-count mismatch failing, a missing referenced file held, held read before down in the page check, a held check counted as down, the page's files never checked, and a TimeoutError not named as a timeout.
+- **For the user after the push.** Scheduled workflows run from the default branch only, so the watch starts once this is on main. Run it once with "Run workflow" (Actions, Production watch) and check that it is green. GitHub mails a scheduled run's failure to the user who last changed its `cron` line; check that Settings, Notifications, GitHub Actions has email on ("only failures" is enough). GitHub's 60-day inactivity disable of scheduled workflows is a public-repository rule; it would apply if the repo were made public.
+- **Runbook and conventions.** backend-data.md §3.7.4's report table has a `Run failed: Production watch` row, and conventions.md's CI paragraph names the workflow and its import rule. `scripts/import-graph.ts` allows the one crossing.
+
+### 2026-11-10 — Observability audit Phases 1, 2 and 4 merged
+
+Branches `obs-p1`, `obs-p2` and `obs-p4` merged into `obs`. Conflicts: `scripts/mutation/mutants.ts` (append-only, both sides kept), and the console spies of `lobby/lobbyDO.test.ts` and `lobby/lobbyAbuse.test.ts`, where Phase 1 moved the info spy to `console.info` and Phase 2 added an error spy; the merge keeps both. On the merged tree `bun run check` is green (752 files, 17,416 tests, 76/76 Lua), and the OBS-P0, P1, P2 and P4 rows plus the 5 rows the phases re-anchored are all killed.

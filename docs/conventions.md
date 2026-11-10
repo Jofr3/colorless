@@ -62,7 +62,11 @@ only the conclusion.
   The install cache is keyed on bun.lock alone and only `static` saves it. A
   gitleaks finding fails `static`: a real secret is rotated, not just removed
   from the branch; a false positive gets a scoped entry in `.gitleaks.toml`,
-  whose header pins the gitleaks version and sha256. Run
+  whose header pins the gitleaks version and sha256. Apart from CI,
+  `prod-watch.yml` ("Production watch") probes production every 6 hours with
+  `scripts/prod-watch.ts`: Bun only, no install and no secret, so keep that
+  script's imports to Node built-ins and the files it reads now. Its failure
+  email is the outage alert. Run
   `bun run format` before committing. `bun run release` runs check, the release
   gates (with the production advisory audit, and CI's result for HEAD printed,
   not waited for), the web build, the remote D1 migrations, the API deploy, the

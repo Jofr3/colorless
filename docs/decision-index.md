@@ -67,6 +67,10 @@ the script after adding a decision.
 | 2026-11-10 | Two Cloudflare tokens: a read-only ambient one, and a deploy token only production writes load | decisions.md:1739 |
 | 2026-11-10 | The web Worker's 404 script, a web rollback rehearsal, locked-down Actions, and lexio on the deploy token | decisions.md:1753 |
 | 2026-11-10 | Observability audit: the log guard, logErrorThrottledBy, and a runbook a player's report can be looked up in | decisions.md:1769 |
+| 2026-11-10 | Observability audit Phase 1: an unhandled error names its frames, info lines get a level, Workers Issues and… | decisions.md:1802 |
+| 2026-11-10 | Observability audit Phase 2: frame_failed under the lobby code, the DO's code-bug lines at error, and match_s… | decisions.md:1858 |
+| 2026-11-10 | Observability audit Phase 4: a 6-hourly production watch from GitHub Actions, retried, that never fails on a… | decisions.md:1890 |
+| 2026-11-10 | Observability audit Phases 1, 2 and 4 merged | decisions.md:1911 |
 
 ## Numbered decisions
 
