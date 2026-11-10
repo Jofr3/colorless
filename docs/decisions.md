@@ -1493,6 +1493,7 @@ Phase 3 of the dependency audit (report `tmp/deps/deps-audit.md`), decision id D
 - **The Worker shipped unminified while the budget gated a minified build (USE1).** The apps/api `deploy` script ran a bare `wrangler deploy` (1937.8 KiB, 421.7 KiB gzip). `worker-bundle.ts --check` measured a `--minify` dry run (951.4 KiB, 257.3 KiB gzip) that never shipped, so its 1024 KiB budget would already have failed the real artifact. Per audit decision 4:
   - The `deploy` script now runs `wrangler deploy --minify`. `wrangler dev` (and so `bun run dev` and the e2e suites) stays unminified, which a `minify` key in wrangler.jsonc would not.
   - `apps/api/wrangler.jsonc` sets `"upload_source_maps": true`, so Workers Logs resolves a minified stack trace to source. wrangler 4.109's config schema has the key; a misspelled one draws "Unexpected fields found". `keep_names` stays at wrangler's default (true), so `error.name` in the error log keeps its names. `observability` is unchanged (`unstable_readConfig` reads `{ enabled: true }` as before).
+    - Amended 2026-11-10 (observability audit ERR1, OBS-P0): Cloudflare reads the map only for an uncaught exception, and a stack a Worker logs itself is not resolved. Only `scheduled()` and the Durable Object let an exception escape, so the map serves the cron and the lobby. An HTTP route's throw is caught by `onError`, whose `http unhandled` line carries names and no stack.
   - The uploaded map is 5.2 MB (about 1.3 MB gzip), beside a 257 KiB gzip script.
 - **The gate builds what the deploy builds.** `worker-bundle.ts` now reads the flags of the `wrangler deploy` step in the apps/api `deploy` script and runs its dry run with them, so the bundle it measures is the one that ships. `--check` also fails, before building, when that step lacks `--minify` or wrangler.jsonc does not set `"upload_source_maps": true` on a live line. Dropping `--minify` fails twice: once by name, and once over budget at 1937.8 KiB. Setting `"upload_source_maps": false` fails by name; wrangler then writes no map, which the gate needs to read.
 - **zod 4's deprecated `message` parameter (VER13).** The two refinements that used it, `withoutControlChars` (`packages/schema/src/text.ts`) and the empty-patch guard (`packages/schema/src/decks/requests.ts`), now pass `error`. The issues are byte-identical (`{ code: "custom", path: [], message }`). No test pinned either message, so `text.test.ts` and `decks.test.ts` now pin both word for word. The other `message:` keys are `ctx.addIssue` issue objects, which are not deprecated. conventions.md now says to use `{ error }`.
@@ -1764,3 +1765,36 @@ The rest of Phase 5 of the build system and CI/CD audit: decisions 8 and 9 (find
 - **Repository Actions settings (CI8).** `allowed_actions: selected` (GitHub-owned actions plus `oven-sh/setup-bun@*`) and `sha_pinning_required: true`, set through `gh api`. The next CI run (0a8feadf) was green under them. Watch the next weekly Dependabot run, which GitHub runs with its own actions.
 - **lexio.** `scripts/deploy.ts` runs every wrangler write (migrations, upload, promote, rollback) with the deploy token, and refuses to run without it outside GitHub Actions, where the environment's secret already is a deploy token. Reads keep the shell's read-only token. Branch `deploy-token` (e4bd4e6), not pushed: the user merges it. `origin/README.md` has a "The token" paragraph.
 - **Still open:** revoking or narrowing the old `agents` token (kept file-only as `CLOUDFLARE_AGENTS_TOKEN`; the user's call), and a rehearsal of the API Worker's rollback.
+
+### 2026-11-10 — Observability audit: the log guard, `logErrorThrottledBy`, and a runbook a player's report can be looked up in
+
+Phase 0 of the observability and monitoring audit (report `tmp/obs/obs-audit.md`, evidence in `tmp/obs/probe/`; 2 medium findings, 0 high). Decision id OBS-P0. The user took all 8 recommendations of the report's section 6:
+
+1. **1a.** Keep Cloudflare's invocation logs, set `redact_query_string`, and document that they hold the client IP and geolocation for 3 days.
+2. **2a.** Enable Workers Issues in config while it is a free beta, and add one Real-Time Issue email notification.
+3. **3a.** A liveness probe from GitHub Actions every 6 hours, with no secret.
+4. **4a.** The threshold report is run by hand, monthly and after each release.
+5. **5a.** Reliability decision 17 stands: nothing is reported off-device, so the client-reporting phase is deferred.
+6. **6a.** Match counts live in log lines only, with no Analytics Engine.
+7. **7a.** Two light SLOs (99.5% non-5xx, p95 under 500 ms on the core routes) printed by the report.
+8. **8a.** Narrow the log-level rule: error is a code defect or an unexpected exception, warn an expected degradation or a refusal.
+
+Phase 0 changes no runtime behaviour; nothing to release.
+
+- **`scripts/log-guard.ts` (LOG4), in `check:static`.** It reads `apps/api/src` apart from tests and `testing/`, and fails on:
+  - a `console` call outside `http/log.ts`;
+  - a denied field key in a log call's object literals, or in a function that returns `LogFields` (`errorFields`). A key containing `email`, `password`, `token`, `cookie` or `secret` is denied, and so are `ip`, a camelCase `…Ip`, `name`, `displayName`, `deckName`, `deckId`, `userId`, `accountId`, `session` and `sessionId`, without case. `code` is allowed, as the report advised, because lobby lines carry a WebSocket close code under it. `name` is denied against the report's advice: no line uses it, and on a log line it would most likely be a display or deck name;
+  - an `evt` and `kind` that backend-data.md §3.7.4 does not name: the backticked words of that `evt`'s query row, and for `lobby` the kind table too. `evt` and `kind` must be string literals, apart from 5 forwarding calls (`bindingRefuses`, and `LobbyDO.log` and `.info`) whose callers are read instead.
+  - Today: 68 files, 59 pairs, no console call and no denied key. The runbook lacked 4 kinds, now added: `auth` `logout_failed`, `oauth_unavailable` and `expired_session_delete_failed`, and `lobby` `seat_orphaned`.
+  - It reads source text, so a key built in a variable, or a log function imported under another name, goes unseen. `LogFields` and the lobby's LB8 test cover part of that at run time.
+  - A phase that adds a kind (Phase 2's `frame_failed`, `match_started`, `match_ended`) adds its runbook row in the same change, or the check fails.
+- **`logErrorThrottledBy` in `apps/api/src/http/log.ts`.** It has `logEventThrottledBy`'s signature and per-`by` throttle, at error level, so Phase 2 can move the lobby's code-bug lines to error without touching log.ts. The level rule and `logInfo` are unchanged; Phase 1 owns them.
+- **Runbook, backend-data.md §3.7.4 (ERR4, LOG1, LOG2, LOG4).**
+  - The Workers Logs paragraph now names both event types: the app's lines (`$metadata.type = "cf-worker"`) and Cloudflare's invocation events (`cf-worker-event`), which share `$workers.requestId`.
+  - Info lines arrive with no level, so an info query needs the type filter.
+  - The lobby's `describeError` keeps `name: message`, up to 200 characters.
+  - A new paragraph says what the logs hold about a player: the app's lines carry no IP, while the invocation event holds the IP, geolocation and the full URL for 3 days (decision 1a). §3.5's account-tag paragraph points there.
+  - New: a Workers Issues paragraph (off until Phase 1 enables it), a `$workers.outcome = "exception"` row, and an "A player reports…" table that maps a report to a query.
+  - "Saved queries" is now "Log queries", since none are saved in the dashboard.
+- **DEP-P3 amended (ERR1).** The source map serves only uncaught exceptions, which here means the cron and the Durable Object. The same claim in the comment above `upload_source_maps` in `apps/api/wrangler.jsonc` is left for Phase 1, which owns that file.
+- 6 OBS-P0 mutant rows, all killed. Three are on API source and are killed by running the guard: an `email` field on `login_ok`, a raw `console.warn` for `login_failed`, and a renamed lobby kind with no runbook row. Three are on the guard itself and are killed by `scripts/logGuard.test.ts`. A seventh row, on `logErrorThrottledBy`, is killed by `log.test.ts`.

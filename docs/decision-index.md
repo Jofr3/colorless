@@ -53,19 +53,20 @@ the script after adding a decision.
 | 2026-11-09 | Dependency audit Phase 1: grouped Dependabot, Node 24 actions, one bun and one Node from laptop to CI, a rele… | decisions.md:1427 |
 | 2026-11-09 | Dependency refresh: wrangler 4.158 and its own miniflare 5 together, hono past its advisories, in-range dev t… | decisions.md:1449 |
 | 2026-11-09 | Deploy the API Worker minified with its source maps, gate the bundle the deploy builds, and pass zod refineme… | decisions.md:1489 |
-| 2026-11-09 | Dependency audit Phase 4: an MIT LICENSE, served third-party notices with a Credits button, and love.js 11.4.… | decisions.md:1502 |
-| 2026-11-09 | Generate the API Worker's types with wrangler types, check them in check:static, and drop @cloudflare/workers… | decisions.md:1540 |
-| 2026-11-09 | TypeScript 7 for every typecheck, with the TypeScript 6 parser kept for the mutation scripts | decisions.md:1560 |
-| 2026-11-09 | Vitest 5, with the module cache's new key and path | decisions.md:1576 |
-| 2026-11-10 | Biome 2.6.6, with the migrated config and its lint fixes | decisions.md:1589 |
-| 2026-11-10 | Build and CI/CD audit safety nets: CI keeps its static signal, the mutant sample cannot silently lose its dif… | decisions.md:1613 |
-| 2026-11-10 | Release identity and gates: every deploy names its commit, deploy:web cannot ship a stale dist, and the relea… | decisions.md:1626 |
-| 2026-11-10 | CI efficiency and secret scanning: one setup action, a bounded install cache, three jobs, and gitleaks on eve… | decisions.md:1674 |
-| 2026-11-10 | Lua build: the package uuid comes from game.data, so the build is reproducible and the IndexedDB package surv… | decisions.md:1695 |
-| 2026-11-10 | An opt-in pre-push hook runs Biome, the decision index and, when installed, gitleaks on the commits being pus… | decisions.md:1712 |
-| 2026-11-10 | Production only, no staging environment; the build audit's merge and what is left | decisions.md:1730 |
-| 2026-11-10 | Two Cloudflare tokens: a read-only ambient one, and a deploy token only production writes load | decisions.md:1738 |
-| 2026-11-10 | The web Worker's 404 script, a web rollback rehearsal, locked-down Actions, and lexio on the deploy token | decisions.md:1752 |
+| 2026-11-09 | Dependency audit Phase 4: an MIT LICENSE, served third-party notices with a Credits button, and love.js 11.4.… | decisions.md:1503 |
+| 2026-11-09 | Generate the API Worker's types with wrangler types, check them in check:static, and drop @cloudflare/workers… | decisions.md:1541 |
+| 2026-11-09 | TypeScript 7 for every typecheck, with the TypeScript 6 parser kept for the mutation scripts | decisions.md:1561 |
+| 2026-11-09 | Vitest 5, with the module cache's new key and path | decisions.md:1577 |
+| 2026-11-10 | Biome 2.6.6, with the migrated config and its lint fixes | decisions.md:1590 |
+| 2026-11-10 | Build and CI/CD audit safety nets: CI keeps its static signal, the mutant sample cannot silently lose its dif… | decisions.md:1614 |
+| 2026-11-10 | Release identity and gates: every deploy names its commit, deploy:web cannot ship a stale dist, and the relea… | decisions.md:1627 |
+| 2026-11-10 | CI efficiency and secret scanning: one setup action, a bounded install cache, three jobs, and gitleaks on eve… | decisions.md:1675 |
+| 2026-11-10 | Lua build: the package uuid comes from game.data, so the build is reproducible and the IndexedDB package surv… | decisions.md:1696 |
+| 2026-11-10 | An opt-in pre-push hook runs Biome, the decision index and, when installed, gitleaks on the commits being pus… | decisions.md:1713 |
+| 2026-11-10 | Production only, no staging environment; the build audit's merge and what is left | decisions.md:1731 |
+| 2026-11-10 | Two Cloudflare tokens: a read-only ambient one, and a deploy token only production writes load | decisions.md:1739 |
+| 2026-11-10 | The web Worker's 404 script, a web rollback rehearsal, locked-down Actions, and lexio on the deploy token | decisions.md:1753 |
+| 2026-11-10 | Observability audit: the log guard, logErrorThrottledBy, and a runbook a player's report can be looked up in | decisions.md:1769 |
 
 ## Numbered decisions
 

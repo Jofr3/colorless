@@ -367,7 +367,8 @@ data loss rather than a validation failure.
   base64url characters (`apps/api/src/http/logTag.ts`), and `rate_limited` names
   the network by the same MAC of its clientIpKey (`net`). Without the
   `LOG_TAG_KEY` secret every tag reads `untagged`. No line carries an email,
-  IP, user id or `avatarSeed` (public in lobbies). Losing or rotating the key
+  IP, user id or `avatarSeed` (public in lobbies); Cloudflare's own invocation
+  event beside it does hold the IP (§3.7.4). Losing or rotating the key
   only stops old tags matching new ones.
 - **Account deletion** (database audit OP6): `DELETE /auth/me` with
   `{password?, confirmEmail?}`. An account with a password must send it (wrong
@@ -1095,23 +1096,58 @@ with the table above. Worker requests are under Workers & Pages → `colorless-a
 Workers & Pages → Usage shows the account-wide totals.
 
 **Workers Logs** (`colorless-api` → Observability; `observability.enabled` in
-`apps/api/wrangler.jsonc`). Every line from `apps/api/src/http/log.ts` is JSON
-with an `evt` field, and repeating failures are throttled to one line per 10
-minutes per isolate (per `evt` and `kind`, so one route's line can hide
-another's), carrying a `suppressed` count. Levels: info for what went as
-intended (sign-ins and the other account successes, the sweep's counts, a
-lobby forfeit or wipe), warn for a refusal or a degradation the code handled,
-error for a failure nothing handled. Filter on level `warn` or `error` to see
-only trouble; the saved queries filter on `evt` and see every level. A failure
-line's error fields come from `errorFields` (`apps/api/src/http/errors.ts`):
-`error` and `cause` names, `query` (the SQL without its parameters) and
-`quota: true` when the error reads as a spent daily quota, never a message or
-a bound value. Saved queries:
+`apps/api/wrangler.jsonc`) keeps two kinds of event for 3 days. The app's own
+lines (`$metadata.type = "cf-worker"`) come from `apps/api/src/http/log.ts`:
+JSON with an `evt` field, and repeating failures are throttled to one line per
+10 minutes per isolate (per `evt` and `kind`, so one route's line can hide
+another's), carrying a `suppressed` count. Cloudflare adds one invocation event
+per request, cron run and Durable Object call (`$metadata.type =
+"cf-worker-event"`), with its outcome, status, CPU time, URL and request
+headers; a console line shares `$workers.requestId` with its invocation. Levels:
+info for what went as intended (sign-ins and the other account successes, the
+sweep's counts, a lobby forfeit or wipe), warn for a refusal or a degradation
+the code handled, error for a failure nothing handled. Filter on level `warn` or
+`error` to see only trouble. Info lines (`console.log`) arrive with no level, so
+a level filter neither selects nor excludes them, and invocation events are
+level info, so a query for the app's info lines also needs `$metadata.type =
+"cf-worker"`. The log queries below filter on `evt` and see every level. A
+failure line's error fields come from `errorFields`
+(`apps/api/src/http/errors.ts`): `error` and `cause` names, `query` (the SQL
+without its parameters) and `quota: true` when the error reads as a spent daily
+quota, never a message or a bound value. The lobby's `error` field is the
+exception: `describeError` gives `name: message` up to 200 characters (for a
+failed query only the error and cause names), and those messages come from the
+engine and the runtime.
+
+**What the logs hold about a player.** The app's lines carry no email, IP,
+password, session token or player-typed string: an account or an address is
+the keyed tag from `apps/api/src/http/logTag.ts`. `scripts/log-guard.ts`
+(`check:static`) fails on a `console` call outside log.ts, on a log field on its
+deny-list (any key containing `email`, `password`, `token`, `cookie` or
+`secret`, and `ip`, `name`, `displayName`, `deckName`, `deckId`, `userId`,
+`accountId`, `session` and `sessionId`), and on an `evt` and `kind` this section
+does not name. Cloudflare's invocation event is another matter: its request
+headers include the client IP (`cf-connecting-ip`), and `request.cf` the city,
+postal code, coordinates, ASN and TLS fingerprint, next to the full URL with its
+query string. It is kept 3 days and readable by
+the account and its read tokens, and an `account` tag can be joined to it
+through `$workers.requestId`. That was accepted (observability audit LOG1,
+decision 1a).
+
+**Workers Issues** (`colorless-api` → Observability → Issues) groups errors
+into issues with an occurrence count; by Cloudflare's description it records an
+uncaught exception, a failed invocation, a 5xx response or a logged error. It is
+off until `observability.issues.enabled` is set in `apps/api/wrangler.jsonc`
+(observability audit ERR1, decision 2a), since a dashboard toggle is undone by
+the next deploy. Which of the app's error lines it picks up is checked when it
+is enabled. Once it is on, look there first.
+
+Log queries:
 
 | Query | What it finds |
 | --- | --- |
 | `evt = "kv"` | Catalog cache `get_failed`, `put_failed` and `epoch_failed`, with the route and the error fields: `quota: true` means the day's KV quota is spent. |
-| `evt = "auth"` | The account audit trail (`apps/api/src/auth/routes.ts`, §3.5): `registered`, `login_ok`, `login_failed` (`reason`; `capped: true` past the per-email cap), `logout`, `logout_all` (`sessions` ended), `profile_updated`, `delete_failed`, `account_deleted`, `oauth_created`, `oauth_linked` (`claimed`, `identitiesRemoved`, `sessionsRevoked`), `oauth_refused` and the other OAuth failures: `oauth_denied` (the provider's `?error=` for this browser's sign-in, its code in `providerError`; `access_denied` is a Cancel), `oauth_state` (`reason`: `no_cookie`, `no_state`, `mismatch` or `no_code`), `oauth_exchange` and `oauth_profile` (the provider's `status` and `providerError`). The successes are info level, the rest warn. `account` is the keyed tag of the user id (`apps/api/src/http/logTag.ts`, secret `LOG_TAG_KEY`; `untagged` without it): filter on one tag to follow an account across addresses. `rate_limited` (with `by: "binding"` when `AUTH_LIMIT` refused it) carries `net`, the same kind of tag for the address; `limiter_error` from the D1 limiter and `binding_error` from the binding. Error level: `pepper_missing` (no `PASSWORD_PEPPER`; set it) and `pepper_unavailable` (a stored hash needs a pepper the Worker lacks: restore the secret or `PASSWORD_PEPPER_PREVIOUS`). No line carries an email, IP or user id. |
+| `evt = "auth"` | The account audit trail (`apps/api/src/auth/routes.ts`, §3.5): `registered`, `login_ok`, `login_failed` (`reason`; `capped: true` past the per-email cap), `logout`, `logout_all` (`sessions` ended), `profile_updated`, `delete_failed`, `account_deleted`, `oauth_created`, `oauth_linked` (`claimed`, `identitiesRemoved`, `sessionsRevoked`), `oauth_refused` and the other OAuth failures: `oauth_denied` (the provider's `?error=` for this browser's sign-in, its code in `providerError`; `access_denied` is a Cancel), `oauth_state` (`reason`: `no_cookie`, `no_state`, `mismatch` or `no_code`), `oauth_exchange` and `oauth_profile` (the provider's `status` and `providerError`). The successes are info level, the rest warn. `account` is the keyed tag of the user id (`apps/api/src/http/logTag.ts`, secret `LOG_TAG_KEY`; `untagged` without it): filter on one tag to follow an account across addresses. `rate_limited` (with `by: "binding"` when `AUTH_LIMIT` refused it) carries `net`, the same kind of tag for the address; `limiter_error` from the D1 limiter and `binding_error` from the binding. `expired_session_delete_failed` (throttled, with the error fields): an expired session presented to a route could not be deleted; the 401 stands and the daily sweep gets the row. Error level: `logout_failed` (the session row could not be deleted; the cookie is cleared anyway), `oauth_unavailable` (D1 failed while the callback found the account or recorded the session; the browser is sent back with `unavailable`), both with the error fields, `pepper_missing` (no `PASSWORD_PEPPER`; set it) and `pepper_unavailable` (a stored hash needs a pepper the Worker lacks: restore the secret or `PASSWORD_PEPPER_PREVIOUS`). No line carries an email, IP or user id. |
 | `evt = "decks"` | `rate_limited` and `binding_error` from the deck write limits (`apps/api/src/decks/routes.ts`). |
 | `evt = "lobby"` | Lobby Durable Object events (`apps/api/src/lobby/`, kinds below), and `rate_limited` / `limiter_error` from the per-IP limits on its routes. |
 | `evt = "http"` | `unhandled`: a request that threw (a 500), with the method, route pattern and the error fields. Logged at error level. `invalid_request` (throttled): a validator 400, with the route pattern, `target` (`body` or `query`), the `issues` count and the first five issue `paths` (`cards.3.cardId`), never the values or messages; a run of them after a release means the client sends what the server rejects. `cross_site_refused` (throttled): an unsafe request from another site (§3.5), with the method and route pattern. |
@@ -1119,6 +1155,7 @@ a bound value. Saved queries:
 | `evt = "catalog"` | `rate_limited` / `limiter_error` from `CATALOG_SEARCH_LIMIT` on `/cards`, `/cards/index` or `/facets` (the `route` field). |
 | `evt = "assets"` | `origin_refused` with a `reason` (`origin_url`, `redirect`, `content_type`, `magic`, `too_large`): the asset mirror would not store what the origin sent. `origin_status` with the `status`: the origin answered something other than 200, 404, 410 or a 5xx (a 429, 403 or 408), served as an uncached 502. `r2_get_failed` with the `error` name: an R2 read threw and the image came from the origin. |
 | `evt = "after_response"` | `failed`: other deferred work that failed after its response, such as an R2 asset mirror write, with the route and the error fields. |
+| `$workers.outcome = "exception"` | An invocation that threw past every handler: the daily cron (also under Cron Events) or a Durable Object call, such as a lobby frame whose storage write failed. It names no `evt` or lobby code; open the invocation for the exception, whose stack the uploaded source map resolves (no such event has been seen in production yet). An HTTP route that throws is answered by `onError` with a 500 and an `http` `unhandled` line, so its outcome stays `ok`. |
 
 Every `evt = "lobby"` line carries the lobby's `code` as `lobby`. None carries
 an account id, a session id, an email, a seat secret, a deck id or a name:
@@ -1143,7 +1180,19 @@ the first six:
 | `forfeit` | `seat`, `cause` | A seat conceded by leaving (`left`) or by its forfeit clock (`abandoned`). |
 | `action_threw` *t* | `type`, `error` | The engine threw on an action; it was refused like any move (MI3). Throttled per action `type`, so a throw on another type still logs (API audit LOB7). |
 | `match_migrated`, `match_retired` | `from`, `to` / `cause` | A stored match was migrated to this build's version, or retired as unreadable. |
+| `seat_orphaned` | `seats` | An alarm pass found `seats` shown connected that no socket holds (their sockets went in a deploy without a close the DO heard) and gave each the reconnect grace. |
 | `alarm_failed` | `error` | An alarm pass threw; the alarm is re-armed, no sooner than 5 s later until a pass succeeds (LOB1). |
+
+**A player reports…** Ask for the time, to the minute, and for a match the
+lobby code from the address bar (`/?lobby=CODE`). Then:
+
+| Report | Where to look |
+| --- | --- |
+| Anything | Workers Issues first, once it is on; then Account Home → Workers & Pages → Usage, and the table at the top of this section, for a spent daily quota. |
+| A deck didn't save | Invocations whose URL contains `/decks` with a status of 400 or more, then that invocation's `decks` or `http` line (`rate_limited`, `binding_error`, `invalid_request`, `unhandled`). |
+| Sign-in fails | `evt = "auth"`, kinds `oauth_*`, `login_failed`, `rate_limited`, `limiter_error` and the error-level ones. |
+| A match froze or will not start | `lobby = "<CODE>"`, the invocations whose URL contains `/lobby/<CODE>/ws`, and `$workers.outcome = "exception"` around the time, since an exception carries no lobby code. |
+| Cards or images don't load | `evt = "kv"`, `evt = "catalog"` and `evt = "assets"`. An asset 502 from a failing origin has no line, only its invocation's status. |
 
 ---
 
