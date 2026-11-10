@@ -19,7 +19,7 @@
     "types": "rm -f worker-configuration.d.ts && wrangler types --env-file=/dev/null --env-interface=GeneratedEnv",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "bun ../../scripts/with-system-certs.ts wrangler d1 migrations apply colorless --local",
-    "db:migrate:remote": "wrangler d1 migrations apply colorless --remote"
+    "db:migrate:remote": "bun scripts/with-deploy-token.ts wrangler d1 migrations apply colorless --remote"
   },
   "dependencies": {
     "@colorless/engine": "workspace:*",

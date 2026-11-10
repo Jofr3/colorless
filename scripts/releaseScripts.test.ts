@@ -53,4 +53,10 @@ describe("the release scripts run their gates", () => {
     expect(api["release:health"]).toBe("bun scripts/release-gate.ts health");
     expect(api["release:finish"]).toBe("bun scripts/release-gate.ts finish");
   });
+
+  it("the remote migration runs with the deploy token, since the ambient token is read-only", () => {
+    expect(api["db:migrate:remote"]).toBe(
+      "bun scripts/with-deploy-token.ts wrangler d1 migrations apply colorless --remote",
+    );
+  });
 });

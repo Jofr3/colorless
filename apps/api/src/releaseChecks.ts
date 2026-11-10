@@ -1,7 +1,7 @@
 // The verdicts scripts/release-gate.ts reaches about a release, as pure functions of what it read
 // (git, wrangler, gh, the deployed site), so vitest can test them; it sits here beside
 // requiredSecrets.ts for that reason, and the Worker imports neither. Build audit ENV1, DEP1,
-// DEP4, DEPM1 and CI1.
+// DEP4, DEPM1, CI1 and DEP3.
 
 /** The commit a release names everywhere: wrangler's `--tag`, /health's `version.tag`, the log. */
 export const shortSha = (commit: string): string => commit.slice(0, 8);
@@ -386,4 +386,28 @@ export function releaseLogLine(input: {
     `bookmark=${pin.bookmark ?? "?"}`,
     `balatro-source=${balatro ?? "?"}`,
   ].join(" ");
+}
+
+// ---- The deploy token (build audit DEP3) ----
+
+/** Where the production-write Cloudflare token lives, relative to $HOME, unless
+    CLOUDFLARE_DEPLOY_TOKEN_FILE names another file. The ambient CLOUDFLARE_API_TOKEN is read-only;
+    only the commands that write to production (the deploys, `db:migrate:remote`, a remote ingest,
+    a rollback run through scripts/with-deploy-token.ts) load this one. */
+export const DEPLOY_TOKEN_PATH = ".local/state/secrets/CLOUDFLARE_DEPLOY_TOKEN";
+
+/** The environment for a production write: `env` with CLOUDFLARE_API_TOKEN replaced by the deploy
+    token, or why there is none. `read` returns a file's text, or undefined when it cannot. */
+export function deployTokenEnv(
+  env: Readonly<Record<string, string | undefined>>,
+  home: string,
+  read: (path: string) => string | undefined,
+): { env: Record<string, string | undefined> } | { error: string } {
+  const path = env.CLOUDFLARE_DEPLOY_TOKEN_FILE ?? `${home}/${DEPLOY_TOKEN_PATH}`;
+  const token = read(path)?.trim();
+  if (!token)
+    return {
+      error: `deploy token: none at ${path}. The ambient CLOUDFLARE_API_TOKEN is read-only; a production write needs the deploy token there, or CLOUDFLARE_DEPLOY_TOKEN_FILE pointing at it (backend-data.md §3.7.2, "Cloudflare tokens").`,
+    };
+  return { env: { ...env, CLOUDFLARE_API_TOKEN: token } };
 }

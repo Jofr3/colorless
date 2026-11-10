@@ -11,6 +11,7 @@ import {
   cleanTreeProblems,
   deployAnnotations,
   deployedVersions,
+  deployTokenEnv,
   envValue,
   healthTagProblem,
   MESSAGE_MAX,
@@ -347,5 +348,41 @@ describe("the release record", () => {
     expect(line).toBe(
       `2026-11-10T09:05:00.000Z release-20261110-0905 commit=${HEAD} colorless-api=a1->a2 colorless=w1->? bookmark=bm balatro-source=f01aba9f`,
     );
+  });
+});
+
+describe("deployTokenEnv", () => {
+  const files = (map: Record<string, string>) => (path: string) => map[path];
+
+  it("swaps the ambient read-only token for the deploy token from the default file", () => {
+    const got = deployTokenEnv(
+      { CLOUDFLARE_API_TOKEN: "read-only", PATH: "/bin" },
+      "/home/u",
+      files({ "/home/u/.local/state/secrets/CLOUDFLARE_DEPLOY_TOKEN": "deploy\n" }),
+    );
+    expect(got).toEqual({ env: { CLOUDFLARE_API_TOKEN: "deploy", PATH: "/bin" } });
+  });
+
+  it("reads CLOUDFLARE_DEPLOY_TOKEN_FILE instead when it is set", () => {
+    const got = deployTokenEnv(
+      { CLOUDFLARE_DEPLOY_TOKEN_FILE: "/run/t" },
+      "/home/u",
+      files({ "/run/t": "other" }),
+    );
+    expect(got).toEqual({
+      env: { CLOUDFLARE_DEPLOY_TOKEN_FILE: "/run/t", CLOUDFLARE_API_TOKEN: "other" },
+    });
+  });
+
+  it("refuses a missing or blank file rather than writing with the ambient token", () => {
+    for (const read of [
+      files({}),
+      files({ "/home/u/.local/state/secrets/CLOUDFLARE_DEPLOY_TOKEN": " \n" }),
+    ]) {
+      const got = deployTokenEnv({ CLOUDFLARE_API_TOKEN: "read-only" }, "/home/u", read);
+      expect("error" in got && got.error).toContain(
+        "deploy token: none at /home/u/.local/state/secrets/CLOUDFLARE_DEPLOY_TOKEN",
+      );
+    }
   });
 });

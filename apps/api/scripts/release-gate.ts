@@ -67,6 +67,7 @@ import {
   rmSync,
   writeFileSync,
 } from "node:fs";
+import { homedir } from "node:os";
 import { join } from "node:path";
 import { dbHealthResponseSchema } from "@colorless/schema";
 import {
@@ -81,6 +82,7 @@ import {
   cleanTreeProblems,
   deployAnnotations,
   deployedVersions,
+  deployTokenEnv,
   envValue,
   healthTagProblem,
   pageReferences,
@@ -98,6 +100,7 @@ import {
 } from "../src/releaseChecks";
 import { missingSecrets, REQUIRED_SECRETS } from "../src/requiredSecrets";
 import { API_ROOT, type D1Target, d1Query, recordBookmark, wrangler } from "./d1";
+import { readText } from "./with-deploy-token";
 
 const REPO_ROOT = join(API_ROOT, "..", "..");
 const PIN_FILE = join(REPO_ROOT, "tmp", "release.json");
@@ -597,9 +600,13 @@ function deployLabelled(command: readonly string[]): void {
   mkdirSync(join(REPO_ROOT, "tmp"), { recursive: true });
   const output = join(REPO_ROOT, "tmp", `wrangler-deploy-${process.pid}.ndjson`);
   rmSync(output, { force: true });
+  // The ambient CLOUDFLARE_API_TOKEN is read-only; the deploy loads the production-write token
+  // (build audit DEP3). Every step before this one only reads, so they keep the ambient token.
+  const withToken = deployTokenEnv(process.env, homedir(), readText);
+  if ("error" in withToken) throw new Error(withToken.error);
   const run = spawnSync("bunx", [...command, ...deployAnnotations(head, subject)], {
     stdio: "inherit",
-    env: { ...process.env, WRANGLER_OUTPUT_FILE_PATH: output },
+    env: { ...withToken.env, WRANGLER_OUTPUT_FILE_PATH: output },
   });
   const deployed = existsSync(output) ? deployedVersions(readFileSync(output, "utf8")) : [];
   rmSync(output, { force: true });

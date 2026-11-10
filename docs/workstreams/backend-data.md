@@ -698,6 +698,24 @@ API's commit). The page source's `<meta name="build">` gives the web's commit.
 `bunx wrangler deployments list` shows each version's tag and message. `git tag
 --list 'release-*'` and `tmp/releases.log` hold the release history.
 
+**Cloudflare tokens (build audit DEP3, BLD-P5).** Two account-owned tokens, each
+restricted to this account. `colorless-agents-read` is the ambient
+`CLOUDFLARE_API_TOKEN`: Workers Scripts, D1, Workers KV, R2, Account Settings,
+Account Analytics, Workers Observability and Workers Tail, all Read. It runs every
+listing, `d1 execute` SELECT, `d1 migrations list`, `time-travel info` and every
+release-gate step except the deploy. `colorless-deploy` adds Write on Workers
+Scripts, D1, Workers KV and R2. It lives in
+`~/.local/state/secrets/CLOUDFLARE_DEPLOY_TOKEN`, decrypted from the dotfiles'
+`secrets/CLOUDFLARE_DEPLOY_TOKEN.age`, or the file `CLOUDFLARE_DEPLOY_TOKEN_FILE`
+names. Only the production writes load it: release-gate.ts's
+`-- wrangler deploy` (both Workers), `db:migrate:remote`, and anything run by hand
+through `bun apps/api/scripts/with-deploy-token.ts <command>`. That covers
+`bunx wrangler rollback`, `wrangler secret put`, `d1 time-travel restore`,
+`ingest.ts --remote`, and a writing `d1 execute --remote`. Run any of those
+commands below through it. A missing file stops the write with the path.
+The split stops a mistaken write, not a deliberate one: any process running as
+this user can read the file.
+
 **A dead pin.** A release killed before `abort` ran (a closed terminal) leaves
 `tmp/release.json` for 15 minutes. Releasing the same commit again takes it
 over. To release another commit sooner, run `bun
