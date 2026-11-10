@@ -53,7 +53,16 @@ only the conclusion.
   one quoted argument, so adding one to `package.json` is all it takes.
   `check:test` runs after them on its own, since vitest already uses every core
   and sharing them makes its timeouts flaky. CI runs the same three
-  names, except that Lua tests needing Balatro's source are skipped there. Run
+  names, except that Lua tests needing Balatro's source are skipped there, in
+  three jobs: `static` (the prod audit, check:static, the Lua tests, the bundle,
+  actionlint, the gitleaks secret scan of the pushed or PR range and, on main
+  pushes only, the never-failing `bench`), `test` and `mutants`. Each job runs
+  `.github/actions/setup` after its checkout (Bun, Node, Bun's install cache,
+  the frozen install, optionally Lua 5.1), so a toolchain change is made once.
+  The install cache is keyed on bun.lock alone and only `static` saves it. A
+  gitleaks finding fails `static`: a real secret is rotated, not just removed
+  from the branch; a false positive gets a scoped entry in `.gitleaks.toml`,
+  whose header pins the gitleaks version and sha256. Run
   `bun run format` before committing. `bun run release` runs check, the release
   gates (with the production advisory audit, and CI's result for HEAD printed,
   not waited for), the web build, the remote D1 migrations, the API deploy, the

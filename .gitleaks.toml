@@ -1,0 +1,23 @@
+# Secret scanning: gitleaks' default rules, plus an allowlist for the engine's
+# tests and fixtures. CI's static job reads the two pinned lines below to
+# download the binary and check it before running it; a local hook should run
+# the same version with this file (`gitleaks git --config .gitleaks.toml
+# --log-opts=<range> .`). Bump both lines together, from the release's
+# gitleaks_<version>_checksums.txt.
+#
+# gitleaks-version: 8.30.1
+# gitleaks-linux-x64-sha256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+
+[extend]
+useDefault = true
+
+# The engine is pure game logic with no credentials. Its census tests name card
+# keys next to long identifier strings, which generic-api-key reads as keys:
+# every finding of a full-history scan was one of those test titles.
+[[allowlists]]
+description = "engine tests and fixtures: card keys, not credentials"
+targetRules = ["generic-api-key"]
+paths = [
+  '''^packages/engine/src/.*\.test\.ts$''',
+  '''^packages/engine/src/fixtures/''',
+]
