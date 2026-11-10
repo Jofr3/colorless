@@ -19,7 +19,7 @@ import { cardIndexRoutes } from "./catalog/cardIndex";
 import { catalogRoutes } from "./catalog/routes";
 import { deckRoutes } from "./decks/routes";
 import { appCorsOrigins, type Env } from "./env";
-import { errorFields } from "./http/errors";
+import { errorFields, unhandledErrorFields } from "./http/errors";
 import { logError, logEventThrottled, logInfo } from "./http/log";
 import { lobbyRoutes, lobbySocketRoutes } from "./lobby/routes";
 
@@ -32,11 +32,12 @@ app.onError((error, c) => {
   if (error instanceof HTTPException) {
     return c.json({ error: error.message || "request failed" }, error.status);
   }
-  // Names and the SQL only: a failed query's message carries its bound values (./http/errors.ts).
+  // Names, the SQL and the stack's frames, never a message: a failed query's message carries its
+  // bound values (./http/errors.ts).
   logError("http", "unhandled", {
     method: c.req.method,
     route: routePath(c, -1),
-    ...errorFields(error),
+    ...unhandledErrorFields(error),
   });
   return c.json({ error: "internal error" }, 500);
 });
@@ -170,7 +171,7 @@ async function scheduled(controller: ScheduledController, env: Env): Promise<voi
   try {
     logInfo("d1", "sweep", await sweepExpired(env.DB, controller.scheduledTime));
   } catch (error) {
-    logError("d1", "sweep_failed", { error: error instanceof Error ? error.name : typeof error });
+    logError("d1", "sweep_failed", unhandledErrorFields(error));
     throw error;
   }
 }

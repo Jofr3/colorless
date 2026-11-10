@@ -2,8 +2,10 @@
 // concerns, and a refusal the network it came from, by a keyed HMAC-SHA256 of the id, truncated:
 // the same account always gets the same tag, so one account's events line up across requests and
 // addresses, while a log reader without the `LOG_TAG_KEY` Worker secret can neither reverse a tag
-// nor compute one from an id, email or IP they already know. Never use `avatarSeed` for this: it
-// is public in lobbies and an unkeyed 32-bit hash.
+// nor compute one from an id, email or IP they already know. That holds for the app's lines alone:
+// Cloudflare's invocation event for the same request, which shares its request id, records the
+// client IP and geolocation. Never use `avatarSeed` for this: it is public in lobbies and an
+// unkeyed 32-bit hash.
 //
 // Without the secret (dev, tests, a Worker deployed before `wrangler secret put LOG_TAG_KEY`)
 // every tag is the literal UNTAGGED, so nothing identifying is logged in its place.

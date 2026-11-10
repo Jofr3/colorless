@@ -35,11 +35,13 @@ describe("logEvent", () => {
     ]);
   });
 
-  it("writes success and audit lines at info level", () => {
-    const info = vi.spyOn(console, "log").mockImplementation(() => {});
+  it("writes success and audit lines at info level, which console.log would leave levelless", () => {
+    const info = vi.spyOn(console, "info").mockImplementation(() => {});
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     logInfo("d1", "sweep", { sessions: 3 });
     expect(info).toHaveBeenCalledWith('{"evt":"d1","kind":"sweep","sessions":3}');
+    expect(log).not.toHaveBeenCalled();
     expect(warn).not.toHaveBeenCalled();
   });
 

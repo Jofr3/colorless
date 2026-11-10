@@ -7,12 +7,23 @@
   // (Workers with a Durable Object get none today; this keeps it that way.)
   "preview_urls": false,
   // The `deploy` script minifies (`wrangler deploy --minify`; `wrangler dev` stays readable), so
-  // the source maps go up with it and Workers Logs resolves a stack trace to source. Function and
-  // class names survive minification (wrangler's keep_names default), which error logging reads.
+  // the source maps go up with it. Cloudflare reads them only for an uncaught exception, which
+  // here is the cron and the Durable Object; a route's throw is caught by `onError`, and the
+  // frames its `http unhandled` line logs are not resolved. Function and class names survive
+  // minification (wrangler's keep_names default), so those frames still name the code.
   // `scripts/worker-bundle.ts --check` fails without either (dependency audit USE1).
   "upload_source_maps": true,
   "observability": {
-    "enabled": true
+    "enabled": true,
+    // The invocation event keeps the URL without its query string: a catalog search's text and
+    // the OAuth callback's code and state stay out of the logs. Routes are grouped by
+    // `$metadata.trigger`, which has no query anyway.
+    "redact_query_string": true,
+    // Workers Issues groups uncaught exceptions, 5xx responses and `console.error` lines. It is
+    // set here, not in the dashboard, because a deploy without it turns Issues off.
+    "issues": {
+      "enabled": true
+    }
   },
   // The running version's id and its `--tag` (the commit's short sha, which
   // scripts/release-gate.ts passes to `wrangler deploy`), returned by GET /health so the

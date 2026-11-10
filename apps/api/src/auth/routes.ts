@@ -27,7 +27,7 @@ import { bindingRefusal, bindingRefuses } from "../http/bindingLimit";
 import { deadline } from "../http/deadline";
 import { clientIpKey } from "../http/clientIp";
 import { chainMentions, errorFields } from "../http/errors";
-import { logError, logErrorThrottled, logEvent, logEventThrottled, logInfo } from "../http/log";
+import { logErrorThrottled, logEvent, logEventThrottled, logInfo } from "../http/log";
 import { accountTag, logTag } from "../http/logTag";
 import { validate } from "../http/validation";
 import { privateRevalidate } from "../httpCache";
@@ -467,7 +467,7 @@ authRoutes.post("/logout", async (c) => {
         logInfo("auth", "logout", { account: await accountTag(c.env, ended.userId) });
       }
     } catch (error) {
-      logError("auth", "logout_failed", errorFields(error));
+      logEvent("auth", "logout_failed", errorFields(error));
     }
   }
   c.header("Set-Cookie", clearedSessionCookie());
@@ -528,6 +528,9 @@ type Upstream = {
   json: unknown;
   /** The HTTP status, or null when the fetch itself failed. */
   status: number | null;
+  /** Why the fetch failed when status is null: no answer within UPSTREAM_TIMEOUT_MS, or anything
+      else (DNS, TLS, a reset). */
+  cause?: "timeout" | "network";
   /** The OAuth `error` code of a failed response (redirect_uri_mismatch, invalid_client, ...). */
   providerError: string | null;
 };
@@ -554,7 +557,8 @@ async function upstreamJson(url: string, init: RequestInit): Promise<Upstream> {
     try {
       response = await limit.within(fetch(url, { ...init, signal: limit.signal }));
     } catch {
-      return { json: null, status: null, providerError: null };
+      const cause = limit.signal.aborted ? "timeout" : "network";
+      return { json: null, status: null, cause, providerError: null };
     }
     const json: unknown = await limit.within(response.json()).catch(() => null);
     return {
@@ -618,8 +622,8 @@ authRoutes.get("/oauth/:provider/callback", async (c) => {
   });
   const accessToken = parseTokenResponse(tokenResponse.json);
   if (accessToken === null) {
-    const { status, providerError } = tokenResponse;
-    logEvent("auth", "oauth_exchange", { provider, status, providerError });
+    const { status, cause, providerError } = tokenResponse;
+    logEvent("auth", "oauth_exchange", { provider, status, cause, providerError });
     return c.redirect(oauthFailureRedirect(c.env, packed.redirect, "exchange"), 302);
   }
 
@@ -629,8 +633,8 @@ authRoutes.get("/oauth/:provider/callback", async (c) => {
   });
   const profile = parseOAuthProfile(userinfo.json);
   if (profile === null) {
-    const { status, providerError } = userinfo;
-    logEvent("auth", "oauth_profile", { provider, status, providerError });
+    const { status, cause, providerError } = userinfo;
+    logEvent("auth", "oauth_profile", { provider, status, cause, providerError });
     return c.redirect(oauthFailureRedirect(c.env, packed.redirect, "profile"), 302);
   }
 
@@ -674,15 +678,16 @@ authRoutes.get("/oauth/:provider/callback", async (c) => {
   return c.redirect(`${appOrigin(c.env)}${packed.redirect}`, 302);
 });
 
-/** A D1 failure while the callback finds the account or records the session: logged as the error
-    handler logs one, and sent back to the app like the callback's other failures. */
+/** A D1 failure while the callback finds the account or records the session: logged with the error
+    fields at warn, as an outage the callback answers for, and sent back to the app like the
+    callback's other failures. */
 function oauthUnavailable(
   c: AuthContext,
   provider: OAuthProvider,
   redirect: string,
   error: unknown,
 ): Response {
-  logError("auth", "oauth_unavailable", { provider, ...errorFields(error) });
+  logEvent("auth", "oauth_unavailable", { provider, ...errorFields(error) });
   return c.redirect(oauthFailureRedirect(c.env, redirect, "unavailable"), 302);
 }
 

@@ -1,26 +1,30 @@
-// Structured log lines for Workers Logs: one JSON object per line with an `evt` field, so a saved
-// query (`evt = "auth"`, `evt = "kv"`, `evt = "lobby"`) finds every line of one kind. Fields must
-// never carry an email, an IP, a password, a session token or a player-typed string; use counts,
-// status codes, short fixed reasons, and for an account or a network the keyed tag from
-// ./logTag.ts, never the raw id.
+// Structured log lines for Workers Logs: one JSON object per line with an `evt` field, so a log
+// query (`evt = "auth"`, `evt = "kv"`, `evt = "lobby"`) finds every line of one kind. These lines
+// must never carry an email, an IP, a password, a session token or a player-typed string; use
+// counts, status codes, short fixed reasons, and for an account or a network the keyed tag from
+// ./logTag.ts, never the raw id. The rule covers the app's lines only: Cloudflare's own invocation
+// event for the same request holds its headers, the client IP and geolocation among them.
 
 export type LogFields = Record<string, string | number | boolean | null | undefined>;
 
-// Levels: logInfo for what went as intended (sign-ins, the sweep's counts, a forfeit), logEvent
-// (warn) for a refusal or a degradation the code handled, logError for a failure nothing handled.
-// Saved queries filter on `evt`, so the level only narrows a search.
+// Levels: logInfo for what went as intended (sign-ins, the sweep's counts, a forfeit); logEvent
+// (warn) for an expected degradation (a spent quota, a limiter or binding failure, an origin or D1
+// failure the code answers for) or a refusal; logError for a code defect or an unexpected
+// exception, which Workers Issues records as a logged error. Each goes out through the
+// console method of its level, since Workers Logs takes the level from it and gives a
+// `console.log` line none. Log queries filter on `evt`, so the level only narrows a search.
 
 /** One `{ evt, kind, ...fields }` line at info level, for success and audit lines. */
 export function logInfo(evt: string, kind: string, fields: LogFields = {}): void {
-  console.log(JSON.stringify({ evt, kind, ...fields }));
+  console.info(JSON.stringify({ evt, kind, ...fields }));
 }
 
-/** The same line at warn level, for a refusal or a handled degradation. */
+/** The same line at warn level, for a refusal or an expected degradation. */
 export function logEvent(evt: string, kind: string, fields: LogFields = {}): void {
   console.warn(JSON.stringify({ evt, kind, ...fields }));
 }
 
-/** The same line at error level, for failures nothing handled. */
+/** The same line at error level, for a code defect or an unexpected exception. */
 export function logError(evt: string, kind: string, fields: LogFields = {}): void {
   console.error(JSON.stringify({ evt, kind, ...fields }));
 }

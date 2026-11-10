@@ -155,14 +155,21 @@ describe("error responses", () => {
     expect(await res.json()).toEqual({ error: "internal error" });
     expect(res.headers.get("x-content-type-options")).toBe("nosniff");
     expect(log).toHaveBeenCalledOnce();
-    expect(JSON.parse(String(log.mock.calls[0]?.[0]))).toEqual({
+    const line = JSON.parse(String(log.mock.calls[0]?.[0]));
+    expect(line).toEqual({
       evt: "http",
       kind: "unhandled",
       method: "GET",
       route: "/series",
       error: "TypeError",
       quota: false,
+      frames: expect.any(String),
     });
+    // Where it threw, without what it said.
+    const frames = String(line.frames).split("\n");
+    expect(frames.length).toBeGreaterThan(0);
+    expect(frames.every((frame) => frame.startsWith("at "))).toBe(true);
+    expect(line.frames).not.toMatch(/undefined|reading/);
     log.mockRestore();
   });
 });

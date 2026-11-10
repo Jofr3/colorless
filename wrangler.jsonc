@@ -12,6 +12,11 @@
   "compatibility_date": "2026-06-01",
   // No per-version preview URLs: only the deployed version is reachable.
   "preview_urls": false,
+  // Workers Logs for the script's invocations, so the 404s a stale tab's missing chunks get can be
+  // counted per version after a web deploy. Static hits never invoke the script and log nothing.
+  "observability": {
+    "enabled": true
+  },
   "assets": {
     // dist/.assetsignore (copied from public/) keeps the hidden source maps out.
     "directory": "./dist",

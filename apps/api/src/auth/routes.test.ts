@@ -272,7 +272,7 @@ describe("GET /auth/oauth/:provider/callback", () => {
       "no status for an exchange that never reached the provider",
       () => Promise.reject(new TypeError("network down")),
       "exchange",
-      { kind: "oauth_exchange", status: null, providerError: null },
+      { kind: "oauth_exchange", status: null, cause: "network", providerError: null },
     ],
     [
       "a free-text error as no code",
@@ -386,6 +386,7 @@ describe("GET /auth/oauth/:provider/callback", () => {
           kind: "oauth_exchange",
           provider: "google",
           status: null,
+          cause: "timeout",
           providerError: null,
         },
       ]);
