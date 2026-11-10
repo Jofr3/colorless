@@ -50,11 +50,16 @@ export function bundledPackages(sources: readonly string[]): string[] {
 }
 
 /** The flags the `deploy` script passes to `wrangler deploy`, from the `&&`-joined step that runs
-    it, or undefined when no step does. */
+    it, or undefined when no step does. The step is `wrangler deploy <flags>` itself, or a
+    release-gate run that ends in `-- wrangler deploy <flags>`, which runs it after its gates and
+    adds the commit's `--tag` and `--message` (scripts/release-gate.ts; those two only label the
+    version, so the dry run goes without them). */
 export function deployFlags(script: string): string[] | undefined {
   for (const step of script.split("&&")) {
-    const [bin, command, ...flags] = step.trim().split(/\s+/);
-    if (bin === "wrangler" && command === "deploy") return flags;
+    const words = step.trim().split(/\s+/);
+    const dash = words.indexOf("--");
+    const command = words[0] === "wrangler" ? words : dash >= 0 ? words.slice(dash + 1) : [];
+    if (command[0] === "wrangler" && command[1] === "deploy") return command.slice(2);
   }
   return undefined;
 }

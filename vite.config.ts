@@ -1,4 +1,6 @@
-import { existsSync, readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { defineConfig, loadEnv, type Plugin } from "vite";
 
 // Content-Security-Policy for the production HTML only, injected at build time so it does not break
@@ -55,11 +57,12 @@ function shareUrlsPlugin(siteOrigin: string): Plugin {
 // refuses a reference it can't version; dev only warns, since a missing file
 // there just means `build:lua` hasn't run. CI bundles without the Lua build
 // (it needs Balatro's source), so LOVE_VERSIONS_OPTIONAL=1 makes the build warn too.
-function loveVersionsPlugin(): Plugin {
+function loveVersionsPlugin(): Plugin & { strict: () => boolean } {
   const manifest = "public/love/versions.json";
   let strict = false;
   return {
     name: "love-versions",
+    strict: () => strict,
     configResolved(config) {
       strict = config.command === "build" && process.env.LOVE_VERSIONS_OPTIONAL !== "1";
     },
@@ -75,6 +78,58 @@ function loveVersionsPlugin(): Plugin {
         console.warn(problem);
         return match;
       });
+    },
+  };
+}
+
+// What a build is a build of, for the release (build audit DEP4): dist/build-info.json records the
+// commit, whether the tree had uncommitted changes, the origins baked in and whether the /love/
+// references were strictly versioned, and the page carries the commit as <meta name="build">
+// (`-dirty` appended for a changed tree). It never fails the build: `bun run e2e` builds in
+// production mode against a local API. `deploy:web`'s `web-dist` gate (apps/api/scripts/
+// release-gate.ts) refuses a dist/ that is not a clean build of HEAD for production, and
+// `web-health` reads the meta back from the deployed page. public/.assetsignore keeps the JSON
+// out of the deployed assets.
+function buildInfoPlugin(info: {
+  apiOrigin: string;
+  siteOrigin: string;
+  loveStrict: () => boolean;
+}): Plugin {
+  const git = (...args: string[]) => {
+    try {
+      return execFileSync("git", args, {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      }).trim();
+    } catch {
+      return undefined;
+    }
+  };
+  let commit: string | null = null;
+  let dirty = false;
+  return {
+    name: "build-info",
+    apply: "build",
+    buildStart() {
+      commit = git("rev-parse", "HEAD") ?? null;
+      dirty = git("status", "--porcelain") !== "";
+    },
+    transformIndexHtml(html) {
+      const build = `${commit ?? "unknown"}${dirty ? "-dirty" : ""}`;
+      return html.replace("<head>", `<head>\n    <meta name="build" content="${build}" />`);
+    },
+    writeBundle(options) {
+      const record = {
+        commit,
+        dirty,
+        apiOrigin: info.apiOrigin,
+        siteOrigin: info.siteOrigin,
+        loveStrict: info.loveStrict(),
+      };
+      writeFileSync(
+        join(options.dir ?? "dist", "build-info.json"),
+        `${JSON.stringify(record, null, 2)}\n`,
+      );
     },
   };
 }
@@ -122,12 +177,14 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd());
   const apiOrigin = (env.VITE_API_ORIGIN ?? "http://localhost:8787").replace(/\/+$/, "");
   const siteOrigin = (env.VITE_SITE_ORIGIN ?? "http://localhost:5175").replace(/\/+$/, "");
+  const loveVersions = loveVersionsPlugin();
   return {
     plugins: [
-      loveVersionsPlugin(),
+      loveVersions,
       cspPlugin(buildCsp(apiOrigin)),
       shareUrlsPlugin(siteOrigin),
       noticedPackagesPlugin(),
+      buildInfoPlugin({ apiOrigin, siteOrigin, loveStrict: loveVersions.strict }),
     ],
     server: {
       // The dev server's root is the repo root, so without this it serves any file in it, such as
@@ -149,10 +206,13 @@ export default defineConfig(({ mode }) => {
     build: {
       // Match the TypeScript target so output isn't down-levelled further than needed.
       target: "es2022",
-      // Emit source maps but don't reference them from the bundles ("hidden"), so
-      // production stack traces stay resolvable (error reporting) without shipping
-      // a //# sourceMappingURL that exposes source in end-users' devtools.
-      // public/.assetsignore keeps the maps out of the deployed assets.
+      // Emit source maps but don't reference them from the bundles ("hidden"), and
+      // public/.assetsignore keeps them out of the deployed assets, so end users'
+      // devtools get no source. Nothing collects browser errors (src/lib/reportError.ts
+      // only logs to the console), and the maps are not archived either: the bundles are
+      // byte-identical across rebuilds, so to resolve a stack trace from production,
+      // check out the release's tag (or the commit in the page's <meta name="build">)
+      // and rebuild (build audit ENV5).
       sourcemap: "hidden",
       // The rules engine loads as one lazy chunk with the game table (~620 kB,
       // ~150 kB gzipped); it splits no further, so the default 500 kB warning is noise.

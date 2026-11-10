@@ -1,7 +1,7 @@
 # Status — start here
 
 A Pokémon TCG deck builder and simulator: build decks from the real catalog, play them locally in
-a sandbox, or play them online against another account. Updated 2026-10-27.
+a sandbox, or play them online against another account. Updated 2026-11-10.
 
 ## Where things are
 
@@ -18,15 +18,15 @@ a sandbox, or play them online against another account. Updated 2026-10-27.
 
 - `bun run check` is the gate, and CI runs the same steps. It needs `BALATRO_SOURCE` pointing at a Balatro source checkout for the Lua tests and build.
 - `bun run dev:all` starts the web app and the API. The local D1 catalog setup is in `workstreams/backend-data.md`.
-- `bun run release` checks, migrates the remote D1, deploys the API, then the web app. First diff local and remote `print_key` as `conventions.md` describes, because the reprint alias table is generated from the local catalog.
+- `bun run release` checks, migrates the remote D1, deploys the API, then the web app, checks both, and tags the release `release-YYYYMMDD-HHMM`. First diff local and remote `print_key` as `conventions.md` describes, because the reprint alias table is generated from the local catalog.
 - After adding a `decisions.md` entry, run `bun run docs:index`.
 
 ## Current state
 
-- **Deployed:** everything on `main`, including the Phase 4 architecture work (2026-10-26).
+- **Deployed:** the 2026-11-09 release (`be8cf9b0`). Commits on `main` after it ship with the next release. From the build audit's Phase 1 on, the live commit is in `GET /health` (`version.tag`, the API) and the page's `<meta name="build">` (the web app), and each release has a `release-*` git tag (`workstreams/backend-data.md` §3.7.2).
 - **Card coverage:** the coverage program finished in October. `simulationGaps` lists text the engine still can't run, and the builder shows it on the card.
 - **Architecture audit:** Phases 0–4 are done (`decisions.md`, 2026-10-24 to 2026-10-26). Left out on purpose: H5 (explicit card-pool cache) and the host art-loader slice.
-- **Performance:** the 2026-10-27 work in `decisions.md` is on branch `perf`, not yet deployed. `bun run bench` is the engine benchmark; its fingerprint must not change in a pure performance change.
+- **Performance:** the 2026-10-27 work in `decisions.md` is deployed. `bun run bench` is the engine benchmark; its fingerprint must not change in a pure performance change.
 - **Deferred:** card readings left for a rulings review are the `R-…` entries in `decisions.md` and the "Ruling notes" in `reference/card-revision.md`.
 
 ## Docs

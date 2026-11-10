@@ -55,9 +55,11 @@ only the conclusion.
   and sharing them makes its timeouts flaky. CI runs the same three
   names, except that Lua tests needing Balatro's source are skipped there. Run
   `bun run format` before committing. `bun run release` runs check, the release
-  gates, the web build, the remote D1 migrations, the API deploy, the
-  `/health/db` check and then the web deploy, in that order, re-checking the
-  tree is clean at `origin/main` right before each deploy
+  gates (with the production advisory audit, and CI's result for HEAD printed,
+  not waited for), the web build, the remote D1 migrations, the API deploy, the
+  health check of the new version, the web deploy and its check, then tags the
+  release `release-YYYYMMDD-HHMM`, re-checking before each deploy that the tree
+  is clean at the remote's main and at the commit the release pinned
   (`docs/workstreams/backend-data.md` §3.7.2 has the recovery per step).
 - `tsc -b` checks the engine and the schema once: both are composite projects
   that emit declarations into their ignored `dist/`, and the app, the api and
@@ -609,7 +611,9 @@ transitive or dev packages. The weekly **Dependency report** workflow
    against the local bun and node, specs that differ between workspaces, the
    `compatibility_date` age, and the advisory and release pages of the five
    packages the Worker ships. Also read the latest Dependency report run
-   (`gh run list --workflow deps-report.yml`).
+   (`gh run list --workflow deps-report.yml`), and drop any line of
+   `scripts/audit-ignore.txt` whose advisory has a fix now: CI's audit and the
+   release's `audit` gate both skip what it lists.
 2. Read those five pages since the locked versions. An upstream repository
    advisory can take days to reach GitHub's database, and `bun audit` reads
    only that database: hono's of 2026-11-01 reached neither.

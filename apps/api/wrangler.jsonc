@@ -14,6 +14,12 @@
   "observability": {
     "enabled": true
   },
+  // The running version's id and its `--tag` (the commit's short sha, which
+  // scripts/release-gate.ts passes to `wrangler deploy`), returned by GET /health so the
+  // live commit can be named and `release:health` can wait for the new version (build audit ENV1).
+  "version_metadata": {
+    "binding": "CF_VERSION_METADATA"
+  },
   "vars": {
     // The web app's origin: CORS allow-origin (credentialed) + OAuth
     // post-login redirect target (§3.5). Production is the static frontend

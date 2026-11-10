@@ -11,6 +11,18 @@ describe("GET /health", () => {
     expect(res.status).toBe(200);
     const body = healthResponseSchema.parse(await res.json());
     expect(body.ok).toBe(true);
+    expect(body.version).toBeNull();
+  });
+
+  it("names the running version and its tag, uncached, so release:health can wait for it", async () => {
+    const res = await app.request("/health", undefined, {
+      CF_VERSION_METADATA: { id: "v-123", tag: "3d6b1a12", timestamp: "2026-11-10T00:00:00Z" },
+    });
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(healthResponseSchema.parse(await res.json()).version).toEqual({
+      id: "v-123",
+      tag: "3d6b1a12",
+    });
   });
 
   it("404s unknown routes", async () => {

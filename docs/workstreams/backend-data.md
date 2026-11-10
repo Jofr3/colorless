@@ -592,7 +592,7 @@ cd apps/api && bun scripts/ingest.ts --serie sv --remote
 | `bun run db:migrate:remote` **from the repo root** | ❌ **NO** — the root `package.json` has no such script. It is defined only in `apps/api/package.json`, so it must be run as `cd apps/api && bun run db:migrate:remote` (or `bun run --cwd apps/api db:migrate:remote`). Commit messages that quote the bare form are wrong. |
 | `cd apps/api && bun run db:migrate:remote` | ✅ `wrangler d1 migrations apply colorless --remote` |
 | `cd apps/api && bun scripts/ingest.ts --remote` | ✅ the script exists; `--remote` and `--serie` are real flags (`apps/api/scripts/ingest.ts`). Note it is `bun scripts/ingest.ts`, **not** `bun run` — there is no npm script wrapping it. |
-| `bun run api:deploy` (repo root) | ✅ `bun run --cwd apps/api deploy` → `release-gate.ts migrations clean-tree`, then `wrangler deploy` (§3.7.2) |
+| `bun run api:deploy` (repo root) | ✅ `bun run --cwd apps/api deploy` → `release-gate.ts migrations clean-tree ci -- wrangler deploy --minify`, which deploys with the commit's tag and message (§3.7.2) |
 | `cd apps/api && bun run db:migrate:local` | ✅ the local twin, used for the pre-flight |
 
 **Why step 3 has never run here.** `api.tcgdex.net` is refused by this
@@ -600,30 +600,108 @@ environment's network policy — the same wall D188, D194, D197 and D198 hit. Th
 ingest is the only step that needs the public internet; steps 1, 2 and 4 do not,
 and step 1 is therefore unblocked TODAY and should not wait for the backfill.
 
-#### 3.7.2 Release gates (2026-10-27)
+#### 3.7.2 Release gates (2026-10-27; identity and checks 2026-11-10, BLD-P1)
 
-`bun run release` runs, in order: `check` → `release:gate` (apps/api:
-fails unless the tree is clean at `origin/main`; fails unless the production
-Worker holds every secret in `apps/api/src/requiredSecrets.ts`, today
-`PASSWORD_PEPPER` and `LOG_TAG_KEY`, read with `wrangler secret list`, which
-shows names only, and prints the `wrangler secret put` lines to run; then
-records the remote Time Travel bookmark, then fails unless the local and remote
-catalogs agree on every card's `print_key`, because the engine's
-`PROGRAM_ALIAS` table is generated from the local one) → `build` (the web
-bundle, before anything remote changes; `build:lua` needs `BALATRO_SOURCE`) →
-`db:migrate:remote` → `api:deploy` → `release:health` → `deploy:web`. The API
-`deploy` script first runs `release-gate.ts migrations clean-tree`: it fails
-unless every file in `drizzle/` is applied remotely, so a bare `api:deploy`
-cannot ship a Worker ahead of its migrations (the D203 incident above), and
-then re-checks the tree. `deploy:web` re-checks the tree and runs `wrangler
-deploy` on the `dist/` that `build` made; `bun run deploy` is `build` then
-`deploy:web`. The tree is checked again right before each `wrangler deploy`
-because other agents share the checkout and wrangler ships what is on disk at
-that moment. `release:health` (`release-gate.ts health`) asks the deployed API
-for `GET /health/db` (three tries, five seconds apart) and fails unless it
-reads D1 and counts as many migrations as `drizzle/` has files; it reads the
-origin from `.env.production`, and `API_ORIGIN=http://localhost:8787` points it
-at a local `wrangler dev`. All these gates only read production.
+`bun run release` runs, in order:
+
+1. `check`.
+2. `release:gate` (apps/api), whose steps are:
+   - `pin`: writes HEAD to `tmp/release.json`, so the rest of the release can
+     require that commit. It refuses while another commit's release holds a pin
+     younger than 15 minutes. A pin of the same commit is an earlier, failed
+     run of this release, and it is taken over.
+   - `clean-tree`: no uncommitted changes, and HEAD is the remote's main, read
+     with `git ls-remote` (a Dependabot merge on GitHub leaves the local
+     `origin/main` behind).
+   - `audit`: `bun scripts/audit.ts`, the production advisory audit CI runs,
+     with the same dated ignore list (`scripts/audit-ignore.txt`). It blocks.
+   - `ci`: prints CI's result for HEAD (static, lua, test, mutants) from
+     `gh api …/commits/<sha>/check-runs`. It never blocks: CI usually is
+     still running at this point, and local `check` ran the same suites.
+   - `secrets`: the production Worker holds every secret in
+     `apps/api/src/requiredSecrets.ts` (`PASSWORD_PEPPER`, `LOG_TAG_KEY`,
+     `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`). It reads `wrangler secret
+     list`, which shows names only, and prints the `wrangler secret put` lines
+     to run.
+   - `bookmark`: records the remote Time Travel bookmark.
+   - `versions`: records each Worker's running version (`wrangler
+     deployments status`).
+   - `print-keys`: the local and remote catalogs agree on every card's
+     `print_key`, because the engine's `PROGRAM_ALIAS` table is generated from
+     the local one.
+3. `build`: the web bundle, before anything remote changes. `build:lua` needs
+   `BALATRO_SOURCE`. Vite writes `dist/build-info.json` (commit, dirty tree,
+   origins, strict `/love/` versions) and puts the commit in the page as
+   `<meta name="build">`.
+4. `db:migrate:remote`.
+5. `api:deploy`.
+6. `release:health`.
+7. `deploy:web`.
+8. `release:finish`.
+
+When any step fails, `release-gate.ts abort` drops the pin and the release
+exits 1.
+
+The API `deploy` script is `release-gate.ts migrations clean-tree ci --
+wrangler deploy --minify`. It fails unless every file in `drizzle/` is applied
+remotely, so a bare `api:deploy` cannot ship a Worker ahead of its migrations
+(the D203 incident above). Then it re-checks the tree, prints CI's line, and
+runs `wrangler deploy --minify --tag <short sha> --message <commit subject>`.
+
+`deploy:web` is `release-gate.ts clean-tree web-dist ci -- wrangler deploy`,
+then `web-health`. `web-dist` refuses a `dist/` that is not a clean build of
+HEAD, a lenient Lua build, origins other than `.env.production`'s, and a site
+origin that is not the API's `APP_ORIGIN`. A bare `deploy:web` after new
+commits therefore says to rebuild with `bun run deploy`, which is `build` then
+`deploy:web`.
+
+The tree is checked again right before each `wrangler deploy`, because other
+agents share the checkout and wrangler ships what is on disk at that moment.
+While a release holds the pin, that check also requires HEAD to be the pinned
+commit, so a commit pushed mid-release is never deployed by it.
+
+`release:health` (`release-gate.ts health`) checks the deployed API in three
+stages, each tried up to six times, five seconds apart:
+
+1. `GET /health` names the version tagged with the released commit
+   (`version.tag`, from the `CF_VERSION_METADATA` binding).
+2. `GET /health/db` reads D1 and counts as many migrations as `drizzle/` has
+   files.
+3. `GET /sets` answers 200 and `GET /auth/me` answers 401, both as JSON.
+
+It reads the origin from `.env.production`. `API_ORIGIN=http://localhost:8787`
+points it at a local `wrangler dev`, and `HEALTH_TAG=<tag>` (`*` for any)
+replaces the tag it waits for, for example after a rollback.
+
+`web-health`, the last step of `deploy:web`, fetches the site and needs two
+things. The page's `<meta name="build">` must be the released commit. Every
+`/assets/` and `/love/` file the page references must answer 200, and a script
+or style that comes back as `text/html` counts as missing, because the SPA
+fallback serves `index.html` for a missing file.
+
+`release:finish` does four things:
+
+1. Appends a line to `tmp/releases.log`: the time, the tag, the commit, each
+   Worker's version before and after, the bookmark, and the balatro-source
+   commit from `dist/love/asset-manifest.json`.
+2. Prints the release notes, which are the commit subjects since the previous
+   `release-*` tag.
+3. Tags HEAD `release-YYYYMMDD-HHMM` (UTC, annotated with the log line) and
+   pushes the tag.
+4. Drops the pin.
+
+All the gates only read production.
+
+**Which commit is live.** `curl -s
+https://colorless-api.jofrescari.workers.dev/health` gives `version.tag` (the
+API's commit). The page source's `<meta name="build">` gives the web's commit.
+`bunx wrangler deployments list` shows each version's tag and message. `git tag
+--list 'release-*'` and `tmp/releases.log` hold the release history.
+
+**A dead pin.** A release killed before `abort` ran (a closed terminal) leaves
+`tmp/release.json` for 15 minutes. Releasing the same commit again takes it
+over. To release another commit sooner, run `bun
+apps/api/scripts/release-gate.ts unlock`, but only when no release is running.
 
 **Before releasing, run `bun run e2e`** (`scripts/e2e.ts`; needs `CHROMIUM`, or
 chromium on PATH, and `BALATRO_SOURCE`; about 70 s). It is the one check of the
@@ -649,9 +727,10 @@ earliest line for it in `tmp/d1-bookmarks.log`). From `apps/api` unless noted:
 | --- | --- | --- |
 | `check`, `release:gate`, `build` | Nothing changed. | Fix what it printed and release again. |
 | `db:migrate:remote` | The files before the failing one are applied; the failing one rolled back (one transaction per file). The old Worker reads the expanded schema fine. | A transient error: release again. A SQL error: fix the file (it is not applied remotely), commit, push, release again. |
-| `api:deploy` | New schema, old Worker. | Release again, or `bun run api:deploy`, then `bun run release:health`, then `bun run deploy:web` from the repo root (rebuild with `bun run deploy` if the tree changed since `build`). |
-| `release:health` | New Worker, which cannot read D1 or sees another migration count. | A D1 error: `evt = "d1", kind = "health_failed"` in Workers Logs (§3.7.4) carries the error and cause names and `quota`. `quota: true` is a spent daily quota (wait for 00:00 UTC); otherwise it is a binding or schema problem (`bunx wrangler d1 migrations list colorless --remote`): fix it, rerun `bun run release:health`. Bad code: `bunx wrangler deployments list`, then `bunx wrangler rollback <version id> -m "<why>"` to the version before the release, and check `/health/db` again. The schema stays: the old Worker reads it (expand, then contract). |
-| `deploy:web` | New API, old web app; fine when the API change kept the old client working, as an API-first release should. | `bun run deploy` from the repo root. A bad web build: `bunx wrangler deployments list` and `bunx wrangler rollback <version id>` from the repo root (Worker `colorless`). |
+| `api:deploy` | New schema, old Worker. | Release again, or `bun run api:deploy`, then `bun run release:health`, then `bun run deploy:web` from the repo root (`web-dist` refuses a `dist/` built at another commit: then `bun run deploy`). |
+| `release:health` | New Worker, which cannot read D1, sees another migration count or fails a route; or the new version never answered `/health`. | The tag never matched: `bunx wrangler deployments list` shows whether the deploy took; rerun `bun run release:health` once it has. A D1 error: `evt = "d1", kind = "health_failed"` in Workers Logs (§3.7.4) carries the error and cause names and `quota`. `quota: true` is a spent daily quota (wait for 00:00 UTC); otherwise it is a binding or schema problem (`bunx wrangler d1 migrations list colorless --remote`): fix it, rerun `bun run release:health`. Bad code (a failed `/sets` or `/auth/me` probe, or D1 errors from the code): `bunx wrangler rollback <version id> -m "<why>"` to the version before the release (the `versions` line it printed), and check `HEALTH_TAG='*' bun run release:health` again. The schema stays: the old Worker reads it (expand, then contract). |
+| `deploy:web` (`web-dist`, the deploy, `web-health`) | New API, and the old web app, or a new one `web-health` found broken. The old web app is fine when the API change kept the old client working, as an API-first release should. | `bun run deploy` from the repo root, then `bun run --cwd apps/api release:finish` if the pin is still there (`abort` dropped it otherwise, and the release goes untagged; tag it by hand as below). A bad web build: `bunx wrangler deployments list` and `bunx wrangler rollback <version id>` from the repo root (Worker `colorless`). |
+| `release:finish` | Both new. Only the record is missing: the log line, the tag, or its push. | It prints the `git tag -a … && git push origin refs/tags/…` to run. A missing log line can be rebuilt from `bunx wrangler deployments list` (both Workers) and `tmp/d1-bookmarks.log`. |
 
 Never revert or edit a migration file that is applied remotely: undo it with a
 new migration. A rollback of the API across a change of
@@ -720,7 +799,7 @@ bunx wrangler d1 time-travel restore colorless --timestamp=2026-10-27T09:00:00Z
 bun scripts/release-gate.ts migrations    # "not applied remotely" = the restore rewound a migration
 bun run db:check -- --remote
 bunx wrangler kv key put catalog:epoch $(date +%s) --binding CACHE --remote
-bun run release:health
+HEALTH_TAG='*' bun run release:health    # any version: the live one may not be HEAD's
 ```
 
 **A restore that crosses a release.** Time Travel rewinds `d1_migrations` with
@@ -951,12 +1030,14 @@ spends at most a few misses a minute, and a 429 there shows the search's "Try
 again" message. The limit slows a careless loop but not a determined one (one
 address can still read about 150k rows a minute).
 
-**After every deploy**, check that the Worker reaches D1 and that the remote
+**After every deploy**, check that the new version answers, that it reaches D1 and that the remote
 migration count matches the files; `release` runs this as `release:health`:
 
 ```sh
-cd apps/api && bun run release:health
+cd apps/api && bun run release:health    # HEALTH_TAG='*' when the live version is not HEAD's
 # The same by hand:
+curl -fsS https://colorless-api.jofrescari.workers.dev/health
+# {..., "version":{"id":"<version id>","tag":"<short sha>"}}: the live API's commit.
 curl -fsS https://colorless-api.jofrescari.workers.dev/health/db
 # {"ok":true,"migrations":13}, where 13 = `ls apps/api/drizzle/*.sql | wc -l`.
 # 503 {"ok":false}: a D1 error (binding, schema, quota); the reason is not in

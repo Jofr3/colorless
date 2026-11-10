@@ -30,6 +30,9 @@ export type Env = {
   /** Per-IP Workers rate limit on GET /cards queries that scan the catalog
       (src/catalog/searchLimit.ts). Absent in unit tests. */
   CATALOG_SEARCH_LIMIT?: Generated["CATALOG_SEARCH_LIMIT"];
+  /** The running Worker version's id and `--tag` (the deployed commit's short sha, empty for a
+      version deployed without one), for GET /health. Absent in unit tests. */
+  CF_VERSION_METADATA?: Generated["CF_VERSION_METADATA"];
   /** The web app's origin — CORS allow-origin + OAuth post-login redirect
       target (§3.5). wrangler.jsonc `vars` holds the production origin; the
       `dev` script overrides it with `--var APP_ORIGIN:http://localhost:5175`
