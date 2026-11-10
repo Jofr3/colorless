@@ -90,9 +90,11 @@ or sign-in breaks.
 
 ### API secrets
 
-The API needs two Worker secrets besides the Google ones, and `bun run release`
-refuses to release until both exist (`release:gate` step `secrets`, which only
-lists secret names):
+`bun run release` refuses to release until the Worker holds four secrets
+(`release:gate` step `secrets`, which only lists secret names): the Google
+client's `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` (see Google login below),
+and these two. A missing Google secret only answers 503 to someone who tries
+Google sign-in, so the gate is what notices it.
 
 | Secret | What it does | If it is lost |
 |---|---|---|
