@@ -72,6 +72,7 @@ the script after adding a decision.
 | 2026-11-10 | Observability audit Phase 4: a 6-hourly production watch from GitHub Actions, retried, that never fails on a… | decisions.md:1890 |
 | 2026-11-10 | Observability audit Phases 1, 2 and 4 merged | decisions.md:1911 |
 | 2026-11-10 | Observability audit Phase 3: prod:report: production usage, latency, 5xx, D1, thresholds and SLOs in one read… | decisions.md:1915 |
+| 2026-11-10 | Observability audit released | decisions.md:2004 |
 
 ## Numbered decisions
 

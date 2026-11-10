@@ -2000,3 +2000,16 @@ Phase 3 of the observability audit (MET2 with METX1, MET5, MET6, OPS2, OPS3, OPS
   - an abandoned seat counted as completed.
 - `bun run check` green: 752 files, 17,408 tests (with `BALATRO_SOURCE`, which a worktree needs for `check:lua`).
 - **Merged** into `obs` after Phases 1, 2 and 4 (only `mutants.ts` conflicted, append-only).
+
+### 2026-11-10 — Observability audit released
+
+`main` b00fa6d3 released as `release-20261110-1331`: API da6bfe40 (from 99fbfdba), web 8e86d8ea. Checked in production right after:
+
+- The live script settings show `redact_query_string: true` and `issues.enabled: true` on `colorless-api`, and observability on for `colorless`.
+- On da6bfe40, 0 of 10 invocation events kept a query string, two `?obsprobe=…` requests included; the version before kept them.
+- `bun scripts/prod-watch.ts` printed `PROD OK` on b00fa6d3.
+- `prod:report --release` exited 0. Its one warn is the latency SLO: p95 1,111 ms over 39 core-route requests, set by cold `/cards/index` builds. That stays a warn, to be revisited after a month of reports.
+- **Still open:**
+  - whether a `console.info` line now carries a level (the next `d1 sweep` line, or a sign-in; `bun tmp/obs/probe/logs/levels.ts 24`);
+  - the user's Real-Time Issue notification;
+  - the first `workflow_dispatch` run of Production watch and GitHub's Actions failure email.
