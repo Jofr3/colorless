@@ -70140,4 +70140,14 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: [],
     killedByCommand: ["bun", "x", "biome", "ci", ".", "--error-on-warnings"],
   },
+  {
+    id: "DEP-P7-redirect-guard-loses-its-slash",
+    decision: "DEP-P7",
+    what: "sanitizeRedirect's guard, rewritten as an optional chain for Biome 2's useOptionalChain, checks only that the value exists and no longer that it starts with /, so an absolute URL passes as a redirect.",
+    file: "apps/api/src/auth/oauth.ts",
+    symbol: "sanitizeRedirect",
+    find: '  if (!raw?.startsWith("/") || raw.startsWith("//") || raw.includes("\\\\")) {',
+    replace: '  if (!raw || raw.startsWith("//") || raw.includes("\\\\")) {',
+    expectKilledBy: ["apps/api/src/auth/oauth.test.ts"],
+  },
 ];
