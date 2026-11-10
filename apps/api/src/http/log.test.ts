@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   logErrorThrottled,
+  logErrorThrottledBy,
   logEvent,
   logEventThrottled,
   logEventThrottledBy,
@@ -67,5 +68,22 @@ describe("logEvent", () => {
       '{"evt":"auth","kind":"pepper_missing"}',
       '{"evt":"auth","kind":"pepper_missing","suppressed":1}',
     ]);
+  });
+
+  it("throttles each `by` value of an error-level kind on its own", () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    logErrorThrottledBy("endTurn", "lobby", "action_threw", { type: "endTurn" }, 1000, 0);
+    logErrorThrottledBy("endTurn", "lobby", "action_threw", { type: "endTurn" }, 1000, 10);
+    logErrorThrottledBy("attack", "lobby", "action_threw", { type: "attack" }, 1000, 20);
+    logErrorThrottled("lobby", "action_threw", {}, 1000, 30);
+    logErrorThrottledBy("endTurn", "lobby", "action_threw", { type: "endTurn" }, 1000, 1500);
+    expect(error.mock.calls.map(([line]) => line)).toEqual([
+      '{"evt":"lobby","kind":"action_threw","type":"endTurn"}',
+      '{"evt":"lobby","kind":"action_threw","type":"attack"}',
+      '{"evt":"lobby","kind":"action_threw"}',
+      '{"evt":"lobby","kind":"action_threw","type":"endTurn","suppressed":1}',
+    ]);
+    expect(warn).not.toHaveBeenCalled();
   });
 });

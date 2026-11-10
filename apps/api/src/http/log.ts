@@ -70,6 +70,18 @@ export function logErrorThrottled(
   throttled(logError, `${evt}:${kind}`, evt, kind, fields, intervalMs, now);
 }
 
+/** logError, throttled per `by` value like logEventThrottledBy. */
+export function logErrorThrottledBy(
+  by: string,
+  evt: string,
+  kind: string,
+  fields: LogFields = {},
+  intervalMs = 10 * 60 * 1000,
+  now = Date.now(),
+): void {
+  throttled(logError, `${evt}:${kind}#${by}`, evt, kind, fields, intervalMs, now);
+}
+
 function throttled(
   log: (evt: string, kind: string, fields: LogFields) => void,
   key: string,
