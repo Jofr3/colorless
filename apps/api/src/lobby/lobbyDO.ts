@@ -29,6 +29,8 @@ import { resolveAccountFromCookie, type SessionAccount } from "../auth/resolveSe
 import { describeError } from "../http/errors";
 import {
   type LogFields,
+  logError,
+  logErrorThrottledBy,
   logEvent,
   logEventThrottled,
   logEventThrottledBy,
@@ -382,22 +384,48 @@ export class LobbyDO {
     if (typeof message !== "string") return;
     const frame = parseClientMessage(message);
     if (frame === null) return; // §3.6: anything that doesn't validate is dropped
-    if (isOverflow(ws)) return await this.turnAway(ws, frame);
-    const snapshot = await this.loadSnapshot();
+    // A throw here (a storage write refused: the day's quota spent, a value too large) escapes to
+    // the runtime, whose exception event names no lobby. One line under the lobby's code first,
+    // then the same error, so the invocation still fails as it would have (ERR3).
+    try {
+      if (isOverflow(ws)) return await this.turnAway(ws, frame);
+      await this.dispatch(ws, frame, await this.loadSnapshot());
+    } catch (error) {
+      await this.frameFailed(frame.kind, error);
+      throw error;
+    }
+  }
 
+  private async dispatch(
+    ws: WebSocket,
+    frame: LobbyClientMessage,
+    snapshot: LobbyState | null,
+  ): Promise<void> {
     switch (frame.kind) {
       case "hello":
-        return this.onHello(ws, frame, snapshot);
+        return await this.onHello(ws, frame, snapshot);
       case "intent":
-        return this.onIntent(ws, frame, snapshot);
+        return await this.onIntent(ws, frame, snapshot);
       case "action":
-        return this.onAction(ws, frame, snapshot);
+        return await this.onAction(ws, frame, snapshot);
       case "reject":
-        return this.onReject(ws, frame, snapshot);
+        return await this.onReject(ws, frame, snapshot);
       case "bye":
-        return this.onBye(ws, frame, snapshot);
+        return await this.onBye(ws, frame, snapshot);
       case "rematch":
-        return this.onRematch(ws, frame, snapshot);
+        return await this.onRematch(ws, frame, snapshot);
+    }
+  }
+
+  /** The `frame_failed` line for a frame whose handling threw, at error level and throttled per
+      frame kind (a client re-sends its hello while the failure lasts). It never throws itself, so
+      the caller rethrows the original error. */
+  private async frameFailed(frame: LobbyClientMessage["kind"], error: unknown): Promise<void> {
+    try {
+      const line = await this.failureFields({ frame, error: describeError(error) });
+      logErrorThrottledBy(frame, "lobby", "frame_failed", line);
+    } catch {
+      // Nothing may replace the error being rethrown.
     }
   }
 
@@ -535,13 +563,14 @@ export class LobbyDO {
     // The clock stamps the appended log rows' elapsed time.
     const outcome = applyMatchAction(record, seat, frame.action, this.deps.now());
     if (!outcome.ok) {
-      // A throw is refused like any move, and logged (throttled: a client can repeat the frame).
-      // `type` passed the allowlist to reach the engine, so it is one of a fixed set of names, and
-      // each has its own throttle: a second engine bug is not hidden behind the first.
+      // A throw is refused like any move, and logged at error level, since the engine is meant
+      // to be total (throttled: a client can repeat the frame). `type` passed the allowlist to
+      // reach the engine, so it is one of a fixed set of names, and each has its own throttle: a
+      // second engine bug is not hidden behind the first.
       if ("thrown" in outcome) {
         const error = describeError(outcome.thrown);
         const type = frame.action.type;
-        await this.log("action_threw", { type, error }, type);
+        logErrorThrottledBy(type, "lobby", "action_threw", await this.fields({ type, error }));
       }
       this.send(ws, { kind: "reject-action", reason: outcome.reason });
       return;
@@ -551,6 +580,7 @@ export class LobbyDO {
     const { state, log } = outcome.record;
     if (state === record.state && log.length === record.log.length) return;
     await this.match.put(outcome.record);
+    await this.matchEnded(record, outcome.record);
     await this.touchActivity();
     // A trimmed log no longer continues the one every socket holds, so it goes out whole.
     const logFrom = outcome.logTrimmed ? undefined : record.log.length;
@@ -693,7 +723,7 @@ export class LobbyDO {
       // Logged and not rethrown: the `finally` re-arms the alarm, and that is the retry. The
       // runtime's own retry on top would run the same pass twice.
       this.retryNotBefore = this.deps.now() + ALARM_RETRY_MS;
-      await this.log("alarm_failed", { error: describeError(error) });
+      logError("lobby", "alarm_failed", await this.failureFields({ error: describeError(error) }));
     } finally {
       // Always, so one failed pass cannot leave the liveness sweep, the countdown and the
       // forfeit clocks with nothing to wake them.
@@ -1211,22 +1241,28 @@ export class LobbyDO {
         "match_refused",
         MATCH_START_FAILED_REASON,
         describeError(error),
+        true,
       );
     }
     if (!begun.ok) return await this.failedStart("match_refused", begun.reason);
     await this.match.put(begun.record);
     await this.state.storage.delete(CHOOSER_KEY);
+    // One line per match begun (MET3). A rematch is another under the same lobby code.
+    await this.info("match_started");
     return { kind: "started" };
   }
 
   /** A handoff that could not start the match, logged by `cause` (the reason the players see
-      carries their names, so it stays out of the log). */
+      carries their names, so it stays out of the log). `threw` marks the engine throwing, a code
+      defect, which logs at error level; a D1 failure or a refused deck is a warning. */
   private async failedStart(
     cause: "d1_error" | "deck_unresolved" | "match_refused",
     reason: string,
     error?: string,
+    threw = false,
   ): Promise<HandoffResult> {
-    await this.log("handoff_failed", { cause, error });
+    if (threw) logError("lobby", "handoff_failed", await this.fields({ cause, error }));
+    else await this.log("handoff_failed", { cause, error });
     return { kind: "failed", reason };
   }
 
@@ -1578,6 +1614,7 @@ export class LobbyDO {
     await this.match.put(outcome.record);
     await this.touchActivity();
     await this.info("forfeit", { seat, cause });
+    await this.matchEnded(load.record, outcome.record, cause);
     const logFrom = outcome.logTrimmed ? undefined : load.record.log.length;
     await this.broadcastMatch(outcome.record, snapshot, { logFrom });
   }
@@ -1623,24 +1660,64 @@ export class LobbyDO {
   }
 
   /**
+   * The `match_ended` line when `after` finished the game `before` was still playing (MET3), with
+   * how it ended: the engine's reason for a win (`prizesTaken`, `noPokemon`, `deckOut`,
+   * `cardEffect`, `conceded`), `tie`, or the forfeit's `left` or `abandoned`; the turn it ended on,
+   * and how long the match ran. No name, seat or account.
+   */
+  private async matchEnded(
+    before: MatchRecord,
+    after: MatchRecord,
+    forfeit?: "abandoned" | "left",
+  ): Promise<void> {
+    const { phase } = after.state;
+    if (before.state.phase.kind === "gameOver" || phase.kind !== "gameOver") return;
+    const { outcome } = phase;
+    await this.info("match_ended", {
+      cause: forfeit ?? (outcome.result === "win" ? outcome.reason : "tie"),
+      turns: after.state.turn,
+      durationMs: this.deps.now() - after.startedAt,
+    });
+  }
+
+  /**
    * One `lobby` log line at warn level, tagged with this lobby's code (log.ts says what fields may
    * carry: never a player-typed string). `throttled` caps a line that repeats for as long as an
    * outage lasts; a string throttles each such value on its own, so one cause cannot hide another.
+   * A code defect logs at error level through log.ts directly, with `fields`.
    */
   private async log(
     kind: string,
     fields: LogFields = {},
     throttled: boolean | string = false,
   ): Promise<void> {
-    const line = { lobby: await this.logCode(), ...fields };
+    const line = await this.fields(fields);
     if (typeof throttled === "string") logEventThrottledBy(throttled, "lobby", kind, line);
     else if (throttled) logEventThrottled("lobby", kind, line);
     else logEvent("lobby", kind, line);
   }
 
-  /** A `lobby` line at info level, for the lobby's normal course (a forfeit, its expiry). */
+  /** A `lobby` line at info level, for the lobby's normal course (a match, a forfeit, its expiry). */
   private async info(kind: string, fields: LogFields = {}): Promise<void> {
-    logInfo("lobby", kind, { lobby: await this.logCode(), ...fields });
+    logInfo("lobby", kind, await this.fields(fields));
+  }
+
+  /** `fields` tagged with this lobby's code, as every `lobby` line is. */
+  private async fields(fields: LogFields): Promise<LogFields> {
+    return { lobby: await this.logCode(), ...fields };
+  }
+
+  /** `fields` for a line about a failure that may be storage's own: the code is read from memory
+      first, and a storage read that fails as well leaves it null rather than throwing over the
+      failure being logged (ERR3). */
+  private async failureFields(fields: LogFields): Promise<LogFields> {
+    let lobby: string | null = null;
+    try {
+      lobby = await this.logCode();
+    } catch {
+      // Storage is failing too; the line goes out without the code.
+    }
+    return { lobby, ...fields };
   }
 
   private async logCode(): Promise<string | null> {

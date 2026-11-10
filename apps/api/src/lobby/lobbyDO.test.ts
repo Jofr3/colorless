@@ -51,10 +51,12 @@ const STALE_REASON =
 let h: LobbyHarness;
 let warn: MockInstance<typeof console.warn>;
 let info: MockInstance<typeof console.info>;
+let errors: MockInstance<typeof console.error>;
 
 beforeEach(() => {
   warn = vi.spyOn(console, "warn").mockImplementation(() => {});
   info = vi.spyOn(console, "info").mockImplementation(() => {});
+  errors = vi.spyOn(console, "error").mockImplementation(() => {});
   h = createLobbyHarness({
     seed: drbgSeed(42),
     displayNames: new Map([
@@ -75,8 +77,11 @@ afterEach(() => {
 });
 
 /** The fields of every `lobby` log line of `kind` written so far at `level` (warn by default). */
-function logged(kind: string, level: "warn" | "info" = "warn"): Record<string, unknown>[] {
-  return (level === "warn" ? warn : info).mock.calls
+function logged(
+  kind: string,
+  level: "warn" | "info" | "error" = "warn",
+): Record<string, unknown>[] {
+  return { warn, info, error: errors }[level].mock.calls
     .map(([line]) => JSON.parse(String(line)) as Record<string, unknown>)
     .filter((line) => line.evt === "lobby" && line.kind === kind);
 }
@@ -403,7 +408,9 @@ describe("LobbyDO — the match RNG (MI1)", () => {
     expect(wire).not.toContain(key);
     expect(wire).not.toContain("rngState");
     expect(wire).not.toContain("chacha20");
-    expect(JSON.stringify([warn.mock.calls, info.mock.calls])).not.toContain(key);
+    expect(JSON.stringify([warn.mock.calls, info.mock.calls, errors.mock.calls])).not.toContain(
+      key,
+    );
   });
 });
 
@@ -621,6 +628,7 @@ describe("LobbyDO — disconnects", () => {
     expect(logged("forfeit", "info")).toEqual([
       { evt: "lobby", kind: "forfeit", lobby: "ABCD", seat: "p2", cause: "abandoned" },
     ]);
+    expect(logged("match_ended", "info")).toMatchObject([{ lobby: "ABCD", cause: "abandoned" }]);
 
     const emptiedAt = h.world.now;
     await h.drop(host);
@@ -1017,6 +1025,8 @@ describe("LobbyDO — failures", () => {
         error: "Error: D1_ERROR: Network connection lost.",
       },
     ]);
+    // A D1 outage is a degradation the handoff handles, not a defect (OBS-P2).
+    expect(logged("handoff_failed", "error")).toEqual([]);
   });
 
   it("drops both back with a reason when starting the match throws", async () => {
@@ -1035,10 +1045,19 @@ describe("LobbyDO — failures", () => {
     expect(snapshot.phase).toBe("selecting");
     expect([snapshot.host.ready, snapshot.guest?.ready]).toEqual([false, false]);
     expect(matchKeys()).toEqual([]);
-    expect(logged("handoff_failed")).toMatchObject([
-      { cause: "match_refused", error: "Error: engine threw" },
+    // The engine is meant to be total, so its throw is a code defect: error level (OBS-P2).
+    expect(logged("handoff_failed", "error")).toEqual([
+      {
+        evt: "lobby",
+        kind: "handoff_failed",
+        lobby: "ABCD",
+        cause: "match_refused",
+        error: "Error: engine threw",
+      },
     ]);
-    expect(logged("alarm_failed")).toEqual([]);
+    expect(logged("handoff_failed")).toEqual([]);
+    expect(logged("alarm_failed", "error")).toEqual([]);
+    expect(logged("match_started", "info")).toEqual([]);
     expect(h.storage.alarm).toBe(h.world.now + SEATED_LIVENESS_SWEEP_MS);
   });
 
@@ -1053,13 +1072,16 @@ describe("LobbyDO — failures", () => {
     // The countdown's deadline is past, yet each failed pass waits before the next.
     for (const pass of [1, 2]) {
       await h.fireAlarm();
-      expect(logged("alarm_failed")).toHaveLength(pass);
+      expect(logged("alarm_failed", "error")).toHaveLength(pass);
       expect(h.storage.alarm).toBe(h.world.now + ALARM_RETRY_MS);
     }
-    expect(logged("alarm_failed")[0]).toMatchObject({
+    expect(logged("alarm_failed", "error")[0]).toEqual({
+      evt: "lobby",
+      kind: "alarm_failed",
       lobby: "ABCD",
       error: "Error: SQLITE_TOOBIG",
     });
+    expect(logged("alarm_failed")).toEqual([]);
     fail = false;
     await h.fireAlarm();
     expect(snapshotOf(host).phase).toBe("in-game");
@@ -1091,9 +1113,97 @@ describe("LobbyDO — failures", () => {
     };
     const ready = intent("h", { type: "set-ready", ready: true });
     await expect(h.send(host, ready)).rejects.toThrow("SQLITE_TOOBIG");
+    // The frame's failure is a line under the lobby's code before the error goes on (ERR3).
+    expect(logged("frame_failed", "error")).toEqual([
+      {
+        evt: "lobby",
+        kind: "frame_failed",
+        lobby: "ABCD",
+        frame: "intent",
+        error: "Error: SQLITE_TOOBIG",
+      },
+    ]);
     await h.send(host, ready);
     expect(snapshotOf(host).host.ready).toBe(true);
     expect(readSnapshot(h.storage.data.get("snapshot"))?.host.ready).toBe(true);
+    expect(logged("frame_failed", "error")).toHaveLength(1);
+  });
+
+  it("logs a failed frame once per frame kind, rethrowing the frame's own error when the code read fails too", async () => {
+    const { host } = await seatBoth();
+    // A woken instance holds no snapshot, so both the frame and the line's code read storage.
+    h.hibernate();
+    const get = h.storage.get.bind(h.storage) as (key: string) => Promise<unknown>;
+    let reads = 0;
+    h.storage.get = (async () => {
+      reads++;
+      throw new Error(`read ${String(reads)} failed`);
+    }) as typeof h.storage.get;
+    const pick = intent("h", { type: "select-deck", deckId: "deck-ana", deckName: "A" });
+    await expect(h.send(host, pick)).rejects.toThrow("read 1 failed");
+    expect(reads).toBe(2);
+    await expect(h.send(host, pick)).rejects.toThrow("read 3 failed");
+    await expect(h.send(host, hello("h"))).rejects.toThrow("read 5 failed");
+    expect(logged("frame_failed", "error")).toEqual([
+      {
+        evt: "lobby",
+        kind: "frame_failed",
+        lobby: null,
+        frame: "intent",
+        error: "Error: read 1 failed",
+      },
+      {
+        evt: "lobby",
+        kind: "frame_failed",
+        lobby: null,
+        frame: "hello",
+        error: "Error: read 5 failed",
+      },
+    ]);
+    h.storage.get = get as typeof h.storage.get;
+    await h.send(host, pick);
+    expect(readSnapshot(h.storage.data.get("snapshot"))?.host.deckId).toBe("deck-ana");
+  });
+});
+
+describe("LobbyDO — match lines (MET3)", () => {
+  it("logs each match's start and its end with the cause, turn and duration, and a rematch's start", async () => {
+    const { host, guest } = await startedMatch();
+    expect(logged("match_started", "info")).toEqual([
+      { evt: "lobby", kind: "match_started", lobby: "ABCD" },
+    ]);
+    const { startedAt } = await storedMatch();
+    h.world.now += 90_000;
+    await h.send(guest, { kind: "action", action: { type: "concede" } });
+    // A concede once the game is over changes nothing and logs nothing.
+    await h.send(host, { kind: "action", action: { type: "concede" } });
+    expect(logged("match_ended", "info")).toEqual([
+      {
+        evt: "lobby",
+        kind: "match_ended",
+        lobby: "ABCD",
+        cause: "conceded",
+        turns: (await storedMatch()).state.turn,
+        durationMs: h.world.now - startedAt,
+      },
+    ]);
+    await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
+    await readyUp(host, "h", "deck-ana");
+    await readyUp(guest, "g", "deck-bo");
+    await h.fireAlarm();
+    expect(logged("match_started", "info")).toHaveLength(2);
+    expect(logged("match_ended", "info")).toHaveLength(1);
+  });
+
+  it("ends a match left mid-game as `left`, after its forfeit line", async () => {
+    const { guest } = await startedMatch();
+    await h.send(guest, { kind: "bye", from: seatIdOf("g"), slot: "guest" });
+    const kinds = info.mock.calls
+      .map(([line]) => JSON.parse(String(line)) as Record<string, unknown>)
+      .filter((line) => line.evt === "lobby")
+      .map((line) => line.kind);
+    expect(kinds.slice(-2)).toEqual(["forfeit", "match_ended"]);
+    expect(logged("match_ended", "info")).toMatchObject([{ cause: "left", turns: 0 }]);
   });
 });
 
