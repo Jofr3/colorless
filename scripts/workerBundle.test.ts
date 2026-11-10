@@ -3,6 +3,7 @@ import {
   bundledPackages,
   deployFlags,
   deployProblems,
+  observabilityProblems,
   shippedDependencies,
   uploadsSourceMaps,
 } from "./worker-bundle";
@@ -68,6 +69,37 @@ describe("worker-bundle deploy flags", () => {
     ]);
     expect(deployProblems(["--minify"], false)).toEqual([
       'apps/api/wrangler.jsonc does not set `"upload_source_maps": true`',
+    ]);
+  });
+
+  it("refuses an API config without logs, query redaction or Workers Issues", () => {
+    const config = (body: string) =>
+      `{\n  "main": "src/index.ts",\n  "observability": {\n${body}\n  },\n  "vars": { "enabled": true }\n}`;
+    const missing = (setting: string) =>
+      `apps/api/wrangler.jsonc does not set \`observability.${setting}: true\``;
+    const on = '    "enabled": true,\n    // why\n    "redact_query_string": true,';
+    expect(observabilityProblems(config(`${on}\n    "issues": { "enabled": true }`))).toEqual([]);
+    expect(observabilityProblems(config(on))).toEqual([missing("issues.enabled")]);
+    expect(
+      observabilityProblems(config(`${on}\n    "issues": {\n      "enabled": false\n    }`)),
+    ).toEqual([missing("issues.enabled")]);
+    // Issues' own `enabled` does not stand in for the logs' one, nor does one outside the block.
+    expect(
+      observabilityProblems(
+        config('    "redact_query_string": true,\n    "issues": { "enabled": true }'),
+      ),
+    ).toEqual([missing("enabled")]);
+    expect(
+      observabilityProblems(
+        config(
+          '    "enabled": true,\n    // "redact_query_string": true,\n    "issues": { "enabled": true }',
+        ),
+      ),
+    ).toEqual([missing("redact_query_string")]);
+    expect(observabilityProblems('{ "main": "src/index.ts" }')).toEqual([
+      missing("enabled"),
+      missing("redact_query_string"),
+      missing("issues.enabled"),
     ]);
   });
 

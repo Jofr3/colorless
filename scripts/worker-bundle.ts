@@ -70,6 +70,41 @@ export function uploadsSourceMaps(config: string): boolean {
   return /^\s*"upload_source_maps"\s*:\s*true\b/m.test(config);
 }
 
+/** The body of a wrangler.jsonc's `observability` object, without its full-line comments, or
+    an empty string when there is none. */
+function observabilityBlock(config: string): string {
+  const text = config
+    .split("\n")
+    .filter((line) => !/^\s*\/\//.test(line))
+    .join("\n");
+  const start = /"observability"\s*:\s*\{/.exec(text);
+  if (start === null) return "";
+  const open = start.index + start[0].length;
+  let depth = 1;
+  for (let i = open; i < text.length; i++) {
+    if (text[i] === "{") depth++;
+    else if (text[i] === "}" && --depth === 0) return text.slice(open, i);
+  }
+  return "";
+}
+
+/** What `--check` refuses in the API's `observability` settings: logs off, query strings kept in
+    the invocation log (observability audit decision 1a), or Workers Issues off (decision 2a). A
+    deploy without `issues` turns Issues off, so the config is the only place it lives. */
+export function observabilityProblems(config: string): string[] {
+  const block = observabilityBlock(config);
+  const issues = /"issues"\s*:\s*\{([^{}]*)\}/.exec(block);
+  const own = issues === null ? block : block.replace(issues[0], "");
+  const on = (text: string, key: string) => new RegExp(`"${key}"\\s*:\\s*true\\b`).test(text);
+  const missing = (setting: string) =>
+    `apps/api/wrangler.jsonc does not set \`observability.${setting}: true\``;
+  return [
+    ...(on(own, "enabled") ? [] : [missing("enabled")]),
+    ...(on(own, "redact_query_string") ? [] : [missing("redact_query_string")]),
+    ...(issues !== null && on(issues[1] ?? "", "enabled") ? [] : [missing("issues.enabled")]),
+  ];
+}
+
 /** What `--check` refuses in the deploy itself: a `deploy` script that does not run
     `wrangler deploy --minify` (the budget would gate a bundle that never ships), or a config that
     does not upload the source maps a minified bundle's stack traces need. */
@@ -159,10 +194,11 @@ function main(): void {
   const flags = deployFlags(typeof scripts.deploy === "string" ? scripts.deploy : "");
   const check = process.argv.includes("--check");
   // Before the build: with `"upload_source_maps": false` the dry run writes no map to read.
-  const deploy = deployProblems(
-    flags,
-    uploadsSourceMaps(readFileSync(repoPath("apps/api/wrangler.jsonc"), "utf8")),
-  );
+  const config = readFileSync(repoPath("apps/api/wrangler.jsonc"), "utf8");
+  const deploy = [
+    ...deployProblems(flags, uploadsSourceMaps(config)),
+    ...observabilityProblems(config),
+  ];
   if (check && deploy.length > 0) fail(`worker-bundle: FAIL — ${deploy.join("; ")}.`);
   const { kib, locales, testOnly, packages } = measure(flags ?? []);
   console.log(
