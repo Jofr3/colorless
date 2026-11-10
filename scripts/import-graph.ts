@@ -31,13 +31,15 @@ export const RECORDED_CYCLE: readonly string[] = [
 
 /**
  * Relative imports allowed to cross a root, as `from -> specifier`. The web app under `src` is not a
- * package, so a script reading from it has no package entry to go through.
+ * package, so a script reading from it has no package entry to go through. prod-watch runs in a
+ * workflow with no install, where no workspace package resolves.
  */
 export const ALLOWED_CROSSINGS: readonly string[] = [
   "scripts/lua-constants.ts -> ../src/host/mailboxes",
   "scripts/lua-constants.ts -> ../src/lua/wireFields",
   "scripts/e2e.ts -> ../src/host/mailboxes",
   "scripts/e2e.ts -> ../src/lua/wireFields",
+  "scripts/prod-watch.ts -> ../apps/api/src/releaseChecks",
 ];
 
 /** The web page's one module script. */

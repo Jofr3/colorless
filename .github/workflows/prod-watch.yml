@@ -1,0 +1,35 @@
+name: Production watch
+
+# Whether production answers, from outside, every 6 hours: the API's /health,
+# /health/db and two routes, and the web page with every file it references
+# (scripts/prod-watch.ts). Read-only GETs with no secret. A failed run is the
+# alert: GitHub mails it under this workflow's name, apart from CI's, and the
+# job's annotation starts PROD DOWN. The script retries each check before
+# failing and never fails on a 4xx (rate limiting), so a red run means a 5xx,
+# no answer, a timeout or a wrong body. The probe imports nothing outside the
+# repository, so the job needs Bun and no install: one short job, billed
+# one minute a run. The minute past the hour avoids the top-of-hour queue,
+# where GitHub delays and drops scheduled runs.
+on:
+  schedule:
+    - cron: "41 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Probe production
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
+      - name: Probe production
+        run: bun scripts/prod-watch.ts
