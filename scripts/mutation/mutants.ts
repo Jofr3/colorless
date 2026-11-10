@@ -70472,6 +70472,7 @@ export const MUTANTS: Mutant[] = [
     decision: "BLD-P5",
     what: "The 404 for a missing build file may be stored, so a browser keeps the miss for a chunk name a web rollback makes valid again.",
     file: "src/notFoundWorker.ts",
+    symbol: "NOT_FOUND_HEADERS",
     find: '  "cache-control": "no-store",',
     replace: '  "cache-control": "public, max-age=31536000, immutable",',
     expectKilledBy: ["src/notFoundWorker.test.ts"],
