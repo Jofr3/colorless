@@ -70457,4 +70457,23 @@ export const MUTANTS: Mutant[] = [
     replace: "  if (token === undefined)\n    return {\n      error: `deploy token: none at",
     expectKilledBy: ["apps/api/src/releaseChecks.test.ts"],
   },
+  {
+    id: "BLD-P5-love-miss-becomes-the-page",
+    decision: "BLD-P5",
+    what: "The web Worker's script treats only /assets/ as build files, so a missing /love/ file is answered with index.html again, the HTML a stale tab then runs as the game's script.",
+    file: "src/notFoundWorker.ts",
+    symbol: "isBuildFile",
+    find: '  return pathname.startsWith("/assets/") || pathname.startsWith("/love/");',
+    replace: '  return pathname.startsWith("/assets/");',
+    expectKilledBy: ["src/notFoundWorker.test.ts"],
+  },
+  {
+    id: "BLD-P5-missing-chunk-cached",
+    decision: "BLD-P5",
+    what: "The 404 for a missing build file may be stored, so a browser keeps the miss for a chunk name a web rollback makes valid again.",
+    file: "src/notFoundWorker.ts",
+    find: '  "cache-control": "no-store",',
+    replace: '  "cache-control": "public, max-age=31536000, immutable",',
+    expectKilledBy: ["src/notFoundWorker.test.ts"],
+  },
 ];

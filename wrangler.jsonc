@@ -1,16 +1,22 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  // The web frontend: a static-assets-only Worker (no script) serving the
+  // The web frontend: a static-assets Worker, with a script only for misses, serving the
   // Vite build. `bun run deploy` builds it in production mode, which reads
   // VITE_API_ORIGIN from .env.production; the api (apps/api) lists this
   // Worker's origin as its APP_ORIGIN.
   "name": "colorless",
+  // Runs only on an asset miss that is not a page navigation: a 404 no-store under /assets/ and
+  // /love/, index.html elsewhere (src/notFoundWorker.ts, build audit DEP6). Static hits never
+  // invoke it, so it adds no requests to the Free plan's count for them.
+  "main": "src/notFoundWorker.ts",
   "compatibility_date": "2026-06-01",
   // No per-version preview URLs: only the deployed version is reachable.
   "preview_urls": false,
   "assets": {
     // dist/.assetsignore (copied from public/) keeps the hidden source maps out.
     "directory": "./dist",
+    // The script's handle on the static assets, for the index.html it serves.
+    "binding": "ASSETS",
     // Every page path (/decks, /online/CODE, …) gets the host page, which
     // routes on the path; unknown paths open home.
     "not_found_handling": "single-page-application"
