@@ -70,13 +70,13 @@ describe("journalRefusal", () => {
     expect(journalRefusal("/j.json", () => false)).toBeUndefined();
   });
 
-  it("refuses from the command, before reading what is pushed", () => {
+  it("refuses from the command, even when the push has nothing to check", () => {
     const dir = mkdtempSync(join(tmpdir(), "pre-push-test-"));
     try {
       const journal = join(dir, "journal.json");
       writeFileSync(journal, JSON.stringify({ pid: 1 }));
       const run = spawnSync("bun", [repoPath("scripts/pre-push.ts"), "origin"], {
-        input: `refs/heads/main ${A} refs/heads/main ${B}\n`,
+        input: `(delete) ${ZERO} refs/heads/old ${B}\n`,
         env: { ...process.env, MUTATION_JOURNAL_PATH: journal },
         encoding: "utf8",
       });

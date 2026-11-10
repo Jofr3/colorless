@@ -133,9 +133,15 @@ async function main(): Promise<number> {
     const gitleaksOnPath = spawnSync("gitleaks", ["version"]).error === undefined;
     const notes: string[] = [];
     const steps: Promise<Step>[] = [];
+    const biome = [
+      "ci",
+      ".",
+      "--error-on-warnings",
+      ...(process.stdout.isTTY ? [] : ["--colors=off"]),
+    ];
     for (const [sha, dir] of trees) {
       const at = tips.length > 1 ? ` @ ${sha.slice(0, 12)}` : "";
-      steps.push(run(`biome ci${at}`, localBin("biome"), ["ci", ".", "--error-on-warnings"], dir));
+      steps.push(run(`biome ci${at}`, localBin("biome"), biome, dir));
       steps.push(
         run(`decision-index --check${at}`, "bun", ["scripts/decision-index.ts", "--check"], dir),
       );
@@ -151,8 +157,9 @@ async function main(): Promise<number> {
         notes.push(`${push.localRef}: ${skip}`);
         continue;
       }
-      const args = ["git", "--no-banner", "--redact", "--config", config, `--log-opts=${range}`];
-      steps.push(run(`gitleaks ${push.localRef}`, "gitleaks", [...args, REPO_ROOT], REPO_ROOT));
+      const args = ["git", "--no-banner", "--redact", "--verbose", "--log-level=warn"];
+      args.push("--config", config, `--log-opts=${range}`, REPO_ROOT);
+      steps.push(run(`gitleaks ${push.localRef}`, "gitleaks", args, REPO_ROOT));
     }
 
     const results = await Promise.all(steps);
