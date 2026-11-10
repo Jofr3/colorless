@@ -59,6 +59,11 @@ the script after adding a decision.
 | 2026-11-09 | Vitest 5, with the module cache's new key and path | decisions.md:1576 |
 | 2026-11-10 | Biome 2.6.6, with the migrated config and its lint fixes | decisions.md:1589 |
 | 2026-11-10 | Build and CI/CD audit safety nets: CI keeps its static signal, the mutant sample cannot silently lose its dif… | decisions.md:1613 |
+| 2026-11-10 | Release identity and gates: every deploy names its commit, deploy:web cannot ship a stale dist, and the relea… | decisions.md:1626 |
+| 2026-11-10 | CI efficiency and secret scanning: one setup action, a bounded install cache, three jobs, and gitleaks on eve… | decisions.md:1674 |
+| 2026-11-10 | Lua build: the package uuid comes from game.data, so the build is reproducible and the IndexedDB package surv… | decisions.md:1695 |
+| 2026-11-10 | An opt-in pre-push hook runs Biome, the decision index and, when installed, gitleaks on the commits being pus… | decisions.md:1712 |
+| 2026-11-10 | Production only, no staging environment; the build audit's merge and what is left | decisions.md:1730 |
 
 ## Numbered decisions
 
