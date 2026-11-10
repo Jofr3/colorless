@@ -42,7 +42,8 @@ const DENIED_KEYS = new Set([
 const DENIED_KEY_PARTS = /email|password|token|cookie|secret/i;
 
 /** Where each log function takes its `evt` and `kind`; `kind` may be absent with a default. */
-const CALLS: Readonly<Record<string, { evt: number; kind: number; defaultKind?: string }>> = {
+type CallSpec = { evt: number; kind: number; defaultKind?: string };
+const CALLS: Readonly<Record<string, CallSpec>> = {
   logInfo: { evt: 0, kind: 1 },
   logEvent: { evt: 0, kind: 1 },
   logError: { evt: 0, kind: 1 },
@@ -110,7 +111,7 @@ function bracketed(code: string, text: string, start: number) {
   const keys: { key: string; at: number }[] = [];
   let argStart = start + 1;
   for (let i = start; i < code.length; i++) {
-    const c = code[i];
+    const c = code.charAt(i);
     if (OPEN.includes(c)) stack.push(c);
     else if (CLOSE.includes(c)) {
       stack.pop();
@@ -127,7 +128,7 @@ function bracketed(code: string, text: string, start: number) {
       const match = KEY.exec(code);
       const quoted = match?.indices?.[3];
       if (match && match[1] === undefined) {
-        const key = quoted ? text.slice(quoted[0] + 1, quoted[1] - 1) : match[2];
+        const key = quoted ? text.slice(quoted[0] + 1, quoted[1] - 1) : (match[2] ?? "");
         keys.push({ key, at: i + 1 });
       }
     }
@@ -150,14 +151,14 @@ function runbookKinds(runbook: string): Map<string, Set<string>> | null {
   const kinds = new Map<string, Set<string>>();
   const add = (evt: string, words: string) => {
     const set = kinds.get(evt) ?? new Set();
-    for (const [, word] of words.matchAll(/`(\w+)`/g)) set.add(word);
+    for (const [, word = ""] of words.matchAll(/`(\w+)`/g)) set.add(word);
     kinds.set(evt, set);
   };
   for (const line of section.split("\n")) {
-    const row = line.match(/^\| `evt = "(\w+)"` \|(.*)$/);
-    if (row) add(row[1], row[2]);
-    const lobbyKinds = line.match(/^\| ((?:`[a-z_]+`(?: \*t\*)?(?:, )?)+) \|/);
-    if (lobbyKinds) add("lobby", lobbyKinds[1]);
+    const [, evt, words = ""] = line.match(/^\| `evt = "(\w+)"` \|(.*)$/) ?? [];
+    if (evt !== undefined) add(evt, words);
+    const [, lobbyKinds] = line.match(/^\| ((?:`[a-z_]+`(?: \*t\*)?(?:, )?)+) \|/) ?? [];
+    if (lobbyKinds !== undefined) add("lobby", lobbyKinds);
   }
   return kinds;
 }
@@ -189,15 +190,16 @@ export function logGuardReport(files: readonly ApiSource[], runbook: string): Re
 
     for (const match of code.matchAll(CALL)) {
       if (/\bfunction\s*$/.test(code.slice(0, match.index))) continue;
-      const lobbyMethod = match[2] !== undefined;
-      if (lobbyMethod && path !== LOBBY) continue;
+      const [, callee, lobbyMethod] = match;
+      if (lobbyMethod !== undefined && path !== LOBBY) continue;
+      const spec = callee === undefined ? undefined : CALLS[callee];
       const { args, keys } = bracketed(code, text, match.index + match[0].length - 1);
       checkKeys(keys);
       const raw = args.map(([from, to]) => text.slice(from, to).trim());
-      const spec = lobbyMethod ? { evt: -1, kind: 0 } : CALLS[match[1]];
-      const evt = spec.evt === -1 ? "lobby" : literal(raw[spec.evt] ?? "");
-      const kind = raw[spec.kind] === undefined ? spec.defaultKind : literal(raw[spec.kind]);
-      const head = `${path} ${match[1] ?? `this.${match[2]}`}(${raw.slice(0, spec.kind + 1).join(", ")})`;
+      const evt = spec === undefined ? "lobby" : literal(raw[spec.evt] ?? "");
+      const kindArg = raw[spec?.kind ?? 0];
+      const kind = kindArg === undefined ? spec?.defaultKind : literal(kindArg);
+      const head = `${path} ${callee ?? `this.${lobbyMethod}`}(${raw.slice(0, (spec?.kind ?? 0) + 1).join(", ")})`;
       if (evt === undefined || kind === undefined) {
         if (!FORWARDERS.has(head)) {
           problems.push(`  ${where(match.index)}: evt and kind must be string literals`);
