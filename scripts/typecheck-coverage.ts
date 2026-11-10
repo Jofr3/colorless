@@ -16,7 +16,12 @@ const EXTENSIONS = ["ts", "tsx", "mts", "cts"];
 
 /** JavaScript that ships or builds the app, checked with `// @ts-check` and `checkJs`: a directory
  * (trailing slash) or one file. Other JavaScript (tests and one-off tools) stays unchecked. */
-const CHECKED_JS = ["frontend/lua/web/", "frontend/lua/build.mjs"];
+const CHECKED_JS = [
+  "frontend/lua/web/",
+  "frontend/lua/build.mjs",
+  "frontend/lua/packageUuid.mjs",
+  "frontend/lua/watch.mjs",
+];
 const JS_EXTENSIONS = ["js", "mjs", "cjs"];
 
 const isCheckedJs = (file: string) =>

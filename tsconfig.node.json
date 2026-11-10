@@ -6,5 +6,11 @@
     "allowJs": true,
     "checkJs": true
   },
-  "include": ["vite.config.ts", "vitest.config.ts", "frontend/lua/build.mjs"]
+  "include": [
+    "vite.config.ts",
+    "vitest.config.ts",
+    "frontend/lua/build.mjs",
+    "frontend/lua/packageUuid.mjs",
+    "frontend/lua/watch.mjs"
+  ]
 }

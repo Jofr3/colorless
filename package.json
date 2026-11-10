@@ -11,7 +11,7 @@
     "node": ">=22.12"
   },
   "scripts": {
-    "dev": "bun run build:lua && vite --host 127.0.0.1 --port 5175 --strictPort",
+    "dev": "bun run build:lua && node frontend/lua/watch.mjs vite --host 127.0.0.1 --port 5175 --strictPort",
     "dev:all": "bun run --parallel dev api:dev",
     "dev:tailnet": "bun scripts/dev-tailnet.ts",
     "build": "tsc -b && bun run build:lua && vite build",
