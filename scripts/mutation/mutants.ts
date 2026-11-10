@@ -70672,4 +70672,14 @@ export const MUTANTS: Mutant[] = [
     replace: '  ["an IPv6 address", /\\b[0-9a-f]{1,4}(?::[0-9a-f]{1,4}){3,7}\\b/i],',
     expectKilledBy: ["apps/api/src/prodReport.test.ts"],
   },
+  {
+    id: "OBS-P3-abandoned-counts-as-completed",
+    decision: "OBS-P3",
+    what: "An abandoned seat counts as a completed match, so the share a desync or a client crash would lower stays put.",
+    file: "apps/api/src/prodReport.ts",
+    symbol: "UNFINISHED",
+    find: 'const UNFINISHED = new Set<string>(["abandoned"]);',
+    replace: "const UNFINISHED = new Set<string>([]);",
+    expectKilledBy: ["apps/api/src/prodReport.test.ts"],
+  },
 ];

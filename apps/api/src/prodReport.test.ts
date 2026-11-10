@@ -296,20 +296,27 @@ describe("matches", () => {
     expect(matchLines([])).toEqual(["no match lines yet"]);
   });
 
-  it("counts a game ended by its rules as completed, and an unknown cause as other", () => {
+  it("counts every ending but an abandoned seat as completed, and an unknown cause as other", () => {
     expect(
       matchLines([
-        { kind: "match_started", cause: undefined, count: 10 },
-        { kind: "match_ended", cause: "win", count: 5 },
-        { kind: "match_ended", cause: "concede", count: 1 },
-        { kind: "match_ended", cause: "forfeit", count: 2 },
-        { kind: "match_ended", cause: "abandoned", count: 1 },
-        { kind: "match_ended", cause: "a typed reason", count: 0 },
+        { kind: "match_started", cause: undefined, count: 12 },
+        { kind: "match_ended", cause: "prizesTaken", count: 5 },
+        { kind: "match_ended", cause: "conceded", count: 1 },
+        { kind: "match_ended", cause: "tie", count: 1 },
+        { kind: "match_ended", cause: "left", count: 1 },
+        { kind: "match_ended", cause: "abandoned", count: 2 },
+        { kind: "match_ended", cause: "a typed reason", count: 1 },
       ]),
     ).toEqual([
-      "match completion: 8 of 10 started (80%)",
-      "ended 9: win 5, concede 1, forfeit 2, abandoned 1, other 0; still open or unlogged 1",
+      "match completion: 9 of 12 started (75%)",
+      "ended 11: prizesTaken 5, conceded 1, tie 1, left 1, abandoned 2, other 1; not ended (still playing, retired, wiped or kicked) 1",
     ]);
+  });
+
+  it("reports ended matches whose start fell outside the window", () => {
+    expect(matchLines([{ kind: "match_ended", cause: "deckOut", count: 2 }])[0]).toBe(
+      "match completion: 2 completed, but no match_started line in the window",
+    );
   });
 });
 

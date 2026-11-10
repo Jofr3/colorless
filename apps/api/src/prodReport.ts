@@ -382,10 +382,21 @@ export const latencyLevel = (p95: number | undefined): Level =>
 
 // ---- Online matches ----
 
-/** `match_ended`'s causes. win, concede and forfeit end a game by its rules; abandoned and error
-    are a match nobody finished. */
-export const MATCH_CAUSES = ["win", "concede", "forfeit", "abandoned", "error"] as const;
-const COMPLETED = new Set<string>(["win", "concede", "forfeit"]);
+/** `match_ended`'s causes: the engine's reasons for a win, a tie, and the two forfeits. Any other
+    value is printed as `other`, never by name. */
+export const MATCH_CAUSES = [
+  "prizesTaken",
+  "noPokemon",
+  "deckOut",
+  "cardEffect",
+  "conceded",
+  "tie",
+  "left",
+  "abandoned",
+] as const;
+/** The ending that is not a finished game: a player who disconnected and never came back, which
+    is what a desync or a client crash looks like from the lobby. */
+const UNFINISHED = new Set<string>(["abandoned"]);
 
 export function matchLines(
   rows: readonly { kind: string; cause: string | undefined; count: number }[],
@@ -401,7 +412,7 @@ export function matchLines(
     byCause.set(known, (byCause.get(known) ?? 0) + count);
   }
   const total = [...byCause.values()].reduce((sum, n) => sum + n, 0);
-  const completed = [...byCause].filter(([c]) => COMPLETED.has(c)).reduce((s, [, n]) => s + n, 0);
+  const completed = [...byCause].filter(([c]) => !UNFINISHED.has(c)).reduce((s, [, n]) => s + n, 0);
   const causes = [...MATCH_CAUSES, "other"]
     .filter((c) => byCause.has(c))
     .map((c) => `${c} ${fmtInt(byCause.get(c) ?? 0)}`);
@@ -409,7 +420,7 @@ export function matchLines(
     started === 0
       ? `match completion: ${fmtInt(completed)} completed, but no match_started line in the window`
       : `match completion: ${fmtInt(completed)} of ${fmtInt(started)} started (${fmtPct(completed / started, 0)})`,
-    `ended ${fmtInt(total)}${causes.length > 0 ? `: ${causes.join(", ")}` : ""}; still open or unlogged ${fmtInt(Math.max(started - total, 0))}`,
+    `ended ${fmtInt(total)}${causes.length > 0 ? `: ${causes.join(", ")}` : ""}; not ended (still playing, retired, wiped or kicked) ${fmtInt(Math.max(started - total, 0))}`,
   ];
 }
 
