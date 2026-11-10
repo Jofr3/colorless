@@ -51,7 +51,7 @@
     "@colorless/schema": "workspace:*"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
+    "@biomejs/biome": "2.6.6",
     "@colorless/api": "workspace:*",
     "@types/node": "^22.20.5",
     "@typescript/typescript6": "^6.0.2",

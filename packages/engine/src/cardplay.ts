@@ -659,7 +659,9 @@ export function rareCandyOptions(state: GameState, seat: Seat): RareCandyOption[
     if (stage2Uids.length > 0) options.push({ target, basicUid: uid, stage2Uids });
   };
   consider(side.active, { spot: "active" });
-  side.bench.forEach((pokemon, index) => consider(pokemon, { spot: "bench", index }));
+  side.bench.forEach((pokemon, index) => {
+    consider(pokemon, { spot: "bench", index });
+  });
   return options;
 }
 

@@ -485,14 +485,22 @@ export function boardRows(
       for (const e of a?.energies ?? []) f.noteArt(e);
       for (const t of a?.tools ?? []) f.noteArt(t);
     };
-    hand.forEach((c, i) => cardRow(c, "hand", i));
+    hand.forEach((c, i) => {
+      cardRow(c, "hand", i);
+    });
     if (side.active) cardRow(side.active, "active", 0);
-    side.bench.forEach((c, i) => cardRow(c, "bench", i));
+    side.bench.forEach((c, i) => {
+      cardRow(c, "bench", i);
+    });
     for (const prize of side.faceUpPrizes) cardRow(prize.card, "prize", prize.index);
-    piles[owner].played.forEach((c, i) => cardRow(c, "played", i));
+    piles[owner].played.forEach((c, i) => {
+      cardRow(c, "played", i);
+    });
     // Send every public discard in its authoritative order so simultaneous
     // cost discards and turn cleanup can animate without guessing the top.
-    piles[owner].discard.forEach((c, i) => cardRow(c, "discard", i));
+    piles[owner].discard.forEach((c, i) => {
+      cardRow(c, "discard", i);
+    });
   }
   if (v.board.stadium) {
     const c = v.board.stadium;

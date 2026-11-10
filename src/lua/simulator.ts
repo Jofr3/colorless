@@ -289,7 +289,7 @@ export class LuaSimulator {
     const v = this.view();
     this.promptKey = this.key(v);
     // The table answers only its own decisions, and the source takes the automatic ones.
-    if (!v || v.waitingOn !== "you" || autoStepFor(v)) return;
+    if (v?.waitingOn !== "you" || autoStepFor(v)) return;
     const p = v.phase;
     if (p.kind === "effect:choose" && p.prompt)
       this.menu = effectMenu(this, p.prompt, selectedCounterSource);
@@ -299,7 +299,7 @@ export class LuaSimulator {
    * as a card row; both steps are skipped when the choice is forced. */
   retreat(promote?: number) {
     const v = this.view();
-    if (!v || v.phase.kind !== "turn:action") return;
+    if (v?.phase.kind !== "turn:action") return;
     if (promote === undefined) {
       this.show(retreatBenchMenu(v, (bench) => this.retreat(bench)));
       return;

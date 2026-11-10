@@ -171,7 +171,9 @@ export function candidateActions(state: GameState, seat: Seat): GameAction[] {
       return out;
     }
     case "ko:promote":
-      side.bench.forEach((_, benchIndex) => out.push({ type: "promote", seat, benchIndex }));
+      side.bench.forEach((_, benchIndex) => {
+        out.push({ type: "promote", seat, benchIndex });
+      });
       return out;
     case "effect:choose":
       for (const choice of choiceCandidates(phase.prompt))
@@ -207,9 +209,9 @@ export function candidateActions(state: GameState, seat: Seat): GameAction[] {
   const active = side.active;
   if (active !== null)
     for (const discardEnergy of prefixes(active.energy, 0, active.energy.length))
-      side.bench.forEach((_, promoteBenchIndex) =>
-        out.push({ type: "retreat", seat, discardEnergy, promoteBenchIndex }),
-      );
+      side.bench.forEach((_, promoteBenchIndex) => {
+        out.push({ type: "retreat", seat, discardEnergy, promoteBenchIndex });
+      });
   for (const target of targets) {
     const body = target.spot === "active" ? side.active : side.bench[target.index];
     const uid = body === null || body === undefined ? undefined : topUid(body);

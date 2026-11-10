@@ -14,14 +14,14 @@ import { localBin, REPO_ROOT, repoPath, repoSourceFiles } from "./lib/repo";
 /** Extensions Biome lints that hold hand-written source in this repo. */
 const EXTENSIONS = ["ts", "tsx", "mts", "cts", "js", "jsx", "mjs", "cjs"];
 
-/** Generated files that biome.json's `files.ignore` lists on purpose: nobody edits them, and a
+/** Generated files that biome.json's `files.includes` excludes (`!`) on purpose: nobody edits them, and a
     check:static step checks them against their generator instead. */
 const GENERATED = new Set([
   // `wrangler types` output (bun run --cwd apps/api types), checked by scripts/worker-types.ts.
   "apps/api/worker-configuration.d.ts",
 ]);
 
-/** Cap the per-file drill-down so a wholly-empty `include` prints a page, not a book. */
+/** Cap the per-file drill-down so a wholly-empty `includes` prints a page, not a book. */
 const MAX_NAMED = 25;
 
 const BIOME = localBin("biome");
@@ -138,7 +138,7 @@ fail(
     `${files.length - checked} file(s) in this repo are linted by NOTHING.\n\n`,
     `Directories that came up short:\n${shortDirs.join("\n")}\n\n`,
     `Files Biome cannot see:\n${named}${more}\n\n`,
-    "Fix by widening `files.include` in biome.json (NOT by deleting this check).\n",
+    "Fix by widening `files.includes` in biome.json (NOT by deleting this check).\n",
     "This is D212: a lint step that exits 0 on an empty file set is not coverage.",
   ].join(""),
 );

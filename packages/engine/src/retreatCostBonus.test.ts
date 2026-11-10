@@ -34,6 +34,7 @@ import {
   setActiveFromDeck,
   activeOf,
 } from "./testFixtures";
+import { present } from "./fixtures/values";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
@@ -255,7 +256,7 @@ describe("§2 — the clause row: one PARAMETERISED member, two arms, and the an
     expect(read?.count).toEqual({ kind: "boardCondition", cond: COND });
     // The `{C}{C}` glyph is stored as the NUMBER 2 — the arity the fold returns —
     // never as the printed brace pair.
-    expect((read?.count as { cond: { count: number } }).cond.count).toBe(2);
+    expect((present(read).count as { cond: { count: number } }).cond.count).toBe(2);
     expect(read?.per).toBe(Number(BONUS.exec(TAKEN)?.[2]));
     expect(read?.per).toBe(110);
   });

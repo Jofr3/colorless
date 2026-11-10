@@ -40,6 +40,7 @@ import {
   findEvent,
   roundTrip,
 } from "./testFixtures";
+import { present } from "./fixtures/values";
 
 const ENERGY_PILE = "This attack does 20 more damage for each Energy card in your discard pile.";
 const ETHAN_PILE =
@@ -228,7 +229,9 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
       seat: "opponent",
       filter: { kind: "basicEnergy" },
     });
-    expect((bonus?.count as { filter: { energyType?: string } }).filter.energyType).toBeUndefined();
+    expect(
+      (present(bonus).count as { filter: { energyType?: string } }).filter.energyType,
+    ).toBeUndefined();
   });
 
   it("THE SEAT/FOLD CONFOUND, MEASURED — and then broken on CONSTRUCTED text", () => {
@@ -241,7 +244,7 @@ describe("§2 — the two anchors, the vocabulary, and the seat/fold confound", 
       const multiply = deriveAttackDamageMultiplier(s);
       const read = bonus ?? multiply;
       expect(read).not.toBeNull();
-      const seat = (read?.count as { seat: string }).seat;
+      const seat = (present(read).count as { seat: string }).seat;
       expect(bonus === null ? "opponent" : "you", `${s} breaks the confound`).toBe(seat);
     }
 

@@ -529,6 +529,7 @@ describe("§1 — the prints and the registry rows", () => {
     expect(shared.sort()).toEqual(["me03-062", "me03-107", "me03-121"]);
   });
 
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: the title quotes the key's format, `${uid}:${name}`.
   it("`abilityUsedKey` keys a TRIGGERED row exactly as an activated one — `${uid}:${name}`", () => {
     const zero = (programFor(PALAFIN)?.triggered ?? [])[0];
     if (zero === undefined) throw new Error("no trigger");
@@ -632,6 +633,7 @@ describe('§2 — Misty\'s Psyduck "Flustered Leap" (benchOnly, bottom mill, dec
     expect(refused(after, use("Flustered Leap", bench(0))).code).toBe("ABILITY_ALREADY_USED");
   });
 
+  // biome-ignore lint/suspicious/noTemplateCurlyInString: the title quotes the key's format, `${uid}:${name}`.
   it("R-FL (UNRULED half): the SAME card replayed later in the turn stays locked by its `${uid}:Flustered Leap` key", () => {
     const { state: leapt } = run(leapBoard(), use("Flustered Leap", bench(0)));
     const psyduck = leapt.players.p1.deck[0] as string;

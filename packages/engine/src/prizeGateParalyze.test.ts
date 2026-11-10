@@ -554,7 +554,9 @@ describe("D517 §7 — the price, and both version constants", () => {
             }
           });
         }
-        v.forEach((el, i) => walk(el, `${where}[${i}]`));
+        v.forEach((el, i) => {
+          walk(el, `${where}[${i}]`);
+        });
         return;
       }
       if (v === null || typeof v !== "object") return;

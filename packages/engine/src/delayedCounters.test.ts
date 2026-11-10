@@ -733,7 +733,7 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
     const victim = body(legacy.players.p2.active) as Omit<InPlayPokemon, "scheduledEffect"> & {
       scheduledEffect?: { turn: number; amount: number };
     };
-    // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT. `= undefined` leaves it PRESENT, which is the exact distinction D124's rule turns on and the one this case exists to drive.
+    // The key must be genuinely ABSENT. `= undefined` leaves it PRESENT, which is the exact distinction D124's rule turns on and the one this case exists to drive.
     delete victim.scheduledEffect;
     expect("scheduledEffect" in victim).toBe(false);
 
@@ -753,7 +753,7 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
     const legacy = saved();
     const victim = body(legacy.players.p2.active) as unknown as Record<string, unknown>;
     victim.scheduledCounters = victim.scheduledEffect;
-    // biome-ignore lint/performance/noDelete: the NEW key must be genuinely ABSENT — a v28 writer never wrote it.
+    // The NEW key must be genuinely ABSENT — a v28 writer never wrote it.
     delete victim.scheduledEffect;
     expect("scheduledCounters" in victim).toBe(true);
     expect("scheduledEffect" in victim).toBe(false);
@@ -799,7 +799,7 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
       InPlayPokemon,
       "scheduledEffect"
     > & { scheduledEffect?: { turn: number; amount: number } };
-    // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT. `= undefined` leaves it PRESENT, which is the exact distinction D124's rule turns on and the one this case exists to drive.
+    // The key must be genuinely ABSENT. `= undefined` leaves it PRESENT, which is the exact distinction D124's rule turns on and the one this case exists to drive.
     delete stripped.scheduledEffect;
     expect(tolerant(body(withKey.players.p2.active), 3)).toBe(90);
     expect(tolerant(stripped as unknown as InPlayPokemon, 3)).toBeNull();

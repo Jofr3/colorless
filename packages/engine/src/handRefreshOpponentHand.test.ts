@@ -446,7 +446,9 @@ describe("D516 §7 — what this slice did NOT buy, measured", () => {
             if (i > 0 && holdsRefresh(el)) offenders.push(`${where}[${i}]`);
           });
         }
-        v.forEach((el, i) => walk(el, `${where}[${i}]`));
+        v.forEach((el, i) => {
+          walk(el, `${where}[${i}]`);
+        });
         return;
       }
       if (v === null || typeof v !== "object") return;

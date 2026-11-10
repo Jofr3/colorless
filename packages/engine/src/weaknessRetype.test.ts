@@ -531,7 +531,7 @@ describe("§8 — the v34 bytes round-trip, and a v33-shaped body is why the ver
   it("v33-SHAPED body (the key genuinely ABSENT): the first main hit THROWS (D326)", () => {
     const revived = roundTrip(inWindow(installed().state));
     const target = body(revived.players.p2.active) as Partial<InPlayPokemon>;
-    // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT, which is what a v33 record looks like (D124).
+    // The key must be genuinely ABSENT, which is what a v33 record looks like (D124).
     delete target.weaknessRetype;
     expect("weaknessRetype" in target).toBe(false);
     expect(() => applyAction(revived, { type: "attack", seat: "p1", index: STRIKE })).toThrow(

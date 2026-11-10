@@ -33,8 +33,9 @@ updates:
       # 22 LTS), not the newest Node; the move to 24 is planned for Q1 2027.
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
-      # Phase 7: Biome 2 rewrites the config and changes lint rules across
-      # the tree.
+      # A Biome major (3) gets its own go/no-go branch, as 2 did (DEP-P7):
+      # `biome migrate --write`, then biome ci --error-on-warnings,
+      # lint-coverage, the generators' --check and a mutant sample.
       - dependency-name: "@biomejs/biome"
         update-types: ["version-update:semver-major"]
       # A vitest major (6) gets its own go/no-go branch, as 5 did (DEP-P6):

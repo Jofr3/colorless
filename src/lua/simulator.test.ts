@@ -682,7 +682,7 @@ describe("Lua simulator", () => {
           ?.run();
         for (let i = 0; i < 2; i++) {
           const h = sim.host;
-          if (!h || h.game.phase.kind !== "setup:place") throw Error("Expected opening placement");
+          if (h?.game.phase.kind !== "setup:place") throw Error("Expected opening placement");
           const seat = h.viewerSeat;
           const uid = h.game.players[seat].hand.find((u) => {
             const card = cardOfUid(h.game, u);

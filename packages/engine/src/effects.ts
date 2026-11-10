@@ -138,10 +138,9 @@ const BENCHED_SNIPE_CLASS_GROUP = `(?: (${[...BENCHED_SNIPE_CLASS_NOUNS.keys()]
   .sort((a, b) => b.length - a.length)
   .join("|")}))?`;
 
-// The pieces are kept as a concatenation rather than one long template literal for readability, so
-// the style rule is suppressed here.
+// The pieces are kept as a concatenation rather than one long template literal for readability, and
+// because collapsing this chain would destroy four mutation anchors.
 const ALSO_BENCHED_SNIPE_BODY =
-  // biome-ignore lint/style/useTemplate: see the note above — collapsing this chain would destroy four mutation anchors.
   `attack (?:also )?does (\\d+) damage to (\\d+) of (your opponent['’]s|your) Benched Pokémon` +
   BENCHED_SNIPE_CLASS_GROUP +
   "( that has any damage counters on it)?\\." +

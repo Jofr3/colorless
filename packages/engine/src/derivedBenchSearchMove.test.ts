@@ -369,7 +369,10 @@ function localSetup(seed: number, first: Seat): GameState {
 function table({
   ownBench = 1,
   basics = 6,
-}: { ownBench?: number; basics?: number } = {}): GameState {
+}: {
+  ownBench?: number;
+  basics?: number;
+} = {}): GameState {
   let state = localSetup(SEED, "p1");
   while (state.turn < 3) {
     if (state.phase.kind !== "turn:action") throw new Error(`stuck in ${state.phase.kind}`);

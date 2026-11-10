@@ -30,6 +30,7 @@ import {
   setActiveFromDeck,
   setDamage,
 } from "./testFixtures";
+import { present } from "./fixtures/values";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
@@ -201,7 +202,7 @@ describe("§2 — the clause row: one PARAMETERISED member, two arms, and the an
     const read = deriveAttackDamageBonus(TAKEN);
     expect(read).not.toBeNull();
     expect(read?.count).toEqual({ kind: "boardCondition", cond: COND });
-    expect((read?.count as { cond: { count: number } }).cond.count).toBe(3);
+    expect((present(read).count as { cond: { count: number } }).cond.count).toBe(3);
     expect(read?.per).toBe(Number(BONUS.exec(TAKEN)?.[2]));
     expect(read?.per).toBe(80);
   });
@@ -403,9 +404,9 @@ describe("§5 — the fixture, the census this row moves, and the summands it do
     expect(SIBLING).toContain("you have");
     expect(TAKEN).toContain("your opponent has");
     expect(deriveAttackRequirement(SIBLING)).toEqual({ kind: "yourBenchAtLeast", count: 5 });
-    expect((deriveAttackDamageBonus(TAKEN)?.count as { cond: { count: number } }).cond.count).toBe(
-      3,
-    );
+    expect(
+      (present(deriveAttackDamageBonus(TAKEN)).count as { cond: { count: number } }).cond.count,
+    ).toBe(3);
   });
 
   it("the bonus residue is 16 / 19, and the 2-PRINTING BAND IS STILL EMPTY", () => {

@@ -568,7 +568,7 @@ describe("§12 — the v33 bytes round-trip, and a v32-shaped state THROWS (D549
     const revived = roundTrip(ready());
     for (const seat of ["p1", "p2"] as const) {
       const side = revived.players[seat] as Partial<PlayerSide>;
-      // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT, which is what a v32 record looks like (D124).
+      // The key must be genuinely ABSENT, which is what a v32 record looks like (D124).
       delete side.sideAttackLock;
     }
     expect(() => applyAction(revived, { type: "attack", seat: "p1", index: JAB })).toThrow(

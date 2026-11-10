@@ -686,7 +686,9 @@ describe("D519 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is still no car
     const carriers: string[] = [];
     const visit = (node: unknown, path: string): void => {
       if (Array.isArray(node)) {
-        node.forEach((v, i) => visit(v, `${path}[${i}]`));
+        node.forEach((v, i) => {
+          visit(v, `${path}[${i}]`);
+        });
         return;
       }
       if (node === null || typeof node !== "object") return;
@@ -697,7 +699,9 @@ describe("D519 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is still no car
       }
       for (const [k, v] of Object.entries(rec)) visit(v, `${path}.${k}`);
     };
-    programs.forEach((p, i) => visit(p, `program[${i}]`));
+    programs.forEach((p, i) => {
+      visit(p, `program[${i}]`);
+    });
     expect(carriers).toEqual([]);
   });
 

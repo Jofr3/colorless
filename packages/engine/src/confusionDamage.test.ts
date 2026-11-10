@@ -565,7 +565,7 @@ describe("§7 — the bump, and the corruption it refuses", () => {
       InPlayPokemon["conditions"],
       "confusionDamage"
     > & { confusionDamage?: number };
-    // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT. `= undefined` leaves it PRESENT, which is the exact distinction D124's rule turns on and the one this case exists to drive.
+    // The key must be genuinely ABSENT. `= undefined` leaves it PRESENT, which is the exact distinction D124's rule turns on and the one this case exists to drive.
     delete body.confusionDamage;
     expect("confusionDamage" in body).toBe(false);
 

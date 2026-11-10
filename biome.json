@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.6.6/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -7,24 +7,21 @@
   },
   "files": {
     "maxSize": 8388608,
-    "include": [
-      "src/**",
-      "apps/**",
-      "packages/**",
-      "scripts/**",
-      "vite.config.ts",
-      "vitest.config.ts",
-      "frontend/**"
-    ],
-    "ignore": [
-      "node_modules",
-      "**/node_modules",
-      "dist",
-      "**/dist",
-      "public",
-      "**/*.tsbuildinfo",
-      "**/.wrangler",
-      "apps/api/worker-configuration.d.ts"
+    "includes": [
+      "**/src/**",
+      "**/apps/**",
+      "**/packages/**",
+      "**/scripts/**",
+      "**/vite.config.ts",
+      "**/vitest.config.ts",
+      "**/frontend/**",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/public",
+      "!**/*.tsbuildinfo",
+      "!**/.wrangler",
+      "!**/apps/api/worker-configuration.d.ts",
+      "!**/*.md"
     ]
   },
   "formatter": {
@@ -43,7 +40,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "suspicious": {
         "noExplicitAny": "error"
       },
@@ -58,11 +55,14 @@
   },
   "overrides": [
     {
-      "include": ["apps/api/src/lobby/**"],
-      "ignore": ["apps/api/src/lobby/match.ts", "apps/api/src/lobby/**/*.test.ts"],
+      "includes": [
+        "**/apps/api/src/lobby/**",
+        "!**/apps/api/src/lobby/match.ts",
+        "!**/apps/api/src/lobby/**/*.test.ts"
+      ],
       "linter": {
         "rules": {
-          "nursery": {
+          "style": {
             "noRestrictedImports": {
               "level": "error",
               "options": {
@@ -76,12 +76,12 @@
       }
     },
     {
-      "include": ["apps/api/src/**"],
-      "ignore": [
-        "apps/api/src/**/*.test.ts",
-        "apps/api/src/testing/**",
-        "apps/api/src/ingest/payloadCache.ts",
-        "apps/api/src/ingest/sqlFile.ts"
+      "includes": [
+        "**/apps/api/src/**",
+        "!**/apps/api/src/**/*.test.ts",
+        "!**/apps/api/src/testing/**",
+        "!**/apps/api/src/ingest/payloadCache.ts",
+        "!**/apps/api/src/ingest/sqlFile.ts"
       ],
       "linter": {
         "rules": {
@@ -89,14 +89,14 @@
             "noRestrictedGlobals": {
               "level": "error",
               "options": {
-                "deniedGlobals": [
-                  "process",
-                  "Buffer",
-                  "__dirname",
-                  "__filename",
-                  "require",
-                  "global"
-                ]
+                "deniedGlobals": {
+                  "process": "The Worker runs without nodejs_compat; read config from the Env bindings.",
+                  "Buffer": "The Worker runs without nodejs_compat; use Uint8Array, TextEncoder or btoa/atob.",
+                  "__dirname": "The Worker has no file system or module paths.",
+                  "__filename": "The Worker has no file system or module paths.",
+                  "require": "The Worker is an ES module; use import.",
+                  "global": "Use globalThis."
+                }
               }
             }
           }
@@ -104,7 +104,7 @@
       }
     },
     {
-      "include": ["frontend/lua/**"],
+      "includes": ["**/frontend/lua/**"],
       "linter": {
         "rules": {
           "style": {
@@ -113,9 +113,23 @@
           }
         }
       }
+    },
+    {
+      "includes": ["**/scripts/mutation/mutants.ts", "**/scripts/mutation/binding-gate.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noTemplateCurlyInString": "off"
+          }
+        }
+      }
     }
   ],
-  "organizeImports": {
-    "enabled": false
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "off"
+      }
+    }
   }
 }

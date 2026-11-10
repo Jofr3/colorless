@@ -33,7 +33,12 @@ function board({
   metals = 0,
   ownBench = 2,
   benchEnergy = 0,
-}: { basics?: number; metals?: number; ownBench?: number; benchEnergy?: number } = {}): GameState {
+}: {
+  basics?: number;
+  metals?: number;
+  ownBench?: number;
+  benchEnergy?: number;
+} = {}): GameState {
   let state = mustApply(
     driveSetup(SEED, { p1: SPREAD_ENERGY_MOVE_DECK, p2: SPREAD_ENERGY_MOVE_DECK }, { first: "p2" }),
     { type: "endTurn", seat: "p2" },

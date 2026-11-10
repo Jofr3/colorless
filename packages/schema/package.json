@@ -3,7 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "sideEffects": ["./src/jitless.ts"],
+  "sideEffects": [
+    "./src/jitless.ts"
+  ],
   "exports": {
     ".": "./src/index.ts",
     "./constants": "./src/constants.ts",

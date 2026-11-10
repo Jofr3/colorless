@@ -294,9 +294,9 @@ function attachedEnergies(
     collect(side.active, { seat, spot: { spot: "active" } });
   }
   if (scope === "active") return out;
-  side.bench.forEach((pokemon, index) =>
-    collect(pokemon, { seat, spot: { spot: "bench", index } }),
-  );
+  side.bench.forEach((pokemon, index) => {
+    collect(pokemon, { seat, spot: { spot: "bench", index } });
+  });
   return out;
 }
 
@@ -506,9 +506,9 @@ export function discardableTools(
       for (const uid of pokemon.tools) out.push({ uid, from });
     };
     if (side.active !== null) collect(side.active, { seat: victim, spot: { spot: "active" } });
-    side.bench.forEach((pokemon, index) =>
-      collect(pokemon, { seat: victim, spot: { spot: "bench", index } }),
-    );
+    side.bench.forEach((pokemon, index) => {
+      collect(pokemon, { seat: victim, spot: { spot: "bench", index } });
+    });
   }
   return out;
 }

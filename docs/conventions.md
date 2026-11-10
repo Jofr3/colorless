@@ -534,6 +534,9 @@ meant to change dependencies changes bun.lock (dependency audit, DEP-P1).
   - `miniflare`: equal to the version wrangler itself depends on, so the D1 test
     harness and `wrangler dev` run one workerd. `scripts/lock-check.ts`
     (check:static) fails a second miniflare or workerd in the lock.
+  - `@biomejs/biome` (DEP-P7): `biome ci --error-on-warnings` is a check:static
+    gate, and a patch can change formatter output or add a warning, so a bump
+    is a commit of its own that reformats and fixes in the same diff.
   A new exact pin adds its line and decision here.
 - A dependency declared in two workspaces carries the same spec there
   (wrangler, today). `bun run deps:check` lists any that differ.
@@ -901,6 +904,19 @@ uncovered set. It names the files. **Delete a directory from `files.include` and
   `include: ["src/**"]`, `biome lint .` checks 482 files, not 208. So an include
   entry covers more than it reads like, and a *narrowly* passed path argument can
   hide that. Always observe with the count, never read the config and infer.
+  **Biome 2 (DEP-P7)** anchors globs at the config's directory, so
+  `biome migrate` rewrote each entry as `**/src/**` and so on to keep 1.9's
+  coverage, and the old `files.ignore` became `!` entries in `files.includes`.
+  For these top-level directories the two forms cover the same 1058 files
+  (measured); lint-coverage, not the glob's spelling, is the check.
+- **Biome 2 does not touch Markdown** (`!**/*.md`, dependency audit decision 10):
+  Biome 2 formats `.md`, and the docs are hand-wrapped prose. Format them in a
+  change of their own if ever.
+- **Biome 2 refuses a second root config** below the one it started from
+  ("Found a nested root configuration"). `scripts/lib/generated.ts` formats a
+  generated file with a temp config under `tmp/`, so it runs Biome *from that
+  directory* (`cwd: dir`); run from the repo root, every generator's `--check`
+  fails.
 - ⚠️ Passing `.` reports **exactly one more file than the sum of its parts**
   (509 vs 508) under every include set tried — a constant artifact of the `.`
   argument itself, not a file. The guard passes explicit file lists, so it is

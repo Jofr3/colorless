@@ -31,6 +31,7 @@ import {
   types,
   findEvent,
 } from "./testFixtures";
+import { present } from "./fixtures/values";
 
 const CLAUSE = "Put 2 damage counters on 1 of your opponent's Benched Pokémon.";
 
@@ -205,7 +206,9 @@ describe("the anchor — 4 printings, 1 clause, one regex with one (\\d+) captur
       Object.keys(deriveAttackEffect(CLAUSE)?.[0] as object).sort(),
     );
     expect(authoredOp.source).toBe("ability");
-    expect((deriveAttackEffect(CLAUSE)?.[0] as Record<string, unknown>).source).toBe("attack");
+    expect((present(deriveAttackEffect(CLAUSE))[0] as Record<string, unknown>).source).toBe(
+      "attack",
+    );
   });
 
   it("refuses the FIVE real catalog rows that share its words — and the TWO MAPPED ones keep their OWN programs", () => {
@@ -234,12 +237,12 @@ describe("the anchor — 4 printings, 1 clause, one regex with one (\\d+) captur
       "discardPileRetrieval",
       "shuffleDeck",
     ]);
-    expect((deriveAttackEffect(CLAUSE)?.[0] as Record<string, unknown>).target).toBe(
+    expect((present(deriveAttackEffect(CLAUSE))[0] as Record<string, unknown>).target).toBe(
       "opponentBench",
     );
-    expect((deriveAttackEffect(SCALED_PILE_TWIN)?.[0] as Record<string, unknown>).target).toBe(
-      "opponentAny",
-    );
+    expect(
+      (present(deriveAttackEffect(SCALED_PILE_TWIN))[0] as Record<string, unknown>).target,
+    ).toBe("opponentAny");
     expect(deriveAttackEffect(CLAUSE)?.[0]).not.toHaveProperty("perDiscardPileCard");
     expect(NEAR_MISSES).toHaveLength(5);
     for (const ability of NEAR_MISSES.filter((t) => t.startsWith("You must discard"))) {

@@ -583,7 +583,9 @@ function redactedAbilitiesOf(
     }
   };
   consider(side.active, { spot: "active" });
-  side.bench.forEach((pokemon, index) => consider(pokemon, { spot: "bench", index }));
+  side.bench.forEach((pokemon, index) => {
+    consider(pokemon, { spot: "bench", index });
+  });
   return out;
 }
 

@@ -27,7 +27,10 @@ const SEED = 0x2f11;
 function board({
   basics = 3,
   ownBench = 2,
-}: { basics?: number; ownBench?: number } = {}): GameState {
+}: {
+  basics?: number;
+  ownBench?: number;
+} = {}): GameState {
   let state = mustApply(
     driveSetup(SEED, { p1: CLEAR_STATUS_DECK, p2: CLEAR_STATUS_DECK }, { first: "p2" }),
     { type: "endTurn", seat: "p2" },

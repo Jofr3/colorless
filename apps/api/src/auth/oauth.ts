@@ -178,7 +178,7 @@ export function unpackStateCookieValue(
  * else falls back to "/".
  */
 export function sanitizeRedirect(raw: string | null | undefined): string {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) {
+  if (!raw?.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) {
     return "/";
   }
   for (let index = 0; index < raw.length; index++) {

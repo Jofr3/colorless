@@ -23,6 +23,7 @@ import {
   driveSetup,
   roundTrip,
 } from "./testFixtures";
+import { present } from "./fixtures/values";
 
 const PRINTED =
   "Put 2 damage counters on 1 of your opponent's Pokémon for each Basic {G} Energy card in your discard pile. Then, shuffle those Energy cards into your deck.";
@@ -305,10 +306,14 @@ describe("D538 §2 — arm 23b-bis derives THREE ops, and ONE filter object serv
   });
 
   it("the counters are converted to HP AT THE PRODUCER (§12), never left as counters", () => {
-    expect((deriveAttackEffect(PRINTED)?.[0] as Record<string, unknown>).amount).toBe(20);
+    expect((present(deriveAttackEffect(PRINTED))[0] as Record<string, unknown>).amount).toBe(20);
     expect(
-      (deriveAttackEffect(PRINTED.replace("Put 2 ", "Put 5 "))?.[0] as Record<string, unknown>)
-        .amount,
+      (
+        present(deriveAttackEffect(PRINTED.replace("Put 2 ", "Put 5 ")))[0] as Record<
+          string,
+          unknown
+        >
+      ).amount,
     ).toBe(50);
   });
 
@@ -408,10 +413,9 @@ describe("D538 §2 — arm 23b-bis derives THREE ops, and ONE filter object serv
   it("the OTHER printed types derive too — the filter is the CAPTURE, not a literal", () => {
     expect(
       (
-        deriveAttackEffect(PRINTED.replace("Basic {G} Energy", "Basic {R} Energy"))?.[0] as Record<
-          string,
-          unknown
-        >
+        present(
+          deriveAttackEffect(PRINTED.replace("Basic {G} Energy", "Basic {R} Energy")),
+        )[0] as Record<string, unknown>
       ).perDiscardPileCard,
     ).toEqual({ kind: "basicEnergy", energyType: "Fire" });
     // …and the UNQUALIFIED Energy noun is refused: without the printed word "Basic" the
@@ -667,9 +671,11 @@ describe("D538 §6 — a head noun the tail cannot be about falls to the LOUD sk
     }
     expect(
       (
-        deriveAttackEffect(
-          "Put 2 damage counters on 1 of your opponent's Pokémon for each a Basic Energy card in your discard pile. Then, shuffle those Energy cards into your deck.",
-        )?.[0] as Record<string, unknown>
+        present(
+          deriveAttackEffect(
+            "Put 2 damage counters on 1 of your opponent's Pokémon for each a Basic Energy card in your discard pile. Then, shuffle those Energy cards into your deck.",
+          ),
+        )[0] as Record<string, unknown>
       ).perDiscardPileCard,
     ).toEqual({ kind: "basicEnergy" });
   });
@@ -720,7 +726,7 @@ describe("D538 §7 — two literals GROW the serialized alphabet and `MATCH_RECO
     expect(dropped).toEqual(deriveAttackEffect(UNSCALED_TWIN)?.[0]);
     // …and a v30 reader that dropped the retrieval's WIDENED value has no number to fall
     // back on at all, which is why `"all"` is a value and not an absent key.
-    expect((deriveAttackEffect(PRINTED)?.[1] as Record<string, unknown>).max).toBe("all");
+    expect((present(deriveAttackEffect(PRINTED))[1] as Record<string, unknown>).max).toBe("all");
   });
 
   it("the parked record REPLAYS — the rider is applied from `pendingOp` and nothing else", () => {

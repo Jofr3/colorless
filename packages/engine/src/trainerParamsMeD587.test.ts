@@ -22,6 +22,7 @@ import {
   effectPrompt,
   driveSetup,
 } from "./testFixtures";
+import { present } from "./fixtures/values";
 
 /** [me ids, twin id, card name, me text, twin text, edits]. Each edit is [twin phrase, me
     phrase]; applied in order, they turn the twin's text into the `me` text. */
@@ -253,7 +254,7 @@ describe("D587 §2 — the registry: one NEW object per text, the twin's op at t
   });
 
   it("Energy Swatter = Ortega's first op with an Energy filter, and no record or draw", () => {
-    const { recordAs: _recorded, ...first } = programFor("sv03-190")?.trainer?.[0] as {
+    const { recordAs: _recorded, ...first } = present(programFor("sv03-190")?.trainer)[0] as {
       recordAs?: string;
     };
     expect(programFor("me03-073")?.trainer).toEqual([{ ...first, filter: { kind: "anyEnergy" } }]);

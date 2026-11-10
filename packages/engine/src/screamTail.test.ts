@@ -466,7 +466,7 @@ describe("D283 §6 — the bump, driven", () => {
     const v14 = { ...state } as Omit<GameState, "handPlayLockedTurn"> & {
       handPlayLockedTurn?: GameState["handPlayLockedTurn"];
     };
-    // biome-ignore lint/performance/noDelete: rebuilding an ABSENT key is the point.
+    // Rebuilding an ABSENT key is the point.
     delete v14.handPlayLockedTurn;
     expect("handPlayLockedTurn" in v14).toBe(false);
     expect(() => handPlayBarred(v14 as GameState, "p2", "Item", undefined)).toThrow(TypeError);

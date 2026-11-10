@@ -103,6 +103,7 @@ function expectedTuple<Row>(columns: readonly SqlColumnSpec<Row>[], row: Row): D
       case "json":
         return JSON.stringify(value);
     }
+    throw new Error(`unknown column kind: ${String((column as { kind: unknown }).kind)}`);
   });
 }
 

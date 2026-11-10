@@ -23,6 +23,7 @@ import {
   setActiveFromDeck,
   types,
 } from "./testFixtures";
+import { present } from "./fixtures/values";
 
 const CLAUSES = [
   {
@@ -408,7 +409,7 @@ describe("mutants — each arm's realistic wrong build, and the case that kills 
       const m = /^Draw (?:(\d+) cards|a card)\.$/.exec(text.trim());
       return m === null ? null : [{ op: "drawCards", count: Number(m[1]) }];
     };
-    expect(Number.isNaN((nan("Draw a card.")?.[0] as { count: number }).count)).toBe(true);
+    expect(Number.isNaN((present(nan("Draw a card."))[0] as { count: number }).count)).toBe(true);
     expect(deriveAttackEffect("Draw a card.")).toEqual([{ op: "drawCards", count: 1 }]);
   });
 

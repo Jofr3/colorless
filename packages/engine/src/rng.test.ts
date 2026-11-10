@@ -12,6 +12,7 @@ import {
   shuffle,
 } from "./rng";
 import { MIXED_DECK, drbgSeed, mustApply, mustCreate, walkGame } from "./testFixtures";
+import { present } from "./fixtures/values";
 
 // The match RNG (security audit MI1). Every real game draws from a ChaCha20 keystream under a fresh
 // 256-bit key; states recorded on the old mulberry32 generator keep replaying on it.
@@ -117,7 +118,7 @@ describe("freshRngState", () => {
     const spy = vi.spyOn(webCrypto, "getRandomValues");
     const a = freshRngState();
     expect(spy).toHaveBeenCalledTimes(1);
-    expect((spy.mock.calls[0]?.[0] as Uint8Array).length).toBe(32);
+    expect((present(spy.mock.calls[0])[0] as Uint8Array).length).toBe(32);
     spy.mockRestore();
     const b = freshRngState();
     for (const state of [a, b]) {

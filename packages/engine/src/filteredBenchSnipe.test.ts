@@ -24,6 +24,7 @@ import {
   findEvent,
   roundTrip,
 } from "./testFixtures";
+import { present } from "./fixtures/values";
 
 const PRINTED =
   "This attack also does 60 damage to 1 of your opponent's Benched Pokémon that has any damage counters on it. (Don't apply Weakness and Resistance for Benched Pokémon.)";
@@ -206,7 +207,7 @@ describe("§2 — the derivation, and the number agreement that keeps D399's run
         deals: true,
       },
     ]);
-    expect("damagedOnly" in (plain?.[0] as object)).toBe(false);
+    expect("damagedOnly" in (present(plain)[0] as object)).toBe(false);
   });
 
   it("THE NUMBER MUST AGREE — a singular clause at count 2 is REFUSED, count 2 bare is READ", () => {
@@ -606,7 +607,7 @@ describe("§8 — the persisted question: `MATCH_RECORD_VERSION` STAYS 29", () =
     const record = parked();
     if (record.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const op = record.phase.cont.pendingOp as Record<string, unknown>;
-    // biome-ignore lint/performance/noDelete: the key must be genuinely ABSENT — that is what a deploy which never knew it writes, and `= undefined` leaves it PRESENT.
+    // The key must be genuinely ABSENT — that is what a deploy which never knew it writes, and `= undefined` leaves it PRESENT.
     delete op.damagedOnly;
     expect("damagedOnly" in op).toBe(false);
     const prompt = record.phase.prompt;

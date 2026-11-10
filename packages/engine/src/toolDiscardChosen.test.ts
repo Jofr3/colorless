@@ -29,6 +29,7 @@ import {
   driveSetup,
   roundTrip,
 } from "./testFixtures";
+import { present } from "./fixtures/values";
 
 const SENTENCE = "Discard up to 2 Pokémon Tools from your opponent's Pokémon.";
 
@@ -383,7 +384,7 @@ describe("§4 — the answer strips BOTH bodies and fills the OWNER's discard pi
   it("TWO TOOLS ON ONE BODY collapse to ONE event row, because `host` is one uid", () => {
     let start = ready({ tools: ["d543-tool-a", null], benched: false });
     start = attachToolFromDeck(start, "p2", "active", "d543-tool-b");
-    const [t1, t2] = start.players.p2.active?.tools as [string, string];
+    const [t1, t2] = present(start.players.p2.active).tools as [string, string];
     const parked = attack(start, STRIP);
     expect(parkedPrompt(parked.state).scope).toEqual({ kind: "upTo", max: 2 });
     const { state, events } = answerWith(parked.state, "p1", [t1, t2]);

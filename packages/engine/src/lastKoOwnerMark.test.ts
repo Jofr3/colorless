@@ -423,7 +423,7 @@ describe("MATCH_RECORD_VERSION — the derivation, driven by a replay", () => {
 
     // The version-18 shape: the same board, minus the key that deploy never wrote.
     const legacy: Partial<GameState> = { ...koed };
-    // biome-ignore lint/performance/noDelete: reproducing a persisted shape requires the key to be ABSENT, not undefined.
+    // Reproducing a persisted shape requires the key to be ABSENT, not undefined.
     delete legacy.lastKoMarks;
     expect("lastKoMarks" in legacy).toBe(false);
     expect("lastKoTurn" in legacy).toBe(true);

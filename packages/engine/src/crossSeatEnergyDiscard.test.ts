@@ -18,6 +18,7 @@ import {
   types,
   mustDerive,
 } from "./testFixtures";
+import { present } from "./fixtures/values";
 
 /** Every `discardEnergy` op inside an arbitrarily nested program — the recursive
     flatten §5's biconditional needs, and the reason it cannot be a `.filter`. */
@@ -413,7 +414,9 @@ describe("D361 §6 — what the anchors REFUSE, and every refusal is a real cata
       from: "opponentEach",
       filter: { kind: "specialEnergy" },
     });
-    expect((programFor("sv02-182")?.trainer?.[0] as { count?: unknown }).count).toBeUndefined();
+    expect(
+      (present(programFor("sv02-182")?.trainer)[0] as { count?: unknown }).count,
+    ).toBeUndefined();
   });
 
   it("refuses every near-miss — each one a real catalog row, or an absence that was MEASURED", () => {

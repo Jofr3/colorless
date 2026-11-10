@@ -3,7 +3,7 @@
 import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { basename, join, relative } from "node:path";
-import { localBin, REPO_ROOT, repoPath } from "./repo";
+import { localBin, repoPath } from "./repo";
 
 /**
  * `source` as `biome format` would write it to `out`, so the committed file passes the format
@@ -20,13 +20,14 @@ export function biomeFormatted(out: string, source: string): string {
     JSON.stringify({
       extends: [relative(dir, repoPath("biome.json"))],
       vcs: { enabled: false },
-      files: { include: ["**"], ignore: [] },
+      files: { includes: ["**"] },
     }),
   );
   writeFileSync(temp, source);
   try {
+    // Run from the temp directory: Biome 2 refuses a second root config under the repo's own.
     const run = spawnSync(localBin("biome"), ["format", "--write", "--config-path", dir, temp], {
-      cwd: REPO_ROOT,
+      cwd: dir,
       encoding: "utf8",
     });
     if (run.status !== 0) throw new Error(`biome format failed: ${run.stderr}`);

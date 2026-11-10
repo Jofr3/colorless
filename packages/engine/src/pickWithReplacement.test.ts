@@ -17,6 +17,7 @@ import {
   must,
   driveSetup,
 } from "./testFixtures";
+import { present } from "./fixtures/values";
 
 const PRINTED =
   "Choose 1 of your opponent's Pokémon 6 times. (You can choose the same Pokémon more than once.) For each time you chose a Pokémon, do 20 damage to it. This damage isn't affected by Weakness or Resistance.";
@@ -558,7 +559,7 @@ describe("D535 §6 — `ignoreWR` and `deals` ON THE BOARD", () => {
     const spread = deriveAttackEffect(
       "Put 3 damage counters on your opponent's Pokémon in any way you like.",
     );
-    expect((spread?.[0] as { deals?: true }).deals).toBeUndefined();
+    expect((present(spread)[0] as { deals?: true }).deals).toBeUndefined();
   });
 
   it("RIDE-ALONG — the BENCH read site: ~~`ignoreWR` nulls a benched Bouffalant's `damageReductionAfterWR`, so two picks land the full 40~~ ( D622: `wrOnly` keeps it, so two picks land 0)", () => {
@@ -598,7 +599,7 @@ describe("D535 §6 — `ignoreWR` and `deals` ON THE BOARD", () => {
         deals: true,
       },
     ]);
-    expect((flat?.[0] as { ignoreWR?: true }).ignoreWR).toBeUndefined();
+    expect((present(flat)[0] as { ignoreWR?: true }).ignoreWR).toBeUndefined();
     expect(Object.keys(ONE).filter((k) => !Object.keys(flat?.[0] ?? {}).includes(k))).toEqual([
       "ignoreWR",
       "wrOnly",
