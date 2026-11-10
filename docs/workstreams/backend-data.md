@@ -1210,6 +1210,8 @@ the first six:
 | `seat_orphaned` | `seats` | An alarm pass found `seats` shown connected that no socket holds (their sockets went in a deploy without a close the DO heard) and gave each the reconnect grace. |
 | `alarm_failed` | `error` | An alarm pass threw, error level; the alarm is re-armed, no sooner than 5 s later until a pass succeeds (LOB1). |
 
+**Production report.** `bun run --cwd apps/api prod:report [--days N] [--release]` is the one-command view of production. It reads only, with the ambient read token, and exits 1 only on a crit. It shows usage against the Free quotas per UTC day, requests by status with CPU and wall time, 5xx by day and version, latency by route, the top D1 queries, the watched lines and the cron, the two SLOs and the match completion share. Run it monthly with `--days 30`, and after a release with `--release`, which compares the new API version with the one it replaced. A `quota` warn or crit names the day: look up that day's `quota: true` lines (§3.7.4 Log queries) and which Worker or database on the account spent it. An `unreadable` line is a refused or failed read; rerun before acting on the rest.
+
 **A player reports…** Ask for the time, to the minute, and for a match the
 lobby code from the address bar (`/?lobby=CODE`). Then:
 

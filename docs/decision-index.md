@@ -71,6 +71,7 @@ the script after adding a decision.
 | 2026-11-10 | Observability audit Phase 2: frame_failed under the lobby code, the DO's code-bug lines at error, and match_s… | decisions.md:1858 |
 | 2026-11-10 | Observability audit Phase 4: a 6-hourly production watch from GitHub Actions, retried, that never fails on a… | decisions.md:1890 |
 | 2026-11-10 | Observability audit Phases 1, 2 and 4 merged | decisions.md:1911 |
+| 2026-11-10 | Observability audit Phase 3: prod:report: production usage, latency, 5xx, D1, thresholds and SLOs in one read… | decisions.md:1915 |
 
 ## Numbered decisions
 

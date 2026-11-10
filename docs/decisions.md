@@ -1911,3 +1911,92 @@ Phase 4 of the observability audit (OPS1, with OPS5 merged into it; decisions 3a
 ### 2026-11-10 — Observability audit Phases 1, 2 and 4 merged
 
 Branches `obs-p1`, `obs-p2` and `obs-p4` merged into `obs`. Conflicts: `scripts/mutation/mutants.ts` (append-only, both sides kept), and the console spies of `lobby/lobbyDO.test.ts` and `lobby/lobbyAbuse.test.ts`, where Phase 1 moved the info spy to `console.info` and Phase 2 added an error spy; the merge keeps both. On the merged tree `bun run check` is green (752 files, 17,416 tests, 76/76 Lua), and the OBS-P0, P1, P2 and P4 rows plus the 5 rows the phases re-anchored are all killed.
+
+### 2026-11-10 — Observability audit Phase 3: `prod:report`: production usage, latency, 5xx, D1, thresholds and SLOs in one read-only command
+
+Phase 3 of the observability audit (MET2 with METX1, MET5, MET6, OPS2, OPS3, OPS4; decisions 4a and 7a). Decision id OBS-P3. It is a dev script, so there is no runtime change and nothing to release.
+
+- **`bun run --cwd apps/api prod:report [--days N] [--release]`** (`apps/api/scripts/prod-report.ts`). Read-only. It uses GraphQL Analytics, the Workers Logs query API (`view: "calculations"`, which saves no query: the account still has 0 saved queries after the runs) and the deployments and versions GETs, all with the ambient `CLOUDFLARE_API_TOKEN`. The account is the single one the token lists, or `CLOUDFLARE_ACCOUNT_ID`.
+  - `--days` takes 1 to 30, default 7. A GraphQL range that starts past the dataset's retention answers no rows at all, with no error, so the cap is 30.
+  - Workers Logs sections read the last `min(days, 7)` days.
+  - The SLOs always use 7 days. The cron check always reads the last week.
+  - It takes about 10 s and makes about 40 reads (about 48 with `--release`), at most 4 Workers Logs reads at a time per section.
+- **Sections:**
+  - usage against the Free quotas, account-wide, per UTC day: peak day, today and the share of the limit. This covers Workers requests, D1 rows read and written, KV reads, writes, deletes and lists, Durable Object rows read and written, and Workers Logs events (one count per UTC day against 200k);
+  - API requests by HTTP status. WebSocket sessions and cron runs (status below 200) are counted apart and left out of every latency figure;
+  - invocation outcomes, CPU p50/p99/max against the 10 ms reference, and wall p50/p95/p99;
+  - LobbyDO invocations, with its exceededCpu, exceededMemory and fatalInternal counts;
+  - 5xx by day, status and version;
+  - latency by route over Workers Logs: requests and wall and CPU p50/p95/p99. Routes are the Worker's own Hono table, imported from `src/index.ts`, so a printed pattern is one the code declares and no route list is kept by hand. A trigger is matched to the pattern with the most literal segments. Each route's query is its regex less the literal routes that regex also matches (`GET /cards/:id` excludes `GET /cards/index`). A trigger no route matches is only counted;
+  - the top 5 D1 queries on `colorless` by rows read and by total duration, as shapes with string, blob, number and non-identifier double-quoted literals replaced by `?`, cut to 90 characters;
+  - counts of the watched log lines (`http unhandled`, `http invalid_request`, `lobby match_retired`, `handoff_failed`, `action_threw`) and `quota: true` lines, plus the daily cron;
+  - the two SLO lines and the match completion share;
+  - with `--release`, the release table;
+  - the thresholds.
+- **Thresholds.** Exit 1 on any crit, 2 when it cannot run, else 0. All quotas warn at 50% and go crit at 80% of the limit:
+
+  | Signal | Warn | Crit |
+  |---|---|---|
+  | Workers requests / day (account) | 50k | 80k |
+  | D1 rows read / day | 2.5M | 4M |
+  | D1 rows written / day | 50k | 80k |
+  | KV reads / day | 50k | 80k |
+  | KV writes, deletes, lists / day (each) | 500 | 800 |
+  | DO rows read / day | 2.5M | |
+  | DO rows written / day | 50k | |
+  | Workers Logs events / day | 100k (50% of 200k) | |
+  | Daily cron | a failed run in the last week | no successful run yesterday |
+  | `match_retired`, `handoff_failed`, `quota: true` lines | any | |
+  | Worker `exceeded*` outcomes, DO exceeded/fatal counts | any | |
+  | SLO missed | yes | |
+  | A source unreadable, a core path no longer routed, 1,000 triggers (grouping capped) | yes | |
+  | `--release` findings | yes | |
+
+  OPS2's table plus KV reads, deletes and lists and DO rows read, which share the same Free limits. The Workers Logs warn counts events. The 2026-12-01 Free cap is 0.5 GB a day, and counts cannot measure bytes: at the 5 KB median event, 0.5 GB is about 100k events, which is the same warn. When nothing trips, the section prints `all clear: N signals ok`.
+- **SLOs (decision 7a).**
+  - Availability: over 7 days of GraphQL, 99.5% of API answers (status 200 and above) are not 5xx. The line prints the budget, `floor(requests × 0.5%)`.
+  - Latency: over 7 days of Workers Logs, the p95 wall time of `/decks`, `/decks/:id`, `/auth/me`, `/sets` and `/cards/index` (any method) is under 500 ms.
+  - A miss is a warn.
+  - Match completion: from `evt = "lobby"` `match_started` and `match_ended` lines grouped by `cause`, with Phase 2's vocabulary (obs-p2 6a8de9a9). The causes are `prizesTaken`, `noPokemon`, `deckOut`, `cardEffect`, `conceded`, `tie`, `left` and `abandoned`.
+    - Every ending but `abandoned` counts as completed: a player who never came back is how a desync or a client crash shows from the lobby.
+    - Any other cause is printed as `other`, never by name.
+    - A start with no end is printed as "not ended" (still playing, retired, wiped or kicked).
+    - It has no target, and prints `no match lines yet` until Phase 2 is released.
+- **`--release` (OPS3).**
+  - The newest API deployment (the version taking the most traffic) is compared with the version before it. The new version is read since its deploy, and the old one over the same span before the deploy, capped at 7 days. Both come from Workers Logs, by `$workers.scriptVersion.id`.
+  - Per version it prints requests, 5xx with their rate, wall p95 and the watched lines. The commit tag comes from the version's details; only a hex tag is taken, because those details also carry the uploader's email.
+  - Any new-version 5xx or watched line is a warn. So is a p95 over 2× the old one when both versions served at least 20 requests; under 20, only presence is judged. A finding never blocks.
+- **Privacy.**
+  - Only counts, dates, route patterns, statuses, Cloudflare's outcome names, version ids, the hex tag and literal-free SQL shapes are printed. Raw triggers and log fields are never printed.
+  - Before printing, `leaksIn` checks the whole text for an email, an IPv4 or an IPv6 address (compressed forms too). On a match it prints nothing and exits 2.
+  - The saved real run was also grepped for those patterns: no match.
+- **Pure parts in `apps/api/src/prodReport.ts`**, with `prodReport.test.ts` (33 tests). They cover threshold levels, the exit code, quota aggregation from GraphQL rows, UTC day slices, route patterns and trigger matching, the route filters, the core-route regex, availability and latency math, match lines, the cron signal, release signals, the deployments pair, the tag, Workers Logs result parsing, the SQL shape, tables and the leak guard.
+  - The pure module sits in the api's `src`, beside `releaseChecks.ts`, because vitest does not collect `apps/api/scripts`. The Worker does not import it.
+  - No registration was needed: `check:static` passes as is (typecheck coverage, lint coverage, the import graph, the worker bundle).
+- **Wiring.**
+  - `apps/api/package.json` gets a `prod:report` script.
+  - `release:finish` prints one line after the tag: after about an hour of use, run `bun run --cwd apps/api prod:report --release`.
+  - The monthly routine in conventions.md (Dependencies) gets step 6, `prod:report --days 30`; the old step 6 is now 7.
+- **Real runs, 2026-11-10** (`tmp/obs/drafts/p3-report-run.txt` is the `--release` run).
+  - 7 days, every quota ok. Peaks: D1 rows read 46,874 (0.9%), Workers requests 157, KV writes 5, Logs events 97 a day. 87 API answers and 7 WebSocket/cron, CPU p99 54 ms, 0 5xx, cron ran on 11-09.
+  - Availability SLO 100% (met). Latency SLO p95 1,102 ms over 27 core-route requests: **missed**. With 27 requests, the 2 card-index KV misses (GET 1,545 ms, HEAD 1,102 ms) are the p95.
+  - Release: 99fbfdba (0a8feadf, 3.4 h) has 28 requests, 0 5xx and p95 117 ms; 907516db has 8, 0 and 251 ms. Exit 0 with one warn (latency SLO).
+  - 30 days: D1 read peak 2,435,769 on 10-23 (48.7%), D1 written 30,607 on 10-19, and KV writes 550 on 10-23, which is a warn. These are the audit's pre-CAT1 peaks. The one 5xx burst is 10-30, 502 ×5 on b118e511, which is METX1. Exit 0.
+- **Not built:** MET2's per-version CPU and wall table for the last 3 releases (`--release` compares the newest two); OPS4's optional daily line in `tmp/slo.log`; OPS3's `hours=24` argument, since the window is "since the deploy"; and OPS3's web Worker `/assets/` 404 count, which needs Phase 1's web `observability` line.
+- **For the user.** At about 30 core-route requests a week, the latency SLO is decided by one or two cold `/cards/index` builds. It will read MISSED most weeks while the target is right about steady state. Options: (a) keep it, accepting that the miss means "the index was cold"; (b) take `/cards/index` out of the core routes; (c) judge p95 only from 100 requests up. Recommendation: (a) for now, since it is a warn and never fails the run, and revisit with the first month of reports.
+- 13 OBS-P3 mutant rows on `apps/api/src/prodReport.ts`, all killed by `prodReport.test.ts` (`bun run mutants --decision OBS-P3`: 13 killed, 0 gaps, 11.1 s):
+  - a WebSocket 101 counted as an answer;
+  - a quota exactly at its crit rated warn;
+  - any warn exiting 1;
+  - an unread quota rated ok;
+  - Logs days cut 24 h from the start instead of at midnight;
+  - the first matching route winning;
+  - the shadowed-literal check reversed;
+  - 500 not counted as an error;
+  - yesterday's failed cron only a warn;
+  - the p95 ratio on an old version with few requests;
+  - SQL string literals kept;
+  - compressed IPv6 not caught;
+  - an abandoned seat counted as completed.
+- `bun run check` green: 752 files, 17,408 tests (with `BALATRO_SOURCE`, which a worktree needs for `check:lua`).
+- **Merged** into `obs` after Phases 1, 2 and 4 (only `mutants.ts` conflicted, append-only).
