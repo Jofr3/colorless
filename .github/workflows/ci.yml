@@ -59,10 +59,10 @@ jobs:
       # Known advisories in what the Workers ship (hono, zod, drizzle-orm and
       # their dependencies). The dev tree is reported, not gated, by
       # deps-report.yml and `bun run deps:check`: GitHub's alerts do not read
-      # bun.lock. A new advisory with no fix yet gets a dated
-      # `--ignore=GHSA-…` here.
+      # bun.lock. A new advisory with no fix yet gets a dated line in
+      # scripts/audit-ignore.txt, which the release's `audit` gate reads too.
       - name: Audit production dependencies
-        run: bun audit --prod --audit-level=moderate
+        run: bun scripts/audit.ts
 
       # The previous run's build info and engine and schema declarations, so
       # `tsc -b` re-checks only what changed. Each run saves under its own sha.

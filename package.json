@@ -43,8 +43,8 @@
     "api:deploy": "bun run --cwd apps/api deploy",
     "build:lua": "node frontend/lua/build.mjs",
     "deploy": "bun install --frozen-lockfile && bun run build && bun run deploy:web",
-    "deploy:web": "bun apps/api/scripts/release-gate.ts clean-tree && wrangler deploy",
-    "release": "bun install --frozen-lockfile && bun run check && bun run --cwd apps/api release:gate && bun run build && bun run --cwd apps/api db:migrate:remote && bun run api:deploy && bun run --cwd apps/api release:health && bun run deploy:web"
+    "deploy:web": "bun apps/api/scripts/release-gate.ts clean-tree web-dist ci -- wrangler deploy && bun apps/api/scripts/release-gate.ts web-health",
+    "release": "bun install --frozen-lockfile && bun run check && bun run --cwd apps/api release:gate && bun run build && bun run --cwd apps/api db:migrate:remote && bun run api:deploy && bun run --cwd apps/api release:health && bun run deploy:web && bun run --cwd apps/api release:finish || bun apps/api/scripts/release-gate.ts abort"
   },
   "dependencies": {
     "@colorless/engine": "workspace:*",

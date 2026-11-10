@@ -1,0 +1,5 @@
+# Advisories `bun scripts/audit.ts` (CI's "Audit production dependencies" step and the release's
+# `audit` gate) ignores: one per line, `<GHSA id or advisory number> <YYYY-MM-DD added> <reason>`.
+# Add one only for an advisory with no fixed version yet that does not reach the shipped code, and
+# remove it once a fix lands; the monthly dependency routine (docs/conventions.md) re-reads this list.
+# An entry older than 30 days is printed as a reminder.

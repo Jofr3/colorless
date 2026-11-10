@@ -3,3 +3,6 @@
 # host.js carries the hashes inlined.
 love/versions.json
 love/asset-manifest.json
+# What the build is a build of (vite.config.ts build-info plugin), read by the release's web-dist
+# gate; the deployed page carries the commit as <meta name="build">.
+build-info.json

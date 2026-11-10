@@ -9,11 +9,16 @@ const listing = (...names: string[]) =>
   );
 
 describe("the release gate's secrets listing", () => {
-  it("requires the password pepper and the log tag key", () => {
-    expect(REQUIRED_SECRETS).toEqual(["PASSWORD_PEPPER", "LOG_TAG_KEY"]);
+  it("requires the password pepper, the log tag key and both Google client secrets", () => {
+    expect(REQUIRED_SECRETS).toEqual([
+      "PASSWORD_PEPPER",
+      "LOG_TAG_KEY",
+      "GOOGLE_CLIENT_ID",
+      "GOOGLE_CLIENT_SECRET",
+    ]);
   });
 
-  it("names nothing missing when production holds both", () => {
+  it("names nothing missing when production holds all four", () => {
     expect(
       missingSecrets(
         listing("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET", "LOG_TAG_KEY", "PASSWORD_PEPPER"),
@@ -22,13 +27,26 @@ describe("the release gate's secrets listing", () => {
   });
 
   it("names each missing secret, in order", () => {
-    expect(missingSecrets(listing("GOOGLE_CLIENT_ID"))).toEqual(["PASSWORD_PEPPER", "LOG_TAG_KEY"]);
-    expect(missingSecrets(listing("LOG_TAG_KEY"))).toEqual(["PASSWORD_PEPPER"]);
-    expect(missingSecrets("[]")).toEqual(["PASSWORD_PEPPER", "LOG_TAG_KEY"]);
-    // Only a whole name counts.
-    expect(missingSecrets(listing("PASSWORD_PEPPER_PREVIOUS", "LOG_TAG_KEY"))).toEqual([
+    expect(missingSecrets(listing("GOOGLE_CLIENT_ID"))).toEqual([
       "PASSWORD_PEPPER",
+      "LOG_TAG_KEY",
+      "GOOGLE_CLIENT_SECRET",
     ]);
+    expect(
+      missingSecrets(listing("LOG_TAG_KEY", "GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET")),
+    ).toEqual(["PASSWORD_PEPPER"]);
+    expect(missingSecrets("[]")).toEqual([...REQUIRED_SECRETS]);
+    // Only a whole name counts.
+    expect(
+      missingSecrets(
+        listing(
+          "PASSWORD_PEPPER_PREVIOUS",
+          "LOG_TAG_KEY",
+          "GOOGLE_CLIENT_ID_OLD",
+          "GOOGLE_CLIENT_SECRET",
+        ),
+      ),
+    ).toEqual(["PASSWORD_PEPPER", "GOOGLE_CLIENT_ID"]);
   });
 
   it("reads past warning lines wrangler prints first", () => {

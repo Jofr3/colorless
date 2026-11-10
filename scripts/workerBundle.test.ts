@@ -51,6 +51,13 @@ describe("worker-bundle deploy flags", () => {
     expect(deployFlags(`${gate} && wrangler versions deploy`)).toBeUndefined();
   });
 
+  it("reads the wrangler deploy a release-gate run starts after its gates", () => {
+    expect(deployFlags(`${gate} ci -- wrangler deploy --minify`)).toEqual(["--minify"]);
+    expect(deployFlags(`${gate} -- wrangler deploy`)).toEqual([]);
+    expect(deployFlags(`${gate} -- wrangler versions deploy --minify`)).toBeUndefined();
+    expect(deployFlags(`${gate} health`)).toBeUndefined();
+  });
+
   it("refuses a deploy that does not minify or upload source maps", () => {
     expect(deployProblems(["--minify"], true)).toEqual([]);
     expect(deployProblems([], true)).toEqual([

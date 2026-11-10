@@ -1,10 +1,17 @@
 // The Worker secrets production must hold before a release, checked by the `secrets` step of
 // scripts/release-gate.ts against `wrangler secret list` (names only; values are never readable).
-// Both degrade quietly when absent (src/env.ts), which is exactly why a release refuses to go out
-// without them: an unpeppered production keeps hashing passwords the old way, and an untagged one
-// logs no account trail.
+// Every secret production uses is gated, because none of them fails where the release would see
+// it (src/env.ts). The pepper and the log key degrade quietly: an unpeppered production keeps
+// hashing passwords the old way, and an untagged one logs no account trail. The Google client's
+// two answer a loud 503, but only to someone who tries Google sign-in, so a deleted or renamed one
+// would go unnoticed until a user hit it (build audit ENV6, decision 12).
 
-export const REQUIRED_SECRETS = ["PASSWORD_PEPPER", "LOG_TAG_KEY"] as const;
+export const REQUIRED_SECRETS = [
+  "PASSWORD_PEPPER",
+  "LOG_TAG_KEY",
+  "GOOGLE_CLIENT_ID",
+  "GOOGLE_CLIENT_SECRET",
+] as const;
 
 /** The secret names in `wrangler secret list --format json` output, which is a JSON array of
     `{name, type}` that wrangler may precede with warning lines. Throws when there is no such

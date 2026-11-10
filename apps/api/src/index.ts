@@ -129,10 +129,15 @@ app.route("/", cardIndexRoutes);
 app.route("/", catalogRoutes);
 
 app.get("/health", (c) => {
+  // `release:health` polls this until the new version answers, so no cache may hold an older one.
+  c.header("Cache-Control", "no-store");
+  // `c.env` is undefined when a unit test calls app.request() without one.
+  const version = (c.env as Env | undefined)?.CF_VERSION_METADATA;
   const payload: HealthResponse = {
     ok: true,
     service: "colorless-api",
     time: new Date().toISOString(),
+    version: version === undefined ? null : { id: version.id, tag: version.tag ?? "" },
   };
   // Parse our own response at the boundary — the same pattern every future
   // route will use for its inputs, so a schema drift fails loudly here.

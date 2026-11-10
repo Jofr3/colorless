@@ -18,10 +18,11 @@ export type Row = Record<string, unknown>;
     bounds a stalled connection, which would otherwise hold a release or an ingest. */
 export const WRANGLER_TIMEOUT_MS = 5 * 60 * 1000;
 
-/** Runs `bunx wrangler ...args` in apps/api and returns its stdout; throws on a non-zero exit. */
-export function wrangler(args: readonly string[]): string {
+/** Runs `bunx wrangler ...args` in apps/api (or `cwd`, such as the repo root for the web Worker)
+    and returns its stdout; throws on a non-zero exit. */
+export function wrangler(args: readonly string[], cwd: string = API_ROOT): string {
   const result = spawnSync("bunx", ["wrangler", ...args], {
-    cwd: API_ROOT,
+    cwd,
     encoding: "utf8",
     // A whole-catalog select prints several MB of JSON.
     maxBuffer: 256 * 1024 * 1024,
