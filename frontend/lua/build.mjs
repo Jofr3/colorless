@@ -16,6 +16,7 @@ import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { brotliCompressSync, constants as zlibConstants, gzipSync } from "node:zlib";
+import { withPackageUuid } from "./packageUuid.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../..");
@@ -190,6 +191,8 @@ try {
   // stays beside it for a browser without one. game.js's loader asks host.js for the package
   // (Module.fetchPackage), which this build patches in; a love.js whose loader no longer has
   // that function stops the build rather than shipping a package nothing compresses or counts.
+  // The package's random uuid becomes one derived from game.data, so the build is reproducible
+  // and a returning player's cached package survives a release that leaves game.data unchanged.
   const gameData = readFileSync(join(output, "game.data"));
   writeFileSync(join(output, "game.data.gz"), gzipSync(gameData, { level: 9 }));
   const loader = "function fetchRemotePackage(packageName, packageSize, callback, errback) {";
@@ -198,9 +201,12 @@ try {
     throw new Error(`love.js's game.js no longer has exactly one \`${loader}\`; update build.mjs`);
   writeFileSync(
     join(output, "game.js"),
-    gameJs.replace(
-      loader,
-      `${loader}\n      if (Module['fetchPackage']) return Module['fetchPackage'](packageName, callback);`,
+    withPackageUuid(
+      gameJs.replace(
+        loader,
+        `${loader}\n      if (Module['fetchPackage']) return Module['fetchPackage'](packageName, callback);`,
+      ),
+      gameData,
     ),
   );
   // Byte sizes for host.js's boot bar: response bodies yield decoded bytes, so love.wasm counts

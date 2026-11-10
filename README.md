@@ -31,7 +31,7 @@ detail.
 |---|---|---|
 | `/assets/*` (Vite bundle), `/love/*` (runtime, game package) | browser | immutable for a year; `/love/` URLs carry a `?v=` content hash (`frontend/lua/build.mjs`, `vite.config.ts`), headers in `public/_headers` |
 | Pages (`index.html` on every route) | browser | revalidated on each load, so a deploy shows up immediately |
-| `game.data` | IndexedDB | love.js preload cache, keyed by package |
+| `game.data` | IndexedDB | love.js preload cache, reused while game.data's bytes are unchanged (its uuid is their sha256, `frontend/lua/packageUuid.mjs`) |
 | Card artwork | IndexedDB (`ArtworkCache`), memory | 128 MB LRU of resized PNGs |
 | Catalog reads (`/cards`, `/sets`, `/series`, `/facets`) | KV + browser | KV 1 h; browser 5 min fresh + 1 h stale-while-revalidate, ETag/304 |
 | Card images (`/assets/cards/…` on the API) | R2 + browser | mirrored once from tcgdex; immutable |
@@ -45,7 +45,7 @@ beyond the static assets themselves.
 
 ```bash
 bun install
-bun run dev         # build the Lua app, serve it at http://127.0.0.1:5175/
+bun run dev         # build the Lua app, serve it at http://127.0.0.1:5175/, rebuild on Lua edits
 bun run dev:all     # frontend (5175) + API (8787); Ctrl+C stops both
 bun run dev:tailnet # both servers over Tailnet HTTPS; selects available ports
 bun run build:lua   # rebuild the Lua app into public/love/ (refresh the page)
@@ -65,6 +65,13 @@ bun run deps:check  # the monthly dependency report (needs the network, never fa
 The toolchain is pinned: bun in `.bun-version` and Node (22 LTS) in
 `.node-version`. The build and test tools run under Node. The upgrade routine is
 in `docs/conventions.md` ("Dependencies").
+
+`dev` (and so `dev:all` and `dev:tailnet`) runs Vite under
+`frontend/lua/watch.mjs`, which reruns `build:lua` 200 ms after the last change
+to `frontend/lua/{main.lua,conf.lua,ui,assets,web}`. Refresh the page once
+"Colorless Lua frontend built" prints. A failed rebuild is reported and the
+watch goes on. Edits under `tests/` and `tools/` are not packed and rebuild
+nothing.
 
 `build:lua` needs the sibling `../balatro-source` checkout (or
 `BALATRO_SOURCE`) with its installed `love.js` package. The Lua unit checks run

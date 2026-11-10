@@ -19,7 +19,7 @@ bun run dev:tailnet
 Open the printed frontend URL. Tailscale must be connected;
 the command selects free ports. Ctrl+C stops both servers and its Tailnet proxies.
 
-Rebuild after editing Lua or host files, then refresh (a running Vite dev server picks the new files up):
+`bun run dev` rebuilds after an edit to Lua or host files (`watch.mjs`); refresh the page once the build prints. Without it, rebuild by hand, then refresh (a running Vite dev server picks the new files up):
 
 ```sh
 bun run build:lua
