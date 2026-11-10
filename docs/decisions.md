@@ -1768,7 +1768,7 @@ The rest of Phase 5 of the build system and CI/CD audit: decisions 8 and 9 (find
 
 ### 2026-11-10 — Observability audit: the log guard, `logErrorThrottledBy`, and a runbook a player's report can be looked up in
 
-Phase 0 of the observability and monitoring audit (report `tmp/obs/obs-audit.md`, evidence in `tmp/obs/probe/`; 2 medium findings, 0 high). Decision id OBS-P0. The user took all 8 recommendations of the report's section 6:
+Phase 0 of the observability and monitoring audit (report `tmp/obs/obs-audit.md`, evidence in `tmp/obs/probe/`; 20 findings, 2 medium, 0 high). Decision id OBS-P0. The user took all 8 recommendations of the report's section 6:
 
 1. **1a.** Keep Cloudflare's invocation logs, set `redact_query_string`, and document that they hold the client IP and geolocation for 3 days.
 2. **2a.** Enable Workers Issues in config while it is a free beta, and add one Real-Time Issue email notification.
@@ -1797,4 +1797,4 @@ Phase 0 changes no runtime behaviour; nothing to release.
   - New: a Workers Issues paragraph (off until Phase 1 enables it), a `$workers.outcome = "exception"` row, and an "A player reports…" table that maps a report to a query.
   - "Saved queries" is now "Log queries", since none are saved in the dashboard.
 - **DEP-P3 amended (ERR1).** The source map serves only uncaught exceptions, which here means the cron and the Durable Object. The same claim in the comment above `upload_source_maps` in `apps/api/wrangler.jsonc` is left for Phase 1, which owns that file.
-- 6 OBS-P0 mutant rows, all killed. Three are on API source and are killed by running the guard: an `email` field on `login_ok`, a raw `console.warn` for `login_failed`, and a renamed lobby kind with no runbook row. Three are on the guard itself and are killed by `scripts/logGuard.test.ts`. A seventh row, on `logErrorThrottledBy`, is killed by `log.test.ts`.
+- 7 OBS-P0 mutant rows, all killed. Three are on API source and are killed by running the guard, each for its own reason: an `email` field on `login_ok`, a raw `console.warn` for `login_failed`, and a renamed lobby kind with no runbook row. Three are on the guard and are killed by `scripts/logGuard.test.ts`: shorthand keys unread, the deny-list compared with case, and kinds taken from the whole of backend-data.md. The seventh, `logErrorThrottledBy` logging at warn, is killed by `log.test.ts`.
