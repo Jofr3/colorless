@@ -65,6 +65,7 @@ the script after adding a decision.
 | 2026-11-10 | An opt-in pre-push hook runs Biome, the decision index and, when installed, gitleaks on the commits being pus… | decisions.md:1712 |
 | 2026-11-10 | Production only, no staging environment; the build audit's merge and what is left | decisions.md:1730 |
 | 2026-11-10 | Two Cloudflare tokens: a read-only ambient one, and a deploy token only production writes load | decisions.md:1738 |
+| 2026-11-10 | The web Worker's 404 script, a web rollback rehearsal, locked-down Actions, and lexio on the deploy token | decisions.md:1752 |
 
 ## Numbered decisions
 

@@ -944,6 +944,19 @@ source migrated in place, table for table, `name_prompt` included
 under `.wrangler/state/v3/d1/`. Run `bun run db:migrate:local` to create the
 new file, then copy the old one into it with sqlite's `.backup`.
 
+**Web Worker rollback rehearsal** (run 2026-11-10 at the user's request, build
+audit DEP2). Production's web Worker went back one version and forward again
+with `bun apps/api/scripts/with-deploy-token.ts bunx wrangler rollback <version
+id> -m "…" -y`. The ambient token was the read-only one, so only the deploy
+token wrote. The step back was from `b0ed6d08` (0a8feadf, with the 404 script) to
+`b95dba73` (0a2c8644, static assets only). Each step served the target build's
+`<meta name="build">` within 30 s, the whole drill took 59 s, and `web-health`
+passed after the step forward. While the old version served, a missing chunk
+was again `200 text/html`: the 404 script ships with a version, so rolling back
+past it brings that behaviour back. The API Worker's rollback is still not
+rehearsed. It is the same command from `apps/api/`, but it also changes the
+code that reads D1 and holds live matches.
+
 **Remote Time Travel rehearsal** (run 2026-10-28 with the user's OK: every
 expectation below held, and `colorless-drill` was deleted afterwards; it needs
 `CI=true` so `d1 create` does not prompt). It proves the remote restore path,

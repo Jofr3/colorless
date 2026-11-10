@@ -1748,3 +1748,19 @@ The build system and CI/CD audit's decision 5 (finding DEP3). Decision id BLD-P5
 - **The wiring.** `deployTokenEnv` (apps/api/src/releaseChecks.ts) swaps in the deploy token from `~/.local/state/secrets/CLOUDFLARE_DEPLOY_TOKEN` (or `CLOUDFLARE_DEPLOY_TOKEN_FILE`), and refuses a missing or blank file. release-gate.ts's `-- wrangler deploy` uses it for both Workers, and every gate before it keeps the ambient token. `db:migrate:remote` and hand-run writes (rollback, `secret put`, `time-travel restore`, `ingest.ts --remote`) go through `apps/api/scripts/with-deploy-token.ts`. backend-data.md §3.7.2 has a "Cloudflare tokens" paragraph.
 - **Limits.** The split stops a mistaken write, not a deliberate one: any process running as the user can read the file. The deploy token can still deploy any Worker in the account, because Cloudflare tokens cannot be scoped to one script. Its first real use is the next `bun run release`.
 - 2 BLD-P5 mutant rows, both killed: the deploy keeping the ambient token, and a blank token file accepted.
+
+### 2026-11-10 — The web Worker's 404 script, a web rollback rehearsal, locked-down Actions, and lexio on the deploy token
+
+The rest of Phase 5 of the build system and CI/CD audit: decisions 8 and 9 (findings DEP6, DEP2), the repository settings from CI8, and the token split carried to lexio. Decision id BLD-P5. Released as `release-20261110-0911` (0a8feadf; API 99fbfdba, web b0ed6d08). That release ran with the read-only token as the ambient one, so only the deploy token wrote.
+
+- **A missing build file is a 404 nothing stores (DEP6, decision 9).** The web Worker has a script now (`src/notFoundWorker.ts`, root wrangler.jsonc `main` plus an `ASSETS` binding). It runs only on an asset miss that is not a page navigation.
+  - Under `/assets/` and `/love/` it answers `404`, `cache-control: no-store`, with nosniff and CORP set, because `_headers` does not reach a script's responses.
+  - Any other path gets index.html through the binding.
+  - It was first deployed to a throwaway `colorless-drill-404` Worker, since deleted. That run showed why the second rule is needed: a script that answered every miss with 404 also refused `/decks/abc` asked for without `Sec-Fetch-Mode: navigate` (Safari before 16.4, link previews). Navigations never reach the script.
+  - Production after the release: a missing chunk or `/love/` file gives 404 no-store; `/decks/abc`, plain or navigated, gives the page with its `_headers`; existing files keep `immutable`.
+  - Left as it is: a navigation typed straight to a missing `/assets/…` URL still gets the platform's SPA fallback (HTML, immutable). Only `run_worker_first` on the asset paths would change that, and it would bill every asset request.
+  - 2 mutant rows, both killed: `/love/` misses served as the page, and the 404 made cacheable.
+- **Web rollback rehearsed (DEP2, decision 8).** Back one version and forward again, 59 s in all (backend-data.md §3.7.3, "Web Worker rollback rehearsal"). The API Worker's rollback is still not rehearsed.
+- **Repository Actions settings (CI8).** `allowed_actions: selected` (GitHub-owned actions plus `oven-sh/setup-bun@*`) and `sha_pinning_required: true`, set through `gh api`. The next CI run (0a8feadf) was green under them. Watch the next weekly Dependabot run, which GitHub runs with its own actions.
+- **lexio.** `scripts/deploy.ts` runs every wrangler write (migrations, upload, promote, rollback) with the deploy token, and refuses to run without it outside GitHub Actions, where the environment's secret already is a deploy token. Reads keep the shell's read-only token. Branch `deploy-token` (e4bd4e6), not pushed: the user merges it. `origin/README.md` has a "The token" paragraph.
+- **Still open:** revoking or narrowing the old `agents` token (kept file-only as `CLOUDFLARE_AGENTS_TOKEN`; the user's call), and a rehearsal of the API Worker's rollback.
