@@ -272,7 +272,6 @@ describe("CI's result for a commit", () => {
   });
   const allGreen = () => [
     run("static", "completed", "success"),
-    run("lua", "completed", "success"),
     run("test", "completed", "success"),
     run("mutants", "completed", "success"),
   ];
@@ -280,7 +279,7 @@ describe("CI's result for a commit", () => {
   it("is green when every job passed, ignoring check runs of other workflows", () => {
     expect(ciVerdict(runs(...allGreen(), run("Dependabot", "completed", "failure")))).toEqual({
       verdict: "green",
-      jobs: ["static success", "lua success", "test success", "mutants success"],
+      jobs: ["static success", "test success", "mutants success"],
     });
   });
 
@@ -290,19 +289,19 @@ describe("CI's result for a commit", () => {
     );
     expect(ciVerdict(runs(...list)).verdict).toBe("red");
     expect(
-      ciVerdict(runs(run("static", "completed", "cancelled"), run("lua", "in_progress", null)))
+      ciVerdict(runs(run("static", "completed", "cancelled"), run("test", "in_progress", null)))
         .verdict,
     ).toBe("red");
   });
 
   it("is pending while a job runs, incomplete when one never ran, none before CI reports", () => {
     expect(
-      ciVerdict(runs(run("static", "completed", "success"), run("lua", "queued", null))).verdict,
+      ciVerdict(runs(run("static", "completed", "success"), run("test", "queued", null))).verdict,
     ).toBe("pending");
     const partial = ciVerdict(runs(run("static", "completed", "success")));
     expect(partial).toEqual({
       verdict: "incomplete",
-      jobs: ["static success", "lua absent", "test absent", "mutants absent"],
+      jobs: ["static success", "test absent", "mutants absent"],
     });
     expect(ciVerdict(runs()).verdict).toBe("none");
     expect(ciVerdict("garbage").verdict).toBe("none");

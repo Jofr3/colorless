@@ -289,7 +289,7 @@ export function assetProblem(
 // ---- CI ----
 
 /** The ci.yml jobs whose result the release prints (decision 1b: printed, never blocking). */
-export const CI_JOBS = ["static", "lua", "test", "mutants"] as const;
+export const CI_JOBS = ["static", "test", "mutants"] as const;
 
 const PASSING = new Set(["success", "neutral", "skipped"]);
 

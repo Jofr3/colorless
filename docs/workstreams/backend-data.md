@@ -615,7 +615,7 @@ and step 1 is therefore unblocked TODAY and should not wait for the backfill.
      `origin/main` behind).
    - `audit`: `bun scripts/audit.ts`, the production advisory audit CI runs,
      with the same dated ignore list (`scripts/audit-ignore.txt`). It blocks.
-   - `ci`: prints CI's result for HEAD (static, lua, test, mutants) from
+   - `ci`: prints CI's result for HEAD (static, test, mutants) from
      `gh api …/commits/<sha>/check-runs`. It never blocks: CI usually is
      still running at this point, and local `check` ran the same suites.
    - `secrets`: the production Worker holds every secret in
