@@ -653,6 +653,42 @@ it with `bun run --cwd apps/api types` whenever apps/api/wrangler.jsonc, its
 (`check:static` fails a stale one). Never edit it or run a bare `wrangler types`,
 which reads `.dev.vars` (DEP-P3b).
 
+## Pre-push hook
+
+`.githooks/pre-push` is an opt-in hook (BLD-P4) that stops the Biome and
+decision-index slips CI would fail on. Enable it once per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+That setting lives in the clone's shared config, so every worktree of the clone
+uses it, each running its own checkout's `.githooks/pre-push`. A worktree on a
+branch from before the hook existed runs nothing. Turn it off with
+`git config --unset core.hooksPath`. Skip it for one push with
+`git push --no-verify`, for instance mid-sweep or when pushing someone else's
+red commit on purpose.
+
+- **What it runs.** The stub execs `bun scripts/pre-push.ts`. For each commit
+  being pushed, that exports the commit's tree to a temp directory outside the
+  repo and runs `biome ci . --error-on-warnings` and
+  `scripts/decision-index.ts --check` there, concurrently. It checks what is
+  pushed, not the working tree, so another agent's unfinished file in a shared
+  checkout neither fails your push nor passes for you. About 3 s on an idle
+  machine, nearly all of it Biome. Biome runs on the whole tree rather than the
+  changed files: the saving would be about 2 s, and a changed-files run has to
+  get first pushes, `biome.json` edits and deleted files right.
+- **Secret scan.** When a `gitleaks` binary is on PATH and the pushed tree has
+  `.gitleaks.toml`, it also runs `gitleaks git` over the commits the remote
+  lacks (`<remote tip>..<tip>`, or `<tip> --not --remotes=<remote>` for a new
+  ref or an unfetched remote tip), with findings redacted. Otherwise it prints
+  why it skipped. CI runs gitleaks either way.
+- **Mutation journal.** Like `check.ts`, it refuses while
+  `tmp/mutation-journal.json` (or `MUTATION_JOURNAL_PATH`) exists: the tree may
+  hold mutated source, and a commit made from it may carry a mutant.
+- It is not a substitute for `bun run check`; tsc, the guards, the Lua tests and
+  vitest still run only there and in CI.
+
 ## Working beside other agents
 
 Two or three agents share this checkout. Work like it:

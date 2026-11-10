@@ -45,6 +45,7 @@ beyond the static assets themselves.
 
 ```bash
 bun install
+git config core.hooksPath .githooks  # once per clone: the opt-in pre-push hook (docs/conventions.md, "Pre-push hook")
 bun run dev         # build the Lua app, serve it at http://127.0.0.1:5175/
 bun run dev:all     # frontend (5175) + API (8787); Ctrl+C stops both
 bun run dev:tailnet # both servers over Tailnet HTTPS; selects available ports
