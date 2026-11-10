@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Mutant } from "./mutants";
-import { pickSample } from "./sample";
+import { changedSince, pickSample } from "./sample";
 
 const row = (id: string, file: string, killers: string[] = []): Mutant => ({
   id,
@@ -47,5 +47,36 @@ describe("pickSample", () => {
       pickSample(CORPUS, new Set(), { random: 6, cap: 0, seed }).random.map((m) => m.id);
     expect(ids("abc")).toEqual(ids("abc"));
     expect(ids("abc")).not.toEqual(ids("xyz"));
+  });
+});
+
+describe("changedSince", () => {
+  const calls: string[][] = [];
+  const fake =
+    (known: boolean, diff: string | undefined) =>
+    (...args: string[]) => {
+      calls.push(args);
+      if (args[0] === "cat-file") return known ? "" : undefined;
+      return diff;
+    };
+
+  it("lists both sides of a rename without reading blobs", () => {
+    calls.length = 0;
+    expect(changedSince("abc", fake(true, "src/old.ts\nsrc/new.ts\n"))).toEqual({
+      files: new Set(["src/old.ts", "src/new.ts"]),
+    });
+    expect(calls[1]).toEqual(["diff", "--no-renames", "--name-only", "abc...HEAD"]);
+  });
+
+  it("reports an unknown base (a first push, a force-push) without diffing", () => {
+    calls.length = 0;
+    expect(changedSince("gone", fake(false, "x"))).toEqual({ unknownBase: true });
+    expect(calls).toHaveLength(1);
+  });
+
+  it("reports a failed diff of a known base as an error, not as no changes", () => {
+    expect(changedSince("abc", fake(true, undefined))).toEqual({
+      error: "git diff abc...HEAD failed",
+    });
   });
 });

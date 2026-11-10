@@ -658,6 +658,12 @@ new migration. A rollback of the API across a change of
 `MATCH_RECORD_VERSION` (the engine's game-state version) retires the matches
 the newer Worker stored, so players in a match at that moment lose it.
 
+A Durable Object migration (a `migrations` entry in apps/api/wrangler.jsonc that
+adds, renames or deletes a class) blocks `wrangler rollback` to any API version
+before it: Cloudflare refuses a rollback across a DO class change. Ship such a
+migration in a release with no other API change, so the version before it is
+not one a rollback would need (build audit DEP2).
+
 **Secrets before the first Phase 5 release (security audit 2026-10-27).** Generate
 `PASSWORD_PEPPER` and `LOG_TAG_KEY` (`openssl rand -base64 32` each), save both in
 the password manager, then from `apps/api/` run `bunx wrangler secret put

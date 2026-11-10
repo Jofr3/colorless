@@ -514,6 +514,11 @@ the previous Worker keeps serving while `release` migrates. Two rules follow.
 - `scripts/drizzle-drift.ts` (check:static) fails when `schema.ts` has changes no
   migration records. drizzle-kit does not track triggers; note any next to the
   table in `apps/api/src/db/`.
+- **A Durable Object migration ships alone.** A new `migrations` entry in
+  apps/api/wrangler.jsonc (a LobbyDO class added, renamed or deleted) blocks
+  `wrangler rollback` to every API version before it. Release it with no other
+  API change, so a rollback never has to cross it (backend-data.md §3.7.2;
+  build audit DEP2).
 
 ## Dependencies
 

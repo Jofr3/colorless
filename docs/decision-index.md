@@ -34,30 +34,31 @@ the script after adding a decision.
 | 2026-10-28 | Deck saves that survive a lost response, and client request deadlines | decisions.md:982 |
 | 2026-10-28 | API failure paths: D1 write failures and stalled upstreams degrade to sensible answers | decisions.md:999 |
 | 2026-10-28 | Data ops and the release pipeline: a restore recipe proven locally, recovery per release step | decisions.md:1013 |
-| 2026-10-28 | Engine safety nets: real-card fuzz, a wider shape pin, and version 41 retired | decisions.md:1032 |
-| 2026-10-28 | The Lua frontend's browser smoke, named mailbox rows, and a page that says what happened | decisions.md:1054 |
-| 2026-10-28 | Online lobby follow-ups: a faster sweep while two seats are held, and a definite "not found" | decisions.md:1067 |
-| 2026-10-29 | Frontend & UI audit Phase 1: the deck pages speak, keyboard focus shows, and a loading deck is not "unavailab… | decisions.md:1083 |
-| 2026-10-29 | Frontend & UI audit Phase 2: the table speaks, plays by keyboard, and holds online buttons while sending | decisions.md:1097 |
-| 2026-10-29 | Frontend & UI audit Phase 3: the host page checks, counts and compresses its boot, and the canvas follows the… | decisions.md:1114 |
-| 2026-10-30 | Frontend & UI audit Phase 4: data in flight keeps what is on screen, and the Sandbox button no longer waits o… | decisions.md:1130 |
-| 2026-10-30 | Frontend & UI audit Phase 5: a 60 fps cap, still frames skipped, and less work per frame and per turn | decisions.md:1145 |
-| 2026-10-30 | Frontend & UI audit Phase 6: full-density rendering, an Interface Size setting, phone legibility and text fie… | decisions.md:1162 |
-| 2026-10-31 | Frontend & UI audit Phase 7: shared page widgets, simulator and page splits, spatial arrows, history tooltips… | decisions.md:1188 |
-| 2026-11-09 | Frontend & UI audit follow-ups: Interface Size on the table and the online lobby, filter option lists, toolti… | decisions.md:1217 |
-| 2026-11-09 | Backend and API audit safety nets, and what production says | decisions.md:1281 |
-| 2026-11-09 | Backend and API audit Phases 1-4: a lobby alarm that backs off, builder pages from the card index, saves that… | decisions.md:1307 |
-| 2026-11-09 | Backend and API audit Phase 5 and CAT2: every catalog miss spends the search budget, and failures say why | decisions.md:1354 |
-| 2026-11-09 | Builder prefetch from the index only, page input once the wipe has committed, and springs that do not ring on… | decisions.md:1394 |
-| 2026-11-09 | Dependency audit safety nets: Lua for the mutants job, a weekly full-tree report, one Workers runtime in the… | decisions.md:1409 |
-| 2026-11-09 | Dependency audit Phase 1: grouped Dependabot, Node 24 actions, one bun and one Node from laptop to CI, a rele… | decisions.md:1426 |
-| 2026-11-09 | Dependency refresh: wrangler 4.158 and its own miniflare 5 together, hono past its advisories, in-range dev t… | decisions.md:1448 |
-| 2026-11-09 | Deploy the API Worker minified with its source maps, gate the bundle the deploy builds, and pass zod refineme… | decisions.md:1488 |
-| 2026-11-09 | Dependency audit Phase 4: an MIT LICENSE, served third-party notices with a Credits button, and love.js 11.4.… | decisions.md:1501 |
-| 2026-11-09 | Generate the API Worker's types with wrangler types, check them in check:static, and drop @cloudflare/workers… | decisions.md:1539 |
-| 2026-11-09 | TypeScript 7 for every typecheck, with the TypeScript 6 parser kept for the mutation scripts | decisions.md:1559 |
-| 2026-11-09 | Vitest 5, with the module cache's new key and path | decisions.md:1575 |
-| 2026-11-10 | Biome 2.6.6, with the migrated config and its lint fixes | decisions.md:1588 |
+| 2026-10-28 | Engine safety nets: real-card fuzz, a wider shape pin, and version 41 retired | decisions.md:1033 |
+| 2026-10-28 | The Lua frontend's browser smoke, named mailbox rows, and a page that says what happened | decisions.md:1055 |
+| 2026-10-28 | Online lobby follow-ups: a faster sweep while two seats are held, and a definite "not found" | decisions.md:1068 |
+| 2026-10-29 | Frontend & UI audit Phase 1: the deck pages speak, keyboard focus shows, and a loading deck is not "unavailab… | decisions.md:1084 |
+| 2026-10-29 | Frontend & UI audit Phase 2: the table speaks, plays by keyboard, and holds online buttons while sending | decisions.md:1098 |
+| 2026-10-29 | Frontend & UI audit Phase 3: the host page checks, counts and compresses its boot, and the canvas follows the… | decisions.md:1115 |
+| 2026-10-30 | Frontend & UI audit Phase 4: data in flight keeps what is on screen, and the Sandbox button no longer waits o… | decisions.md:1131 |
+| 2026-10-30 | Frontend & UI audit Phase 5: a 60 fps cap, still frames skipped, and less work per frame and per turn | decisions.md:1146 |
+| 2026-10-30 | Frontend & UI audit Phase 6: full-density rendering, an Interface Size setting, phone legibility and text fie… | decisions.md:1163 |
+| 2026-10-31 | Frontend & UI audit Phase 7: shared page widgets, simulator and page splits, spatial arrows, history tooltips… | decisions.md:1189 |
+| 2026-11-09 | Frontend & UI audit follow-ups: Interface Size on the table and the online lobby, filter option lists, toolti… | decisions.md:1218 |
+| 2026-11-09 | Backend and API audit safety nets, and what production says | decisions.md:1282 |
+| 2026-11-09 | Backend and API audit Phases 1-4: a lobby alarm that backs off, builder pages from the card index, saves that… | decisions.md:1308 |
+| 2026-11-09 | Backend and API audit Phase 5 and CAT2: every catalog miss spends the search budget, and failures say why | decisions.md:1355 |
+| 2026-11-09 | Builder prefetch from the index only, page input once the wipe has committed, and springs that do not ring on… | decisions.md:1395 |
+| 2026-11-09 | Dependency audit safety nets: Lua for the mutants job, a weekly full-tree report, one Workers runtime in the… | decisions.md:1410 |
+| 2026-11-09 | Dependency audit Phase 1: grouped Dependabot, Node 24 actions, one bun and one Node from laptop to CI, a rele… | decisions.md:1427 |
+| 2026-11-09 | Dependency refresh: wrangler 4.158 and its own miniflare 5 together, hono past its advisories, in-range dev t… | decisions.md:1449 |
+| 2026-11-09 | Deploy the API Worker minified with its source maps, gate the bundle the deploy builds, and pass zod refineme… | decisions.md:1489 |
+| 2026-11-09 | Dependency audit Phase 4: an MIT LICENSE, served third-party notices with a Credits button, and love.js 11.4.… | decisions.md:1502 |
+| 2026-11-09 | Generate the API Worker's types with wrangler types, check them in check:static, and drop @cloudflare/workers… | decisions.md:1540 |
+| 2026-11-09 | TypeScript 7 for every typecheck, with the TypeScript 6 parser kept for the mutation scripts | decisions.md:1560 |
+| 2026-11-09 | Vitest 5, with the module cache's new key and path | decisions.md:1576 |
+| 2026-11-10 | Biome 2.6.6, with the migrated config and its lint fixes | decisions.md:1589 |
+| 2026-11-10 | Build and CI/CD audit safety nets: CI keeps its static signal, the mutant sample cannot silently lose its dif… | decisions.md:1613 |
 
 ## Numbered decisions
 

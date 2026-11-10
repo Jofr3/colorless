@@ -31,13 +31,15 @@ export type Env = {
       (src/catalog/searchLimit.ts). Absent in unit tests. */
   CATALOG_SEARCH_LIMIT?: Generated["CATALOG_SEARCH_LIMIT"];
   /** The web app's origin — CORS allow-origin + OAuth post-login redirect
-      target (§3.5). wrangler.jsonc `vars` sets the dev default; production
-      overrides it when the web app's real origin exists. */
+      target (§3.5). wrangler.jsonc `vars` holds the production origin; the
+      `dev` script overrides it with `--var APP_ORIGIN:http://localhost:5175`
+      (scripts/dev-tailnet.ts appends its own). */
   APP_ORIGIN?: string;
   /** Public API origin for OAuth callbacks behind a local HTTPS proxy. */
   API_ORIGIN?: string;
-  // OAuth app credentials (§3.5) — ABSENT until the user registers the apps;
-  // the /auth/oauth routes answer 503 meanwhile. Install per provider with:
+  // OAuth app credentials (§3.5). Production holds both; where they are
+  // absent (a fresh dev setup, unit tests) the /auth/oauth routes answer 503.
+  // Install per provider with:
   //   wrangler secret put GOOGLE_CLIENT_ID (and GOOGLE_CLIENT_SECRET)
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;

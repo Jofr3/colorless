@@ -8,7 +8,9 @@
  *   bun scripts/mutation/sample.ts --random 30 --cap 60 --seed abc --list
  *
  * The seed defaults to GITHUB_SHA, then HEAD, so a re-run of one commit picks the same rows. An
- * unknown base (a first push, a force-push) is reported and the run continues with the draw.
+ * unknown base (a first push, a force-push) is reported and the run continues with the draw. A
+ * known base whose diff still fails stops the run: without it the job would stay green while
+ * running no targeted row (build audit CI8).
  */
 
 import { spawnSync } from "node:child_process";
@@ -64,6 +66,21 @@ function git(...args: string[]): string | undefined {
   return r.status === 0 ? r.stdout.trim() : undefined;
 }
 
+type Git = (...args: string[]) => string | undefined;
+
+/** The files changed since `base`, or why there are none. `--no-renames` lists both sides of a
+    rename and reads no file contents: rename detection would fetch blobs, which CI's blob:none
+    checkout lacks and, with no credentials kept, cannot fetch (build audit CI8). */
+export function changedSince(
+  base: string,
+  run: Git = git,
+): { files: Set<string> } | { unknownBase: true } | { error: string } {
+  if (run("cat-file", "-e", `${base}^{commit}`) === undefined) return { unknownBase: true };
+  const diff = run("diff", "--no-renames", "--name-only", `${base}...HEAD`);
+  if (diff === undefined) return { error: `git diff ${base}...HEAD failed` };
+  return { files: new Set(diff.split("\n").filter(Boolean)) };
+}
+
 function parseArgs(argv: readonly string[]) {
   const values = new Map<string, string>();
   let list = false;
@@ -96,9 +113,11 @@ if (import.meta.main) {
   const { base, list, options } = parseArgs(process.argv.slice(2));
   let changed = new Set<string>();
   if (base !== undefined) {
-    const diff = git("diff", "--name-only", `${base}...HEAD`);
-    if (diff === undefined) console.log(`sample: base \`${base}\` not found; random draw only`);
-    else changed = new Set(diff.split("\n").filter(Boolean));
+    const since = changedSince(base);
+    if ("error" in since)
+      fail(`sample: ${since.error}; the rows on changed files cannot be picked`);
+    if ("unknownBase" in since) console.log(`sample: base \`${base}\` not found; random draw only`);
+    else changed = since.files;
   }
   const { touched, random, dropped } = pickSample(MUTANTS, changed, options);
   console.log(

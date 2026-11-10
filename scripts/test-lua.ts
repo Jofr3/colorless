@@ -7,7 +7,9 @@
 // love.js in a browser and is skipped. Tests that compare against Balatro's
 // source exit 77 when it is missing
 // (frontend/lua/tests/support/balatro_source.lua), or skip only those checks
-// and say so (`PARTIAL`); --require-source makes either a failure instead.
+// and say so (`PARTIAL`); --require-source makes either a failure instead,
+// and refuses any interpreter but 5.1: it is the release's only source-comparing
+// run, so it must not pass under a dialect the game cannot run (build audit ENV4).
 // Files run concurrently, one per core; a failure's output is printed whole,
 // in file order. Naming test files runs only those (a mutant row's killer).
 //
@@ -75,6 +77,14 @@ function runOne(file: string): Promise<Outcome> {
       resolve({ status, output: stderr || stdout, partial: stdout.includes(PARTIAL) }),
     );
   });
+}
+
+if (requireSource && !versionOf(lua)?.startsWith("Lua 5.1")) {
+  console.error(
+    `--require-source needs Lua 5.1, the dialect love.js ships; ${lua} is ${versionOf(lua) ?? "not runnable"}.\n` +
+      "Install lua5.1 (apt install lua5.1, or nix build nixpkgs#lua5_1), or set LUA=<a 5.1 binary>.",
+  );
+  process.exit(1);
 }
 
 const named = process.argv.slice(2).filter((arg) => arg.endsWith(".lua"));
