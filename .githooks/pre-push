@@ -1,0 +1,5 @@
+#!/bin/sh
+# Opt-in pre-push hook: Biome and the decision index on what is pushed, plus gitleaks when it is
+# installed. Enable once per clone with `git config core.hooksPath .githooks`; skip one push with
+# `git push --no-verify`. The checks live in scripts/pre-push.ts.
+exec bun scripts/pre-push.ts "$@"
