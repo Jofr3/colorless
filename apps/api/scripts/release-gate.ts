@@ -565,6 +565,9 @@ const STEPS: Record<string, () => void | Promise<void>> = {
       );
     }
     console.log(`finish: OK — tagged ${tag} and pushed it`);
+    console.log(
+      "After about an hour of use, compare the new API version with the one it replaced: `bun run --cwd apps/api prod:report --release` (read-only).",
+    );
   },
   abort: () => {
     const pin = readPin();

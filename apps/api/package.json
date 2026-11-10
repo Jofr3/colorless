@@ -15,6 +15,7 @@
     "release:health": "bun scripts/release-gate.ts health",
     "release:finish": "bun scripts/release-gate.ts finish",
     "db:check": "bun scripts/db-check.ts",
+    "prod:report": "bun scripts/prod-report.ts",
     "typecheck": "tsc -b",
     "types": "rm -f worker-configuration.d.ts && wrangler types --env-file=/dev/null --env-interface=GeneratedEnv",
     "db:generate": "drizzle-kit generate",

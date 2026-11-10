@@ -643,7 +643,13 @@ transitive or dev packages. The weekly **Dependency report** workflow
    or note why not.
 5. Look at the toolchain pins: a newer bun 1.x or Node 22.x is bumped in a
    commit of its own.
-6. Record the notable bumps in `docs/decisions.md`.
+6. `bun run --cwd apps/api prod:report --days 30`. It is read-only, with the
+   ambient read token, and exits 1 only on a crit: a Free quota at 80% of its
+   limit, or no successful cron run yesterday. Read every warn, the two SLO
+   lines and the match completion share; a missed SLO sends the next session
+   to its cause. Run it with `--release` after each release too (`release:finish`
+   reminds you); the runbook is `docs/workstreams/backend-data.md` §3.7.4.
+7. Record the notable bumps in `docs/decisions.md`.
 
 **Taking a major** happens on a go/no-go branch of its own, never in a group
 PR. Write the go criteria first (the dependency audit's §5, phases 5-7, are
