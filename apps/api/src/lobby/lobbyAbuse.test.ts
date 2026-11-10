@@ -40,10 +40,12 @@ import { LOG_CHUNK, MatchStore } from "./matchStore";
 let h: LobbyHarness;
 let warn: MockInstance<typeof console.warn>;
 let info: MockInstance<typeof console.log>;
+let errors: MockInstance<typeof console.error>;
 
 beforeEach(() => {
   warn = vi.spyOn(console, "warn").mockImplementation(() => {});
   info = vi.spyOn(console, "log").mockImplementation(() => {});
+  errors = vi.spyOn(console, "error").mockImplementation(() => {});
   h = createLobbyHarness({
     seed: drbgSeed(42),
     displayNames: new Map([
@@ -66,8 +68,11 @@ afterEach(() => {
 });
 
 /** The fields of every `lobby` log line of `kind` written so far at `level` (warn by default). */
-function logged(kind: string, level: "warn" | "info" = "warn"): Record<string, unknown>[] {
-  return (level === "warn" ? warn : info).mock.calls
+function logged(
+  kind: string,
+  level: "warn" | "info" | "error" = "warn",
+): Record<string, unknown>[] {
+  return { warn, info, error: errors }[level].mock.calls
     .map(([line]) => JSON.parse(String(line)) as Record<string, unknown>)
     .filter((line) => line.evt === "lobby" && line.kind === kind);
 }
@@ -320,10 +325,10 @@ describe("lobby abuse — crafted actions (MI3)", () => {
     }
     expect(actorSocket.framesOf("reject-action")).toHaveLength(3);
     expect(await storedRecord()).toEqual(before);
-    expect(logged("action_threw")).toEqual([]);
+    expect(logged("action_threw", "error")).toEqual([]);
   });
 
-  it("MI3: an engine throw is refused like any move and logged, throttled", async () => {
+  it("MI3: an engine throw is refused like any move and logged at error level, throttled", async () => {
     const { actorSocket } = await matchInTurnOne();
     // A record whose state the engine cannot read stands in for any input that breaks its
     // totality contract. It passes the record gate, which checks only the top level.
@@ -337,7 +342,8 @@ describe("lobby abuse — crafted actions (MI3)", () => {
       { kind: "reject-action", reason: "That move isn't available here." },
       { kind: "reject-action", reason: "That move isn't available here." },
     ]);
-    expect(logged("action_threw")).toEqual([
+    // The engine is meant to be total, so a throw is a code defect (OBS-P2).
+    expect(logged("action_threw", "error")).toEqual([
       {
         evt: "lobby",
         kind: "action_threw",
@@ -346,6 +352,7 @@ describe("lobby abuse — crafted actions (MI3)", () => {
         error: expect.stringMatching(/^TypeError: /),
       },
     ]);
+    expect(logged("action_threw")).toEqual([]);
   });
 
   it("LOB7: a throw on another action type is not hidden behind the first one's line", async () => {
@@ -357,7 +364,10 @@ describe("lobby abuse — crafted actions (MI3)", () => {
     for (const type of ["endTurn", "endTurn", "concede"] as const)
       await h.send(actorSocket, { kind: "action", action: { type } });
     expect(actorSocket.framesOf("reject-action")).toHaveLength(3);
-    expect(logged("action_threw").map((line) => line.type)).toEqual(["endTurn", "concede"]);
+    expect(logged("action_threw", "error").map((line) => line.type)).toEqual([
+      "endTurn",
+      "concede",
+    ]);
   });
 });
 
@@ -918,8 +928,12 @@ describe("lobby abuse — the audit trail (LB8)", () => {
     h.world.endedSessions.add(sessionIdOf("bo"));
     await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
     for (let i = 0; i <= FRAME_BURST; i++) await h.send(host, "junk");
-    const lines = [...warn.mock.calls, ...info.mock.calls].map(([line]) => String(line));
+    const calls = [...warn.mock.calls, ...info.mock.calls, ...errors.mock.calls];
+    const lines = calls.map(([line]) => String(line));
     expect(lines.length).toBeGreaterThanOrEqual(3);
+    // The match's own lines are among them (MET3).
+    expect(logged("match_started", "info")).toHaveLength(1);
+    expect(logged("match_ended", "info")).toMatchObject([{ cause: "conceded" }]);
     const secrets = ["ana", "bo", sessionIdOf("ana"), sessionIdOf("bo"), "deck-ana", "deck-bo"];
     secrets.push(seatSecret("h"), seatSecret("g"));
     for (const secret of secrets) {

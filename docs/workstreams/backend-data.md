@@ -1161,9 +1161,12 @@ Every `evt = "lobby"` line carries the lobby's `code` as `lobby`. None carries
 an account id, a session id, an email, a seat secret, a deck id or a name:
 `signedIn` and `seated` say only whether there was one. The refusals and
 closes a client can repeat are throttled (marked *t*); the throttle is per
-`kind` (per `kind` and action `type` for `action_threw`), so one cause can hide
-another's line for 10 minutes, counted in `suppressed`. `forfeit` and
-`lobby_wiped` are info level, the rest warn. The security audit trail (LB8) is
+`kind` (per `kind` and action `type` for `action_threw`, per `kind` and frame
+for `frame_failed`), so one cause can hide another's line for 10 minutes,
+counted in `suppressed`. `match_started`, `match_ended`, `forfeit` and
+`lobby_wiped` are info level. A code defect is error level: `frame_failed`,
+`action_threw`, `alarm_failed`, and `handoff_failed` when starting the match
+threw. The rest are warn. The security audit trail (LB8) is
 the first six:
 
 | `kind` | Fields | When |
@@ -1176,12 +1179,15 @@ the first six:
 | `rematch_refused` | `cause`, `sockets`, `requester` | A rematch refused because a seat's session ended (`session_ended`, MI4): the `sockets` holding it were closed (1008), `requester` says whether the asker's own was one. |
 | `rematch_unchecked` *t* | `cause`, `error` | The rematch's session read failed (`session_lookup`) and the rematch went ahead; the handoff's deck read re-checks each session. |
 | `lobby_wiped` | `cause`, `sockets`, `ageMs`, `inGame` | The lobby was deleted: `empty` (its expiry), `inactive` (an hour without play; `sockets` were closed with 4000) or `legacy` (stored before the LB6 cutover). |
-| `handoff_failed`, `handoff_deferred` | `cause`, `error` / `attempts` | A match could not start: `d1_error`, `deck_unresolved` or `match_refused` (the engine refused the decks, or starting the match threw, with `error`); or the lobby kept changing under the handoff. |
+| `handoff_failed`, `handoff_deferred` | `cause`, `error` / `attempts` | A match could not start: `d1_error`, `deck_unresolved` or `match_refused` (the engine refused the decks, or starting the match threw, with `error`; the throw is error level); or the lobby kept changing under the handoff. |
+| `match_started` | | The handoff began a match (one line per match; several under one lobby code are rematches). |
+| `match_ended` | `cause`, `turns`, `durationMs` | A match reached its result. `cause`: the engine's reason for a win (`prizesTaken`, `noPokemon`, `deckOut`, `cardEffect`, `conceded` for the Concede button), `tie`, or a forfeit's `left` or `abandoned` (each also logs `forfeit`). `turns` is the turn it ended on, `durationMs` the time since it started. A `match_started` with no `match_ended` is a match that never finished: retired (`match_retired`), wiped with its lobby, or ended by the host's kick. Count both with `evt = "lobby" AND kind IN (match_started, match_ended)`, grouped by `cause`. |
 | `forfeit` | `seat`, `cause` | A seat conceded by leaving (`left`) or by its forfeit clock (`abandoned`). |
-| `action_threw` *t* | `type`, `error` | The engine threw on an action; it was refused like any move (MI3). Throttled per action `type`, so a throw on another type still logs (API audit LOB7). |
+| `action_threw` *t* | `type`, `error` | The engine threw on an action, error level; it was refused like any move (MI3). Throttled per action `type`, so a throw on another type still logs (API audit LOB7). |
+| `frame_failed` *t* | `frame`, `error` | Handling a frame threw, error level: most likely a storage write refused (a spent daily DO write quota, or a value too large). `frame` is the frame's kind (`hello`, `intent`, `action`, `reject`, `bye`, `rematch`), and the throttle is per frame kind. The error is rethrown, so the invocation also ends as an exception, and the player gets no reply: the table freezes, and the client's hello retry fails the same way. `lobby` is null when reading the code failed too (ERR3). |
 | `match_migrated`, `match_retired` | `from`, `to` / `cause` | A stored match was migrated to this build's version, or retired as unreadable. |
 | `seat_orphaned` | `seats` | An alarm pass found `seats` shown connected that no socket holds (their sockets went in a deploy without a close the DO heard) and gave each the reconnect grace. |
-| `alarm_failed` | `error` | An alarm pass threw; the alarm is re-armed, no sooner than 5 s later until a pass succeeds (LOB1). |
+| `alarm_failed` | `error` | An alarm pass threw, error level; the alarm is re-armed, no sooner than 5 s later until a pass succeeds (LOB1). |
 
 **A player reports…** Ask for the time, to the minute, and for a match the
 lobby code from the address bar (`/?lobby=CODE`). Then:
@@ -1191,7 +1197,7 @@ lobby code from the address bar (`/?lobby=CODE`). Then:
 | Anything | Workers Issues first, once it is on; then Account Home → Workers & Pages → Usage, and the table at the top of this section, for a spent daily quota. |
 | A deck didn't save | Invocations whose URL contains `/decks` with a status of 400 or more, then that invocation's `decks` or `http` line (`rate_limited`, `binding_error`, `invalid_request`, `unhandled`). |
 | Sign-in fails | `evt = "auth"`, kinds `oauth_*`, `login_failed`, `rate_limited`, `limiter_error` and the error-level ones. |
-| A match froze or will not start | `lobby = "<CODE>"`, the invocations whose URL contains `/lobby/<CODE>/ws`, and `$workers.outcome = "exception"` around the time, since an exception carries no lobby code. |
+| A match froze or will not start | `lobby = "<CODE>"`: `frame_failed` (a frame threw, usually a refused storage write), `handoff_failed`, `action_threw`, `alarm_failed`. Then the invocations whose URL contains `/lobby/<CODE>/ws`, and `$workers.outcome = "exception"` around the time, since an exception carries no lobby code. |
 | Cards or images don't load | `evt = "kv"`, `evt = "catalog"` and `evt = "assets"`. An asset 502 from a failing origin has no line, only its invocation's status. |
 
 ---
