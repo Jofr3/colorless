@@ -1584,3 +1584,27 @@ Phase 6 of the dependency audit (report `tmp/deps/deps-audit.md`), finding VER6:
   - The one `nameFilter` row (API-OPS2-login-warn) still selects its tests under Vitest 5's `-t` and is killed.
   - `clearMocks` now defaults to true. The shared projects already restore mocks after each test, and nothing failed.
 - Dependabot still ignores vitest majors: a 6 gets its own branch, as 5 did. No mutant rows: the change is configuration, and the sample comparison above is its check.
+
+### 2026-11-10 — Biome 2.6.6, with the migrated config and its lint fixes
+
+Phase 7 of the dependency audit (report `tmp/deps/deps-audit.md`), finding VER5: a go/no-go branch. Decision id DEP-P7. Biome 1.9.4 had had no release since 2024-10-17.
+
+- **@biomejs/biome 1.9.4 → 2.6.6** (2026-11-06), pinned exactly: `biome ci --error-on-warnings` is a check:static gate, and a patch can change formatter output or add a warning. The pin's reason is in conventions' list.
+- **Config.** `biome migrate --write` turned `include`/`ignore` into `files.includes` with `**/` prefixes and `!` exclusions, moved `noRestrictedImports` from nursery to style and `organizeImports` into `assist`. By hand: duplicate exclusions dropped, and the six `noRestrictedGlobals` entries (USE6's override on apps/api/src) given real messages in place of the migration's TODO placeholders. New: `!**/*.md`, because Biome 2 formats Markdown and the docs are hand-wrapped (audit decision 10), and `noTemplateCurlyInString` off for `scripts/mutation/mutants.ts` and `binding-gate.ts`, whose patches and fixtures are code strings (382 of the 385 warnings).
+- **Fixes, none of which changes behaviour:**
+  - 21 `noUnsafeOptionalChaining` errors, all in engine tests: `(x?.[0] as T).field`. Each became `(present(x)[0] as T).field`, with `present()` new in `fixtures/values.ts`. It throws on null or undefined, so a missing value still fails the test, as the old TypeError did. Rewriting these as `?.field` would have let a `toBeUndefined()` assertion pass on a missing value.
+  - 17 `useIterableCallbackReturn` errors: 16 `forEach` arrows that returned their call's value now have block bodies, and `upserts.test.ts`'s `map` throws after its exhaustive switch.
+  - 4 `useOptionalChain` warnings applied, among them `sanitizeRedirect`'s guard (`!raw?.startsWith("/") || …`), which is equivalent for null, undefined and "".
+  - 18 suppressions Biome 2 no longer needs (`noDelete` and `useTemplate` left `recommended`). Each `noDelete` suppression became a plain comment that keeps its D124 reason.
+  - 2 test titles that quote the `${uid}:${name}` key format keep a `biome-ignore`.
+  - 5 files reformatted (3 engine tests, `schema/src/lobby/equals.ts`, `schema/package.json`).
+- **`scripts/lib/generated.ts`.** Biome 2 refuses a second root config below the one it started from, so `biomeFormatted` writes `files.includes` and runs Biome from its temp directory. Run from the repo root, every generator's `--check` failed.
+- **Go criteria, all met:**
+  - `biome ci . --error-on-warnings` is clean (1098 files).
+  - lint-coverage OK (1058 files).
+  - Planted violations still fire: `process` in a Worker file, and the engine imported in `lobby/`. A test file using `process` is still exempt.
+  - `bun run check` passes: 744 files, 17,298 tests.
+  - The seeded sample `sample.ts --random 40 --seed dep-p7` killed all 40 rows.
+  - The 6 rows anchored on the changed engine lines and the 5 older Biome-related rows (D212 ×2, D414, D416, D460) are killed. D212's two rows were re-anchored on the `**/` globs.
+- **No release needed.** The shipped files changed are a comment, block bodies and one equivalent guard, so they ship with the next release.
+- 4 DEP-P7 mutant rows, all killed: the generator run from the root, Markdown back in, the template rule back on for the corpus, and the redirect guard losing its slash check.

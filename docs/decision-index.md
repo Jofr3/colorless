@@ -57,6 +57,7 @@ the script after adding a decision.
 | 2026-11-09 | Generate the API Worker's types with wrangler types, check them in check:static, and drop @cloudflare/workers… | decisions.md:1539 |
 | 2026-11-09 | TypeScript 7 for every typecheck, with the TypeScript 6 parser kept for the mutation scripts | decisions.md:1559 |
 | 2026-11-09 | Vitest 5, with the module cache's new key and path | decisions.md:1575 |
+| 2026-11-10 | Biome 2.6.6, with the migrated config and its lint fixes | decisions.md:1588 |
 
 ## Numbered decisions
 
