@@ -50,11 +50,11 @@ const STALE_REASON =
 
 let h: LobbyHarness;
 let warn: MockInstance<typeof console.warn>;
-let info: MockInstance<typeof console.log>;
+let info: MockInstance<typeof console.info>;
 
 beforeEach(() => {
   warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-  info = vi.spyOn(console, "log").mockImplementation(() => {});
+  info = vi.spyOn(console, "info").mockImplementation(() => {});
   h = createLobbyHarness({
     seed: drbgSeed(42),
     displayNames: new Map([

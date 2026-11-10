@@ -29,11 +29,11 @@ const d1 = useTestD1((db) =>
 );
 
 let warn: MockInstance<typeof console.warn>;
-let info: MockInstance<typeof console.log>;
+let info: MockInstance<typeof console.info>;
 
 beforeEach(() => {
   warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-  info = vi.spyOn(console, "log").mockImplementation(() => {});
+  info = vi.spyOn(console, "info").mockImplementation(() => {});
   tokenBodies = [];
 });
 
@@ -845,7 +845,7 @@ describe("POST /auth/logout", () => {
     expect((await me(ash.cookie)).status).toBe(401);
   });
 
-  it("still clears the cookie, and logs, when deleting the session fails", async () => {
+  it("still clears the cookie, and logs at warn, when deleting the session fails", async () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     const ash = await signedInUser(d1().db, "ash@example.com");
     const res = await logout(
@@ -854,7 +854,7 @@ describe("POST /auth/logout", () => {
     );
     expect(res.status).toBe(204);
     expect(res.headers.get("Set-Cookie")).toMatch(/^session=;/);
-    expect(error.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
+    expect(logged("logout_failed")).toEqual([
       {
         evt: "auth",
         kind: "logout_failed",
@@ -864,6 +864,7 @@ describe("POST /auth/logout", () => {
         quota: true,
       },
     ]);
+    expect(error).not.toHaveBeenCalled();
     expect(logged("logout")).toEqual([]);
   });
 });
@@ -1071,7 +1072,7 @@ describe("GET /auth/oauth/google/callback find-or-create", () => {
     // The state cookie is still single-use.
     expect(res.headers.getSetCookie()).toEqual([expect.stringMatching(/^oauth_state=;/)]);
     expect(await userRows()).toEqual([]);
-    expect(error.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
+    expect(logged("oauth_unavailable")).toEqual([
       {
         evt: "auth",
         kind: "oauth_unavailable",
@@ -1080,6 +1081,7 @@ describe("GET /auth/oauth/google/callback find-or-create", () => {
         quota: true,
       },
     ]);
+    expect(error).not.toHaveBeenCalled();
   });
 
   it("sends a returning user back as unavailable when only the session insert fails", async () => {
@@ -1092,9 +1094,8 @@ describe("GET /auth/oauth/google/callback find-or-create", () => {
     expect(authErrorOf(res)).toBe("unavailable");
     expect(sessionCookieOf(res)).toBeNull();
     expect(logged("login_ok")).toHaveLength(1);
-    expect(error.mock.calls.map(([line]) => JSON.parse(String(line)).kind)).toEqual([
-      "oauth_unavailable",
-    ]);
+    expect(logged("oauth_unavailable")).toHaveLength(1);
+    expect(error).not.toHaveBeenCalled();
   });
 
   // Linking keeps an unverified account's password and sessions, so whoever registered the

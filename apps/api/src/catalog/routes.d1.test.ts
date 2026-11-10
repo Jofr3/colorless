@@ -245,7 +245,7 @@ describe("the per-IP limit on catalog reads that miss KV", () => {
   });
 
   it("logs what every KV miss reads, at most once a minute per isolate, at info level", async () => {
-    const info = vi.spyOn(console, "log").mockImplementation(() => {});
+    const info = vi.spyOn(console, "info").mockImplementation(() => {});
     const now = Date.now();
     const clock = vi.spyOn(Date, "now").mockReturnValue(now);
     const env = d1().env();

@@ -1,6 +1,15 @@
 import { DrizzleQueryError } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { chainMentions, describeError, errorChain, errorFields } from "./errors";
+import {
+  chainMentions,
+  describeError,
+  errorChain,
+  errorFields,
+  errorFrames,
+  MAX_FRAME_LENGTH,
+  MAX_FRAMES,
+  unhandledErrorFields,
+} from "./errors";
 
 const D1_UNIQUE = new Error("D1_ERROR: UNIQUE constraint failed: users.email: SQLITE_CONSTRAINT");
 const SECRET = "victim.person@example.com";
@@ -46,6 +55,66 @@ describe("errorFields", () => {
       quota: false,
     });
     expect(errorFields("thrown string")).toEqual({ error: "string" });
+  });
+});
+
+/** An error whose stack is `stack`, as a runtime would have written it at the throw. */
+function withStack(error: Error, stack: string): Error {
+  error.stack = stack;
+  return error;
+}
+
+describe("errorFrames", () => {
+  it("keeps the stack's `at` frames, innermost first, without the message", () => {
+    const error = withStack(
+      new TypeError(`cannot read ${SECRET}`),
+      `TypeError: cannot read ${SECRET}\n    at readCache (index.js:1:200)\n    at async fetch (index.js:9:30)`,
+    );
+    expect(errorFrames(error)).toBe(
+      "at readCache (index.js:1:200)\nat async fetch (index.js:9:30)",
+    );
+  });
+
+  it("never takes a frame-shaped line from a failed query's params", () => {
+    const query = new DrizzleQueryError(
+      'update "decks" set "name" = ?',
+      [`x\n    at ${SECRET}`],
+      D1_UNIQUE,
+    );
+    withStack(query, `Error: ${query.message}\n    at saveDeck (index.js:4:10)`);
+    expect(errorFrames(query)).toBe("at saveDeck (index.js:4:10)");
+  });
+
+  it("gives none when the stack no longer holds the message", () => {
+    const rewritten = withStack(new Error("a\nparams: b"), "Error: other\n    at f (index.js:1:1)");
+    expect(errorFrames(rewritten)).toBeUndefined();
+    expect(errorFrames(withStack(new Error("no frames"), "Error: no frames"))).toBeUndefined();
+    expect(errorFrames("thrown string")).toBeUndefined();
+  });
+
+  it("bounds the frames' count and length", () => {
+    const deep = Array.from({ length: 20 }, (_, i) => `    at f${i} (${"x".repeat(400)}:1:1)`);
+    const frames = errorFrames(withStack(new Error("deep"), ["Error: deep", ...deep].join("\n")));
+    const lines = frames?.split("\n") ?? [];
+    expect(lines).toHaveLength(MAX_FRAMES);
+    expect(lines[0]).toMatch(/^at f0 /);
+    expect(Math.max(...lines.map((line) => line.length))).toBe(MAX_FRAME_LENGTH);
+  });
+
+  it("reads a real stack", () => {
+    const frames = errorFrames(new RangeError(`bad ${SECRET}`)) ?? "";
+    expect(frames.split("\n").every((line) => line.startsWith("at "))).toBe(true);
+    expect(frames).not.toContain(SECRET);
+  });
+});
+
+describe("unhandledErrorFields", () => {
+  it("adds the frames to errorFields", () => {
+    const error = withStack(new TypeError("x"), "TypeError: x\n    at handler (index.js:2:3)");
+    expect(unhandledErrorFields(error)).toEqual({
+      ...errorFields(error),
+      frames: "at handler (index.js:2:3)",
+    });
   });
 });
 

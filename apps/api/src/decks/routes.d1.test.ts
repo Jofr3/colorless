@@ -658,6 +658,7 @@ describe("a failed deck query", () => {
         cause: "Error",
         query: expect.stringMatching(/^delete from "decks"/),
         quota: true,
+        frames: expect.stringMatching(/^at /),
       },
     ]);
     expect(lines.join("\n")).not.toContain(deck.id);

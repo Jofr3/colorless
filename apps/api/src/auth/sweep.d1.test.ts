@@ -58,7 +58,7 @@ async function remaining(table: "sessions" | "auth_rate_limits") {
 describe("the daily sweep", () => {
   it("deletes expired sessions and passed counters in chunks, and logs the counts", async () => {
     await seed(1203, 7);
-    const info = vi.spyOn(console, "log").mockImplementation(() => {});
+    const info = vi.spyOn(console, "info").mockImplementation(() => {});
     const controller = { scheduledTime: NOW, cron: "17 4 * * *", noRetry: () => {} };
     await worker.scheduled(controller, d1().env());
     expect(await remaining("sessions")).toBe(7);
@@ -83,7 +83,13 @@ describe("the daily sweep", () => {
     const controller = { scheduledTime: NOW, cron: "17 4 * * *", noRetry: () => {} };
     await expect(worker.scheduled(controller, env)).rejects.toThrow("down");
     expect(error.mock.calls.map(([line]) => JSON.parse(String(line)))).toEqual([
-      { evt: "d1", kind: "sweep_failed", error: "TypeError" },
+      {
+        evt: "d1",
+        kind: "sweep_failed",
+        error: "TypeError",
+        quota: false,
+        frames: expect.stringMatching(/^at /),
+      },
     ]);
   });
 });
