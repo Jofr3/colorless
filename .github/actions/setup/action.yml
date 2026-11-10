@@ -1,0 +1,70 @@
+name: Setup
+description: >-
+  The toolchain every CI job needs after its checkout: Bun from .bun-version,
+  Node from .node-version, Bun's install cache, a frozen install and,
+  optionally, Lua 5.1.
+
+inputs:
+  lua:
+    description: Install PUC Lua 5.1, the dialect love.js runs.
+    default: "false"
+  save-cache:
+    description: >-
+      Save Bun's install cache when this lockfile has no entry yet. Exactly one
+      job per run sets it, so the others do not fail racing to reserve the key.
+    default: "false"
+
+outputs:
+  week:
+    description: The ISO week, for cache keys that rotate weekly.
+    value: ${{ steps.week.outputs.week }}
+
+runs:
+  using: composite
+  steps:
+    # No bun-version input: setup-bun reads .bun-version (matching the
+    # packageManager field).
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
+    # tsc, vite, vitest, wrangler and biome start with `#!/usr/bin/env node`,
+    # so `bun run` executes them under Node. .node-version pins the line
+    # (22 LTS) rather than taking whatever the runner image ships.
+    - name: Setup Node
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version-file: .node-version
+
+    # Bun's global install cache, not node_modules: bun links from it. The key
+    # is the lockfile alone, with no fallback key, so an entry holds exactly
+    # one lockfile's packages; a fallback carried every older tarball into
+    # each new entry.
+    - name: Restore Bun's install cache
+      id: bun-cache
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.bun/install/cache
+        key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+
+    - name: Install dependencies
+      shell: bash
+      run: bun install --frozen-lockfile
+
+    - name: Save Bun's install cache
+      if: inputs.save-cache == 'true' && steps.bun-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.bun/install/cache
+        key: ${{ steps.bun-cache.outputs.cache-primary-key }}
+
+    # love.js runs PUC Lua 5.1, so the Lua suites run under it: 5.2 would
+    # accept syntax (`goto`) and APIs (`table.unpack`) that break the game.
+    - name: Install Lua
+      if: inputs.lua == 'true'
+      shell: bash
+      run: sudo apt-get install -y lua5.1
+
+    - name: Week
+      id: week
+      shell: bash
+      run: echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"

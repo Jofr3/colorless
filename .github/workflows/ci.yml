@@ -17,44 +17,34 @@ concurrency:
 permissions:
   contents: read
 
-# The same named steps as `bun run check`, split into parallel jobs: static, lua
-# (with the bundle) and test. Lua tests needing Balatro's source (not in this
-# repository) are skipped, and the bundle is built without the Lua package for
-# the same reason. Every job has a timeout, so a hung test fails in minutes
-# rather than GitHub's default six hours.
+# The same named steps as `bun run check`, in parallel jobs: static (with the
+# Lua tests, the bundle, the workflow lint, the secret scan and, on main
+# pushes, the benchmark), test and mutants. The short steps share one job
+# because each job's minutes are billed rounded up. Lua tests needing
+# Balatro's source (not in this repository) are skipped, and the bundle is
+# built without the Lua package for the same reason. A check step after the
+# first runs with `!cancelled()`, so one failure does not hide the others'
+# results. Every job has a timeout, so a hung test fails in minutes rather
+# than GitHub's default six hours. .github/actions/setup is the toolchain and
+# install each job runs after its checkout.
 jobs:
   static:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      # Full history with its blobs: the secret scan reads the patch of every
+      # commit since the base.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
 
-      # No bun-version pin here: setup-bun reads .bun-version for a
-      # reproducible toolchain (matches the packageManager field too).
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-
-      # tsc, vite, vitest, wrangler and biome start with `#!/usr/bin/env node`,
-      # so `bun run` executes them under Node. .node-version pins the line
-      # (22 LTS) rather than taking whatever the runner image ships (PRC4).
-      - name: Setup Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      # The one job that saves Bun's install cache for a new lockfile.
+      - name: Setup
+        uses: ./.github/actions/setup
         with:
-          node-version-file: .node-version
-
-      # Cache Bun's global install cache (keyed on the lockfile) so unchanged
-      # deps don't re-download each run. Not node_modules — bun links from cache.
-      - name: Cache Bun dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
+          lua: "true"
+          save-cache: "true"
 
       # Known advisories in what the Workers ship (hono, zod, drizzle-orm and
       # their dependencies). The dev tree is reported, not gated, by
@@ -102,41 +92,69 @@ jobs:
         if: ${{ !cancelled() }}
         run: bun run check:static
 
-  lua:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-
-      - name: Setup Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .node-version
-
-      - name: Cache Bun dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      # love.js runs PUC Lua 5.1, so the suite runs under it: 5.2 would accept
-      # syntax (`goto`) and APIs (`table.unpack`) that break the shipped game.
       - name: Lua tests
-        run: |
-          sudo apt-get install -y lua5.1
-          LUA=lua5.1 bun run test:lua
+        if: ${{ !cancelled() }}
+        run: LUA=lua5.1 bun run test:lua
 
       - name: Bundle
+        if: ${{ !cancelled() }}
         run: LOVE_VERSIONS_OPTIONAL=1 bunx vite build
+
+      # The workflows and the setup action, with a pinned actionlint, which
+      # also runs the runner's shellcheck over each `run:` script.
+      - name: Lint workflows
+        if: ${{ !cancelled() }}
+        env:
+          VERSION: 1.7.12
+          SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+        run: |
+          dir="$RUNNER_TEMP/actionlint"
+          mkdir -p "$dir"
+          curl -sSfL -o "$dir/actionlint.tar.gz" \
+            "https://github.com/rhysd/actionlint/releases/download/v${VERSION}/actionlint_${VERSION}_linux_amd64.tar.gz"
+          echo "${SHA256}  $dir/actionlint.tar.gz" | sha256sum -c -
+          tar -xzf "$dir/actionlint.tar.gz" -C "$dir" actionlint
+          "$dir/actionlint"
+
+      # Secrets in the commits this push or PR adds: gitleaks' default rules
+      # plus .gitleaks.toml's allowlist. That file's header pins the version
+      # and sha256, so a local hook can run the same binary. Findings print
+      # redacted.
+      - name: Secret scan
+        if: ${{ !cancelled() }}
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
+        run: |
+          version=$(sed -n 's/^# gitleaks-version: //p' .gitleaks.toml)
+          sha256=$(sed -n 's/^# gitleaks-linux-x64-sha256: //p' .gitleaks.toml)
+          if [ -z "$version" ] || [ -z "$sha256" ]; then
+            echo ".gitleaks.toml lacks its gitleaks-version or gitleaks-linux-x64-sha256 line" >&2
+            exit 1
+          fi
+          dir="$RUNNER_TEMP/gitleaks"
+          mkdir -p "$dir"
+          curl -sSfL -o "$dir/gitleaks.tar.gz" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${version}/gitleaks_${version}_linux_x64.tar.gz"
+          echo "${sha256}  $dir/gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf "$dir/gitleaks.tar.gz" -C "$dir" gitleaks
+          # A first push or a force-push has no base in the clone: scan HEAD alone.
+          if git cat-file -e "${BASE}^{commit}" 2>/dev/null; then
+            range="${BASE}..HEAD"
+          else
+            echo "::warning::base ${BASE} is not in this clone; scanning HEAD's commit only"
+            range="-1"
+          fi
+          "$dir/gitleaks" git --no-banner --redact --config .gitleaks.toml --log-opts="$range" .
+
+      # Engine timings for the record, never a gate: shared runners are too
+      # noisy, so it runs on main pushes only and cannot fail the job. The
+      # fingerprint line shows whether a change altered play.
+      - name: Engine benchmark
+        if: ${{ !cancelled() && github.event_name == 'push' }}
+        continue-on-error: true
+        run: |
+          bun run bench --node | tee "$RUNNER_TEMP/bench.txt"
+          { echo '```'; cat "$RUNNER_TEMP/bench.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
 
   test:
     runs-on: ubuntu-latest
@@ -146,39 +164,21 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-
-      - name: Setup Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .node-version
-
-      - name: Cache Bun dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      # Vitest's module cache never prunes itself, so its key rotates weekly.
-      - name: Week
-        id: week
-        run: echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+      - name: Setup
+        id: setup
+        uses: ./.github/actions/setup
 
       # Transformed modules (keyed by content hash) and vitest's results,
-      # which order the next run's files longest first.
+      # which order the next run's files longest first. Vitest's module cache
+      # never prunes itself, so its key rotates weekly.
       - name: Cache vitest
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             node_modules/.vitest-cache
             node_modules/.vite/vitest
-          key: ${{ runner.os }}-vitest-${{ hashFiles('bun.lock') }}-${{ steps.week.outputs.week }}-${{ github.sha }}
-          restore-keys: ${{ runner.os }}-vitest-${{ hashFiles('bun.lock') }}-${{ steps.week.outputs.week }}-
+          key: ${{ runner.os }}-vitest-${{ hashFiles('bun.lock') }}-${{ steps.setup.outputs.week }}-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-vitest-${{ hashFiles('bun.lock') }}-${{ steps.setup.outputs.week }}-
 
       # The runner has two cores; vitest alone would use one worker.
       - name: Test
@@ -200,77 +200,24 @@ jobs:
           filter: blob:none
           persist-credentials: false
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-
-      - name: Setup Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      # Rows killed by a Lua suite run `bun scripts/test-lua.ts`, which needs the
+      # interpreter: without it every such row reports "baseline is RED" and fails
+      # the job (main was red from 2026-10-29 to 2026-11-09; dependency audit PRC1).
+      - name: Setup
+        id: setup
+        uses: ./.github/actions/setup
         with:
-          node-version-file: .node-version
-
-      - name: Cache Bun dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Week
-        id: week
-        run: echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+          lua: "true"
 
       # The harness's own vitest module cache (it drops what each mutant adds).
       - name: Cache the harness's vitest modules
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: tmp/mutation-vitest-cache
-          key: ${{ runner.os }}-mutation-vitest-${{ hashFiles('bun.lock') }}-${{ steps.week.outputs.week }}-${{ github.sha }}
-          restore-keys: ${{ runner.os }}-mutation-vitest-${{ hashFiles('bun.lock') }}-${{ steps.week.outputs.week }}-
-
-      # Rows killed by a Lua suite run `bun scripts/test-lua.ts`, which needs the
-      # interpreter: without it every such row reports "baseline is RED" and fails
-      # the job (main was red from 2026-10-29 to 2026-11-09; dependency audit PRC1).
-      - name: Install Lua
-        run: sudo apt-get install -y lua5.1
+          key: ${{ runner.os }}-mutation-vitest-${{ hashFiles('bun.lock') }}-${{ steps.setup.outputs.week }}-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-mutation-vitest-${{ hashFiles('bun.lock') }}-${{ steps.setup.outputs.week }}-
 
       - name: Mutant sample
         run: bun scripts/mutation/sample.ts --base "$BASE"
         env:
           BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
-
-  # Engine timings for the record, never a gate: shared runners are too noisy.
-  # The fingerprint line shows whether a change altered play.
-  bench:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-
-      - name: Setup Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .node-version
-
-      - name: Cache Bun dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: ${{ runner.os }}-bun-
-
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Engine benchmark
-        run: |
-          bun run bench --node | tee bench.txt
-          { echo '```'; cat bench.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

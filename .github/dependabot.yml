@@ -80,8 +80,12 @@ updates:
           - "*"
         update-types: [minor, patch]
 
+  # `/` covers .github/workflows only; the composite actions under
+  # .github/actions pin actions too, and are scanned only when listed.
   - package-ecosystem: github-actions
-    directory: /
+    directories:
+      - /
+      - /.github/actions/*
     schedule:
       interval: weekly
     cooldown:
