@@ -11,13 +11,15 @@
 // and refuses any interpreter but 5.1: it is the release's only source-comparing
 // run, so it must not pass under a dialect the game cannot run.
 // Files run concurrently, one per core; a failure's output is printed whole,
-// in file order. Naming test files runs only those (a mutant row's killer).
+// in file order. Naming test files (by name or path) runs only those (a
+// mutant row's killer).
 //
 //   bun scripts/test-lua.ts [--require-source] [file.lua ...]
 
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync } from "node:fs";
 import { availableParallelism } from "node:os";
+import { basename } from "node:path";
 import { REPO_ROOT, repoPath } from "./lib/repo";
 
 const TESTS = "frontend/lua/tests";
@@ -87,7 +89,10 @@ if (requireSource && !versionOf(lua)?.startsWith("Lua 5.1")) {
   process.exit(1);
 }
 
-const named = process.argv.slice(2).filter((arg) => arg.endsWith(".lua"));
+const named = process.argv
+  .slice(2)
+  .filter((arg) => arg.endsWith(".lua"))
+  .map((arg) => basename(arg));
 const files = readdirSync(repoPath(TESTS))
   .filter((f) => f.endsWith(".lua") && !BROWSER_ONLY.has(f))
   .filter((f) => named.length === 0 || named.includes(f))
