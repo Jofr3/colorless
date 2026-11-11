@@ -309,7 +309,7 @@ describe("matches", () => {
       ]),
     ).toEqual([
       "match completion: 9 of 12 started (75%)",
-      "ended 11: prizesTaken 5, conceded 1, tie 1, left 1, abandoned 2, other 1; not ended (still playing, retired, wiped or kicked) 1",
+      "ended 11: prizesTaken 5, conceded 1, tie 1, left 1, abandoned 2, other 1; not ended (still playing, retired or wiped) 1",
     ]);
   });
 

@@ -420,7 +420,7 @@ export function matchLines(
     started === 0
       ? `match completion: ${fmtInt(completed)} completed, but no match_started line in the window`
       : `match completion: ${fmtInt(completed)} of ${fmtInt(started)} started (${fmtPct(completed / started, 0)})`,
-    `ended ${fmtInt(total)}${causes.length > 0 ? `: ${causes.join(", ")}` : ""}; not ended (still playing, retired, wiped or kicked) ${fmtInt(Math.max(started - total, 0))}`,
+    `ended ${fmtInt(total)}${causes.length > 0 ? `: ${causes.join(", ")}` : ""}; not ended (still playing, retired or wiped) ${fmtInt(Math.max(started - total, 0))}`,
   ];
 }
 
