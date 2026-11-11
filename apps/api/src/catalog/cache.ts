@@ -37,7 +37,7 @@ const CACHE_TTL_SECONDS = 86_400;
 /**
  * Bump on any deploy that changes a cached response's shape or the values the code derives from
  * existing rows, so stale KV entries are not served for up to a TTL. A data re-ingest does not
- * need a bump: it writes a new catalog epoch. cacheShape.test.ts fails on a shape change until
+ * need a bump: it writes a new catalog epoch. cacheShape.d1.test.ts fails on a shape change until
  * this is bumped; a change to derived values it cannot see.
  */
 export const CACHE_VERSION = "v12";

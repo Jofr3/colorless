@@ -89,7 +89,7 @@ export const patchDeckRequestSchema = nonEmptyPatch({
   chosenCoverCardId: cardIdSchema.nullable().optional(),
   /** The deck version this patch was made from. When present the patch applies only while the
       deck is still at it, and answers 409 with the current deck otherwise. Absent, the patch is
-      last-writer-wins (web builds from before versions). */
+      last-writer-wins, as for the library's rename. */
   version: z.number().int().min(0).optional(),
 });
 export type PatchDeckRequest = z.infer<typeof patchDeckRequestSchema>;

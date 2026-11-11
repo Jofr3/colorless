@@ -24,8 +24,8 @@ export function normalizeSentinel(value: string | null | undefined): string | nu
  * duplicates collapsed, ORDER PRESERVED (GET /facets sorts the result).
  *
  * Dedupe is not theoretical: normalising can collapse two distinct stored
- * spellings ("None" and "") onto the same absence, and a facet list feeds
- * React `key`s.
+ * spellings ("None" and "") onto the same absence, and the builder's filter
+ * chips must list each value once.
  */
 export function facetVocabulary(values: readonly (string | null)[]): string[] {
   const seen = new Set<string>();

@@ -24,8 +24,8 @@ const deckBaseSchema = z.object({
   format: z.string().nullable(),
   /** Base hue (0–360) for the deck's cover gradient (web `Deck.tint`). */
   tint: z.number().int().min(0).max(360),
-  /** The folder a deck is filed in, or null at the library root. No route creates folders or
-      files a deck in one. */
+  /** A folder id from stored data, or null. No route creates folders or files a deck in one, and
+      the client lists every deck at the library root. */
   folderId: z.string().nullable(),
   /** Manual sort slot within the library; lists come back ordered by it ascending. Global per
       user. New decks take min-1 (they prepend), so negatives are normal. */

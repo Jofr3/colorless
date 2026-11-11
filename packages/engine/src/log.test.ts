@@ -49,8 +49,7 @@ function texts(entries: SeatLogEntry[]): string[] {
   return entries.map(textOf);
 }
 
-// KO drivers, mirroring projection.test.ts: seed 11 → no mulligans, p2's
-// opening hand holds the bench copies.
+// KO drivers: seed 11 → no mulligans, p2's opening hand holds the bench copies.
 const KO_SEED = 11;
 const ATTACKER_DECK = deckOf({ "fix-attacker": 30, "fix-fire-energy": 20, "fix-water-energy": 10 });
 

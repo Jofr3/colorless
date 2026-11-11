@@ -8,14 +8,11 @@ import {
 import { apiWebSocketUrl } from "../lib/apiOrigin";
 
 // The transport the lobby talks over. The rest of the online feature depends
-// only on this interface — never on WebSocket directly — which is what let it
-// swap from the original same-machine BroadcastChannel to this real socket
-// against the api's lobby Durable Object without touching the client or UI.
+// only on this interface, never on WebSocket directly.
 
 export interface LobbyChannel {
-  /** Send a message toward the lobby server (never echoed back to the sender —
-      the server broadcasts snapshots, not the sender's own frames, preserving
-      the BroadcastChannel semantics the client was written against). */
+  /** Send a message toward the lobby server. It is never echoed back to the
+      sender: the server broadcasts snapshots, not the sender's own frames. */
   post(message: LobbyMessage): void;
   /** Register a listener; returns an unsubscribe function. */
   subscribe(handler: (message: LobbyMessage) => void): () => void;
@@ -201,8 +198,8 @@ export function createLobbyChannel(
       } catch {
         return;
       }
-      // Light structural gate only — the server is trusted the way the
-      // BroadcastChannel peers were; full Zod validation lives server-side.
+      // Light structural gate only: the server is trusted, and full Zod
+      // validation lives server-side.
       if (
         typeof parsed !== "object" ||
         parsed === null ||

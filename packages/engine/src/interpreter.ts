@@ -2539,7 +2539,7 @@ function stepOp(
       }
       // Hidden information: candidates are hand cards, and the offer names more uids than are paid
       // (and reveals duplicate structure). This is only safe because the prompt is shown just to
-      // its owner; `projection.ts` does not yet gate `pendingDecision` on `phase.seat`.
+      // its owner: `redactedPromptOf` in redact.ts sends a prompt only to its answerer.
       return {
         park: {
           kind: "chooseCards",

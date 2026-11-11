@@ -600,8 +600,7 @@ export class LobbyDO {
     frame: ClientFrame<"reject">,
     snapshot: LobbyState | null,
   ): Promise<void> {
-    // The host's kick — the exact frame the BroadcastChannel host posted
-    // at its guest. Valid only from the host's socket, aimed at the seated
+    // The host's kick. Valid only from the host's socket, aimed at the seated
     // guest. Relay it first (the sticky "you were removed"), then free the
     // seat and broadcast the now-waiting lobby.
     if (snapshot === null || snapshot.guest === null) return;

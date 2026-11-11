@@ -66,7 +66,7 @@ const fullCardsResponseSchema = z.array(cardSchema);
 const setsResponseSchema = z.array(setBriefSchema);
 const seriesResponseSchema = z.array(serieSchema);
 
-/** Each KV-cached route's response schema (./cache.ts), whose shapes cacheShape.test.ts pins to
+/** Each KV-cached route's response schema (./cache.ts), whose shapes cacheShape.d1.test.ts pins to
     CACHE_VERSION. GET /cards/index is pinned there by its own columns. */
 export const CACHED_RESPONSE_SCHEMAS = {
   "/cards": cardsResponseSchema,
