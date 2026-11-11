@@ -1,7 +1,9 @@
 import { EventEmitter } from "node:events";
-import type { ViteDevServer } from "vite";
+import { join } from "node:path";
+import { resolveConfig, type ViteDevServer } from "vite";
 import { describe, expect, it } from "vitest";
 import { loveReloadPlugin } from "../vite.config";
+import { REPO_ROOT } from "./lib/repo";
 
 function devServer() {
   const sent: unknown[] = [];
@@ -37,5 +39,44 @@ describe("love-reload", () => {
       watcher.emit("change", file);
     watcher.emit("unlink", "/repo/public/love/versions.json");
     expect(sent).toEqual([]);
+  });
+});
+
+describe("the dev server's fs.deny", () => {
+  /** Vite's own matcher over the configured deny list, as it checks every file it serves. */
+  async function denied() {
+    const config = await resolveConfig(
+      { root: REPO_ROOT, configFile: join(REPO_ROOT, "vite.config.ts"), logLevel: "silent" },
+      "serve",
+    );
+    const glob = (config as unknown as { fsDenyGlob?: (path: string) => boolean }).fsDenyGlob;
+    if (!glob) throw new Error("Vite's resolved config has no fsDenyGlob any more");
+    return glob;
+  }
+
+  it("refuses the API's secrets, its sources and every local D1 state", async () => {
+    const glob = await denied();
+    for (const path of [
+      "apps/api/.dev.vars",
+      ".dev.vars",
+      "apps/api/src/index.ts",
+      "apps/api/.wrangler/state/v3/d1/db.sqlite",
+      ".wrangler/state/v3/d1/db.sqlite",
+      "tmp/dx/notes.md",
+      ".env.production",
+    ])
+      expect(glob(`${REPO_ROOT}/${path}`), path).toBe(true);
+  });
+
+  it("serves the page's own files, also from a checkout under a tmp/ or apps/ directory", async () => {
+    const glob = await denied();
+    for (const path of [
+      `${REPO_ROOT}/index.html`,
+      `${REPO_ROOT}/src/lua/bridge.ts`,
+      `${REPO_ROOT}/public/love/versions.json`,
+      "/scratch/tmp/checkout/src/lua/bridge.ts",
+      "/work/apps/colorless/index.html",
+    ])
+      expect(glob(path), path).toBe(false);
   });
 });

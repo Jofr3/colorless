@@ -68,4 +68,9 @@ describe("systemPort", () => {
     expect(new Set(ports).size).toBe(3);
     for (const port of ports) expect(await portAvailable(HOST, port)).toBe(true);
   });
+
+  it("records what it hands out, so freePort never gives the same port", async () => {
+    const port = await systemPort();
+    expect(await freePort(HOST, port)).not.toBe(port);
+  });
 });
