@@ -333,7 +333,6 @@ describe("§5 — anchored end to end, and every refusal is a warrant", () => {
       const read = (effectsModule as unknown as Record<string, (t: string) => unknown>)[name];
       expect(read?.(PRINTED) ?? null, name).toBeNull();
     }
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it('D549 — both SIDE-WIDE spellings map to their OWN op, `lockSideAttacks`, and never to `preventAttack` (was: "refuses both SIDE-WIDE spellings — they name a zone this op has no member for")', () => {

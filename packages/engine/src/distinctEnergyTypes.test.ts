@@ -199,7 +199,6 @@ describe("§1 — the printed sentence, the population, and the absences", () =>
 
   it("the two measurements §4's flip table says this slice OWES", () => {
     const rows = legalAttackCorpus();
-    expect(rows).toHaveLength(640);
     // ⓐ THE PHRASE prints on exactly TWO rows, and BOTH are `Basic Energy cards` — so
     // the rider being defined over one noun refuses nothing the column carries.
     const phrase = rows.filter(([, s]) => s.includes("of different types"));

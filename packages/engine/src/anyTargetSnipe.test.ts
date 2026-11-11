@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import { applyAction, deriveAttackEffect } from "./index";
-import type { GameEvent, GameState, PokemonRef } from "./index";
+import type { GameState, PokemonRef } from "./index";
 import {
   ANY_SNIPE_DECK,
   COST_SNIPE_DECK,
@@ -20,6 +20,7 @@ import {
   types,
   findEvent,
   mustDerive,
+  findEvents,
 } from "./testFixtures";
 
 /** Setup with BOTH Actives pinned to fix-lightning-weak (×2 Lightning, 130 HP, empty
@@ -342,13 +343,6 @@ const TWIN_FLAT: Record<string, unknown> = {
   deals: true,
 };
 
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
-
 /** P1 fields `attacker` off TWIN_SNIPE_DECK with one {L} attached; P2 keeps its
     fix-lightning-weak Active and its Bench holds exactly `benched`. */
 function twin(seed: number, attacker: string, benched: readonly string[]): GameState {
@@ -518,7 +512,7 @@ describe("§3 — count 2 on a real board: the Active/Bench split, twice, with W
         refs: [prompt.candidates[0] as PokemonRef, prompt.candidates[2] as PokemonRef],
       },
     });
-    const dealt = findAll(e2, "DAMAGE_DEALT");
+    const dealt = findEvents(e2, "DAMAGE_DEALT");
     expect(dealt).toHaveLength(2);
     // The ACTIVE pick goes through §8.5 — a {L} attacker into a ×2 Lightning body.
     expect(dealt[0]).toMatchObject({
@@ -547,7 +541,7 @@ describe("§3 — count 2 on a real board: the Active/Bench split, twice, with W
         refs: [prompt.candidates[0] as PokemonRef, prompt.candidates[2] as PokemonRef],
       },
     });
-    const dealt = findAll(events, "DAMAGE_DEALT");
+    const dealt = findEvents(events, "DAMAGE_DEALT");
     expect(dealt).toHaveLength(2);
     expect(dealt[0]).toMatchObject({ base: 50, weakness: null, resistance: null, dealt: 50 });
     expect(dealt[1]).toMatchObject({ base: 50, weakness: null, dealt: 50 });
@@ -596,7 +590,7 @@ describe("§3 — count 2 on a real board: the Active/Bench split, twice, with W
       index: 0,
     });
     expect(types(events)).not.toContain("EFFECT_PENDING");
-    expect(findAll(events, "DAMAGE_DEALT")).toHaveLength(1);
+    expect(findEvents(events, "DAMAGE_DEALT")).toHaveLength(1);
     expect(done.players.p2.active?.damage).toBe(50); // ignoreWR — not 100
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
@@ -1036,7 +1030,7 @@ describe("§6 — the board: ONE attack, TWO parks, in printed order", () => {
         refs: [targets[0] as PokemonRef, targets[1] as PokemonRef],
       },
     });
-    const dealt = findAll(e2, "DAMAGE_DEALT");
+    const dealt = findEvents(e2, "DAMAGE_DEALT");
     expect(dealt).toHaveLength(2);
     // fix-bigbody is a neutral 200 HP Active and the Bench never takes W/R, so both
     // hits are the printed 120 and nothing is Knocked Out.
@@ -1067,7 +1061,7 @@ describe("§6 — the board: ONE attack, TWO parks, in printed order", () => {
     // All three Energy went, including the one that was surplus to the {C} cost.
     expect(findEvent(events, "ENERGY_DISCARDED")?.uids).toHaveLength(3);
     expect(done.players.p1.active?.energy ?? []).toHaveLength(0);
-    const dealt = findAll(events, "DAMAGE_DEALT");
+    const dealt = findEvents(events, "DAMAGE_DEALT");
     expect(dealt).toHaveLength(3);
     for (const row of dealt) expect(row).toMatchObject({ base: 110, dealt: 110 });
     expect(done.players.p2.active?.damage).toBe(110);
@@ -1109,7 +1103,7 @@ describe("§6 — the board: ONE attack, TWO parks, in printed order", () => {
         refs: [targets[0] as PokemonRef, targets[1] as PokemonRef],
       },
     });
-    const dealt = findAll(events, "DAMAGE_DEALT");
+    const dealt = findEvents(events, "DAMAGE_DEALT");
     expect(dealt[0]).toMatchObject({
       base: 120,
       weakness: { op: "multiply", amount: 2 },

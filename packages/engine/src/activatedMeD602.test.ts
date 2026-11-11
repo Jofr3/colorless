@@ -476,8 +476,8 @@ describe("D602 §7 — Sunrise: on the Bench, up to 2 Basic {M} Energy from the 
   });
 });
 
-describe('D602 §8 — the two dropped texts stay unkeyed, and the version ( D611 (D539): "stay unkeyed" WITHDRAWN for Dragonair — keyed at D611)', () => {
-  it("Dragonair `me02.5-151` and Larry's Komala `me02.5-175` carry no program ( D611 (D539): WITHDRAWN for Dragonair — it carries its D611 Ability; D628 (D539): WITHDRAWN for Larry's Komala — it carries its D628 Ability)", () => {
+describe("D602 §8 — the two dropped texts are keyed now (D611, D628)", () => {
+  it("Dragonair `me02.5-151` and Larry's Komala `me02.5-175` carry their Abilities (D611, D628)", () => {
     expect(programFor("me02.5-151")?.abilities?.[0]?.name).toBe("Evolutionary Guidance");
     expect(programFor("me02.5-175")?.abilities?.[0]?.name).toBe("Lethargic Charge");
   });

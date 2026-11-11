@@ -672,18 +672,18 @@ function playRejected(state: GameState, id: string): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§1 — the datum: `banners.ts`' ~~98~~ Tera ids, two sources plus the printed face ( D582 (D539): *98* WITHDRAWN — 103: 98 `sv` + 5 `me` reprints)", () => {
+describe("§1 — the datum: `banners.ts`' 103 Tera ids, two sources plus the printed face", () => {
   const ids = Object.keys(BANNER_BY_ID).filter((id) => BANNER_BY_ID[id] === "Tera");
   const pool = new Map(LEGAL_EX_POOL.map((row) => [row[0], row] as const));
 
-  it("~~98~~ Tera ids ( D569: beside 86 Ancient/Future ids — Slice 2 part a) ( D582 (D539): *98* WITHDRAWN — 103: 98 `sv` + 5 `me` reprints)", () => {
+  it("103 Tera ids (98 `sv` + 5 `me`), beside 86 Ancient/Future ids", () => {
     expect(ids.filter((id) => !id.startsWith("me"))).toHaveLength(98);
     expect(ids).toHaveLength(103);
     expect(Object.keys(BANNER_BY_ID)).toHaveLength(189);
     expect(new Set(Object.values(BANNER_BY_ID))).toEqual(new Set(["Tera", "Ancient", "Future"]));
   });
 
-  it("every ~~TERA~~ `sv` TERA id is a Standard-legal Pokémon ex in the local pool (353 rows) ( D582 (D539): *every TERA id* WITHDRAWN — the 5 `me` Tera ids are not in this `sv` pool; pinned by id in `reprintAliasMeD582.test.ts`)", () => {
+  it("every `sv` TERA id is a Standard-legal Pokémon ex in the local pool (353 rows)", () => {
     expect(LEGAL_EX_POOL).toHaveLength(353);
     for (const row of LEGAL_EX_POOL) expect(row[1].endsWith(" ex"), row[0]).toBe(true);
     for (const id of ids.filter((i) => !i.startsWith("me"))) expect(pool.has(id), id).toBe(true);

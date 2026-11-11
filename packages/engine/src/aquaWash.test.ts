@@ -1,9 +1,8 @@
 import type { Card } from "@colorless/schema";
-import manifest from "../package.json" with { type: "json" };
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effectTypes";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { GameState, Seat } from "./index";
 import { logFromEvents } from "./log";
 import type { LogContext } from "./log";
@@ -617,11 +616,5 @@ describe("§6 — the wire and the record", () => {
     const inner = (pending.ops as Record<string, unknown>[])[0] ?? {};
     expect(Object.keys(inner).sort()).toEqual(["count", "filter", "from", "op", "to"]);
     expect(inner.count).toBe(2);
-  });
-});
-
-describe("§7 — the version", () => {
-  it("moved PAST 0.206.0 with the new BoardCondition member, and the two files agree", () => {
-    expect(manifest.version).toBe(engineVersion);
   });
 });

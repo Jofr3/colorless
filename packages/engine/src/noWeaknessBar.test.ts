@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
-import { attackReaderSurface, resolvedByAnyReader } from "./censusAttackCorpus";
+import { resolvedByAnyReader } from "./censusAttackCorpus";
 import { installedNoWeakness, seatRemovesWeakness } from "./continuous";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
 import { applyAction, otherSeat, programFor } from "./index";
@@ -199,7 +199,6 @@ describe("§2 — the anchor claims the sentence WHOLE, and each near-miss diffe
     expect(resolvedByAnyReader(SENTENCE)).toBe(true);
     expect(splitAttackGateClause(SENTENCE)).toBeNull();
     expect(splitAttackTrailingClause(SENTENCE)).toBeNull();
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 });
 

@@ -79,7 +79,7 @@ describe("D621 §1 — the faces: 16 `me` printings / 5 texts, one object per te
     expect(objects.size).toBe(5);
   });
 
-  it("Iron Defender (dropped) stays unkeyed ( D630 (D539): WITHDRAWN — keyed at D630 on the summed list, `persistedRecordsMeD630.test.ts`)", () => {
+  it("Iron Defender is keyed on the summed list (D630)", () => {
     for (const id of ["me01-118", "me05-110"])
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["trainer"]);
   });
@@ -700,7 +700,7 @@ describe("D621 §5 — Acerola's Mischief: one chosen body, no damage or effects
     expect(all(active.events, "ATTACK_EFFECT_PREVENTED")).toHaveLength(0);
   });
 
-  it("R-AM2 ~~the BARE tail passes it too, by D400/D492's reading of `ignoreWR`~~ ( D622: retired) — Oil Salvo and Severe Squall are stopped by the shield", () => {
+  it("R-AM2 — Oil Salvo and Severe Squall are stopped by the shield (D622)", () => {
     const salvo = crown(benchShielded(CROWN_EX), 1, [bench(0)], true);
     expect(salvo.state.players.p1.bench[0]?.damage).toBe(0);
     const parked = acerola(PLAIN, [BRUTE], CROWN_EX).state;

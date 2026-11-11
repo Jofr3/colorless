@@ -1,4 +1,3 @@
-import manifest from "../package.json" with { type: "json" };
 import { describe, expect, it } from "vitest";
 import { passivesOf } from "./continuous";
 import {
@@ -7,7 +6,6 @@ import {
   costMet,
   createGame,
   deriveAttackEffect,
-  engineVersion,
   programFor,
   providedEnergy,
 } from "./index";
@@ -440,11 +438,5 @@ describe("MATCH_RECORD_VERSION 16 → 17 — and it is DRIVEN, not argued", () =
     const done = mustApply(field(1, { legacy: 1 }), bite);
     expect(reductions(done.events)).toHaveLength(1);
     expect(new Set(done.events.map((e) => e.type)).has("PRIZE_REDUCED")).toBe(true);
-  });
-});
-
-describe("the engine version", () => {
-  it("moved to 0.215.0 with the new field, and the two files agree", () => {
-    expect(manifest.version).toBe(engineVersion);
   });
 });

@@ -63,7 +63,7 @@ describe("D629 §1 — the texts", () => {
     }
   });
 
-  it("Psyspear ~~stays unbuilt, named: no reader~~, no composition, no key ( D645 (D539): WITHDRAWN — reader-built at D645, `lastOneOffsMeD645.test.ts`)", () => {
+  it("Psyspear is reader-built (D645): no composition, no key", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     expect(me.get(PSYSPEAR)).toBe(1);
     expect(resolvedByAnyReader(PSYSPEAR)).toBe(true);

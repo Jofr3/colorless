@@ -1,27 +1,16 @@
 import { describe, expect, it } from "vitest";
 import type { Card } from "@colorless/schema";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { countAttachedEnergy, providedEnergy } from "./continuous";
 import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
-  deriveAttackOptionalBoost,
   deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
   optionalCostBoostProgram,
+  ATTACK_READERS,
 } from "./effects";
 import { conditionHolds, conditionNote } from "./boardCondition";
 import { applyAction } from "./index";
-import type { BoardCondition, EffectOp, GameEvent, GameState, PokemonRef, Seat } from "./index";
+import type { BoardCondition, EffectOp, GameState, PokemonRef, Seat } from "./index";
 import {
   FIXTURE_POOL,
   battler,
@@ -33,28 +22,14 @@ import {
   must,
   findEvent,
   driveSetup,
+  findEvents,
 } from "./testFixtures";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
 const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus();
 
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackBonusConsequent,
-  deriveAttackOptionalCostBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackDiscardScaledBoost,
-];
+const READERS = ATTACK_READERS.map(({ read }) => read);
 
 const TORRENTIAL =
   "You may shuffle 3 Energy attached to this Pokémon into your deck. If you do, this attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
@@ -153,19 +128,7 @@ function board(
 const attack = (state: GameState) => apply(state, { type: "attack", seat: "p1", index: 0 });
 const say = (state: GameState, yes: boolean) =>
   apply(state, { type: "resolveEffect", seat: "p1", choice: { kind: "confirm", yes } });
-function findAll<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
-
 describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", () => {
-  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the family's refused half goes 2 sentences / 7 printings → 1 / 2", () => {
     const family = corpus().filter(([, s]) => FAMILY.test(s));
     expect([family.length, units(family)]).toEqual([7, 14]);
@@ -513,9 +476,9 @@ describe("§5 — the board: the Energy reaches the DECK, and the snipe is a SEC
 
   it.each(SEEDS)("seed %i — TWO hits and never one: the rows are 100 and 120", (seed) => {
     const parked = attack(board(seed, { bench: 1 }));
-    expect(findAll(parked.events, "DAMAGE_DEALT").map((d) => d.base)).toEqual([100]);
+    expect(findEvents(parked.events, "DAMAGE_DEALT").map((d) => d.base)).toEqual([100]);
     const done = say(parked.state, true);
-    expect(findAll(done.events, "DAMAGE_DEALT").map((d) => d.base)).toEqual([120]);
+    expect(findEvents(done.events, "DAMAGE_DEALT").map((d) => d.base)).toEqual([120]);
   });
 
   it.each(SEEDS)(
@@ -526,14 +489,14 @@ describe("§5 — the board: the Energy reaches the DECK, and the snipe is a SEC
       if (attacker === null) throw new Error("expected P1's Active");
       const deckBefore = before.players.p1.deck.length;
       const parked = attack(before);
-      expect(findAll(parked.events, "DAMAGE_DEALT").map((d) => d.base)).toEqual([100]);
+      expect(findEvents(parked.events, "DAMAGE_DEALT").map((d) => d.base)).toEqual([100]);
       const done = say(parked.state, false);
       expect(done.state.players.p1.active?.energy).toEqual(attacker.energy);
       expect(done.state.players.p1.deck).toHaveLength(deckBefore);
       expect(types(done.events)).not.toContain("SHUFFLE");
       expect(types(done.events)).not.toContain("ENERGY_DISCARDED");
       expect(done.state.players.p2.bench[0]?.damage).toBe(0);
-      expect(findAll(done.events, "DAMAGE_DEALT")).toHaveLength(0);
+      expect(findEvents(done.events, "DAMAGE_DEALT")).toHaveLength(0);
       expect(done.state.players.p2.active?.damage).toBe(100);
     },
   );
@@ -546,7 +509,7 @@ describe("§5 — the board: the Energy reaches the DECK, and the snipe is a SEC
       const done = say(parked.state, true);
       expect(done.state.players.p1.active?.energy).toEqual([]);
       expect(types(done.events)).toContain("SHUFFLE");
-      expect(findAll(done.events, "DAMAGE_DEALT")).toHaveLength(0);
+      expect(findEvents(done.events, "DAMAGE_DEALT")).toHaveLength(0);
       expect(done.state.players.p2.active?.damage).toBe(100);
     },
   );
@@ -567,7 +530,7 @@ describe("§6 — the gate, and the TWO consecutive parks inside one confirm", (
       expect(types(done.events)).not.toContain("ENERGY_DISCARDED");
       expect(types(done.events)).not.toContain("SHUFFLE");
       expect(types(done.events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-      expect(findAll(done.events, "DAMAGE_DEALT")).toHaveLength(1);
+      expect(findEvents(done.events, "DAMAGE_DEALT")).toHaveLength(1);
       expect(done.state.players.p2.active?.damage).toBe(100);
       expect(done.state.players.p2.bench[0]?.damage).toBe(0);
       expect(attack(board(seed, { bench: 1 })).state.phase.kind).toBe("effect:choose");

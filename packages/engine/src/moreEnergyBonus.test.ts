@@ -1,21 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
-} from "./effects";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { deriveAttackDamageBonus, deriveAttackRequirement } from "./effects";
 import type { BoardCondition, GameEvent, GameState, Seat } from "./index";
 import { countAttachedEnergy, providedEnergy } from "./index";
 import { conditionHolds, conditionNote } from "./boardCondition";
@@ -36,23 +21,6 @@ const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus()
 /** The bonus skeleton, as a labelled COPY — the reader's own pattern is
     module-private. Whole-sentence anchored at BOTH ends, like the reader's. */
 const BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
-
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackBonusConsequent,
-  deriveAttackOptionalCostBoost,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackCancelRequirement,
-];
 
 const TAKEN =
   "If this Pokémon has more Energy attached than your opponent's Active Pokémon, this attack does 160 more damage.";
@@ -168,7 +136,6 @@ describe("§1 — the price, RE-DERIVED, and BOTH consequents asked", () => {
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
     expect(refused.length).toBe(0);
     expect(units(refused)).toBe(0);
-    expect([refused.length + 21, units(refused) + 25]).toEqual([21, 25]);
   });
 
   it("D207's SUPPLY question does not ARISE, and that is a result rather than a skip", () => {
@@ -375,15 +342,8 @@ describe("§5 — the boards", () => {
 });
 
 describe("§6 — the census moves in exactly ONE summand, and the step is 1 and 1", () => {
-  it("D418 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the resolving corpus gains ONE sentence and ONE printing", () => {
     const resolved = corpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect(resolved).toHaveLength(600);
-    expect(units(resolved)).toBe(1663);
     expect([
       resolved.length -
         6 -

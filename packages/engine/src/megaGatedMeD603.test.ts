@@ -555,7 +555,7 @@ describe("D603 §8 — Jett: a card for each of your opponent's Mega Evolution P
 });
 
 describe("D603 §9 — the dropped and excluded texts stay unkeyed, and the version", () => {
-  it("~~Latios~~, ~~Wally's Compassion ×3~~ and ~~Ange Floette~~ carry no program ( D628 (D539): Latios is keyed since D628; D620 (D539): Tremendous Bomb ×2 and Core Memory, excluded here, are keyed since D620; D625 (D539): Wally's Compassion ×3 is keyed since D625; D642 (D539): Ange Floette is keyed since D642, the rung is inverted)", () => {
+  it("Latios, Wally's Compassion ×3 and Ange Floette are keyed, and so are Tremendous Bomb ×2 and Core Memory", () => {
     for (const id of ["me04-075"])
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["stadium"]);
     expect(programFor("me01-101")?.abilities?.[0]?.name).toBe("Lustrous Assist");

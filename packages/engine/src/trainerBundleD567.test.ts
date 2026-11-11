@@ -604,7 +604,7 @@ describe("§3 — Accompanying Flute: the opponent's top 5, onto THEIR Bench", (
     expect(state.players.p2.bench).toHaveLength(3);
   });
 
-  it("PARTIAL: one free slot on p2's Bench — ~~three picked, the FIRST lands~~ the offer is capped at ONE (card revision B01), the others stay in p2's deck", () => {
+  it("PARTIAL: one free slot on p2's Bench — the offer is capped at ONE (card revision B01), and the others stay in p2's deck", () => {
     let board = topFive(table());
     for (let i = 0; i < 4; i++)
       board = benchFromDeck(ensureCopies(board, "p2", FILLER), "p2", FILLER);

@@ -97,7 +97,7 @@ describe("D597 §1 — the eight sentences and their readings", () => {
     expect(deriveAttackEffect(T.infernoX)).toEqual(INFERNO_PROGRAM);
   });
 
-  it('~~the "[R]" Inferno X ×2 is unread, and keyed BY ID on `INFERNO_X`~~ ( D612: the raw text is still unread, but it normalises to the `{R}` sentence and the key is retired)', () => {
+  it("the `[R]` Inferno X ×2 text is unread, normalises to the `{R}` sentence, and carries no registry key (D612)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     expect(me.get(T.infernoXBracket)).toBeUndefined();
     expect(resolvedByAnyReader(T.infernoXBracket)).toBe(false);

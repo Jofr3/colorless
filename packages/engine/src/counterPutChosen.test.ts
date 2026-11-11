@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { applyAction, deriveAttackEffect } from "./index";
 import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
 import {
@@ -73,7 +73,6 @@ describe("§1 — the two printed sentences, and what the placement family still
 
   it("both resolve through the reader SURFACE, and the surface did not grow", () => {
     for (const s of [BARE, CHOSEN]) expect(resolvedByAnyReader(s), s).toBe(true);
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("the PLACEMENT family, now CLOSED — the positive, and every departure by name", () => {

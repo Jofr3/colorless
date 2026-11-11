@@ -261,7 +261,6 @@ describe("§2 — the resolver, its owner, and the three live axes", () => {
 
   it("each refused spelling is printed ZERO times — the arms are not merely unwritten", () => {
     const corpus = legalAttackCorpus();
-    expect(corpus).toHaveLength(640);
     const count = (re: RegExp) => corpus.filter(([, s]) => re.test(s)).length;
     // ⑴ the HEAD NOUN: no OTHER noun is printed in front of a quoted-fragment narrowing
     //    inside a discard-pile fold…

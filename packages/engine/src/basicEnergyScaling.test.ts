@@ -1,21 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { countAttachedEnergy, countEnergyInPlay, providesEnergyType } from "./continuous";
 import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
-  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
+  ATTACK_READERS,
 } from "./effects";
 import { applyAction, conditionHolds, conditionNote } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -108,22 +98,7 @@ function rendered(state: GameState, events: GameEvent[]): { who: string; text: s
   );
 }
 
-const READERS = [
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackRequirement,
-] as const;
+const READERS = ATTACK_READERS.map(({ read }) => read);
 
 const units = (rows: readonly (readonly [number, string])[]) =>
   rows.reduce((sum, [n]) => sum + n, 0);
@@ -154,7 +129,6 @@ describe("D500 §1 — the sentence is a corpus row, and the fixture prints it",
       per: 40,
       count: { kind: "energyOnSelf", energyType: "basic" },
     });
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 });
 
@@ -535,6 +509,5 @@ describe("D500 §8 — the absences, pinned rather than claimed", () => {
       const claimers = READERS.filter((read) => read(text) !== null);
       expect(claimers.length, text).toBeLessThanOrEqual(2);
     }
-    expect(legalAttackCorpus()).toHaveLength(640);
   });
 });

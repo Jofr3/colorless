@@ -1,24 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { legalAttackCorpus, resolvedByAnyReader as readByAny } from "./censusAttackCorpus";
 import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader as readByAny,
-} from "./censusAttackCorpus";
-import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
   deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
   deriveAttackRequirement,
+  ATTACK_READERS,
 } from "./effects";
 import type { GameState } from "./index";
 import { conditionHolds, conditionNote } from "./boardCondition";
@@ -32,22 +18,7 @@ import {
 } from "./testFixtures";
 import { attachFromDeck } from "./testFixtures";
 
-const READERS: readonly ((t: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackBonusConsequent,
-  deriveAttackOptionalCostBoost,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackCancelRequirement,
-];
+const READERS = ATTACK_READERS.map(({ read }) => read);
 
 const BONUS = (n: number): string =>
   `If your opponent's Active Pokémon is a Pokémon ex, this attack does ${String(n)} more damage.`;
@@ -83,12 +54,7 @@ function dressed(seed: number, defender: string): GameState {
 }
 
 describe("§1 — the population, re-derived LIVE rather than quoted", () => {
-  it("D418 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
-  it("D420 — the TWELVE readers resolve 415 / 1,368 of a 640 / 1,732 corpus, and the parts SUM", () => {
+  it("D420 — the readers' resolved and residue halves SUM to the corpus", () => {
     const rows = legalAttackCorpus();
     const total = rows.reduce((sum, [units]) => sum + units, 0);
     const resolved = rows.filter(([, s]) => readByAny(s));
@@ -96,14 +62,8 @@ describe("§1 — the population, re-derived LIVE rather than quoted", () => {
     const resolvedP = resolved.reduce((sum, [units]) => sum + units, 0);
     const residueP = residue.reduce((sum, [units]) => sum + units, 0);
 
-    expect(rows).toHaveLength(640);
-    expect(total).toBe(1732);
-    expect(resolved).toHaveLength(600);
-    expect(resolvedP).toBe(1663);
     expect(resolved.length + residue.length).toBe(rows.length);
     expect(resolvedP + residueP).toBe(total);
-    expect(residue).toHaveLength(40);
-    expect(residueP).toBe(69);
   });
 
   it("the ex-ONLY predicate is 8 s / 13 p and the WIDER sibling is 4 s / 6 p — the ratio that chose the row", () => {

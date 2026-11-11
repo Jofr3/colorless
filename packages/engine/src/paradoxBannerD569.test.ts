@@ -655,7 +655,7 @@ describe("§1 — the datum: `banners.ts`' 86 Paradox ids, two sources plus the 
     expect(BANNER_BY_ID[MIRAIDON]).toBe("Future");
   });
 
-  it("the ~~Tera~~ `sv` Tera rows are untouched: 98, and no id carries two banners (a Record cannot) ( D582 (D539): *the Tera rows are 98* WITHDRAWN — 103: 98 `sv` + 5 `me` reprints)", () => {
+  it("the `sv` Tera rows are untouched: 98 of 103, and no id carries two banners (a Record cannot)", () => {
     const tera = Object.keys(BANNER_BY_ID).filter((id) => BANNER_BY_ID[id] === "Tera");
     expect(tera.filter((id) => !id.startsWith("me"))).toHaveLength(98);
     expect(tera).toHaveLength(103);

@@ -332,7 +332,7 @@ describe("the DEAD read sites — guarded for totality, asserted rather than ass
     expect(done.players.p2.active?.damage).toBe(40);
   });
 
-  it("attackEffectRefused: the Active is put to Sleep — no reachable board on this Active-aimed op ( D622 (D539): ~~today~~ — live at a gust or a put-counter Bench pick)", () => {
+  it("attackEffectRefused: the Active is put to Sleep, and nothing is prevented while the shield holder sits on the Bench", () => {
     const state = holderBenched();
     deepFreeze(state);
     const { state: done, events } = mustApply(state, yawn);

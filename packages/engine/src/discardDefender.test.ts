@@ -311,7 +311,7 @@ describe("D536 §2 — the ANCHOR: head, tail, both apostrophe slots, case", () 
     }
   });
 
-  it("ONE all-640 predicate LOOSER than the anchor (D425): every row opening `Discard a` that this arm claims is this row", () => {
+  it("ONE whole-corpus predicate LOOSER than the anchor (D425): every row opening `Discard a` that this arm claims is this row", () => {
     const loose = legalAttackCorpus().filter(([, s]) => s.startsWith("Discard a"));
     expect(loose.length).toBeGreaterThan(1);
     const mine = loose.filter(([, s]) =>
@@ -320,7 +320,7 @@ describe("D536 §2 — the ANCHOR: head, tail, both apostrophe slots, case", () 
     expect(mine).toEqual([[3, PRINTED]]);
   });
 
-  it("and NO row in the whole 640 derives `discardDefender` except this one", () => {
+  it("and NO row in the whole column derives `discardDefender` except this one", () => {
     const all = legalAttackCorpus().filter(([, s]) =>
       (deriveAttackEffect(s) ?? []).some(
         (op) => op.op === "discardDefender" || JSON.stringify(op).includes('"discardDefender"'),

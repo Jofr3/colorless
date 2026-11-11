@@ -71,7 +71,7 @@ describe("D623 §1 — the texts: 5 attack sentences / 7 printings", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(7);
   });
 
-  it("Doublade ×3 and Okidogi stay unbuilt: 2 texts / 4 printings, named ( D630 (D539): WITHDRAWN for Okidogi — built at D630, `persistedRecordsMeD630.test.ts`) ( D633 (D539): WITHDRAWN for Doublade — built at D633, `attackOddsMeD633.test.ts`)", () => {
+  it("Doublade ×3 and Okidogi: 2 texts / 4 printings, corpus rows that a reader resolves (D630, D633)", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, n] of DROPPED) {
       expect([text, me.get(text)]).toEqual([text, n]);

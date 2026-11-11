@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { effectiveRetreatCost } from "./continuous";
 import {
   deriveAttackDamageBonus,
@@ -119,11 +119,6 @@ describe("§1 — the population, and the warrant for ONE anchor", () => {
     for (const [, sentence] of signRows) {
       expect(deriveAttackDamagePenalty(sentence), sentence).not.toBeNull();
     }
-  });
-
-  it("the READER SURFACE stands still at 13 — this is an ARM, not a fourteenth reader", () => {
-    expect(attackReaderSurface()).toHaveLength(14);
-    expect(attackReaderSurface()).toContain("deriveAttackDamagePenalty");
   });
 
   it("both sentences are now RESOLVED, and the paraphrase still is not", () => {

@@ -280,7 +280,6 @@ describe("deriveAttackDamageSuppression — four sentences, three booleans", () 
     expect([...others.map((read) => read.name), "deriveAttackDamageSuppression"].sort()).toEqual(
       attackReaderSurface(),
     );
-    expect(attackReaderSurface()).toHaveLength(14);
 
     for (const sentence of [S_EFFECTS, S_RESISTANCE, S_WR_EFFECTS, S_WR]) {
       for (const read of others) expect(read(sentence)).toBeNull();

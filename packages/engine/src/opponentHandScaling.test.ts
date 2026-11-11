@@ -1,5 +1,4 @@
 import { HIDDEN_CARD_ID } from "@colorless/schema";
-import manifest from "../package.json" with { type: "json" };
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
@@ -22,7 +21,7 @@ import {
   splitAttackTrailingClause,
 } from "./effects";
 import type { CardFilter } from "./effectTypes";
-import { engineVersion, programFor, redactGame } from "./index";
+import { programFor, redactGame } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { applyAction } from "./index";
 import { conditionHolds, countCardsInDiscardPile, countCardsInHand } from "./boardCondition";
@@ -759,9 +758,5 @@ describe("§8 — the frozen board and the engine version", () => {
     expect(dealt(state, HAND_READ)).toBe(250);
     expect(dealt(state, HAND_COUNT_IDX)).toBe(210);
     expect(state.players.p2.hand).toHaveLength(7);
-  });
-
-  it("the engine version moved with the behaviour, and the two files agree", () => {
-    expect(manifest.version).toBe(engineVersion);
   });
 });

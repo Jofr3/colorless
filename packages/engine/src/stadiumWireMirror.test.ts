@@ -278,7 +278,7 @@ describe("D288 §3 — the wire row is greyed EXACTLY when the engine refuses", 
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D288 §4 — a STAMPED Item bar greys Items and leaves Stadiums lit", () => {
-  it('a STAMPED ITEM bar leaves the Stadium rows LIT, DRIVEN OFF A REAL ATTACK ( D636 (D539): ~~`StampedHandPlayClass` HAS NO `"Stadium"` MEMBER~~ WITHDRAWN — Scorching Earth stamps it, keyed apart from `Item`)', () => {
+  it("a STAMPED ITEM bar leaves the Stadium rows LIT, DRIVEN OFF A REAL ATTACK: the Stadium stamp is keyed apart from `Item` (D636)", () => {
     for (const seed of SEEDS) {
       const stamped = swing(turnOf(board(seed, "p1", "p1", GALVANTULA), "p1"), "p1");
       const open = turnOf(stamped, "p2");

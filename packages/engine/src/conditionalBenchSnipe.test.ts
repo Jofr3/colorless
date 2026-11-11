@@ -1,23 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
-} from "./effects";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { deriveAttackDamageBonus, deriveAttackEffect, ATTACK_READERS } from "./effects";
 import { applyAction } from "./index";
-import type { EffectOp, GameEvent, GameState, PokemonRef } from "./index";
+import type { EffectOp, GameState, PokemonRef } from "./index";
 import {
   CONDITIONAL_BENCH_SNIPE_DECK,
   attachFromDeck,
@@ -30,28 +15,14 @@ import {
   trimDeckTo,
   types,
   findEvent,
+  findEvents,
 } from "./testFixtures";
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
 const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus();
 
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackBonusConsequent,
-];
+const READERS = ATTACK_READERS.map(({ read }) => read);
 
 const TAKEN =
   "If there are 3 or fewer cards in your deck, this attack also does 120 damage to 2 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
@@ -72,13 +43,6 @@ const SNIPE: EffectOp = {
   source: "attack",
   deals: true,
 };
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 function ready(seed: number): GameState {
   let state = driveSetup(
@@ -101,11 +65,6 @@ function armed(seed: number, deck: number, benched: number): GameState {
 // ── §1 ─────────────────────────────────────────────────────────────────────────
 
 describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", () => {
-  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the gated sentence is real, is worth ONE printing, and was refused by all nine", () => {
     expect(corpus().filter(([, s]) => s === TAKEN)).toHaveLength(1);
     expect(units(corpus().filter(([, s]) => s === TAKEN))).toBe(1);
@@ -205,7 +164,7 @@ describe("§3 — the count-2 pick on a real board: two DISTINCT bodies, §8.6-c
     });
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(findAll(events, "DAMAGE_DEALT")).toHaveLength(1);
+    expect(findEvents(events, "DAMAGE_DEALT")).toHaveLength(1);
     expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ seat: "p2", base: 20, dealt: 20 });
     expect(done.players.p2.active?.damage).toBe(20);
     for (const body of done.players.p2.bench) expect(body.damage).toBe(0);
@@ -237,7 +196,7 @@ describe("§3 — the count-2 pick on a real board: two DISTINCT bodies, §8.6-c
     });
     // TWO hits, DAMAGE_DEALT rather than COUNTERS_PLACED, flat (no W/R on a Bench).
     expect(types(e2)).not.toContain("COUNTERS_PLACED");
-    const dealt = findAll(e2, "DAMAGE_DEALT");
+    const dealt = findEvents(e2, "DAMAGE_DEALT");
     expect(dealt).toHaveLength(2);
     for (const row of dealt) expect(row).toMatchObject({ base: 120, weakness: null, dealt: 120 });
     expect(done.players.p2.bench.map((b) => b.damage)).toEqual([120, 120, 0]);
@@ -296,7 +255,7 @@ describe("§3 — the count-2 pick on a real board: two DISTINCT bodies, §8.6-c
       index: 0,
     });
     expect(types(events)).not.toContain("EFFECT_PENDING");
-    expect(findAll(events, "DAMAGE_DEALT")).toHaveLength(2); // the 20 and one 120
+    expect(findEvents(events, "DAMAGE_DEALT")).toHaveLength(2); // the 20 and one 120
     expect(done.players.p2.bench.map((b) => b.damage)).toEqual([120]);
     expect(done.players.p2.active?.damage).toBe(20);
   });
@@ -308,7 +267,7 @@ describe("§3 — the count-2 pick on a real board: two DISTINCT bodies, §8.6-c
       index: 0,
     });
     expect(types(events)).not.toContain("EFFECT_PENDING");
-    expect(findAll(events, "DAMAGE_DEALT")).toHaveLength(1);
+    expect(findEvents(events, "DAMAGE_DEALT")).toHaveLength(1);
     expect(done.players.p2.active?.damage).toBe(20);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });

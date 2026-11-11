@@ -1,6 +1,6 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackEffect,
   splitAttackCancelClause,
@@ -242,7 +242,6 @@ describe("D538 §1 — the corpus row, read off the census rather than retyped",
     // Asked of the SURFACE rather than of one reader: arm 23b-bis sits inside
     // `deriveAttackEffect`, so there is no fourteenth reader and `attackReaderSurface()`
     // is the same length it was at HEAD.
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("ONE apostrophe slot, COUNTED off the printed bytes", () => {

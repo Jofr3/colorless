@@ -557,8 +557,8 @@ describe("D588 §11 — `stage2Only` reads the printed stage word, not the chain
   });
 });
 
-describe("D588 §12 — the ids: real `me` ids in a LOCAL pool; Pokémon Center Lady ~~stays unbuilt~~ ( D617 (D539): WITHDRAWN — built at D617, not by this slice)", () => {
-  it("no D588 Trainer or body reached `FIXTURE_POOL`, and `me01-123` ~~has no program~~ is not one of this slice's objects ( D617: keyed on `POKEMON_CENTER_LADY`)", () => {
+describe("D588 §12 — the ids: real `me` ids in a LOCAL pool; Pokémon Center Lady is built (D617)", () => {
+  it("no D588 Trainer or body reached `FIXTURE_POOL`, and `me01-123` carries its D617 `healChosen` program", () => {
     for (const id of Object.keys(LOCAL)) expect(FIXTURE_POOL[id], id).toBeUndefined();
     for (const id of ME_IDS) expect(/^me/.test(id), id).toBe(true);
     expect(programFor(CENTER_LADY)).toEqual({

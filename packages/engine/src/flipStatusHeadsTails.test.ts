@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import type { EffectOp } from "./effectTypes";
 import * as effects from "./effects";
-import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
+import {
+  deriveAttackEffect,
+  splitAttackGateClause,
+  splitAttackTrailingClause,
+  ATTACK_READERS,
+} from "./effects";
 import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import {
@@ -61,11 +66,7 @@ function all<T extends GameEvent["type"]>(
 const units = (rows: readonly (readonly [number, string])[]) => rows.reduce((s, [n]) => s + n, 0);
 
 const READERS: Record<string, (text: string) => unknown> = Object.fromEntries(
-  attackReaderSurface().map((name) => {
-    const fn = (effects as unknown as Record<string, unknown>)[name];
-    if (typeof fn !== "function") throw new Error(`reader ${name} is not a function`);
-    return [name, fn as (text: string) => unknown];
-  }),
+  ATTACK_READERS.map(({ name, read }) => [name, read]),
 );
 const hit = (re: RegExp) => legalAttackCorpus().filter(([, s]) => re.test(s));
 
@@ -235,7 +236,7 @@ describe("§2 — the derivation, and the population it was measured on", () => 
     }
   });
 
-  it("ZERO false positives over the WHOLE 640-sentence column — one row, two printings", () => {
+  it("ZERO false positives over the WHOLE column — one row, two printings", () => {
     const twoArmed = legalAttackCorpus().filter(([, s]) => {
       const ops = deriveAttackEffect(s);
       const head: EffectOp | undefined = ops?.[0];
@@ -333,7 +334,7 @@ describe("§2 — the derivation, and the population it was measured on", () => 
   });
 });
 
-describe("§3 — the two-branch coin family, measured over all 640 rows", () => {
+describe("§3 — the two-branch coin family, measured over every corpus row", () => {
   it("the family is 3 sentences / 8 printings, and TWO of the three now build", () => {
     const both = legalAttackCorpus().filter(
       ([, s]) => /If heads,/i.test(s) && /If tails,/i.test(s),
@@ -549,13 +550,8 @@ describe("§5 — what this anchor refuses, and what it still admits", () => {
 describe("§6 — the census moves in exactly ONE summand", () => {
   it("the resolving corpus gains ONE sentence and TWO printings", () => {
     const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolved.length, units(resolved)]).toEqual([600, 1663]);
     const without = resolved.filter(([, s]) => s !== PRINTED);
-    expect([without.length, units(without)]).toEqual([599, 1661]);
-  });
-
-  it("the reader SURFACE stands still at 13 — this is an ARM, not a reader", () => {
-    expect(attackReaderSurface()).toHaveLength(14);
+    expect([resolved.length - without.length, units(resolved) - units(without)]).toEqual([1, 2]);
   });
 });
 
@@ -563,7 +559,7 @@ describe("§6 — the census moves in exactly ONE summand", () => {
 // §7 — the version questions, driven rather than reasoned from a name.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("§7 — engineVersion, and why MATCH_RECORD_VERSION does not move", () => {
+describe("§7 — why MATCH_RECORD_VERSION does not move", () => {
   it("`MATCH_RECORD_VERSION` STAYS 29 — the SERIALIZED ALPHABET, and REACHABILITY too", () => {
     const program = deriveAttackEffect(PRINTED);
     expect(program).toHaveLength(1);

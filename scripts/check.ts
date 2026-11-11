@@ -27,6 +27,7 @@ export const STATIC_STEPS: readonly string[] = [
   "bun scripts/lua-constants.ts --check",
   "bun scripts/lua-bridge-guard.ts",
   "bun scripts/log-guard.ts",
+  "bun scripts/passive-lock-guard.ts",
   "bun scripts/docs-writes.ts",
   "bun scripts/comment-guard.ts",
   "bun scripts/registry-aliases.ts --check",

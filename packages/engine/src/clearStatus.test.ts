@@ -19,6 +19,7 @@ import {
   setConditions,
   setDamage,
   findEvent,
+  findEvents,
 } from "./testFixtures";
 
 /** The two printed sentences, byte-for-byte off the local D1 rows. */
@@ -41,13 +42,6 @@ const ALL_STATUSES: StatusName[] = ["asleep", "confused", "paralyzed", "poisoned
 
 const SEED = 5;
 const ACTIVE: PokemonTarget = { spot: "active" };
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 const ATTACKS = {
   hypnosis: { card: "fix-statuser", index: 0 }, // → the DEFENDER is Asleep
@@ -326,7 +320,7 @@ describe("the ATTACK half — Miracle Force", () => {
     expect(theirs?.rotation).toBe("asleep");
     expect(theirs?.poisonDamage).toBe(10);
     expect(theirs?.burned).toBe(true);
-    expect(findAll(done.events, "STATUS_CLEARED")).toHaveLength(1);
+    expect(findEvents(done.events, "STATUS_CLEARED")).toHaveLength(1);
   });
 
   it("the ROW is the card's own verb, filed under the seat that OWNS the body", () => {
@@ -429,7 +423,7 @@ describe("the ABILITY half — Busybody Nurse", () => {
     const done = mustApply(state, nurse());
     expect(conditionsOf(done.state, "p1")?.burned).toBe(false);
     expect(conditionsOf(done.state, "p2")).toMatchObject({ rotation: "asleep", burned: true });
-    expect(findAll(done.events, "STATUS_CLEARED")).toHaveLength(1);
+    expect(findEvents(done.events, "STATUS_CLEARED")).toHaveLength(1);
   });
 });
 
@@ -476,7 +470,7 @@ describe("the op does NOT reuse flow.ts `recoverStatuses`, and the board says wh
   it("ONE seat, not two — reason (2), THE SCOPE IS WRONG, stated on a board", () => {
     let state = blisseyBoard("active", { burned: true });
     state = setConditions(state, "p2", { burned: true });
-    expect(findAll(mustApply(state, nurse()).events, "STATUS_CLEARED")).toHaveLength(1);
+    expect(findEvents(mustApply(state, nurse()).events, "STATUS_CLEARED")).toHaveLength(1);
   });
 
   it("ONE vocabulary word for one printed verb — both halves say `recovered`", () => {

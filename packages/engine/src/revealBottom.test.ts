@@ -18,6 +18,7 @@ import {
   types,
   findEvent,
   roundTrip,
+  findEvents,
 } from "./testFixtures";
 
 const SEED = 20260722;
@@ -26,13 +27,6 @@ const ORTEGA = "sv03-190";
 const ORTEGA_ALT = "sv03-219";
 const GREAVARD = "sv01-105";
 const MIRIAM = "sv01-179";
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 function census(state: GameState, seat: Seat): string[] {
   const side = state.players[seat];
@@ -764,12 +758,12 @@ describe("Greavard — Underworld Stroll, the derived attack twin", () => {
   it("emits ONE reveal per attack — the park did not double-tell it", () => {
     const state = strollBoard([ORTEGA, MIRIAM]);
     const { state: parked, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(findAll(events, "HAND_REVEALED")).toHaveLength(1);
+    expect(findEvents(events, "HAND_REVEALED")).toHaveLength(1);
     const { events: resolved } = mustApply(parked, {
       type: "resolveEffect",
       seat: "p1",
       choice: { kind: "cards", uids: [handUid(parked, "p2", ORTEGA)] },
     });
-    expect(findAll(resolved, "HAND_REVEALED")).toHaveLength(0);
+    expect(findEvents(resolved, "HAND_REVEALED")).toHaveLength(0);
   });
 });

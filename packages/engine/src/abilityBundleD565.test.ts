@@ -505,7 +505,7 @@ describe("§1 — the prints and the registry rows", () => {
     }
   });
 
-  it('`benchOnly` is carried by exactly Flustered Leap\'s two ids, and NO row pairs it with `activeOnly` ( D602 (D539): "exactly Flustered Leap\'s two ids" is WITHDRAWN as a live figure — plus Solgaleo `30th-105` "Sunrise"; D603: plus Linoone `me02-082` "Excited Dash")', () => {
+  it("`benchOnly` is carried by Flustered Leap's two ids plus Sunrise, Excited Dash, Larry's Komala and Clawitzer ×2, and NO row pairs it with `activeOnly`", () => {
     const benchOnly: string[] = [];
     for (const id of programmedCardIds()) {
       for (const ability of programFor(id)?.abilities ?? []) {
@@ -518,7 +518,7 @@ describe("§1 — the prints and the registry rows", () => {
     );
   });
 
-  it('the TRIGGERED `oncePerTurn` is carried by Zero to Hero alone ( D628 (D539): WITHDRAWN as the whole field — `true` is still Zero to Hero alone, and Meowth ex ×3 "Last-Ditch Catch" carries the widened `"sharedByName"`)', () => {
+  it('the TRIGGERED `oncePerTurn: true` is Zero to Hero alone, and Meowth ex ×3 "Last-Ditch Catch" carries `"sharedByName"`', () => {
     const locked = programmedCardIds().filter((id) =>
       (programFor(id)?.triggered ?? []).some((t) => t.oncePerTurn === true),
     );

@@ -3,7 +3,7 @@ import { legalAttackCorpus } from "./censusAttackCorpus";
 import { deriveAttackEffect } from "./effects";
 import { ENERGY_TYPE_BY_CODE } from "./deriver/vocabulary";
 import type { EffectOp } from "./effectTypes";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import { programFor, registryCardIds } from "./registry";
 import {
   CROSS_SEAT_DISCARD_DECK,
@@ -17,6 +17,7 @@ import {
   setActiveFromDeck,
   types,
   mustDerive,
+  findEvents,
 } from "./testFixtures";
 import { present } from "./fixtures/values";
 
@@ -64,13 +65,6 @@ function energyIds(state: GameState, seat: Seat, benchIndex?: number): string[] 
 
 function discardIds(state: GameState, seat: Seat): string[] {
   return state.players[seat].discard.map((uid) => state.cardIdByUid[uid] ?? "?").sort();
-}
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
 const SPECIAL_ACTIVE = "Discard a Special Energy from your opponent's Active Pokémon.";
@@ -231,7 +225,7 @@ describe("D361 §2 — the SPECIAL arm on a board: their ACTIVE, one Energy, and
     // One Special on the Active is a FORCED pick, so it resolves without a prompt
     // (the no-choice rule) — and the benched Special is untouched.
     expect(done.phase.kind).not.toBe("effect:choose");
-    expect(findAll(events, "ENERGY_DISCARDED")).toHaveLength(1);
+    expect(findEvents(events, "ENERGY_DISCARDED")).toHaveLength(1);
     expect(energyIds(done, "p2")).toEqual([]);
     expect(energyIds(done, "p2", 0)).toEqual(["fix-special-2"]);
   });
@@ -241,7 +235,7 @@ describe("D361 §2 — the SPECIAL arm on a board: their ACTIVE, one Energy, and
     state = attachFromDeck(state, "p2", "fix-energy", 2);
     deepFreeze(state);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(findAll(events, "ENERGY_DISCARDED")).toHaveLength(0);
+    expect(findEvents(events, "ENERGY_DISCARDED")).toHaveLength(0);
     expect(energyIds(done, "p2")).toEqual(["fix-energy", "fix-energy"]);
     expect(types(events)).toContain("ATTACK_DECLARED");
   });
@@ -288,7 +282,7 @@ describe("D361 §3 — the TYPED arm: PROVISION, not print, and on THEIR side", 
     // Nothing on their Active provides {R} any more, so the arm whiffs — and the
     // Special that caused the demotion is NOT taken either (this is the {R} arm,
     // not the Special one).
-    expect(findAll(events, "ENERGY_DISCARDED")).toHaveLength(0);
+    expect(findEvents(events, "ENERGY_DISCARDED")).toHaveLength(0);
     expect(energyIds(done, "p2").sort()).toEqual(["fix-special", "sv02-191"]);
   });
 
@@ -302,7 +296,7 @@ describe("D361 §3 — the TYPED arm: PROVISION, not print, and on THEIR side", 
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     // Two Specials now (Luminous is one), so this PARKS where the {R} arm whiffed.
     expect(done.phase.kind).toBe("effect:choose");
-    expect(findAll(events, "ENERGY_DISCARDED")).toHaveLength(0); // not yet — it parked
+    expect(findEvents(events, "ENERGY_DISCARDED")).toHaveLength(0); // not yet — it parked
   });
 });
 
@@ -321,7 +315,7 @@ describe('D361 §4 — the SWEEP: `count: "all"` is EVERY match on EVERY body, n
     // INLINE: the `count === "all"` branch fires before the scope split, so this
     // never parks, never prompts and never crosses the wire.
     expect(done.phase.kind).not.toBe("effect:choose");
-    const rows = findAll(events, "ENERGY_DISCARDED");
+    const rows = findEvents(events, "ENERGY_DISCARDED");
     expect(rows).toHaveLength(2);
     expect(rows.flatMap((r) => r.uids)).toHaveLength(3);
     expect(new Set(rows.map((r) => r.host)).size).toBe(2);
@@ -355,7 +349,7 @@ describe('D361 §4 — the SWEEP: `count: "all"` is EVERY match on EVERY body, n
     state = attachBenchFromDeck(state, "p2", 0, "fix-water-energy", 1);
     deepFreeze(state);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 2 });
-    expect(findAll(events, "ENERGY_DISCARDED")).toHaveLength(0);
+    expect(findEvents(events, "ENERGY_DISCARDED")).toHaveLength(0);
     expect(energyIds(done, "p2")).toEqual(["fix-energy"]);
     expect(energyIds(done, "p2", 0)).toEqual(["fix-water-energy"]);
   });

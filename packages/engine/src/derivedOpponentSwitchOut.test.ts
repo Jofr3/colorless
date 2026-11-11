@@ -570,7 +570,7 @@ describe("end to end — Iron Bundle's compound, and the gate that is not decora
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the seam — the gates and surfaces this op deliberately does not touch", () => {
-  it("~~`programPlayable` gets NO arm~~ — the one card PLAY that reaches the op (D555) reaches it behind `switchActive`'s gate ( D587 (D539): WITHDRAWN — Repel `me01-126` is a top-level producer and the arm is written)", () => {
+  it("`programPlayable` refuses `opponentSwitchOut` on an empty Bench; Repel `me01-126` produces it top-level, the other two behind `switchActive`'s gate", () => {
     const state = ready(71, 1, 0);
     expect(state.players.p2.bench).toHaveLength(0);
     expect(programPlayable(state, [{ op: "gust" }], "p1")).toBe(false);

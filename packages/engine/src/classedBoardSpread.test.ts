@@ -1,8 +1,8 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import * as effectsModule from "./effects";
-import { deriveAttackDamageMultiplier, deriveAttackEffect } from "./effects";
+import { deriveAttackDamageMultiplier, deriveAttackEffect, ATTACK_READERS } from "./effects";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import {
@@ -157,11 +157,7 @@ const corpusRows = () => legalAttackCorpus();
 const units = (rows: readonly (readonly [number, string])[]) =>
   rows.reduce((n, [count]) => n + count, 0);
 
-const READERS: readonly ((t: string) => unknown)[] = attackReaderSurface().map((name) => {
-  const fn = (effectsModule as unknown as Record<string, unknown>)[name];
-  if (typeof fn !== "function") throw new Error(`reader ${name} is not a function on effects.ts`);
-  return fn as (t: string) => unknown;
-});
+const READERS = ATTACK_READERS.map(({ read }) => read);
 
 /** THE PROGRAM, spelled once and reused, so a case cannot pass against a hand-copied
     literal that has drifted from what this file means by it. */
@@ -201,8 +197,6 @@ const EX_V_FILTER = {
 describe("D492 §1 — the two rows, measured live over the legal column", () => {
   it("both are CORPUS bytes at 2 printings each, and the two steps DISAGREE 2 / 4", () => {
     const rows = new Map(corpusRows().map(([n, text]) => [text, n]));
-    expect(corpusRows()).toHaveLength(640);
-    expect(units(corpusRows())).toBe(1732);
     expect(rows.get(EX_60)).toBe(2);
     expect(rows.get(EX_V_100)).toBe(2);
     expect(rows.get(FOR_EACH_EX_60)).toBe(2);
@@ -676,14 +670,8 @@ describe("D492 §9 — the widened quantifier over a v29 record", () => {
 });
 
 describe("D492 §10 — the residue this slice moved, and the engine version", () => {
-  it("the reader surface is still THIRTEEN, derived from the module", () => {
-    expect(attackReaderSurface()).toHaveLength(14);
-    expect(READERS).toHaveLength(14);
-  });
-
   it("the RAW residue fell by exactly 2 sentences / 4 printings", () => {
     const unbuilt = corpusRows().filter(([, s]) => !resolvedByAnyReader(s));
-    expect([unbuilt.length, units(unbuilt)]).toEqual([40, 69]);
     expect(unbuilt.map(([, s]) => s)).not.toContain(EX_60);
     expect(unbuilt.map(([, s]) => s)).not.toContain(EX_V_100);
   });
@@ -694,18 +682,5 @@ describe("D492 §10 — the residue this slice moved, and the engine version", (
     expect([named.length, units(named)]).toEqual([20, 30]);
     const residue = named.filter(([, s]) => !resolvedByAnyReader(s));
     expect([residue.length, units(residue)]).toEqual([0, 0]);
-  });
-});
-
-describe("D492 §11 — the reader list is the module's, in both directions", () => {
-  it("every member of the surface is a function on `effects.ts`, and the SETS are equal", () => {
-    const names = attackReaderSurface();
-    const fromModule = Object.keys(effectsModule).filter(
-      (k) =>
-        k.startsWith("deriveAttack") &&
-        typeof (effectsModule as unknown as Record<string, unknown>)[k] === "function",
-    );
-    expect(new Set(names)).toEqual(new Set(fromModule));
-    expect(names.length).toBe(fromModule.length);
   });
 });

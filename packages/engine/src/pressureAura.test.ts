@@ -20,6 +20,7 @@ import {
   setActiveFromDeck,
   setPrizes,
   findEvent,
+  findEvents,
 } from "./testFixtures";
 
 const PRESSURE =
@@ -30,13 +31,6 @@ const GROWL =
   "During your opponent's next turn, the Defending Pokémon's attacks do 20 less damage (before applying Weakness and Resistance).";
 
 const SEED = 7;
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 function pipeline(row: {
   base: number;
@@ -255,7 +249,7 @@ describe("the four damage sites — 20 off every one", () => {
     state = clearBench(state, "p2");
     state = benchFromDeck(state, "p2", "fix-titan");
     const { events } = swing(state, "fix-sniper");
-    const rows = findAll(events, "DAMAGE_DEALT");
+    const rows = findEvents(events, "DAMAGE_DEALT");
     expect(rows.map((r) => r.dealt)).toEqual([10, 0]);
     expect(rows.map((r) => r.debuff)).toEqual([AMOUNT, AMOUNT]);
     for (const row of rows) expectBeforeWR(row);

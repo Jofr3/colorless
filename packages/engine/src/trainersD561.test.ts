@@ -923,7 +923,7 @@ describe("D561 §9 — `MATCH_RECORD_VERSION` holds at 35: JSON revivals, and ev
     expect(p.max).toBe(2);
   });
 
-  it("Crispin: the scheduled optional revives identically and resolves with its labels STRIPPED; stripped of `oneOfRecorded` the attach ~~takes the first Basic Energy in hand, unasked~~ asks which (card revision B01)", () => {
+  it("Crispin: the scheduled optional revives identically and resolves with its labels STRIPPED; stripped of `oneOfRecorded` the attach asks which Energy", () => {
     const { state: searching } = play(table(), CRISPIN[0]);
     const p = effectPrompt(searching);
     if (p.kind !== "chooseCards") throw new Error("expected chooseCards");

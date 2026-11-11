@@ -115,17 +115,18 @@ Take the printed text from the card's row in the local D1 catalog (`attacks_json
 5. **The test** is a suite in `packages/engine/src` named for the mechanic. Build the card with its
    real id and printed text (`trainerCard`, `battler` from `testFixtures.ts`) so `programFor` finds
    the row, play it through `applyAction` from a `driveSetup` board, cover each clause and refusal,
-   and `roundTrip` a parked state. `censusAtHead.test.ts` pins the built counts (`BUILT`), so a
-   newly built text moves them.
+   and `roundTrip` a parked state. Take reader lists from `ATTACK_READERS` and corpus figures from
+   the corpus helpers rather than copying them. In `censusAtHead.test.ts`, add the new registry
+   ids to their recorded list and, when a column moves, one `CENSUS_HISTORY` row; a new
+   `deriveAttack…` reader also goes in `ATTACK_READERS` (`effects.ts`).
 6. **Mutants.** Add rows to `scripts/mutation/mutants.ts` for the mistakes an author would make (a
    neighbouring row's real code copied in), with `decision` naming the `decisions.md` entry and
    `expectKilledBy` your suite (`bun scripts/mutation/reanchor.ts --write` fills in `symbol`).
    Run each with `bun run mutants --only <id>` until it is KILLED (`conventions.md` "Mutants are
    DECLARED").
-7. **Version.** A behaviour change bumps the minor version in `packages/engine/package.json` and
-   `engineVersion` in `index.ts` together, so local saves recorded under the old rules are dropped
-   rather than replayed. Grep the old version string for its other sites (`bun.lock`, a mutant
-   row's `find`, a few test titles).
+7. **Version.** A behaviour change bumps the minor version in `packages/engine/package.json`, so
+   local saves recorded under the old rules are dropped rather than replayed. `engineVersion` reads
+   it from there; `bun install` updates `bun.lock`.
 8. **A reading the spec does not settle** is recorded as a reading in the test and the
    `decisions.md` entry, not left as a silent guess.
 9. Run `bun run check`, then write a dated `decisions.md` entry and run `bun run docs:index`.

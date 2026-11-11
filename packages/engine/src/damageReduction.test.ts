@@ -25,6 +25,7 @@ import {
   types,
   findEvent,
   mustDerive,
+  findEvents,
 } from "./testFixtures";
 
 /** The bare sentence at each printed amount — one anchor, one capture. */
@@ -46,13 +47,6 @@ const BEFORE_WR_ABILITY =
   "As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon do 20 less damage (before applying Weakness and Resistance).";
 
 const SEED = 11;
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 function pipeline(row: {
   base: number;
@@ -638,7 +632,7 @@ describe("the durated damage reduction — the four READ SITES", () => {
     state = benchFromDeck(state, "p1", "fix-titan");
     state = withReduction(state, "p1", { bench: 0 }, 20);
     const { events } = swing(state, "fix-sniper", [{ id: "fix-energy", count: 1 }]);
-    const bench = findAll(events, "DAMAGE_DEALT").find(
+    const bench = findEvents(events, "DAMAGE_DEALT").find(
       (e) => e.uid === benchTopUid(state, "p1", 0),
     );
     // Spread Shot puts 20 on each benched Pokémon; the installed 20 takes it to 0.
@@ -659,7 +653,7 @@ describe("the durated damage reduction — the four READ SITES", () => {
     state = withReduction(state, "p1", { bench: 0 }, 20);
     state = setPrizes(state, "p1", 5); // 6 − 5 = 1 Prize taken by P2's opponent…
     const { events } = swing(state, "fix-bramble", [{ id: "fix-energy", count: 1 }]);
-    const bench = findAll(events, "DAMAGE_DEALT").find(
+    const bench = findEvents(events, "DAMAGE_DEALT").find(
       (e) => e.uid === benchTopUid(state, "p1", 0),
     );
     expect(bench?.base).toBe(40);

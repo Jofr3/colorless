@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   PICNIC_BASKET_DECK,
   benchFromDeck,
@@ -10,14 +10,8 @@ import {
   handUid,
   mustApply,
   setBenchDamage,
+  findEvents,
 } from "./testFixtures";
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 /** Setup, then open P1's turn 2 (P2 went first and passed) — P1's first
     action phase, where an Item is legal. */
@@ -83,7 +77,7 @@ describe("Picnic Basket — healEachAll (both boards)", () => {
       uid: playedUid,
     });
 
-    const healed = findAll(events, "HEALED");
+    const healed = findEvents(events, "HEALED");
     // Four damaged Pokémon across both boards; the undamaged p2 bench[1] emits nothing.
     expect(healed).toHaveLength(4);
     // Each heal is clamped to min(30, damage): the p2 Active's 20 heals 20, the rest 30.
@@ -118,7 +112,7 @@ describe("Picnic Basket — healEachAll (both boards)", () => {
     const uid = handUid(withCard, "p1", "sv01-184");
     const { state: done, events } = mustApply(withCard, { type: "playTrainer", seat: "p1", uid });
 
-    expect(findAll(events, "HEALED")).toHaveLength(0);
+    expect(findEvents(events, "HEALED")).toHaveLength(0);
     // Legal to play with nothing damaged (healEachAll has no would-whiff gate) —
     // the Item is discarded and the turn continues.
     expect(done.players.p1.discard).toContain(uid);

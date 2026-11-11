@@ -25,6 +25,7 @@ import {
   walkProgram,
   findEvent,
   mustDerive,
+  findEvents,
 } from "./testFixtures";
 
 /** Sentence ONE at each printed amount — the majority spelling (3 of 5). */
@@ -41,13 +42,6 @@ const AFTER_WR =
   "During your opponent's next turn, this Pokémon takes 30 less damage from attacks (after applying Weakness and Resistance).";
 
 const SEED = 7;
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 function pipeline(row: {
   base: number;
@@ -652,7 +646,7 @@ describe("the attacker-side debuff — the four READ SITES", () => {
     state = benchFromDeck(state, "p1", "fix-titan");
     const benched = benchTopUid(state, "p1", 0);
     const { events } = swingBack(state, 0);
-    const rows = findAll(events, "DAMAGE_DEALT");
+    const rows = findEvents(events, "DAMAGE_DEALT");
     const main = rows.find((e) => e.uid === activeUid(state, "p1"));
     const bench = rows.find((e) => e.uid === benched);
     expect(main?.debuff).toBe(20);
@@ -676,7 +670,7 @@ describe("the attacker-side debuff — the four READ SITES", () => {
     state = setPrizes(state, "p1", 5); // 6 − 5 = 1 Prize taken
     const benched = benchTopUid(state, "p1", 0);
     const { events } = swingBack(state, 0);
-    const bench = findAll(events, "DAMAGE_DEALT").find((e) => e.uid === benched);
+    const bench = findEvents(events, "DAMAGE_DEALT").find((e) => e.uid === benched);
     expect(bench?.base).toBe(40);
     expect(bench?.debuff).toBe(20);
     expect(bench?.dealt).toBe(20);

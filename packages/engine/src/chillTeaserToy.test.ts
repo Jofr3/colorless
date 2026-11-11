@@ -1,7 +1,6 @@
-import manifest from "../package.json" with { type: "json" };
 import { describe, expect, it } from "vitest";
 import type { EffectOp } from "./effectTypes";
-import { applyAction, engineVersion, programFor } from "./index";
+import { applyAction, programFor } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { logFromEvents } from "./log";
 import type { LogContext } from "./log";
@@ -571,12 +570,5 @@ describe("what this slice REFUSED and why", () => {
     }
     const hammer = programFor("fix-hammer")?.trainer?.[0];
     expect((hammer as { to?: unknown }).to).toBeUndefined();
-  });
-});
-
-describe("the engine version", () => {
-  it("moved PAST 0.206.0 — this suite asserts the TIE, not the literal", () => {
-    expect(engineVersion).toBe(manifest.version);
-    expect(engineVersion > "0.206.0").toBe(true);
   });
 });

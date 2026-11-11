@@ -1,22 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
   deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
   deriveAttackRequirement,
   splitAttackGateClause,
   splitAttackTrailingClause,
+  ATTACK_READERS,
 } from "./effects";
 import { applyAction, conditionHolds, conditionNote } from "./index";
 import type { BoardCondition, EffectOp, GameEvent, GameOverReason, GameState } from "./index";
@@ -57,22 +47,7 @@ const PROGRAM: EffectOp[] = [
   },
 ];
 
-const READERS = [
-  deriveAttackEffect,
-  deriveAttackCoinFlip,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackBonusConsequent,
-  deriveAttackOptionalCostBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackDiscardScaledBoost,
-];
+const READERS = ATTACK_READERS.map(({ read }) => read);
 
 const SEED = 11;
 
@@ -470,7 +445,6 @@ describe("D517 §6 — the describer surfaces, and the union's seat idiom", () =
 
 describe("D517 §7 — the price, and both version constants", () => {
   it("the hand-kept READERS list IS the module's reader surface, still THIRTEEN", () => {
-    expect(attackReaderSurface()).toHaveLength(14);
     expect(READERS).toHaveLength(14);
   });
 

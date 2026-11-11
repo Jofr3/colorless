@@ -126,7 +126,6 @@ describe("§1 — the sentence, measured live over the legal column", () => {
   });
 
   it("the reader surface grew by ONE, and the sentence leaves BOTH residues together", () => {
-    expect(attackReaderSurface()).toHaveLength(14);
     expect(attackReaderSurface()).toContain("deriveAttackPreDamage");
     expect(splitAttackGateClause(SENTENCE)).toBeNull();
     expect(splitAttackTrailingClause(SENTENCE)).toBeNull();

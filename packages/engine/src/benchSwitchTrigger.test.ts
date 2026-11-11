@@ -18,6 +18,7 @@ import {
   setActiveFromDeck,
   types,
   findEvent,
+  findEvents,
 } from "./testFixtures";
 
 const SWITCH_SENTENCE =
@@ -34,13 +35,6 @@ const RAPID_VERNIER_IDS = [
   "sv05-213",
   "sv08.5-176",
 ] as const;
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 /** p1 (going first) on BENCH_SWITCH_DECK with a `fix-plain-body` Active on both
     seats. Turn 1, p1 to act. */
@@ -260,7 +254,7 @@ describe("D244 §3 — 'If you do, you may move any amount of Energy…'", () =>
     expect(done.phase.kind).toBe("turn:action");
     expect(done.players.p1.active?.energy).toHaveLength(4);
     expect(activeUid(done, "p1")).toBe(leaves);
-    const moved = findAll(events, "ENERGY_MOVED");
+    const moved = findEvents(events, "ENERGY_MOVED");
     expect(moved).toHaveLength(2);
     expect(moved.flatMap((m) => m.uids).sort()).toEqual([...all].sort());
     // Every source is stripped bare.

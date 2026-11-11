@@ -1,21 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
-} from "./effects";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { deriveAttackDamageBonus, deriveAttackRequirement } from "./effects";
 import { POKEMON_TYPES } from "./effectTypes";
 import type { BoardCondition, GameState } from "./index";
 import { conditionHolds, conditionNote } from "./boardCondition";
@@ -39,23 +24,6 @@ const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus()
 /** The bonus skeleton, as a labelled COPY — the reader's own pattern is
     module-private. Whole-sentence anchored at BOTH ends, like the reader's. */
 const BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
-
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackBonusConsequent,
-  deriveAttackOptionalCostBoost,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackCancelRequirement,
-];
 
 const TAKEN: readonly (readonly [string, number, BoardCondition])[] = [
   [
@@ -179,15 +147,6 @@ describe("§1 — the candidate was PRICED against the whole residue, not inheri
     expect(carried.length + refused.length).toBe(openers.length);
     expect(units(carried) + units(refused)).toBe(units(openers));
     expect([refused.length, units(refused)]).toEqual([0, 0]);
-    expect([refused.length + 24, units(refused) + 28]).toEqual([24, 28]);
-    expect([refused.length + 25, units(refused) + 30]).toEqual([25, 30]);
-    expect([refused.length + 26, units(refused) + 32]).toEqual([26, 32]);
-    expect([refused.length + 27, units(refused) + 34]).toEqual([27, 34]);
-    expect([refused.length + 28, units(refused) + 36]).toEqual([28, 36]);
-    expect([refused.length + 30, units(refused) + 38]).toEqual([30, 38]);
-    expect([refused.length + 31, units(refused) + 40]).toEqual([31, 40]);
-    expect([refused.length + 32, units(refused) + 42]).toEqual([32, 42]);
-    expect([refused.length + 33, units(refused) + 44]).toEqual([33, 44]);
     expect([refused.length + 34, units(refused) + 44 + 3]).toEqual([34, 47]);
     expect([refused.length + 34 + TAKEN.length, units(refused) + 47 + 13]).toEqual([43, 60]);
   });
@@ -484,15 +443,8 @@ describe("§6 — the token map: an ASYMMETRY between two sibling templates, clo
 });
 
 describe("§7 — the census moves in exactly ONE summand, and the other three are measured", () => {
-  it("D418 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("raw 1,207 → 1,220 → 1,223 and resolving sentences 335 → 344 → 345", () => {
     const resolved = corpus().filter(([, text]) => resolvedByAnyReader(text));
-    expect(resolved).toHaveLength(600);
-    expect(units(resolved)).toBe(1663);
     expect(
       resolved.length -
         6 -

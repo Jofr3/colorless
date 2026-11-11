@@ -1,28 +1,16 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import type { BoardCondition, EffectOp } from "./effectTypes";
 import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
   deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
   splitAttackGateClause,
   splitAttackTrailingClause,
+  ATTACK_READERS,
 } from "./effects";
 import type { GameEvent } from "./events";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { GameState, Seat } from "./index";
 import { resumeProgram, runProgram } from "./interpreter";
 import { conditionHolds, conditionNote } from "./boardCondition";
@@ -79,22 +67,7 @@ const SIBLING: readonly EffectOp[] = [
   },
 ];
 
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackBonusConsequent,
-];
+const READERS = ATTACK_READERS.map(({ read }) => read);
 
 const SEED = 20260908;
 
@@ -288,11 +261,6 @@ describe("§1 — the sentence and the two families it lands in, measured not qu
 });
 
 describe("§2 — the oracle, and what exactly one of thirteen readers claims", () => {
-  it("the hand-kept READERS list IS the module's reader surface, and it is THIRTEEN", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("exactly ONE of the thirteen claims the compound, and it is `deriveAttackEffect`", () => {
     const claimers = READERS.filter((read) => read(COMPOUND) !== null).map((read) => read.name);
     expect(claimers).toEqual(["deriveAttackEffect"]);
@@ -715,9 +683,3 @@ describe("§9 — every describer this program reaches, asked on the load-bearin
 // ─────────────────────────────────────────────────────────────────────────────
 // §10 — THE VERSION PINS
 // ─────────────────────────────────────────────────────────────────────────────
-
-describe("§10 — the version, and what it is owed for", () => {
-  it("engineVersion is 0.555.0 and the bump is owed for BEHAVIOUR", () => {
-    expect(manifest.version).toBe(engineVersion);
-  });
-});

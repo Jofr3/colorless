@@ -15,14 +15,8 @@ import {
   setPrizes,
   types,
   findEvent,
+  findEvents,
 } from "./testFixtures";
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
-
 /** Setup then open P1's turn 2 (P2 went first and passed) — P1's first
     unrestricted turn, so a Supporter is legal (§4). */
 function board(seed: number): GameState {
@@ -213,7 +207,7 @@ describe("M5 op-slice — Falkner (a one-armed conditionGate)", () => {
     const played = play(state, "sv02-180");
     // +1 for the Falkner put into hand, −1 for playing it, +2 drawn.
     expect(handCount(played.state, "p1")).toBe(before + 2);
-    expect(findAll(played.events, "CARDS_DRAWN")).toHaveLength(1);
+    expect(findEvents(played.events, "CARDS_DRAWN")).toHaveLength(1);
   });
 
   it("draws 2 MORE (4 total, as two separate draws) when YOUR Stadium is in play", () => {
@@ -222,7 +216,7 @@ describe("M5 op-slice — Falkner (a one-armed conditionGate)", () => {
     const played = play(state, "sv02-180");
     expect(handCount(played.state, "p1")).toBe(before + 4);
     // Two drawCards ops, not one merged count — the log reads as the card does.
-    const draws = findAll(played.events, "CARDS_DRAWN");
+    const draws = findEvents(played.events, "CARDS_DRAWN");
     expect(draws.map((d) => d.uids.length)).toEqual([2, 2]);
   });
 
@@ -240,7 +234,7 @@ describe("M5 op-slice — Falkner (a one-armed conditionGate)", () => {
     const before = handCount(p1Turn, "p1");
     const played = play(p1Turn, "sv02-180");
     expect(handCount(played.state, "p1")).toBe(before + 2);
-    expect(findAll(played.events, "CARDS_DRAWN")).toHaveLength(1);
+    expect(findEvents(played.events, "CARDS_DRAWN")).toHaveLength(1);
   });
 
   it("emits NO event for the gate itself — a public condition is not news", () => {
@@ -272,7 +266,7 @@ describe("M5 op-slice — Grusha (the conditionGate `otherwise` arm)", () => {
     const state = attachEnergy(handOnly(board(14), "p1", []), "p1", "active");
     const played = play(state, "sv02-184");
     expect(handCount(played.state, "p1")).toBe(5);
-    expect(findAll(played.events, "CARDS_DRAWN")).toHaveLength(1);
+    expect(findEvents(played.events, "CARDS_DRAWN")).toHaveLength(1);
   });
 
   it("is unaffected by the OPPONENT's Energy (still the 7-draw arm)", () => {
@@ -289,7 +283,7 @@ describe("M5 op-slice — Grusha (the conditionGate `otherwise` arm)", () => {
     const kept = state.players.p1.hand.slice(0, 5);
     const played = play(handOnly(state, "p1", kept), "sv02-184");
     expect(handCount(played.state, "p1")).toBe(5);
-    expect(findAll(played.events, "CARDS_DRAWN")).toHaveLength(0);
+    expect(findEvents(played.events, "CARDS_DRAWN")).toHaveLength(0);
   });
 
   it("never TRIMS a hand already ABOVE the target — it draws, it does not set", () => {
@@ -309,7 +303,7 @@ describe("M5 op-slice — Grusha (the conditionGate `otherwise` arm)", () => {
 
     const played = mustApply(primed, { type: "playTrainer", seat: "p1", uid });
     expect(handCount(played.state, "p1")).toBe(others.length);
-    expect(findAll(played.events, "CARDS_DRAWN")).toHaveLength(0);
+    expect(findEvents(played.events, "CARDS_DRAWN")).toHaveLength(0);
     expect(played.state.players.p1.deck).toEqual(deckBefore);
     // Only the played Grusha reached the discard — no hand card was trimmed into it.
     expect(played.state.players.p1.discard).toHaveLength(discardBefore + 1);
@@ -365,7 +359,7 @@ describe("M5 op-slice — the gate mechanism itself", () => {
     const before = handCount(state, "p1");
     const played = play(state, "fix-gateorder");
 
-    expect(findAll(played.events, "CARDS_DRAWN").map((d) => d.uids.length)).toEqual([1, 4, 2]);
+    expect(findEvents(played.events, "CARDS_DRAWN").map((d) => d.uids.length)).toEqual([1, 4, 2]);
     expect(findEvent(played.events, "ENERGY_ATTACHED")).toBeDefined();
     // Hand: the energy left it for the Active, the Item left it for the discard.
     expect(handCount(played.state, "p1")).toBe(before - 1 + 7);

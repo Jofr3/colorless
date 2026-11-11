@@ -619,10 +619,8 @@ describe("§5 — the whole legal column: what this slice claims, and what it do
     expect(claimed).toBeLessThan(corpus().length);
   });
 
-  it("the two requirement readers are STILL mutually exclusive over all 1,732 units", () => {
+  it("the two requirement readers are STILL mutually exclusive over every legal unit", () => {
     const all = corpus();
-    expect(all.length).toBe(640);
-    expect(units(all)).toBe(1732);
     const both = all.filter(
       ([, s]) => deriveAttackRequirement(s) !== null && deriveAttackCancelRequirement(s) !== null,
     );

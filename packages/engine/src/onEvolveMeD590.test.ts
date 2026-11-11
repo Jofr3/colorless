@@ -149,7 +149,7 @@ describe("D590 §1 — the programs: nine `onEvolve` objects over 13 printings, 
     ]);
   });
 
-  it('Flygon ×3 "Sandy Flapping" is ~~not keyed (its KO half)~~ keyed since D626 with both halves ( D626 (D539)), and no printed attack is registry-keyed', () => {
+  it('Flygon ×3 "Sandy Flapping" is keyed with both halves (D626), and no printed attack is registry-keyed', () => {
     for (const id of ["me02-053", "me02-101", "mep-016"])
       expect(
         programFor(id)?.triggered?.map((t) => t.trigger),

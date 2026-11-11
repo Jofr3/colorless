@@ -177,7 +177,6 @@ describe("§1 — the census, measured over the corpus rather than quoted", () =
     for (const [sentence] of DEFERRED) expect(deriveAttackEffect(sentence)).toBeNull();
     for (const [sentence] of BUILT_ELSEWHERE) expect(deriveAttackEffect(sentence)).not.toBeNull();
     expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0)).toBe(0);
-    expect(DEFERRED.reduce((sum, [, , n]) => sum + n, 0) + 9).toBe(9);
     expect(
       CLAUSES.reduce((sum, c) => sum + c.legalPrintings, 0) +
         BUILT_ELSEWHERE.reduce((sum, [, , n]) => sum + n, 0) +

@@ -85,10 +85,8 @@ function ready(seed: number, defender: string): GameState {
 }
 
 describe("§1 — the census D282 priced its refusal against: counts reproduce, attribution does not", () => {
-  it("re-derives 640 s / 1,732 u, 271 s / 613 u multi-sentence, 8 s / 16 u opening `If `", () => {
+  it("re-derives 271 s / 613 u multi-sentence, 8 s / 16 u opening `If `", () => {
     const all = corpus();
-    expect(all.length).toBe(640);
-    expect(units(all)).toBe(1732);
     const multi = all.filter(([, s]) => s.includes(". "));
     expect(multi.length).toBe(271);
     expect(units(multi)).toBe(613);
@@ -128,7 +126,7 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     expect(units(gateAll) - units(firstTurn)).toBe(6);
   });
 
-  it("S2 — ~~17 of 968~~ registry ids carry an `attackGate`, in three kinds ( D582 (D539): the figures are WITHDRAWN — 18 of 1,087 at D582)", () => {
+  it("S2 — 18 of 1,523 registry ids carry an `attackGate`, in three kinds", () => {
     const ids = programmedCardIds();
     expect(ids.length).toBe(1523);
     const gated = ids.filter((id) => programFor(id)?.attackGate !== undefined);
@@ -158,7 +156,7 @@ describe("§2 — the two splits are DISJOINT on the whole catalog", () => {
     expect([both.length, units(both)]).toEqual([0, 0]);
   });
 
-  it("the ORDER IS UNOBSERVABLE ON THE CATALOG — both orders agree on all 640", () => {
+  it("the ORDER IS UNOBSERVABLE ON THE CATALOG — both orders agree on every row", () => {
     // The consequence of disjointness, stated as the thing that would break.
     // This is what makes a generic composer scaffolding: there is no printed
     // string it would answer differently.
@@ -318,7 +316,7 @@ describe("§6 — FOUR strippers at one seam, and all six pairs are DISJOINT", (
     for (const [name, sentences] of priced) expect([name, sentences > 0]).toEqual([name, true]);
   });
 
-  it("THE TRIPWIRE: 0 of 1,732 legal units are claimed by any TWO of the four", () => {
+  it("THE TRIPWIRE: no legal unit are claimed by any TWO of the four", () => {
     const collisions: string[] = [];
     for (let i = 0; i < STRIPPERS.length; i += 1) {
       for (let j = i + 1; j < STRIPPERS.length; j += 1) {

@@ -105,10 +105,9 @@ describe("D612 §1 — the rules, on the texts tcgdex printed", () => {
 });
 
 describe("D612 §2 — every `sv` text is a fixed point, and so is every regenerated `me` row", () => {
-  it("the 640 legal `sv` attack sentences and the 442 `me` ones come back unchanged", () => {
+  it("every legal `sv` and `me` attack sentence comes back unchanged", () => {
     const sv = legalAttackCorpus();
     const me = meAttackCorpus();
-    expect([sv.length, me.length]).toEqual([640, 442]);
     for (const [, text] of [...sv, ...me]) expect(normalizeCardText(text)).toBe(text);
   });
 });

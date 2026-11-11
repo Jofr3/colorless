@@ -684,3 +684,26 @@ describe("purity", () => {
     expect(deriveAttackCoinFlip(SURPRISE_ATTACK)).toEqual({ kind: "cancelOnTails" });
   });
 });
+
+describe("the cancel coin explains no printed damage marker", () => {
+  it('a "10+" print of Surprise Attack keeps its `ATTACK_EFFECT_SKIPPED { damageModifier: "+" }` row on heads', () => {
+    let heads = 0;
+    for (let seed = 0; seed < SEEDS; seed++) {
+      const start = tarountulaActive(board(seed), "p1");
+      const card = start.cardPool["sv01-018"];
+      if (card === undefined) throw new Error("Tarountula is not in the pool");
+      const attacks = (card.attacks ?? []).map((attack, index) =>
+        index === FLIP_INDEX ? { ...attack, damage: "10+" } : attack,
+      );
+      const state = { ...start, cardPool: { ...start.cardPool, "sv01-018": { ...card, attacks } } };
+      const { events } = mustApply(state, { type: "attack", seat: "p1", index: FLIP_INDEX });
+      if (findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result !== "heads") continue;
+      heads++;
+      expect(findEvent(events, "ATTACK_EFFECT_SKIPPED")).toMatchObject({
+        damageModifier: "+",
+        effect: null,
+      });
+    }
+    expect(heads).toBeGreaterThan(0);
+  });
+});

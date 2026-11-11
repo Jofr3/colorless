@@ -204,7 +204,6 @@ describe("§1 — the printed sentence, the population, and the absences", () =>
 
   it("the measurements the BANNER guard owes, and the one the arm's TRANSFER owes", () => {
     const rows = legalAttackCorpus();
-    expect(rows).toHaveLength(640);
     for (const word of ["Ancient", "Future", "Tera"]) {
       const searches = rows.filter(
         ([, s]) => /^(?:You may search|Search) your deck/.test(s) && s.includes(`${word} card`),

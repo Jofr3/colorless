@@ -19,6 +19,7 @@ import {
   setConditions,
   types,
   findEvent,
+  findEvents,
 } from "./testFixtures";
 
 /** The three printed sentences, byte-for-byte off the local D1 rows. */
@@ -36,13 +37,6 @@ const EVERYONE_DISCHARGE =
     Paralysis half has no choice (see `PARALYSIS NEEDS A COIN` below), and those
     cases pick their own seed off `flipCoin` rather than hoping. */
 const SEED = 11;
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 const ATTACKS = {
   hotBite: { card: "sv01-029", index: 0, energy: 1 }, // Scovillain {C} 20 → Burned
@@ -430,7 +424,7 @@ describe("BURN — Dachsbun refuses it, and the control on the same swing does n
 
   it("…and lands that same trigger's Burn on a non-immune attacker", () => {
     const done = swing(board("hotBite", "sv03-044"), "hotBite");
-    const applied = findAll(done.events, "STATUS_APPLIED").filter((e) => e.status === "burned");
+    const applied = findEvents(done.events, "STATUS_APPLIED").filter((e) => e.status === "burned");
     expect(applied.map((e) => e.seat).sort()).toEqual(["p1", "p2"]);
     expect(conditionsOf(done.state, "p1")?.burned).toBe(true);
     expect(types(done.events)).not.toContain("STATUS_PREVENTED");
@@ -531,28 +525,28 @@ describe("THE CHECKUP — NOT gated, and that is DERIVED rather than skipped", (
     const done = swing(board("hotBite", "sv01-099"), "hotBite");
     expect(conditionsOf(done.state, "p2")?.burned).toBe(false);
     // No burn tick, no cure flip — there was never a condition to tick.
-    expect(findAll(done.events, "COUNTERS_PLACED").filter((e) => e.source === "burn")).toHaveLength(
-      0,
-    );
-    expect(findAll(done.events, "CHECKUP_COIN_FLIP")).toHaveLength(0);
+    expect(
+      findEvents(done.events, "COUNTERS_PLACED").filter((e) => e.source === "burn"),
+    ).toHaveLength(0);
+    expect(findEvents(done.events, "CHECKUP_COIN_FLIP")).toHaveLength(0);
     expect(types(done.events)).toContain("TURN_ENDED");
   });
 
   it("ticks the SAME Checkup on a non-immune body, so the case above is not vacuous", () => {
     const done = swing(board("hotBite", "fix-bigbody"), "hotBite");
-    expect(findAll(done.events, "COUNTERS_PLACED").filter((e) => e.source === "burn")).toHaveLength(
-      1,
-    );
-    expect(findAll(done.events, "CHECKUP_COIN_FLIP")).toHaveLength(1);
+    expect(
+      findEvents(done.events, "COUNTERS_PLACED").filter((e) => e.source === "burn"),
+    ).toHaveLength(1);
+    expect(findEvents(done.events, "CHECKUP_COIN_FLIP")).toHaveLength(1);
   });
 
   it("leaves a SURGICALLY planted condition alone — the IMMUNITY does not recover", () => {
     let state = board("hotBite", "sv01-099");
     state = setConditions(state, "p2", { burned: true });
     const done = mustApply(state, { type: "endTurn", seat: "p1" });
-    expect(findAll(done.events, "COUNTERS_PLACED").filter((e) => e.source === "burn")).toHaveLength(
-      1,
-    );
+    expect(
+      findEvents(done.events, "COUNTERS_PLACED").filter((e) => e.source === "burn"),
+    ).toHaveLength(1);
     // The discriminator, stated where the claim is: Dachsbun refuses a Burn and
     // recovers from nothing, so the two clauses really are two fields.
     const dachsbun = done.state.players.p2.active;

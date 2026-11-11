@@ -1,21 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { deriveAttackBonusConsequent, ATTACK_READERS } from "./effects";
 import {
-  deriveAttackBonusConsequent,
-  deriveAttackCopy,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-} from "./effects";
-import {
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
   deriveAttackEffect,
-  deriveAttackOptionalBoost,
   deriveAttackRequirement,
   splitAttackTrailingClause,
 } from "./index";
@@ -43,33 +32,9 @@ function foldNotes<T>(derived: T): T {
   return out as T;
 }
 
-const READERS = {
-  damageBonus: deriveAttackDamageBonus,
-  damageMultiplier: deriveAttackDamageMultiplier,
-  requirement: deriveAttackRequirement,
-  effect: deriveAttackEffect,
-  coinFlip: deriveAttackCoinFlip,
-  damageSuppression: deriveAttackDamageSuppression,
-  bonusConsequent: deriveAttackBonusConsequent,
-  cancelRequirement: deriveAttackCancelRequirement,
-  damagePenalty: deriveAttackDamagePenalty,
-  discardScaledBoost: deriveAttackDiscardScaledBoost,
-  optionalBoost: deriveAttackOptionalBoost,
-  preDamage: deriveAttackPreDamage,
-  copy: deriveAttackCopy,
-  optionalCostBoost: deriveAttackOptionalCostBoost,
-} as const;
+const READERS = Object.fromEntries(ATTACK_READERS.map(({ name, read }) => [name, read]));
 
 describe("the U+2019 fold — every apostrophe-bearing sentence the fixtures print", () => {
-  it("D419 — the hand-kept READERS table IS the module's reader surface", () => {
-    expect(
-      Object.values(READERS)
-        .map((read) => read.name)
-        .sort(),
-    ).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   const derivable: { sentence: string; ids: string[] }[] = [];
   for (const [id, card] of Object.entries(FIXTURE_POOL)) {
     for (const attack of card.attacks ?? []) {

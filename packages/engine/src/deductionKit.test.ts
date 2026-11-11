@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Card } from "@colorless/schema";
 import type { EffectOp } from "./effectTypes";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { logFromEvents } from "./log";
 import type { LogContext } from "./log";
@@ -378,12 +378,5 @@ describe("D344 — the degenerate decks, and why the M1 guard needed no second a
     expect(played.state.phase.kind).not.toBe("effect:choose");
     expect(played.state.players.p1.deck).toEqual([]);
     expect(findEvent(played.events, "DECK_TOP_TO_BOTTOM")).toBeUndefined();
-  });
-});
-
-describe("D344 — the version", () => {
-  it("moved past 0.249.0 with the op, the fields and the event, and the two files agree", () => {
-    // The TIE, not the literal — `fanCall.test.ts` owns the manifest comparison.
-    expect(engineVersion >= "0.250.0").toBe(true);
   });
 });

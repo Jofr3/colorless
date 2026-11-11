@@ -3,7 +3,7 @@ import { deriveAttackEffect } from "./effects";
 import { POKEMON_TYPES } from "./effectTypes";
 import type { EffectOp } from "./effectTypes";
 import { applyAction, programFor } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   CLASS_BLOCK_DECK,
   FIXTURE_POOL,
@@ -20,6 +20,7 @@ import {
   findEvent,
   activeOf,
   mustDerive,
+  findEvents,
 } from "./testFixtures";
 
 const BASIC_TEXT =
@@ -34,13 +35,6 @@ const UNFILTERED_TEXT =
     would be describing a shuffle rather than a rule (contrast
     `preventBlock.test.ts`, whose every board is reached by sweeping for a face). */
 const SEED = 7;
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 function armed(installer: string, energy = 2): GameState {
   let state = must(
@@ -350,7 +344,7 @@ describe("the attacker-CLASS filter — both sides of the filter, end to end", (
     const benchBefore = state.players.p1.bench.map((p) => p.damage);
     expect(benchBefore.length).toBeGreaterThan(0);
     const { state: done, events } = swing(state, "fix-sniper", { id: "fix-energy", count: 1 });
-    const rows = findAll(events, "DAMAGE_DEALT");
+    const rows = findEvents(events, "DAMAGE_DEALT");
     expect(rows.find((r) => r.uid === activeUid(state, "p1"))).toMatchObject({
       dealt: 0,
       prevented: true,

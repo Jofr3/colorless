@@ -573,7 +573,7 @@ describe("D619 §1 — the prints, the registry rows and the readings", () => {
     }
   });
 
-  it("WP12's four ATTACK texts are dropped: corpus rows, still unread ( D630 (D539): WITHDRAWN — all four read at D630, MRV 43 → 44, `persistedRecordsMeD630.test.ts`)", () => {
+  it("WP12's four ATTACK texts are corpus rows a reader resolves (D630), and their printings carry no registry program", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, n] of DROPPED) {
       expect([text, me.get(text)]).toEqual([text, n]);

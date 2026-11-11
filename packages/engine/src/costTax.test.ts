@@ -213,7 +213,6 @@ describe("§1 — the anchor claims the row WHOLE, and only it", () => {
       return (read?.(S171) ?? null) !== null;
     });
     expect(claimants).toEqual(["deriveAttackEffect"]);
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("the ONE apostrophe slot is U+0027 in the corpus, and the U+2019 twin derives the same op", () => {

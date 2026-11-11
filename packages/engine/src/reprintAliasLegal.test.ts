@@ -118,7 +118,7 @@ function fight(state: GameState, defender: string): GameState {
 }
 
 describe("D190 — the 22 STANDARD-LEGAL reprint aliases", () => {
-  it("resolves ~~every~~ new id to the SAME PROGRAM OBJECT as its twin ( D584 (D539): *every* WITHDRAWN — 21 of 22; Heatran `sv06-123` is the renamed copy `INCANDESCENT_BODY`, the twin's ops under its printed name)", () => {
+  it("resolves each new id to the SAME PROGRAM OBJECT as its twin, except Heatran `sv06-123`, a renamed copy of its twin's ops (D584)", () => {
     for (const { id, twin, card } of ALIASES) {
       expect(programFor(id), `${id} (${card}) has no program`).toBeDefined();
       if (id === "sv06-123") {
@@ -148,7 +148,7 @@ describe("D190 — the 22 STANDARD-LEGAL reprint aliases", () => {
     }
   });
 
-  it("pins the NINE targets' actual shapes — the thing ~~every alias~~ inherits ( D584 (D539): *every alias* WITHDRAWN for Heatran `sv06-123` — it inherits the ops, not Armarouge's name)", () => {
+  it("pins the NINE targets' actual shapes — the thing the aliases inherit", () => {
     expect(programFor("sv06-002")?.passive).toEqual({ damageReductionAfterWR: 30 });
     expect(programFor("sv05-010")?.passive).toEqual({ damageReductionAfterWR: 20 });
     expect(programFor("sv05-139")?.passive).toEqual({ damageAttacker: { amount: 30 } });
@@ -174,7 +174,7 @@ describe("D190 — the 22 STANDARD-LEGAL reprint aliases", () => {
     ]);
   });
 
-  it("keeps every PRE-EXISTING print of the same nine sentences on ~~that one program~~ ( D584 (D539): *one program* WITHDRAWN for the Burn sentence — Armarouge alone, Heatran with Numel ×2 on `INCANDESCENT_BODY`)", () => {
+  it("keeps every PRE-EXISTING print of the same sentences on one shared program per group (Heatran with Numel ×2 on `INCANDESCENT_BODY`)", () => {
     for (const ids of [
       ["sv02-150", "sv02-245", "sv06-002", "sv10.5w-170"],
       ["sv01-121", "sv05-010", "sv08.5-088"],
@@ -315,7 +315,7 @@ const SENTENCE_ONLY_SKIPS = [
 describe("D290 — the COMPLETE per-printing reprint census", () => {
   const flat = PRINTING_ALIAS_CENSUS.flatMap((r) => r.unauthored as readonly string[]);
 
-  it("is ~~44~~ ~~43~~ ~~40~~ 39 incomplete identities over ~~81~~ ~~78~~ ~~74~~ 73 unauthored printings, with no id counted twice (B01: Judge's 3 landed; B04: Rare Candy / Switch / Ultra Ball's 4; B05: Potion's 1)", () => {
+  it("is 39 incomplete identities over 73 unauthored printings, with no id counted twice, and 44 / 81 with the landed rows added back", () => {
     expect(PRINTING_ALIAS_CENSUS).toHaveLength(39);
     expect(flat).toHaveLength(73);
     expect(new Set(flat).size).toBe(73);
@@ -386,7 +386,7 @@ describe("D290 — the COMPLETE per-printing reprint census", () => {
     for (const id of SENTENCE_ONLY_SKIPS) expect(landed.has(id)).toBe(false);
   });
 
-  it("Rare Candy's ~~THREE~~ FOUR printings share ONE program (B04: the fourth, `sv04.5-089`, landed)", () => {
+  it("Rare Candy's FOUR printings share ONE program (B04: `sv04.5-089` landed)", () => {
     const first = programFor("sv01-191");
     expect(first?.rareCandy).toBe(true);
     for (const id of ["sv01-256", "swsh10.5-069", "sv04.5-089"]) expect(programFor(id)).toBe(first);

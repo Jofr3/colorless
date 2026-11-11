@@ -301,11 +301,6 @@ describe("D488 §1 — the two printed rows, off the column rather than off this
       per: 140,
     });
   });
-
-  it("the reader surface stands still at THIRTEEN — no reader was added", () => {
-    expect(attackReaderSurface()).toHaveLength(14);
-    expect(attackReaderSurface()).toContain("deriveAttackEffect");
-  });
 });
 
 describe("D488 §2 — AXIS DELETION: are these two rows really one row?", () => {

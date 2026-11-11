@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { countAttachedEnergy, providedEnergy } from "./continuous";
 import { deriveAttackDamageBonus, deriveAttackRequirement } from "./effects";
 import { effectiveAttackCost } from "./index";
@@ -103,7 +103,6 @@ describe("§1 — the price, RE-DERIVED, and D368's refusal collected rather tha
   });
 
   it("both sentences are CLAIMED, and the reader SURFACE stands still at 13", () => {
-    expect(attackReaderSurface()).toHaveLength(14);
     for (const [sentence] of PRINTED) {
       expect(resolvedByAnyReader(sentence), sentence).toBe(true);
     }

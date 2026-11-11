@@ -1,6 +1,4 @@
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
-import { engineVersion } from "./index";
 import { programPlayable } from "./cardplay";
 import { programFor, registryCardIds } from "./registry";
 import { legalAttackCorpus } from "./censusAttackCorpus";
@@ -1227,11 +1225,5 @@ describe("D457 §4 — `MATCH_RECORD_VERSION` STAYS 29, driven over the SERIALIZ
     expect(JSON.stringify(truncated.phase)).not.toBe(JSON.stringify(parked.phase));
     if (truncated.phase.kind !== "effect:choose") throw new Error("expected a park");
     expect(JSON.stringify(truncated.phase.prompt)).toBe(JSON.stringify(parked.phase.prompt));
-  });
-});
-
-describe("D458 §5 — the engine version moved and the record version did not", () => {
-  it("engineVersion is 0.555.0 and `manifest.version` agrees", () => {
-    expect(manifest.version).toBe(engineVersion);
   });
 });

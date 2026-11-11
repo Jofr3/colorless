@@ -1,27 +1,9 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import {
-  bonusConsequentProgram,
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCopy,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-} from "./effects";
+import { bonusConsequentProgram, deriveAttackBonusConsequent, ATTACK_READERS } from "./effects";
 import type { EffectOp } from "./effectTypes";
-import {
-  applyAction,
-  deriveAttackCoinFlip,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackRequirement,
-} from "./index";
+import { applyAction, deriveAttackDamageBonus, deriveAttackEffect } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { programFor } from "./registry";
 import {
@@ -172,21 +154,9 @@ function count(events: readonly GameEvent[], type: GameEvent["type"]): number {
 }
 
 /** The other ELEVEN readers, run as one — the disjointness control. */
-const OTHER_READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackDiscardScaledBoost,
-];
+const OTHER_READERS = ATTACK_READERS.map(({ read }) => read).filter(
+  (read) => read !== deriveAttackBonusConsequent,
+);
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
@@ -245,7 +215,6 @@ describe("D382 §2 — the REFUSALS, which are what keep an unread sentence loud
     expect(
       [...OTHER_READERS.map((read) => read.name), "deriveAttackBonusConsequent"].sort(),
     ).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("all ELEVEN other readers refuse the sentence", () => {

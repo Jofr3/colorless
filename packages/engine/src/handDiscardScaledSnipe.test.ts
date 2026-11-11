@@ -292,7 +292,7 @@ describe("D489 §1 — the printed row, off the column rather than off this file
     }
   });
 
-  it("the anchor claims THIS row and no other in the whole 640-sentence column", () => {
+  it("the anchor claims THIS row and no other in the whole column", () => {
     const rows = legalAttackCorpus();
     const taken = rows.filter(
       ([, s]) =>
@@ -302,11 +302,6 @@ describe("D489 §1 — the printed row, off the column rather than off this file
     expect(readersClaiming(PRINTED)).toEqual(["deriveAttackEffect"]);
     expect(resolvedByAnyReader(PRINTED)).toBe(true);
     expect(readersClaiming(LOUD)).toEqual([]);
-  });
-
-  it("the reader surface stands still at THIRTEEN — no reader was added", () => {
-    expect(attackReaderSurface()).toHaveLength(14);
-    expect(attackReaderSurface()).toContain("deriveAttackEffect");
   });
 
   it("no CANCEL clause is printed, which is what makes the D420 escape a question at all", () => {
@@ -830,15 +825,7 @@ describe("D489 §8 — the DESCRIBER obligation, discharged rather than asserted
 });
 
 describe("D489 §9 — the census this row moves, and the summands it does not", () => {
-  it("the resolving corpus gains ONE sentence and TWO printings", () => {
-    const rows = legalAttackCorpus();
-    const resolved = rows.filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolved.length, units(resolved)]).toEqual([600, 1663]);
-    expect(rows).toHaveLength(640);
-    expect(units(rows)).toBe(1732);
-  });
-
-  it("engineVersion is 0.555.0 and the bump is owed for BEHAVIOUR", () => {
+  it("the effect reader claims the printed sentence", () => {
     expect(deriveAttackEffect(PRINTED)).not.toBeNull();
   });
 });

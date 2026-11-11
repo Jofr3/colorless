@@ -271,7 +271,7 @@ describe("redactGame — Levincia sv09-150, the Standard-legal driver (D209's fi
 // ─────────────────────────────────────────────────────────────────────────────
 // THE `programPlayable` TERM, AND THE HONEST ADMISSION ABOUT IT.
 
-describe('the `programPlayable` term in the fold is correct and, today, UNREACHABLE ( D606 (D539): "UNREACHABLE" is WITHDRAWN — Surfing Beach reaches it; the D606 block below)', () => {
+describe("the `programPlayable` term in the fold is correct, and Surfing Beach reaches it (the D606 block below)", () => {
   const STADIUM_ABILITY_IDS = [
     "sv02-171", // Artazon
     "sv03-229", // Artazon (reprint)
@@ -301,7 +301,7 @@ describe('the `programPlayable` term in the fold is correct and, today, UNREACHA
     expect(inPool.sort()).toEqual(["sv01-178", "sv02-171", "sv03-196"]);
   });
 
-  it("NO printed Stadium program can whiff-gate — so no test over the pool can kill this term ( D606 (D539): WITHDRAWN as a claim about EVERY printed Stadium — it holds for the ids listed; Surfing Beach whiff-gates)", () => {
+  it("no listed Stadium ability program whiff-gates on a stripped board, while a `gust` program does", () => {
     const base = p1Turn2(1);
     const stripped: GameState = {
       ...base,

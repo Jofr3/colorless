@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { applyAction, deriveAttackEffect, logFromEvents } from "./index";
 import type { EffectOp, GameEvent, GameState, LogContext } from "./index";
 import { runProgram } from "./interpreter";
@@ -108,7 +108,6 @@ describe("§1 — three sentences, five printings, and the class is CLOSED", () 
 
   it("all three resolve through the reader SURFACE, and the surface did not grow", () => {
     for (const s of [BENCH_100, ACTIVE_50, ACTIVE_10]) expect(resolvedByAnyReader(s), s).toBe(true);
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("the PLACEMENT family closes from SEVEN rows to FOUR to TWO, each refusal by name", () => {

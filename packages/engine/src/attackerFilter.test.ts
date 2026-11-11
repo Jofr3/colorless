@@ -25,6 +25,7 @@ import {
   mustApply,
   setActiveFromDeck,
   findEvent,
+  findEvents,
 } from "./testFixtures";
 
 /** The four printed sentences, byte-for-byte off the local D1 rows. */
@@ -38,13 +39,6 @@ const NEUTRALIZATION_ZONE =
   "Prevent all damage done to Pokémon that don't have a Rule Box (both yours and your opponent's) by attacks from the opponent's Pokémon ex and Pokémon V. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)\n\nThis card can't be put into your hand or deck from the discard pile.";
 
 const SEED = 11;
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 const ATTACKERS = {
   "fix-attacker": { index: 0, energy: [{ id: "fix-energy", count: 1 }] }, // FIRE "Bite" (30)
@@ -116,7 +110,7 @@ function benched(state: GameState, seat: Seat, cardId: string) {
 }
 
 function rowFor(events: GameEvent[], uid: string | undefined) {
-  return findAll(events, "DAMAGE_DEALT").find((e) => e.uid === uid);
+  return findEvents(events, "DAMAGE_DEALT").find((e) => e.uid === uid);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

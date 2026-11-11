@@ -198,7 +198,7 @@ function registryAttachOps(): Map<string, Extract<EffectOp, { op: "attachEnergyF
 // ── 1. THE POPULATION, WALKED OFF **BOTH** PRODUCERS ─────────────────────────
 
 describe("D359 §1 — the quantity population, over the registry AND the deriver", () => {
-  it("the REGISTRY half is exactly ~~8~~ printings on 3 sentences, by id ( D582 (D539): *8* WITHDRAWN — 9 since the `me` alias Ethan's Ho-Oh ex `me02.5-026`; D587: 11 printings on 4 sentences since Philippe ×2; D588: 14 on 5 since Rosa's Encouragement ×3)", () => {
+  it("the REGISTRY half is exactly 14 printings, by id", () => {
     const withCount = [...registryAttachOps()]
       .filter(([, ops]) => ops.some((op) => op.count !== undefined))
       .map(([id]) => id)

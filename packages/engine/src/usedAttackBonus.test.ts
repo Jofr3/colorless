@@ -1,21 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
-} from "./effects";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { deriveAttackDamageBonus } from "./effects";
 import type { BoardCondition, GameAction, GameState, PendingStage, Seat } from "./index";
 import { applyAction } from "./index";
 import { conditionHolds, conditionNote } from "./boardCondition";
@@ -38,23 +23,6 @@ const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus()
 /** The bonus skeleton, as a labelled COPY — the reader's own pattern is
     module-private. Whole-sentence anchored at BOTH ends, like the reader's. */
 const BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
-
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackBonusConsequent,
-];
 
 const FALINKS =
   "If this Pokémon used Form Ranks during your last turn, this attack does 90 more damage.";
@@ -147,11 +115,6 @@ const activeOf = (state: GameState, seat: Seat) => state.players[seat].active;
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", () => {
-  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the PAIR is real, is worth 2 printings, and both reached the SKELETON all along", () => {
     for (const [sentence, clause, amount] of [
       [FALINKS, FALINKS_CLAUSE, "90"],
@@ -171,7 +134,7 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     expect(new Set(pair.map(([, s]) => BONUS.exec(s)?.[2]))).toEqual(new Set(["90", "120"]));
   });
 
-  it("the FIELD is worth 6 printings across FOUR sentences — and ~~4 of them stay unbought~~ ( D579 (D539): WITHDRAWN — stale since D395 / D396, and NO printing of the field stays unbought: Rollout and Angelite are registry rows, Ancient is read through the seat record)", () => {
+  it("the `during your last turn` family is 5 sentences / 7 units: Rollout and Angelite are off the readers, Ancient resolves on one", () => {
     const family = corpus().filter(([, s]) => s.includes("during your last turn"));
     expect(family).toHaveLength(5);
     expect(units(family)).toBe(7);
@@ -202,7 +165,6 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     expect(resolvedByAnyReader(FALINKS)).toBe(true);
     expect(resolvedByAnyReader(WEEZING)).toBe(true);
     expect([refused.length, units(refused)]).toEqual([0, 0]);
-    expect([refused.length + 11, units(refused) + 14]).toEqual([11, 14]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";

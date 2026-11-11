@@ -45,7 +45,6 @@ describe("D552 §1 — the sentence is claimed WHOLE by ONE reader, and the halv
   });
 
   it("`deriveAttackDiscardScaledBoost` owns it by VALUE, and it is the ONLY claimant of the thirteen", () => {
-    expect(attackReaderSurface()).toHaveLength(14);
     expect(deriveAttackDiscardScaledBoost(PRINTED)).toEqual(MEMBER);
     expect(claimants(PRINTED)).toEqual(["deriveAttackDiscardScaledBoost"]);
     expect(resolvedByAnyReader(PRINTED)).toBe(true);

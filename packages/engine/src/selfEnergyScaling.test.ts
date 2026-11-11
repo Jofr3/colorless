@@ -205,7 +205,6 @@ describe("the unsimulated-'+' witness, re-homed off Entei onto Pachirisu", () =>
       deriveAttackCoinFlip,
     ];
     expect(readers.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
     expect(resolvedByAnyReader(EVERYONE_DISCHARGE), EVERYONE_DISCHARGE).toBe(false);
     for (const read of readers) {
       expect(read(EVERYONE_DISCHARGE), read.name).toBeNull();
@@ -633,7 +632,6 @@ describe("D459 — the `Energy card` spelling, on the `×` fold only", () => {
   it("the census sees it: the sentence LEAVES the residue by the READER arm", () => {
     expect(resolvedByAnyReader(SPECIAL_DRAW)).toBe(true);
     expect(resolvedByAnyReader(BASIC_DRAW)).toBe(true);
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 });
 

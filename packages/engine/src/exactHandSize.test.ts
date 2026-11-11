@@ -1,23 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { legalAttackCorpus, resolvedByAnyReader as readByAny } from "./censusAttackCorpus";
 import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader as readByAny,
-} from "./censusAttackCorpus";
-import {
-  deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
   deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
-  deriveAttackOptionalBoost,
   deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
 import type { BoardCondition, GameState, Seat } from "./index";
@@ -41,23 +30,6 @@ const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus()
     module-private. Whole-sentence anchored at BOTH ends, like theirs. */
 const BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
 const NOTHING = /^If (.+), this attack does nothing\.$/;
-
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackBonusConsequent,
-  deriveAttackOptionalCostBoost,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackCancelRequirement,
-];
 
 const TRIO_CHEEHOO = "If you don't have exactly 3 cards in your hand, this attack does nothing.";
 const CURSED_SLUG =
@@ -131,27 +103,17 @@ const cursedSlug = (state: GameState, seat: Seat = "p1"): GameState =>
   fielded(state, seat, "sv03-135", [["fix-dark-energy", 3]]);
 
 describe("§1 — the price, RE-DERIVED: the does-nothing skeleton goes EMPTY", () => {
-  it("D418 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the CANCEL residue reaches ZERO — there is no sentence left to name", () => {
     const refused = corpus().filter(([, s]) => NOTHING.test(s.trim()) && !readByAny(s));
     expect(refused.some(([, s]) => s === TRIO_CHEEHOO)).toBe(false);
     expect(refused).toEqual([]);
     expect(units(refused)).toBe(0);
-    expect([refused.length + 1, units(refused) + 2]).toEqual([1, 2]);
-    expect([refused.length + 2, units(refused) + 4]).toEqual([2, 4]);
-    expect([refused.length + 3, units(refused) + 5]).toEqual([3, 5]);
   });
 
   it("the BONUS residue STOOD STILL for D379 — asserted as an OFFSET, not as a head", () => {
     const refused = corpus().filter(([, s]) => BONUS.test(s.trim()) && !readByAny(s));
     expect(refused.length).toBe(0);
     expect(units(refused)).toBe(0);
-    expect([refused.length + 21, units(refused) + 25]).toEqual([21, 25]);
-    expect([refused.length + 22, units(refused) + 26]).toEqual([22, 26]);
   });
 
   it("BOTH CONSEQUENTS ASKED, AND THE BONUS SIDE IS EMPTY — a first for this family", () => {

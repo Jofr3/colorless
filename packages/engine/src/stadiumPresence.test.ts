@@ -1,23 +1,9 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader as readByAny,
-} from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader as readByAny } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackOptionalCostBoost,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
   deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
 import type { BoardCondition, GameState, Seat } from "./index";
@@ -42,23 +28,6 @@ const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus()
     module-private. Whole-sentence anchored at BOTH ends, like theirs. */
 const BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
 const NOTHING = /^If (.+), this attack does nothing\.$/;
-
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackCopy,
-  deriveAttackPreDamage,
-  deriveAttackCancelRequirement,
-  deriveAttackBonusConsequent,
-  deriveAttackOptionalCostBoost,
-  deriveAttackDiscardScaledBoost,
-];
 
 const MOUNTAIN_DROP = "If a Stadium is in play, this attack does 70 more damage.";
 const ASSAULT_LANDING = "If there is no Stadium in play, this attack does nothing.";
@@ -143,29 +112,17 @@ const earthenPower = (state: GameState, seat: Seat = "p1"): GameState =>
   ]);
 
 describe("§1 — the price, RE-DERIVED: a 2:3 step whose CANCEL half is the bigger half", () => {
-  it("D418 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the bonus residue steps by exactly ONE sentence and ONE printing", () => {
     const refused = corpus().filter(([, s]) => BONUS.test(s.trim()) && !readByAny(s));
     expect(refused.some(([, s]) => s === MOUNTAIN_DROP)).toBe(false);
     expect(refused.length).toBe(0);
     expect(units(refused)).toBe(0);
-    expect([refused.length + 22, units(refused) + 26]).toEqual([22, 26]);
-    expect([refused.length + 24, units(refused) + 28]).toEqual([24, 28]);
-    expect([refused.length + 25, units(refused) + 30]).toEqual([25, 30]);
-    expect([refused.length + 26, units(refused) + 32]).toEqual([26, 32]);
-    expect([refused.length + 27, units(refused) + 34]).toEqual([27, 34]);
   });
 
   it("the CANCEL residue steps TWICE as far — and D379 took the ONE left behind it", () => {
     const refused = corpus().filter(([, s]) => NOTHING.test(s.trim()) && !readByAny(s));
     expect(refused.some(([, s]) => s === ASSAULT_LANDING)).toBe(false);
     expect(refused).toEqual([]);
-    expect([refused.length + 1, units(refused) + 2]).toEqual([1, 2]);
-    expect([refused.length + 2, units(refused) + 4]).toEqual([2, 4]);
   });
 
   it("TWO sentences, THREE legal printings — 1 under the bonus and 2 under the cancel", () => {

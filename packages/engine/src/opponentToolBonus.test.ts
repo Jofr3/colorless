@@ -1,21 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
-} from "./effects";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { deriveAttackDamageBonus } from "./effects";
 import type { BoardCondition, GameEvent, GameState, Seat } from "./index";
 import { conditionHolds, conditionNote } from "./boardCondition";
 import { programFor } from "./registry";
@@ -38,23 +23,6 @@ const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus()
 /** The bonus skeleton, as a labelled COPY — the reader's own pattern is
     module-private. Whole-sentence anchored at BOTH ends, like the reader's. */
 const BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
-
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackBonusConsequent,
-];
 
 const TAKEN =
   "If your opponent's Active Pokémon has a Pokémon Tool attached, this attack does 80 more damage.";
@@ -104,34 +72,11 @@ function damageDealt(state: GameState, seat: Seat, index = 0): number {
 }
 
 describe("§1 — the price, RE-DERIVED: the 2-printing band is SEVEN clauses, not two", () => {
-  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the residue is 33 sentences / 44 printings and its top band holds 7 clauses at 2", () => {
     const refused = corpus().filter(([, s]) => BONUS.test(s.trim()) && !resolvedByAnyReader(s));
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
     expect(refused.length).toBe(0);
     expect(units(refused)).toBe(0);
-    expect(refused.length + 23).toBe(23);
-    expect(units(refused) + 27).toBe(27);
-    expect(refused.length + 24).toBe(24);
-    expect(units(refused) + 29).toBe(29);
-    expect(refused.length + 25).toBe(25);
-    expect(units(refused) + 32).toBe(32);
-    expect(refused.length + 27).toBe(27);
-    expect(units(refused) + 34).toBe(34);
-    expect(refused.length + 28).toBe(28);
-    expect(units(refused) + 36).toBe(36);
-    expect(refused.length + 30).toBe(30);
-    expect(units(refused) + 38).toBe(38);
-    expect(refused.length + 31).toBe(31);
-    expect(units(refused) + 40).toBe(40);
-    expect(refused.length + 32).toBe(32);
-    expect(units(refused) + 42).toBe(42);
-    expect(refused.length + 33).toBe(33);
-    expect(units(refused) + 44).toBe(44);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -142,14 +87,6 @@ describe("§1 — the price, RE-DERIVED: the 2-printing band is SEVEN clauses, n
     expect(band).toEqual([]);
     expect([...byClause.values()].filter((n) => n > 1)).toEqual([]);
     expect(byClause.size).toBe(0);
-    expect(band.length + 2).toBe(2);
-    expect(band.length + 3).toBe(3);
-    expect(band.length + 4).toBe(4);
-    expect(band.length + 5).toBe(5);
-    expect(band.length + 6).toBe(6);
-    expect(band.length + 7).toBe(7);
-    expect(band.length + 8).toBe(8);
-    expect(band.length + 9).toBe(9);
     expect([...byClause.values()]).toEqual([]);
   });
 
@@ -201,7 +138,7 @@ describe("§2 — the SHAPE question D368 ordered first, settled: YES, and it is
     expect(conditionHolds(activeOnly, "p1", { kind: "yourBenchDamaged" })).toBe(false);
   });
 
-  it("the CATALOG cannot settle it either — ONE universal antecedent in 640 sentences", () => {
+  it("the CATALOG cannot settle it either — ONE universal antecedent in the corpus", () => {
     const universals = corpus().filter(([, s]) => /^If all of /.test(s));
     expect(universals).toHaveLength(1);
     expect(universals[0]?.[1]).toBe(UNIVERSAL);

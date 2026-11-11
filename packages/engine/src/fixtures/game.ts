@@ -23,6 +23,14 @@ export function findEvent<T extends GameEvent["type"]>(
   return events.find((e): e is Extract<GameEvent, { type: T }> => e.type === type);
 }
 
+/** Every event of `type`, in order, narrowed to that event. */
+export function findEvents<T extends GameEvent["type"]>(
+  events: readonly GameEvent[],
+  type: T,
+): Extract<GameEvent, { type: T }>[] {
+  return events.filter((e): e is Extract<GameEvent, { type: T }> => e.type === type);
+}
+
 export function activeOf(state: GameState, seat: Seat): InPlayPokemon {
   const active = state.players[seat].active;
   if (active === null) throw new Error(`${seat} has no Active Pokémon`);

@@ -214,10 +214,6 @@ describe("§3 — the arm, and what it refuses", () => {
     }
   });
 
-  it("the reader SURFACE stands still at 13 — no new `deriveAttack*` export", () => {
-    expect(attackReaderSurface().length).toBe(14);
-  });
-
   it("exactly ONE reader claims the sentence, and it is `deriveAttackEffect`", () => {
     const claimants = attackReaderSurface().filter(
       (name) => name === "deriveAttackEffect" && deriveAttackEffect(RAISED) !== null,

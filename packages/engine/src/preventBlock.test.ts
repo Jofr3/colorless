@@ -31,6 +31,7 @@ import {
   walkProgram,
   findEvent,
   mustDerive,
+  findEvents,
 } from "./testFixtures";
 import { koByEffectMarker } from "./types";
 
@@ -42,13 +43,6 @@ const NARROW_TEXT =
 const HEADS_SEEDS = [2, 3, 6, 7, 16, 18, 20, 22, 23, 27, 28, 30, 34, 35, 38] as const;
 /** …and the complement, so the tails face is driven rather than assumed. */
 const TAILS_SEEDS = [1, 4, 5, 8, 9, 10, 11, 12, 13, 14] as const;
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 function armed(seed: number, installer: string): GameState {
   let state = must(
@@ -301,7 +295,7 @@ describe("the gated PREVENT clause — the DAMAGE half (both spellings)", () => 
     expect(benchBefore.length).toBeGreaterThan(0);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p2", index: 0 });
 
-    const rows = findAll(events, "DAMAGE_DEALT");
+    const rows = findEvents(events, "DAMAGE_DEALT");
     const activeRow = rows.find((r) => r.uid === activeUid(state, "p1"));
     expect(activeRow).toMatchObject({ dealt: 0, prevented: true });
     for (const [i, before] of benchBefore.entries()) {
@@ -1428,7 +1422,7 @@ describe("the gated PREVENT clause — the guard is SWEPT, not listed", () => {
       { discarded: ["one-card"] },
       events,
     );
-    const damage = findAll(events, "DAMAGE_DEALT");
+    const damage = findEvents(events, "DAMAGE_DEALT");
     return {
       before,
       after: result.state,

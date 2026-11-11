@@ -30,6 +30,7 @@ import {
   types,
   findEvent,
   driveSetup,
+  findEvents,
 } from "./testFixtures";
 
 const LANDED = [
@@ -826,13 +827,6 @@ const TRN_DECK = deckOf({
   "fix-energy": 3,
 });
 
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
-
 function localSetup(seed: number, first: Seat, deck: string[]): GameState {
   return driveSetup(seed, { p1: deck, p2: deck }, { pool: POOL, first });
 }
@@ -1252,7 +1246,7 @@ describe("Biting Spree / Sneaky Bite — driven through the real engine", () => 
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [active, bench0] },
     });
-    const placed = findAll(events, "COUNTERS_PLACED");
+    const placed = findEvents(events, "COUNTERS_PLACED");
     expect(placed).toHaveLength(2);
     for (const e of placed) expect(e.amount).toBe(20);
     for (const e of placed) expect(e.source).toBe("ability");
@@ -1379,7 +1373,7 @@ describe("Scalding Steam / Calming Light / Dangerous Laser — the §12 writers"
   it("Dangerous Laser lands BOTH conditions — two ops, two places on the model", () => {
     const state = deepFreeze(board(11, TRN_DECK));
     const { state: done, events } = playFromHand(state, "fix-dangerouslaser");
-    const applied = findAll(events, "STATUS_APPLIED").map((e) => e.status);
+    const applied = findEvents(events, "STATUS_APPLIED").map((e) => e.status);
     expect(applied).toEqual(["burned", "confused"]);
     expect(done.players.p2.active?.conditions.burned).toBe(true);
     expect(done.players.p2.active?.conditions.rotation).toBe("confused");
@@ -1422,7 +1416,7 @@ describe("Inferno Fandango / Seething Spirit — the attachEnergyFrom rows", () 
     expect(first.state.players.p1.active?.energy).toHaveLength(1);
     const second = mustApply(first.state, useOn("Inferno Fandango"));
     expect(second.state.players.p1.active?.energy).toHaveLength(2);
-    expect(findAll(second.events, "ENERGY_ATTACHED")).toHaveLength(1);
+    expect(findEvents(second.events, "ENERGY_ATTACHED")).toHaveLength(1);
   });
 
   it("Inferno Fandango is REFUSED with only a non-Fire Basic Energy in hand — the `energyType` gate", () => {
@@ -1589,7 +1583,7 @@ describe("Charging Up / Dynamotor / Assemble Alloy — the discard-attach ABILIT
     expect(done.players.p1.active?.energy).toHaveLength(1);
     expect(done.players.p1.bench[0]?.energy).toHaveLength(1);
     expect(done.players.p1.bench[1]?.energy).toHaveLength(0);
-    expect(findAll(events, "ENERGY_ATTACHED")).toHaveLength(1); // the second op's
+    expect(findEvents(events, "ENERGY_ATTACHED")).toHaveLength(1); // the second op's
   });
 
   it("attaches what the pile HAS and stops — one {M} in the pile is one attach", () => {
@@ -1619,7 +1613,7 @@ describe("Charging Up / Dynamotor / Assemble Alloy — the discard-attach ABILIT
     // The trigger still FIRES (it is not gated on the pile) — it just moves nothing.
     expect(types(events)).toContain("ABILITY_TRIGGERED");
     expect(done.phase.kind).not.toBe("effect:choose");
-    expect(findAll(events, "ENERGY_ATTACHED")).toHaveLength(0);
+    expect(findEvents(events, "ENERGY_ATTACHED")).toHaveLength(0);
     expect(done.players.p1.active?.energy).toHaveLength(0);
     expect(done.players.p1.bench[0]?.energy).toHaveLength(0);
   });
@@ -1820,7 +1814,7 @@ describe("Fennel — driven through the real engine", () => {
       },
     };
     const { state: done, events } = playFromHand(withBenchDamage, "fix-fennel");
-    expect(findAll(events, "HEALED")).toHaveLength(2);
+    expect(findEvents(events, "HEALED")).toHaveLength(2);
     expect(done.players.p1.active?.damage).toBe(60);
     // Clamped per Pokémon: 30 damage heals 30, not 40.
     expect(done.players.p1.bench[0]?.damage).toBe(0);
@@ -1857,7 +1851,7 @@ describe("Clemont's Quick Wit — the TYPE GATE on healEach, driven through the 
     const { state: done, events } = playFromHand(quickWitBoard(68), "fix-clemontsquickwit");
     // Three HEALED rows, not four: the Colorless bench body is skipped as
     // SILENTLY as an undamaged one, which is what a FILTER inside the loop means.
-    expect(findAll(events, "HEALED")).toHaveLength(3);
+    expect(findEvents(events, "HEALED")).toHaveLength(3);
     expect(done.players.p1.active?.damage).toBe(40);
     // Clamped per Pokémon, exactly as the ungated op already was: 30 heals 30.
     expect(done.players.p1.bench[0]?.damage).toBe(0);
@@ -1872,7 +1866,7 @@ describe("Clemont's Quick Wit — the TYPE GATE on healEach, driven through the 
     const skipped = offType === undefined ? undefined : topUid(offType);
     expect(skipped).toBeDefined();
     const { state: done, events } = playFromHand(state, "fix-clemontsquickwit");
-    const healed = findAll(events, "HEALED");
+    const healed = findEvents(events, "HEALED");
     expect(healed.every((e) => e.seat === "p1")).toBe(true);
     expect(healed.map((e) => e.amount)).toEqual([60, 30, 60]);
     expect(healed.some((e) => e.uid === skipped)).toBe(false);
@@ -1886,7 +1880,7 @@ describe("Clemont's Quick Wit — the TYPE GATE on healEach, driven through the 
     state = benchFromDeck(state, "p1", "fix-basic-1");
     state = setDamage(state, "p1", 100);
     const { state: done, events } = playFromHand(state, "fix-clemontsquickwit");
-    expect(findAll(events, "HEALED")).toHaveLength(0);
+    expect(findEvents(events, "HEALED")).toHaveLength(0);
     expect(done.players.p1.active?.damage).toBe(100);
   });
 
@@ -1907,7 +1901,7 @@ describe("Clemont's Quick Wit — the TYPE GATE on healEach, driven through the 
       },
     };
     const { state: done, events } = playFromHand(withBench, "fix-fennel");
-    expect(findAll(events, "HEALED")).toHaveLength(2);
+    expect(findEvents(events, "HEALED")).toHaveLength(2);
     expect(done.players.p1.active?.damage).toBe(60);
     expect(done.players.p1.bench[0]?.damage).toBe(60);
   });
@@ -2765,13 +2759,13 @@ describe("Distorted Future (Gothitelle) — driven through the real engine", () 
     const state = distortedBoard(102);
     const held = state.players.p2.hand.length;
     const { events } = mustApply(state, useOn("Distorted Future"));
-    const shuffles = findAll(events, "HAND_SHUFFLED_INTO_DECK");
+    const shuffles = findEvents(events, "HAND_SHUFFLED_INTO_DECK");
     expect(shuffles).toHaveLength(1);
     expect(shuffles[0]?.seat).toBe("p2");
     expect(shuffles[0]?.count).toBe(held);
     expect(types(events)).not.toContain("HAND_TO_BOTTOM_OF_DECK");
     // The draw is the opponent's too — a count-only fact about a hidden hand.
-    const drawn = findAll(events, "CARDS_DRAWN");
+    const drawn = findEvents(events, "CARDS_DRAWN");
     expect(drawn).toHaveLength(1);
     expect(drawn[0]?.seat).toBe("p2");
     expect(drawn[0]?.uids).toHaveLength(3);
@@ -2882,7 +2876,7 @@ describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the
       seen.add(face);
       const drawn = face === "heads" ? 4 : 2;
       expect(done.players.p1.hand).toHaveLength(held - 1 + drawn);
-      const rows = findAll(events, "CARDS_DRAWN");
+      const rows = findEvents(events, "CARDS_DRAWN");
       expect(rows).toHaveLength(1);
       expect(rows[0]?.seat).toBe("p1");
       expect(rows[0]?.uids).toHaveLength(drawn);
@@ -2904,14 +2898,14 @@ describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the
       seen.add(face);
       const drawn = face === "heads" ? 8 : 3;
       expect(done.players.p1.hand).toHaveLength(drawn);
-      const shuffles = findAll(events, "HAND_SHUFFLED_INTO_DECK");
+      const shuffles = findEvents(events, "HAND_SHUFFLED_INTO_DECK");
       expect(shuffles).toHaveLength(1);
       expect(shuffles[0]?.seat).toBe("p1");
       expect(shuffles[0]?.count).toBe(held - 1);
       // …and it is the SHUFFLE form, not Iono's bottom-of-deck rider.
-      expect(findAll(events, "HAND_TO_BOTTOM_OF_DECK")).toHaveLength(0);
+      expect(findEvents(events, "HAND_TO_BOTTOM_OF_DECK")).toHaveLength(0);
       // Exactly one arm ran: one refresh, one draw.
-      const rows = findAll(events, "CARDS_DRAWN");
+      const rows = findEvents(events, "CARDS_DRAWN");
       expect(rows).toHaveLength(1);
       expect(rows[0]?.uids).toHaveLength(drawn);
       // Conservation across P1's own two zones, on either face.
@@ -2930,7 +2924,7 @@ describe("Picnicker / Drasna — the coin gate's `otherwise`, driven through the
       for (const seed of SEEDS) {
         const state = ready(seed, cardId);
         const { state: done, events } = play(state, cardId);
-        const flips = findAll(events, "ATTACK_EFFECT_COIN_FLIP");
+        const flips = findEvents(events, "ATTACK_EFFECT_COIN_FLIP");
         expect(flips, `${cardId} @${seed}`).toHaveLength(1);
         expect(flips[0]?.seat).toBe("p1");
         // The coin is taken on BOTH faces, so rngState always advances — the
@@ -3042,7 +3036,7 @@ describe("Harlequin — `handRefresh`'s PER-SEAT draw, driven through the real e
       const [mine, theirs] = face === "heads" ? [5, 3] : [3, 5];
       // TWO count-only rows, one per seat, in seat order — the controller first,
       // which is the order `handRefresh`'s seat list is built in.
-      const shuffles = findAll(events, "HAND_SHUFFLED_INTO_DECK");
+      const shuffles = findEvents(events, "HAND_SHUFFLED_INTO_DECK");
       expect(shuffles, `@${seed}`).toHaveLength(2);
       expect(shuffles[0]?.seat).toBe("p1");
       // `p1Held − 1`: playTrainer takes the played Supporter out of the hand
@@ -3051,9 +3045,9 @@ describe("Harlequin — `handRefresh`'s PER-SEAT draw, driven through the real e
       expect(shuffles[1]?.seat).toBe("p2");
       expect(shuffles[1]?.count).toBe(p2Held);
       // …and it is the SHUFFLE form, not Iono's bottom-of-deck rider.
-      expect(findAll(events, "HAND_TO_BOTTOM_OF_DECK")).toHaveLength(0);
+      expect(findEvents(events, "HAND_TO_BOTTOM_OF_DECK")).toHaveLength(0);
       // Exactly one arm ran — two draws, not four, and one per seat.
-      const rows = findAll(events, "CARDS_DRAWN");
+      const rows = findEvents(events, "CARDS_DRAWN");
       expect(rows).toHaveLength(2);
       expect(rows[0]?.seat).toBe("p1");
       expect(rows[0]?.uids).toHaveLength(mine);
@@ -3100,7 +3094,7 @@ describe("Harlequin — `handRefresh`'s PER-SEAT draw, driven through the real e
       expect(done.players.p1.hand, `opponent p1 @${seed} ${face}`).toHaveLength(theirs);
       // The controller is dealt FIRST whichever seat it is — the seat list is
       // `[ctx.seat, otherSeat(ctx.seat)]`, not `[p1, p2]`.
-      const rows = findAll(events, "CARDS_DRAWN");
+      const rows = findEvents(events, "CARDS_DRAWN");
       expect(rows[0]?.seat).toBe("p2");
       expect(rows[1]?.seat).toBe("p1");
     }

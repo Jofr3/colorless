@@ -2,22 +2,11 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
   deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
   splitAttackGateClause,
   splitAttackTrailingClause,
+  ATTACK_READERS,
 } from "./effects";
 import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -49,22 +38,7 @@ const BASIC_KO = "If your opponent's Active Pokémon is a Basic Pokémon, it is 
 
 const GATED_FILE_LINE = 384;
 
-const READERS: readonly (readonly [string, (text: string) => unknown])[] = [
-  ["deriveAttackBonusConsequent", deriveAttackBonusConsequent],
-  ["deriveAttackCancelRequirement", deriveAttackCancelRequirement],
-  ["deriveAttackCoinFlip", deriveAttackCoinFlip],
-  ["deriveAttackDamageBonus", deriveAttackDamageBonus],
-  ["deriveAttackDamageMultiplier", deriveAttackDamageMultiplier],
-  ["deriveAttackDamagePenalty", deriveAttackDamagePenalty],
-  ["deriveAttackDamageSuppression", deriveAttackDamageSuppression],
-  ["deriveAttackDiscardScaledBoost", deriveAttackDiscardScaledBoost],
-  ["deriveAttackEffect", deriveAttackEffect],
-  ["deriveAttackOptionalBoost", deriveAttackOptionalBoost],
-  ["deriveAttackOptionalCostBoost", deriveAttackOptionalCostBoost],
-  ["deriveAttackPreDamage", deriveAttackPreDamage],
-  ["deriveAttackCopy", deriveAttackCopy],
-  ["deriveAttackRequirement", deriveAttackRequirement],
-];
+const READERS = ATTACK_READERS.map(({ name, read }) => [name, read] as const);
 
 /** The program the printed sentence must derive to, spelled once. */
 const GATED_PROGRAM = [
@@ -295,12 +269,6 @@ describe("§1 — the sentence, its corpus row, and the fixtures that print it",
     expect(GATED.codePointAt(GATED.indexOf("'"))).toBe(0x27);
     expect(GATED.includes("’")).toBe(false);
     expect(GATED.codePointAt(GATED.indexOf("Pok") + 3)).toBe(0xe9);
-  });
-
-  it("the corpus totals STAND STILL — this slice adds no catalog row", () => {
-    const corpus = legalAttackCorpus();
-    expect(corpus.length).toBe(640);
-    expect(corpus.reduce((sum, [units]) => sum + units, 0)).toBe(1732);
   });
 
   it("the local fixtures carry the four sentences at the indices this file names", () => {

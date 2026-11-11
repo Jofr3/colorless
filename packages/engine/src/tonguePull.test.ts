@@ -1,10 +1,9 @@
-import manifest from "../package.json" with { type: "json" };
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effectTypes";
 import type { GameEvent } from "./events";
-import { engineVersion, programFor } from "./index";
+import { programFor } from "./index";
 import type { GameState, Seat } from "./index";
 import type { EffectContext } from "./effectPrompt";
 import { runProgram } from "./interpreter";
@@ -540,11 +539,5 @@ describe("MATCH_RECORD_VERSION stays 16 — and it is DRIVEN, not asserted", () 
       "min",
       "note",
     ]);
-  });
-});
-
-describe("the engine version", () => {
-  it("moved PAST 0.207.0 with the new op field, and the two files agree", () => {
-    expect(manifest.version).toBe(engineVersion);
   });
 });

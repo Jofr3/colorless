@@ -154,7 +154,6 @@ describe("§2 — TWO readers own it, and the other eleven still refuse", () => 
       if (owners.includes(name)) continue;
       expect(readerByName[name]?.(PRINTED) ?? null, name).toBeNull();
     }
-    expect(attackReaderSurface()).toHaveLength(14);
     // …and no splitter serves it either, so the claim is genuinely WHOLE-SENTENCE.
     expect(splitAttackRequirementClause(PRINTED)).toBeNull();
     expect(splitAttackCancelClause(PRINTED)).toBeNull();
@@ -178,7 +177,7 @@ describe("§2 — TWO readers own it, and the other eleven still refuse", () => 
   });
 });
 
-describe("§3 — the axis lattice and the fork, measured over all 640 rows", () => {
+describe("§3 — the axis lattice and the fork, measured over every corpus row", () => {
   const QUANT = ["3 or more", "at least 3"] as const;
   const TYPE = ["Energy", "{D} Energy"] as const;
   const TAILS = [
@@ -263,7 +262,7 @@ describe("§3 — the axis lattice and the fork, measured over all 640 rows", ()
 });
 
 describe("§4 — the anchor's TIGHT tail buys what a LOOSE one would, and looser is a DEFECT", () => {
-  it("three spellings of the tail, measured over all 640 rows (D472)", () => {
+  it("three spellings of the tail, measured over every corpus row (D472)", () => {
     const HEAD_SRC = "If (.+), this attack does (\\d+) more damage\\.";
     const tight = new RegExp(
       `^${HEAD_SRC} This attack['’]s damage isn['’]t affected by Weakness\\.$`,

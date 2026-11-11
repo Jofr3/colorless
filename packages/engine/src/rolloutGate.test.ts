@@ -1,23 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
-  splitAttackGateClause,
-} from "./effects";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { splitAttackGateClause } from "./effects";
 import type { GameEvent, GameState, Seat } from "./index";
 import { applyAction, attackGateOf, programFor, redactGame } from "./index";
 import { attackTimingBlocked, attackTimingNote } from "./index";
@@ -37,23 +21,6 @@ import {
 
 const ROLLOUT_GATE =
   "You can use this attack only if this Pokémon used Rollout during your last turn.";
-
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackBonusConsequent,
-];
 
 const MILTANK = "sv08.5-081";
 const UNGATED_TWIN = "fix-moomoo-ungated";
@@ -182,11 +149,6 @@ function afterRollout(seed: number, first: Seat, seat: Seat, activeId: string): 
 }
 
 describe("D395 §1 — the census, and the per-INDEX claim checked against the printing", () => {
-  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the corpus holds the sentence ONCE, and no reader resolves it whole", () => {
     const rows = legalAttackCorpus().filter(([, text]) => text === ROLLOUT_GATE);
     expect(rows.length).toBe(1);

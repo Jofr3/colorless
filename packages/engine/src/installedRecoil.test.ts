@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { installedRecoilOf, passivesOf } from "./continuous";
 import { deriveAttackEffect } from "./effects";
 import { applyAction, programFor } from "./index";
@@ -23,6 +23,7 @@ import {
   setActiveFromDeck,
   types,
   findEvent,
+  findEvents,
 } from "./testFixtures";
 
 const SCARY_FANGS =
@@ -49,13 +50,6 @@ const QUILLS = programFor("sv01-005")?.passive?.damageAttacker?.amount ?? 0;
 const SEED = 13;
 
 const PROBE_TAKEN = 9999;
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 /** P2 opens and passes, so P1's turn 2 carries no §4 attack restriction. The
     ARMER goes on P1's Active with the {F}{C}{C} "Scary Fangs" costs. */
@@ -309,7 +303,7 @@ describe("arming it — the stamp, the window and the row", () => {
       turn: state.turn + 1,
       amount: ARMED_HP,
     });
-    expect(findAll(events, "RECOIL_ARMED").map((r) => r.amount)).toEqual([40, ARMED_HP]);
+    expect(findEvents(events, "RECOIL_ARMED").map((r) => r.amount)).toEqual([40, ARMED_HP]);
   });
 });
 
@@ -343,7 +337,7 @@ describe("the §9 SUM — the armed stamp beside the catalog fold, in ONE row", 
     expect(passivesOf(state, mustActive(state, "p1")).damageAttacker).toBe(HELMET);
 
     const { state: done, events } = swing(state, "fix-attacker", [...BITE]);
-    const placed = findAll(events, "COUNTERS_PLACED");
+    const placed = findEvents(events, "COUNTERS_PLACED");
     expect(placed).toHaveLength(1);
     expect(placed[0]).toMatchObject({ amount: ARMED_HP + HELMET, source: "counterattack" });
     // Read from the two authored numbers rather than written as 120, so the
@@ -422,8 +416,8 @@ describe("the `dealt > 0` boundary — D149's cases, which this must not break",
     // COUNTERS_PLACED can exist. The trap is untouched, not spent.
     const state = armed();
     const { state: done, events } = swing(state, "sv02-062", [{ id: "fix-energy", count: 1 }], 0);
-    expect(findAll(events, "DAMAGE_DEALT")).toHaveLength(0);
-    expect(findAll(events, "COUNTERS_PLACED")).toHaveLength(0);
+    expect(findEvents(events, "DAMAGE_DEALT")).toHaveLength(0);
+    expect(findEvents(events, "COUNTERS_PLACED")).toHaveLength(0);
     expect(done.players.p1.active?.installedRecoil).toEqual({
       turn: state.turn,
       amount: ARMED_HP,
@@ -438,7 +432,7 @@ describe("the `dealt > 0` boundary — D149's cases, which this must not break",
     const row = findEvent(events, "DAMAGE_DEALT");
     expect(row?.dealt).toBe(0);
     expect(row?.reduction).toBe(200);
-    expect(findAll(events, "COUNTERS_PLACED")).toHaveLength(0);
+    expect(findEvents(events, "COUNTERS_PLACED")).toHaveLength(0);
     expect(done.players.p2.active?.damage).toBe(0);
     // …and the trap is still armed, so "a clamped zero is not an attack that did
     // damage" is a statement about THIS hit rather than about the window.
@@ -486,7 +480,7 @@ describe("the lifetime — one turn, and the three §10 early endings", () => {
     // The record is STILL there, untouched, and still silent.
     expect(state.players.p1.active?.installedRecoil).toEqual(stamp);
     const { events } = swing(state, "fix-attacker", [...BITE]);
-    expect(findAll(events, "COUNTERS_PLACED")).toHaveLength(0);
+    expect(findEvents(events, "COUNTERS_PLACED")).toHaveLength(0);
   });
 
   it("ends when the Pokémon leaves the Active Spot — a Boss's Orders INSIDE the window", () => {
@@ -515,7 +509,7 @@ describe("the lifetime — one turn, and the three §10 early endings", () => {
     expect(types(gusted.events)).not.toContain("RECOIL_ARMED");
     // And it is GONE rather than merely unread — the promoted body draws nothing.
     const { events } = swing(next, "fix-attacker", [...BITE]);
-    expect(findAll(events, "COUNTERS_PLACED")).toHaveLength(0);
+    expect(findEvents(events, "COUNTERS_PLACED")).toHaveLength(0);
   });
 
   it("ends on EVOLVING — unreachable by construction, written anyway", () => {
@@ -574,7 +568,7 @@ function intoWindow(state: GameState): GameState {
 }
 
 describe("D456 §1 — the datum, and the family CLOSED over the corpus", () => {
-  it("`Attacking Pokémon` over all 640 sentences returns THREE rows — and none is a ten", () => {
+  it("`Attacking Pokémon` over every corpus sentence returns THREE rows — and none is a ten", () => {
     const family = legalAttackCorpus().filter(([, t]) => /Attacking Pokémon/.test(t));
     expect(family).toHaveLength(3);
     expect(family.reduce((sum, [n]) => sum + n, 0)).toBe(8);
@@ -586,7 +580,6 @@ describe("D456 §1 — the datum, and the family CLOSED over the corpus", () => 
     expect(family.some(([, t]) => t.includes("10 damage counters"))).toBe(false);
     // …and ALL THREE now resolve, so the ATTACK column's half of this family is CLOSED.
     for (const [, t] of family) expect(resolvedByAnyReader(t), t).toBe(true);
-    expect(attackReaderSurface()).toHaveLength(14); // no fourteenth reader
   });
 
   it("the parenthetical varies BY PRINTING, which is why the alternation is not invented", () => {
@@ -681,7 +674,7 @@ describe("D456 §2 — the record, the row and the merge", () => {
       ofDamageTaken: true,
     });
     expect(
-      findAll(events, "RECOIL_ARMED").map((r) => [r.amount, r.ofDamageTaken ?? false]),
+      findEvents(events, "RECOIL_ARMED").map((r) => [r.amount, r.ofDamageTaken ?? false]),
     ).toEqual([
       [40, false],
       [40, true],
@@ -769,7 +762,7 @@ describe("D456 §3 — the §9 read: the amount IS the hit", () => {
     let state = equip(ready(), "p1", "sv01-193");
     state = intoWindow(armScaled(state).state);
     const { state: done, events } = swing(state, "fix-attacker", [...BITE]);
-    expect(findAll(events, "COUNTERS_PLACED")).toHaveLength(1);
+    expect(findEvents(events, "COUNTERS_PLACED")).toHaveLength(1);
     expect(findEvent(events, "COUNTERS_PLACED")?.amount).toBe(30 + HELMET);
     expect(findEvent(events, "COUNTERS_PLACED")?.source).toBe("counterattack");
     expect(done.players.p2.active?.damage).toBe(30 + HELMET);
@@ -788,7 +781,7 @@ describe("D456 §3 — the §9 read: the amount IS the hit", () => {
     growling = attachFromDeck(growling, "p2", "fix-lightning-energy", 1);
     const window = state.turn;
     const { state: done, events } = mustApply(growling, { type: "attack", seat: "p2", index: 0 });
-    expect(findAll(events, "COUNTERS_PLACED")).toHaveLength(0);
+    expect(findEvents(events, "COUNTERS_PLACED")).toHaveLength(0);
     expect(done.turn).toBe(window + 1);
     expect(done.players.p1.active?.installedRecoil).toEqual({
       turn: window,
@@ -838,13 +831,13 @@ describe("D456 §4 — the four questions the printed clause raises", () => {
     const attacker = FIXTURE_POOL["fix-attacker"];
     expect(attacker?.weaknesses ?? null).toBeNull(); // …so this board cannot show it, and says so
     expect(findEvent(events, "COUNTERS_PLACED")?.amount).toBe(30);
-    expect(findAll(events, "DAMAGE_DEALT")).toHaveLength(1);
+    expect(findEvents(events, "DAMAGE_DEALT")).toHaveLength(1);
     expect(findEvent(events, "DAMAGE_DEALT")?.seat).toBe("p1");
-    expect(findAll(events, "COUNTERS_PLACED")).toHaveLength(1);
+    expect(findEvents(events, "COUNTERS_PLACED")).toHaveLength(1);
     const shielded = withBlock(state, "p2", state.turn + 1);
     const guarded = swing(shielded, "fix-attacker", [...BITE]);
     expect(findEvent(guarded.events, "COUNTERS_PLACED")?.amount).toBe(30);
-    expect(findAll(guarded.events, "ATTACK_EFFECT_PREVENTED")).toHaveLength(0);
+    expect(findEvents(guarded.events, "ATTACK_EFFECT_PREVENTED")).toHaveLength(0);
     expect(done.players.p2.active?.damage).toBe(30);
   });
 
@@ -900,7 +893,7 @@ describe("D456 §5 — `MATCH_RECORD_VERSION` 29, driven over the SERIALIZED BYT
     const degraded = withRawRecoil(inWindow, "p1", lost);
     expect(installedRecoilOf(degraded, mustActive(degraded, "p1"), 999)).toBe(0);
     const quiet = swing(degraded, "fix-attacker", [...BITE]);
-    expect(findAll(quiet.events, "COUNTERS_PLACED")).toHaveLength(0);
+    expect(findEvents(quiet.events, "COUNTERS_PLACED")).toHaveLength(0);
     const flatAmounts: number[] = [];
     for (const [, text] of legalAttackCorpus()) {
       for (const op of deriveAttackEffect(text) ?? []) {

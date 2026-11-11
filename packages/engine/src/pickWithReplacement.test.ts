@@ -562,7 +562,7 @@ describe("D535 §6 — `ignoreWR` and `deals` ON THE BOARD", () => {
     expect((present(spread)[0] as { deals?: true }).deals).toBeUndefined();
   });
 
-  it("RIDE-ALONG — the BENCH read site: ~~`ignoreWR` nulls a benched Bouffalant's `damageReductionAfterWR`, so two picks land the full 40~~ ( D622: `wrOnly` keeps it, so two picks land 0)", () => {
+  it("RIDE-ALONG — the BENCH read site: `wrOnly` keeps a benched Bouffalant's reduction, so two picks land 0 (D622)", () => {
     const { state, events } = walk(attack(board(43, WALL, [BOUFFALANT])).state, [1, 1]);
     // 0, not 40: Bouffer's −20 cancels each 20 hit exactly.
     expect(state.players.p2.bench[0]?.damage).toBe(0);
@@ -575,7 +575,7 @@ describe("D535 §6 — `ignoreWR` and `deals` ON THE BOARD", () => {
     ]);
   });
 
-  it("RIDE-ALONG — the ACTIVE read site: ~~the same nulling~~ ( D622: the same reduction kept) one function over, on the opponent's Active", () => {
+  it("RIDE-ALONG — the ACTIVE read site: the same reduction is kept one function over, on the opponent's Active", () => {
     const { state, events } = walk(attack(board(47, BOUFFALANT, [FILLERS[1]])).state, [0, 0]);
     expect(state.players.p2.active?.damage).toBe(0);
     const rows = events.filter((e) => e.type === "DAMAGE_DEALT");
@@ -632,10 +632,5 @@ describe("D535 §8 — the POPULATION RUNG and the version", () => {
   it("`BUILT.attack` steps by the PRINTINGS (2), not by the sentences (1) — D495's shape", () => {
     const claimed = legalAttackCorpus().filter(([, s]) => deriveAttackEffect(s) !== null);
     expect(claimed.filter(([, s]) => s === PRINTED)).toEqual([[2, PRINTED]]);
-    const reader = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([reader.length, reader.reduce((sum, [n]) => sum + n, 0)]).toEqual([600, 1663]);
-    const residue = legalAttackCorpus().filter(([, s]) => !resolvedByAnyReader(s));
-    expect([residue.length, residue.reduce((sum, [n]) => sum + n, 0)]).toEqual([40, 69]);
-    expect(reader.length + residue.length).toBe(640);
   });
 });

@@ -137,7 +137,6 @@ describe("§2 — TWO readers own it, and the other eleven still refuse", () => 
       const read = (effectsModule as unknown as Record<string, (t: string) => unknown>)[name];
       expect(read?.(PRINTED) ?? null, name).toBeNull();
     }
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("the COMPOUND's fold is the HEAD's fold — two anchors that cannot drift apart", () => {
@@ -145,7 +144,7 @@ describe("§2 — TWO readers own it, and the other eleven still refuse", () => 
   });
 });
 
-describe("§3 — the fork, measured over all 640 rows rather than argued", () => {
+describe("§3 — the fork, measured over every corpus row rather than argued", () => {
   const readers = attackReaderSurface().map(
     (n) => (effectsModule as unknown as Record<string, (t: string) => unknown>)[n],
   );

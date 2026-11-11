@@ -84,7 +84,7 @@ describe("D617 §1 — the faces: 11 `me` printings / 5 texts, one object per te
     expect(objects.size).toBe(5);
   });
 
-  it("the other 10 WP24 printings (3 texts) ~~stay unkeyed~~ ( D621 (D539): WITHDRAWN — WP24c keys all 10)", () => {
+  it("the other 10 WP24 printings (3 texts) are all keyed (D621)", () => {
     const ids = Object.values(NOT_KEYED).flat();
     expect(ids).toHaveLength(10);
     for (const id of ids) expect(programFor(id), id).toBeDefined();

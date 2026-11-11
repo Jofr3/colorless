@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { redactedEffectPromptSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { hasRuleBox } from "./cards";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackCopy, deriveAttackEffect, splitAttackTrailingClause } from "./effects";
 import { COPY_FAMILY_MARKER } from "./deriver/vocabulary";
 import type { EffectOp } from "./effectTypes";
@@ -564,10 +564,6 @@ describe("D574 §1 — the readers: two resolve-time copy anchors, two counter-m
     expect(rows.get(SEEK_INSPIRATION)).toBe(1);
     expect(resolvedByAnyReader(HAUGHTY_ORDER)).toBe(true);
     expect(resolvedByAnyReader(SEEK_INSPIRATION)).toBe(true);
-  });
-
-  it("the reader SURFACE stays at 14 — a widening, not a reader", () => {
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("Sableye derives WHOLE; Alakazam's tail derives and its compound COMPOSES behind the claimed head", () => {

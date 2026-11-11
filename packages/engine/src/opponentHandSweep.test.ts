@@ -1,12 +1,10 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { matchesFilter } from "./cards";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import type { CardFilter, EffectOp } from "./effectTypes";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
 import type { GameEvent } from "./events";
-import { engineVersion } from "./index";
 import type { GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -186,7 +184,7 @@ describe("§1 — the sentence, and the family it lands in, measured not quoted"
 });
 
 describe("§2 — the oracle, and the anchor's yield measured over the whole column", () => {
-  it("the anchor claims EXACTLY this row — 1 sentence / 1 printing over 640", () => {
+  it("the anchor claims EXACTLY this row — 1 sentence / 1 printing", () => {
     const claimed = legalAttackCorpus().filter(([, s]) => deriveAttackEffect(s) !== null);
     const mine = claimed.filter(([, s]) => s.includes("Discard all Item cards"));
     expect(mine.map(([, s]) => s)).toEqual([SWEEP]);
@@ -203,10 +201,6 @@ describe("§2 — the oracle, and the anchor's yield measured over the whole col
     // the equality above is a statement about the POOL and not about a lucky regex.
     const m = WIDE.exec(SWEEP);
     expect([m?.[1], m?.[2]]).toEqual(["Item", "Pokémon Tool"]);
-  });
-
-  it("the reader surface is still THIRTEEN, derived off the module", () => {
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 });
 
@@ -504,9 +498,3 @@ describe("§8 — the persisted record cannot hold this op", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // §9 — THE VERSION PINS
 // ─────────────────────────────────────────────────────────────────────────────
-
-describe("§9 — the version, and what it is owed for", () => {
-  it("engineVersion is 0.555.0 and the bump is owed for BEHAVIOUR", () => {
-    expect(manifest.version).toBe(engineVersion);
-  });
-});

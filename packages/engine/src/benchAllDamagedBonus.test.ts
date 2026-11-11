@@ -1,21 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
-} from "./effects";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { deriveAttackDamageBonus } from "./effects";
 import type { BoardCondition, GameEvent, GameState, Seat } from "./index";
 import { conditionHolds, conditionNote } from "./boardCondition";
 import {
@@ -36,23 +21,6 @@ const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus()
 /** The bonus skeleton, as a labelled COPY — the reader's own pattern is
     module-private. Whole-sentence anchored at BOTH ends, like the reader's. */
 const BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
-
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackBonusConsequent,
-];
 
 const TAKEN =
   "If all of your Benched Pokémon have at least 1 damage counter on them, this attack does 120 more damage.";
@@ -117,23 +85,11 @@ function vacuousReading(state: GameState, seat: Seat): boolean {
 }
 
 describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to four", () => {
-  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the residue steps by exactly this ONE sentence and TWO printings", () => {
     const refused = corpus().filter(([, s]) => BONUS.test(s.trim()) && !resolvedByAnyReader(s));
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
     expect(refused.length).toBe(0);
     expect(units(refused)).toBe(0);
-    expect([refused.length + 24, units(refused) + 28]).toEqual([24, 28]);
-    expect([refused.length + 25, units(refused) + 30]).toEqual([25, 30]);
-    expect([refused.length + 26, units(refused) + 32]).toEqual([26, 32]);
-    expect([refused.length + 27, units(refused) + 34]).toEqual([27, 34]);
-    expect([refused.length + 28, units(refused) + 36]).toEqual([28, 36]);
-    expect([refused.length + 30, units(refused) + 38]).toEqual([30, 38]);
-    expect([refused.length + 31, units(refused) + 40]).toEqual([31, 40]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
@@ -144,8 +100,6 @@ describe("§1 — the price, RE-DERIVED: a 1:2 step and the band down to four", 
     expect(band).toEqual([]);
     expect([...byClause.values()].filter((n) => n > 1)).toEqual([]);
     expect(byClause.size).toBe(0);
-    expect(band.length + 2).toBe(2);
-    expect(band.length + 5).toBe(5);
     expect([...byClause.values()]).toEqual([]);
   });
 

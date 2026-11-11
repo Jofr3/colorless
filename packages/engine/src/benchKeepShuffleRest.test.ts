@@ -395,10 +395,9 @@ describe("D537 §1 — the corpus row, read off the census rather than retyped",
     expect(JSON.stringify(deriveAttackEffect(COIN))).not.toContain("returnBenchedRest");
   });
 
-  it("ONE all-640 predicate, LOOSER than the anchor, over the whole corpus", () => {
+  it("ONE whole-corpus predicate, LOOSER than the anchor, over the whole corpus", () => {
     const loose = legalAttackCorpus().filter(([, s]) => /that you didn['’]t choose/.test(s));
     expect(loose).toEqual([[2, PRINTED]]);
-    expect(legalAttackCorpus()).toHaveLength(640);
   });
 });
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SEATS, applyAction } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   TRIGGER_DECK,
   activeUid,
@@ -20,14 +20,8 @@ import {
   setDamage,
   types,
   findEvent,
+  findEvents,
 } from "./testFixtures";
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 function triggerBoard(seed: number, turn = 1): GameState {
   let state = driveSetup(
@@ -225,7 +219,7 @@ describe("betweenTurns — Garganacl's Blessed Salt (§9/§13)", () => {
     const { state: after, events } = mustApply(state, { type: "endTurn", seat: "p1" });
     expect(findEvent(events, "ABILITY_TRIGGERED")?.ability).toBe("Blessed Salt");
     // One HEALED per healed Pokémon (Active + the benched one), 20 each.
-    const heals = findAll(events, "HEALED").filter((h) => h.seat === "p1");
+    const heals = findEvents(events, "HEALED").filter((h) => h.seat === "p1");
     expect(heals.map((h) => h.amount).sort()).toEqual([20, 20]);
     expect(after.players.p1.active?.damage).toBe(30); // 50 − 20
     const benchNow = after.players.p1.bench.find((p) => p.stack.includes(benched));
@@ -247,7 +241,7 @@ describe("betweenTurns — Garganacl's Blessed Salt (§9/§13)", () => {
     const { events } = mustApply(state, { type: "endTurn", seat: "p1" });
     // The Ability still triggered, but no Pokémon had damage to remove.
     expect(findEvent(events, "ABILITY_TRIGGERED")?.ability).toBe("Blessed Salt");
-    expect(findAll(events, "HEALED").filter((h) => h.seat === "p1")).toHaveLength(0);
+    expect(findEvents(events, "HEALED").filter((h) => h.seat === "p1")).toHaveLength(0);
   });
 });
 

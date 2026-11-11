@@ -1,9 +1,7 @@
 import type { Card } from "@colorless/schema";
-import manifest from "../package.json" with { type: "json" };
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
-import { engineVersion } from "./index";
 import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -183,8 +181,6 @@ const corpusRows = () => legalAttackCorpus();
 describe("§1 — three printed rows, and the family they belong to", () => {
   it("the column did not move, and each of the three is a corpus row at its printing count", () => {
     const rows = new Map(corpusRows().map(([units, sentence]) => [sentence, units]));
-    expect(corpusRows()).toHaveLength(640);
-    expect(corpusRows().reduce((n, [units]) => n + units, 0)).toBe(1732);
     expect(rows.get(TWO_THEN_120)).toBe(2);
     expect(rows.get(ALL_THEN_90)).toBe(2);
     expect(rows.get(TYPED_THEN_180)).toBe(1);
@@ -667,15 +663,6 @@ describe("§7 — the self-discard half, on its own terms", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the surface, the version, and the mechanisms this slice did not add", () => {
-  it("the reader SURFACE stands still at 13 — the arm is inside `deriveAttackEffect`", () => {
-    expect(attackReaderSurface()).toHaveLength(14);
-    expect(attackReaderSurface()).toContain("deriveAttackEffect");
-  });
-
-  it("engineVersion is 0.555.0 and `manifest.version` agrees", () => {
-    expect(manifest.version).toBe(engineVersion);
-  });
-
   it("the three sentences produce NO op this engine did not already emit", () => {
     const kinds = new Set(
       [TWO_THEN_120, ALL_THEN_90, TYPED_THEN_180].flatMap((s) =>
