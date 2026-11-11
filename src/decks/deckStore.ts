@@ -1,8 +1,8 @@
 import { DECK_SIZE } from "@colorless/engine/rules";
 import type { Deck as SavedDeck } from "@colorless/schema";
+import type { AccountStatus } from "../lib/accountStatus";
 import * as api from "../lib/api";
 import { type DeckVerdict, judgeDecks } from "../game/sandboxDecks";
-import type { AccountStatus } from "../lua/account";
 import type { Deck } from "./data";
 
 /** One user's deck list as the store last had it. */

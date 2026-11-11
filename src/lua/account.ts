@@ -18,9 +18,12 @@ import {
   register,
   updateProfile,
 } from "../lib/api";
+import type { AccountStatus } from "../lib/accountStatus";
 import { startOAuth } from "../lib/startOAuth";
 import { decodeFields, encodeFields } from "./wire";
 import { WIRE_ROWS, wireRow } from "./wireFields";
+
+export type { AccountStatus };
 
 const SIGN_IN_UNAVAILABLE = "Sign-in is unavailable right now. Try again later.";
 
@@ -92,7 +95,6 @@ export const SESSION_CHECK_MAX_AGE_MS = 60_000;
 
 /** The Lua scene owns the UI; this adapter shares the typed API client
  * and cookie session. No credentials or profile data go into localStorage. */
-export type AccountStatus = "loading" | "authenticated" | "anonymous" | "error";
 
 export class LuaAccount {
   user: User | null = null;
