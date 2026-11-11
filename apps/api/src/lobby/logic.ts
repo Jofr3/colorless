@@ -306,26 +306,13 @@ export function reseatHost(
 /**
  * Read a snapshot from storage, filling in fields added since it was written. Unlike matches there
  * is no version gate: a missing field has one sensible default, and retiring snapshots would evict
- * live lobbies on every such deploy. A lobby stored before seats had public ids (`isLegacySnapshot`)
- * reads as null; the DO wipes such a lobby before reading it.
+ * live lobbies on every such deploy. A seat id that is not a public seat id reads as null.
  */
 export function readSnapshot(raw: unknown): LobbyState | null {
   // Never throws: the DO is the only writer, so a malformed blob is impossible in practice and
   // must not take the lobby down if it happens anyway.
   const parsed = storedSnapshotSchema.safeParse(raw);
   return parsed.success ? parsed.data : null;
-}
-
-/**
- * Whether `raw` is a lobby stored before the seat secret split: its seats are named by the
- * ids clients sent, which every snapshot broadcast, so they cannot be carried over as public ids,
- * and no client can present a secret for them. Absent and unreadable values are not legacy.
- */
-export function isLegacySnapshot(raw: unknown): boolean {
-  const parsed = legacySnapshotSchema.safeParse(raw);
-  if (!parsed.success) return false;
-  const { host, guest } = parsed.data;
-  return !isPublicSeatId(host.id) || (guest !== null && !isPublicSeatId(guest.id));
 }
 
 /** A seat as stored by any deploy. `avatarSeed` and `forfeitAt` were added after the first lobbies
@@ -353,12 +340,6 @@ const storedSnapshotSchema = z.object({
   host: storedSeatSchema,
   guest: storedSeatSchema.nullable(),
   countdownStartedAt: z.number().nullable(),
-});
-
-/** Just enough of a stored lobby to read its seat ids. */
-const legacySnapshotSchema = z.object({
-  host: z.object({ id: z.string() }),
-  guest: z.object({ id: z.string() }).nullable(),
 });
 
 /** The countdown ended but the match couldn't START (a chosen deck wouldn't

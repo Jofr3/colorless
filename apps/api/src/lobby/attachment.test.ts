@@ -7,12 +7,10 @@ import {
   attachedPlayer,
   attachedSession,
   attachedUserId,
-  attachLogDeltas,
   attachOverflow,
   attachPlayer,
   attachAccount,
   isOverflow,
-  takesLogDeltas,
 } from "./attachment";
 
 /** The runtime contract in miniature: whatever was serialized comes back. */
@@ -85,7 +83,6 @@ describe("attachment codec", () => {
     expect(attachedDisplayName(ws)).toBeNull();
     attachAccount(ws, account("user-9", "Ana"));
     attachPlayer(ws, "player-1");
-    attachLogDeltas(ws, true);
     attachConnectedAt(ws, 1);
     expect(attachedDisplayName(ws)).toBe("Ana");
     attachAccount(ws, account("user-9", null));
@@ -108,7 +105,6 @@ describe("the session and the connection time", () => {
     attachConnectedAt(ws, 1234);
     attachAccount(ws, account("user-9", "Ana"));
     attachPlayer(ws, "player-1");
-    attachLogDeltas(ws, true);
     expect(attachedSession(ws)).toEqual({ userId: "user-9", sessionId: "session-of-user-9" });
     expect(attachedConnectedAt(ws)).toBe(1234);
   });
@@ -120,30 +116,5 @@ describe("the session and the connection time", () => {
     expect(attachedUserId(old)).toBe("user-9");
     expect(attachedSession(old)).toBeNull();
     expect(attachedConnectedAt(fakeSocket({ connectedAt: "soon" }))).toBeNull();
-  });
-});
-
-describe("the log-delta flag", () => {
-  it("reads false until a hello announces it, and survives every other write", () => {
-    const ws = fakeSocket();
-    expect(takesLogDeltas(ws)).toBe(false);
-    attachAccount(ws, account("user-9", null));
-    attachLogDeltas(ws, true);
-    attachConnectedAt(ws, 1);
-    expect(takesLogDeltas(ws)).toBe(true);
-    attachPlayer(ws, "player-1");
-    attachAccount(ws, account("user-10", null));
-    expect(takesLogDeltas(ws)).toBe(true);
-    expect(attachedPlayer(ws)).toBe("player-1");
-    attachLogDeltas(ws, false);
-    expect(takesLogDeltas(ws)).toBe(false);
-    expect(attachedUserId(ws)).toBe("user-10");
-  });
-
-  it("reads false for an attachment written without it", () => {
-    expect(takesLogDeltas(fakeSocket({ playerId: "p", userId: null, spectating: false }))).toBe(
-      false,
-    );
-    expect(takesLogDeltas(fakeSocket({ logDeltas: "yes" }))).toBe(false);
   });
 });

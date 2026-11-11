@@ -3,12 +3,11 @@
 // `userId`, `sessionId` and `displayName` are the account from the session cookie at upgrade, set
 // independently of the seat; none is ever broadcast. The session id lets the match handoff check
 // that the session still lives when it reads the account's decks. `connectedAt` is when the upgrade
-// was accepted, which the liveness sweep judges a never-answered socket by. `logDeltas` records
-// that the socket's hello announced it takes log deltas in match frames.
+// was accepted, which the liveness sweep judges a never-answered socket by.
 //
-// Attachments written before `sessionId` and `connectedAt` existed read them as null. A deploy
-// disconnects every socket, so such attachments do not outlive one in practice; the readers below
-// say what a null means.
+// Attachments written before `sessionId` existed read it as null. A deploy disconnects every
+// socket, so such attachments do not outlive one in practice; the readers below say what a null
+// means.
 
 /** The slice of the WebSocket API the codec touches — lets tests use a plain
     fake instead of a runtime socket. */
@@ -20,7 +19,6 @@ type LobbyAttachment = {
   sessionId: string | null;
   displayName: string | null;
   connectedAt: number | null;
-  logDeltas: boolean;
   overflow: boolean;
 };
 
@@ -36,7 +34,6 @@ function read(ws: AttachmentCarrier): LobbyAttachment {
       sessionId: null,
       displayName: null,
       connectedAt: null,
-      logDeltas: false,
       overflow: false,
     };
   }
@@ -47,7 +44,6 @@ function read(ws: AttachmentCarrier): LobbyAttachment {
     sessionId: typeof partial.sessionId === "string" ? partial.sessionId : null,
     displayName: typeof partial.displayName === "string" ? partial.displayName : null,
     connectedAt: Number.isFinite(partial.connectedAt) ? (partial.connectedAt as number) : null,
-    logDeltas: partial.logDeltas === true,
     overflow: partial.overflow === true,
   };
 }
@@ -81,11 +77,6 @@ export function attachConnectedAt(ws: AttachmentCarrier, connectedAt: number): v
   update(ws, { connectedAt });
 }
 
-/** Record whether the socket's latest hello announced that it takes log deltas. */
-export function attachLogDeltas(ws: AttachmentCarrier, logDeltas: boolean): void {
-  update(ws, { logDeltas });
-}
-
 /** Mark a socket admitted past the lobby's socket cap: its hello is answered "full" and it is
     closed, and it never takes a seat or receives a broadcast. */
 export function attachOverflow(ws: AttachmentCarrier): void {
@@ -95,11 +86,6 @@ export function attachOverflow(ws: AttachmentCarrier): void {
 /** Whether this socket was admitted past the socket cap only to be turned away. */
 export function isOverflow(ws: AttachmentCarrier): boolean {
   return read(ws).overflow;
-}
-
-/** Whether this socket's match frames may carry only the log's new entries. */
-export function takesLogDeltas(ws: AttachmentCarrier): boolean {
-  return read(ws).logDeltas;
 }
 
 /** The player id a socket is bound to, or null for a never-seated socket (or an
@@ -124,7 +110,7 @@ export function attachedSession(
   return userId === null || sessionId === null ? null : { userId, sessionId };
 }
 
-/** When the upgrade accepted this socket, or null for an attachment from before it was recorded. */
+/** When the upgrade accepted this socket, or null for an attachment that never recorded it. */
 export function attachedConnectedAt(ws: AttachmentCarrier): number | null {
   return read(ws).connectedAt;
 }

@@ -224,6 +224,14 @@ something else.
     commit it as a fixture with the version it was written at. The step's test migrates it and
     plays 20 steps with `fixtures/fuzz.ts`'s checks. Delete the fixture when its version retires.
     An `unchanged` or `withDefaultKeys` step needs none.
+  - **Compat code has a sunset** (maintainability audit LEG4). Code that reads a shape the lobby DO
+    stored or a socket attachment it wrote may go one release after the release that stopped
+    writing it: a lobby is wiped after `INACTIVE_LOBBY_MS` without play, and a deploy drops
+    every socket. Code for an older web build may go 7 days after the build that replaced it.
+    Name the release or date in the compat comment, and before deleting, check Workers Logs
+    for the line the path logs. Lobby protocol breaks are keyed by `LOBBY_PROTOCOL` (§3.6 of
+    backend-data.md), not by sniffing a frame's shape. Match records are not compat code: their
+    migration steps follow the rules above.
 - Reuse the shared engine helpers instead of re-spelling them: `inPlayOf`,
   `bodyAt`/`pokemonAt`, `relativeSeat`, `turnOwnerOf`, `clearedAttackEffects`,
   `HP_PER_COUNTER`/`damageCountersOn`, and for the §9 once-per-turn bag

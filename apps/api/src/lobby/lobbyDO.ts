@@ -46,11 +46,9 @@ import {
   attachedPlayer,
   attachedSession,
   attachedUserId,
-  attachLogDeltas,
   attachOverflow,
   attachPlayer,
   isOverflow,
-  takesLogDeltas,
 } from "./attachment";
 import { loadCardPool } from "./cardPool";
 import { type DeckOwner, type LoadDeckResult, loadPlayerDeck } from "./deckLoad";
@@ -71,7 +69,6 @@ import {
   type HelloDecision,
   helloDecision,
   INACTIVE_LOBBY_MS,
-  isLegacySnapshot,
   livenessSweepMs,
   LOBBY_SOCKET_CAP,
   LOBBY_SOCKET_HARD_CAP,
@@ -328,13 +325,7 @@ export class LobbyDO {
       if (!isWebSocketUpgrade(request.headers.get("Upgrade"))) {
         return Response.json({ error: "expected a websocket upgrade" }, { status: 426 });
       }
-      // A lobby stored before the seat secret split is wiped and answered like an expired one.
-      if (
-        (await this.retireLegacyLobby()) ||
-        (await this.state.storage.get(CREATED_KEY)) === undefined
-      ) {
-        return noSuchLobby();
-      }
+      if ((await this.state.storage.get(CREATED_KEY)) === undefined) return noSuchLobby();
       // The flood guard, before the D1 session read: past it even a seated player is refused.
       // Only a seat-holding account's sockets get past LOBBY_SOCKET_CAP to reach it.
       if (this.members().length >= LOBBY_SOCKET_HARD_CAP) return await this.refuseUpgrade();
@@ -440,20 +431,10 @@ export class LobbyDO {
       await this.log("hello_refused", { cause: "outdated", protocol: frame.protocol ?? 0 }, true);
       return await this.closeSocket(ws, LOBBY_WS_OUTDATED, "client outdated");
     }
-    attachLogDeltas(ws, frame.logDeltas === true);
     // The hello's secret names the seat through its hash: a public id read off a snapshot is
     // not a secret, and the secret of the seat it names is known only to that seat's client. A
-    // `from` that is no secret at all comes from a client older than the split, which is told the
-    // lobby is full: it cannot hold a seat here, and a reload brings the current client.
-    if (!isSeatSecret(frame.from)) {
-      await this.log(
-        "hello_refused",
-        { cause: "credential", signedIn: attachedUserId(ws) !== null, spectating: false },
-        true,
-      );
-      this.send(ws, { kind: "reject", to: frame.from, reason: "full" });
-      return;
-    }
+    // `from` without a secret's shape is dropped like an invalid frame.
+    if (!isSeatSecret(frame.from)) return;
     const seatId = publicSeatId(frame.from);
     const decision = helloDecision(snapshot, seatId);
     if (decision === "reject-full") return await this.refuseSeat(ws, seatId, "full");
@@ -708,7 +689,7 @@ export class LobbyDO {
     const now = this.deps.now();
     let wiped = false;
     try {
-      wiped = (await this.retireLegacyLobby()) || (await this.maintain(now));
+      wiped = await this.maintain(now);
       this.retryNotBefore = null;
     } catch (error) {
       // Logged and not rethrown: the `finally` re-arms the alarm, and that is the retry. The
@@ -772,11 +753,7 @@ export class LobbyDO {
 
   /** Delete every key of the lobby, freeing its code, and any alarm set since this one fired.
       `sockets` is how many open sockets the wipe closed (4000). */
-  private async wipe(
-    now: number,
-    cause: "empty" | "inactive" | "legacy",
-    sockets = 0,
-  ): Promise<void> {
+  private async wipe(now: number, cause: "empty" | "inactive", sockets = 0): Promise<void> {
     const created = await this.state.storage.get(CREATED_KEY);
     await this.info("lobby_wiped", {
       cause,
@@ -793,32 +770,6 @@ export class LobbyDO {
     // set during this pass is left to clear.
     if (this.alarmAt !== null) await this.state.storage.deleteAlarm();
     this.alarmAt = null;
-  }
-
-  /**
-   * Wipe a lobby stored before the seat secret split, true when it did. Its seats are named
-   * by ids every snapshot broadcast, and no client holds a secret that hashes to them, so nobody
-   * could reclaim them: it is closed like an inactive lobby, and the clients, reloaded onto this
-   * deploy's web build, start a new one. Checked once per wake, before the snapshot is first read;
-   * a lobby this deploy wrote is never legacy.
-   */
-  private async retireLegacyLobby(): Promise<boolean> {
-    if (this.snapshot !== undefined) return false;
-    const raw = await this.state.storage.get(SNAPSHOT_KEY);
-    if (!isLegacySnapshot(raw)) {
-      this.snapshot = readSnapshot(raw);
-      return false;
-    }
-    const sockets = this.liveSockets();
-    for (const ws of sockets) {
-      try {
-        ws.close(LOBBY_WS_CLOSED, "lobby closed by a server update");
-      } catch {
-        // Already gone.
-      }
-    }
-    await this.wipe(this.deps.now(), "legacy", sockets.length);
-    return true;
   }
 
   /**
@@ -996,17 +947,10 @@ export class LobbyDO {
    * `close()` does not fire `webSocketClose`, so `socketGone` is called explicitly.
    */
   private async sweepSilentSockets(now: number): Promise<void> {
-    const connectedAt = (ws: WebSocket): number => {
-      const at = attachedConnectedAt(ws);
-      if (at !== null) return at;
-      // An attachment from before the upgrade recorded its time: start its window now, so a
-      // socket that never answers is still let go one window later.
-      attachConnectedAt(ws, now);
-      return now;
-    };
     let unanswered = 0;
     for (const ws of this.liveSockets()) {
-      const since = connectedAt(ws);
+      // Every socket is stamped at its upgrade.
+      const since = attachedConnectedAt(ws) ?? 0;
       // A turned-away socket that never sent the hello it would be answered "full" on.
       if (isOverflow(ws) && now - since > OVERFLOW_HELLO_MS) {
         await this.closeSocket(ws, 1013, "lobby full");
@@ -1111,8 +1055,7 @@ export class LobbyDO {
    */
   private async turnAway(ws: WebSocket, frame: LobbyClientMessage): Promise<void> {
     if (frame.kind === "hello") {
-      const to = isSeatSecret(frame.from) ? publicSeatId(frame.from) : frame.from;
-      this.send(ws, { kind: "reject", to, reason: "full" });
+      this.send(ws, { kind: "reject", to: publicSeatId(frame.from), reason: "full" });
     }
     await this.closeSocket(ws, 1013, "lobby full");
     await this.log("overflow_closed", { cause: "turned_away", code: 1013, sockets: 1 }, true);
@@ -1521,12 +1464,10 @@ export class LobbyDO {
     for (const ws of only === undefined ? this.liveSockets() : [only]) {
       const viewer = viewerOf(ws, snapshot, seatUsers);
       if (viewer === null) continue;
-      const from = takesLogDeltas(ws) ? logFrom : undefined;
-      const key = `${viewer}:${from ?? "all"}`;
-      let encoded = frames.get(key);
+      let encoded = frames.get(viewer);
       if (encoded === undefined) {
-        encoded = JSON.stringify(matchFrameFor(record, viewer, from));
-        frames.set(key, encoded);
+        encoded = JSON.stringify(matchFrameFor(record, viewer, logFrom));
+        frames.set(viewer, encoded);
       }
       this.sendEncoded(ws, encoded);
     }

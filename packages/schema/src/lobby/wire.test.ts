@@ -226,9 +226,10 @@ describe("lobbyClientMessageSchema (what the DO accepts)", () => {
     expect(parsed).toEqual({ kind: "hello", from: "g1", name: "Bo" });
   });
 
-  it("keeps a hello's log-delta announcement", () => {
-    const hello = { kind: "hello", from: "g1", name: "Bo", logDeltas: true };
-    expect(lobbyClientMessageSchema.parse(hello)).toEqual(hello);
+  it("keeps a hello's protocol, and drops the retired log-delta flag", () => {
+    const hello = { kind: "hello", from: "g1", name: "Bo", protocol: 1 };
+    expect(lobbyClientMessageSchema.parse({ ...hello, logDeltas: true })).toEqual(hello);
+    expect(lobbyClientMessageSchema.safeParse({ ...hello, protocol: -1 }).success).toBe(false);
   });
 });
 

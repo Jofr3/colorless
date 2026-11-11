@@ -547,12 +547,6 @@ describe("lobby abuse — sockets and lifetime (LB2, LB3)", () => {
 describe("lobby abuse — the match log (MIX2)", () => {
   it("MIX2: a log past its cap is trimmed behind a marker and sent whole, and its old chunks go", async () => {
     const { host, guest, actorSocket } = await matchInTurnOne();
-    for (const [ws, from] of [
-      [host, "h"],
-      [guest, "g"],
-    ] as const) {
-      await h.send(ws, { kind: "hello", from, name: `anon-${from}`, logDeltas: true });
-    }
     const record = await storedRecord();
     const filler = Array.from({ length: MATCH_LOG_MAX - record.log.length }, () => ({
       kind: "turn" as const,
@@ -820,12 +814,12 @@ describe("lobby abuse — what a snapshot gives away (LB5, LB6)", () => {
     const hostId = seen.host.id;
     const guestId = seen.guest.id;
 
-    // A signed-in intruder's hello with either seat's public id neither takes the seat nor binds
-    // it to the intruder's account.
+    // A signed-in intruder's hello with either seat's public id is dropped: it neither takes the
+    // seat nor binds it to the intruder's account.
     const intruder = await h.connect("eve");
     for (const id of [hostId, guestId]) {
       await h.send(intruder, { kind: "hello", from: id, name: "Evil" });
-      expect(intruder.last("reject")).toEqual({ kind: "reject", to: id, reason: "full" });
+      expect(intruder.sent).toEqual([]);
     }
     // A secret of its own names a seat of its own, which the held guest seat refuses.
     await h.send(intruder, hello("eve"));
@@ -848,7 +842,7 @@ describe("lobby abuse — what a snapshot gives away (LB5, LB6)", () => {
     expect(after?.guest).toMatchObject({ id: guestId, name: "Guest", connected: true });
     expect(guest.framesOf("reject")).toEqual([]);
     expect(h.storage.data.has("seatUsers")).toBe(false);
-    expect(logged("hello_refused")[0]).toMatchObject({ cause: "credential" });
+    expect(logged("hello_refused")).toMatchObject([{ cause: "full", signedIn: true }]);
 
     // The guest's own secret still seats it, and binds it to the account it signs in with.
     const signedIn = await h.connect("bo");
@@ -857,13 +851,12 @@ describe("lobby abuse — what a snapshot gives away (LB5, LB6)", () => {
     expect(h.storage.data.get("seatUsers")).toEqual({ [guestId]: "bo" });
   });
 
-  it("LB6: a client from before the split is answered full and holds nothing", async () => {
+  it("LB6: a hello whose from is no seat secret is dropped unanswered and holds nothing", async () => {
     await h.create();
     const old = await h.connect("ana");
     const uuid = "0b7f6a2e-9c1d-4e1f-8a6b-3c2d1e0f9a8b";
-    await h.send(old, { kind: "hello", from: uuid, name: "Ana", logDeltas: true });
-    // The old client shows a full lobby; a reload brings it the current client.
-    expect(old.sent).toEqual([{ kind: "reject", to: uuid, reason: "full" }]);
+    await h.send(old, { kind: "hello", from: uuid, name: "Ana" });
+    expect(old.sent).toEqual([]);
     expect(old.closed).toBeNull();
     await h.send(old, { kind: "intent", from: uuid, intent: { type: "set-ready", ready: true } });
     expect(h.storage.data.has("snapshot")).toBe(false);

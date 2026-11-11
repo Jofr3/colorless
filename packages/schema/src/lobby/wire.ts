@@ -77,15 +77,13 @@ export const lobbyIntentSchemaMatchesType: Equals<
 > = true;
 
 // The message shapes a client sends, composed here and, with the server's, in serverWire.ts.
-// A hello's `from` is the seat secret (seatId.ts). Its shape is the DO's to check rather than this
-// schema's: a frame that fails here is dropped unanswered, and a client from before the secret
-// should be told the lobby is full instead of waiting on silence.
+// A hello's `from` is the seat secret (seatId.ts); the DO drops a hello whose `from` has no secret's
+// shape, so its length bound is the only one here.
 export const helloMessageSchema = z.object({
   kind: z.literal("hello"),
   from: clientId,
   // The account display name's rule (displayName.ts), stripped rather than refused.
   name: z.string().transform(cleanDisplayName),
-  logDeltas: z.boolean().optional(),
   protocol: z.number().int().nonnegative().optional(),
 });
 export const intentMessageSchema = z.object({

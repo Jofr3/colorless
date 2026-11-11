@@ -21,7 +21,6 @@ import {
   FRAME_REFILL_PER_SECOND,
   type FrameBudget,
   helloDecision,
-  isLegacySnapshot,
   parseClientMessage,
   readSnapshot,
   readStored,
@@ -331,17 +330,14 @@ describe("readSnapshot — the stored shape, completed (3c-v)", () => {
     expect(read?.host.deckName).toBe("d");
   });
 
-  it("reads a lobby stored before seats had public ids as legacy, and as no snapshot (LB6)", () => {
+  it("reads a lobby whose seat id is no public seat id as no snapshot (LB6)", () => {
     const stored = lobbyWithGuest();
     const legacy = {
       ...stored,
       guest: stored.guest && { ...stored.guest, id: "0b7f6a2e-9c1d-4e1f-8a6b-3c2d1e0f9a8b" },
     };
-    expect(isLegacySnapshot(legacy)).toBe(true);
     expect(readSnapshot(legacy)).toBeNull();
-    expect(isLegacySnapshot(stored)).toBe(false);
-    expect(isLegacySnapshot(undefined)).toBe(false);
-    expect(isLegacySnapshot("nope")).toBe(false);
+    expect(readSnapshot(stored)).toEqual(stored);
   });
 
   it("keeps a stored avatar seed and reads a malformed seat as no snapshot", () => {
