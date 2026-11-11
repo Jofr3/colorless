@@ -1,14 +1,15 @@
-# Workstream: Simulator Engine (Phase 3)
+# Simulator engine (as built)
 
-Goal: replicate a real game of the Pokémon TCG well enough to play — first
-approximately, then more accurately each pass. Reused by online matches (P4).
-
-**Depends on:** P2 (real, usable decks) and `reference/ptcg-rules.md`.
+`packages/engine` (`@colorless/engine`) plays a game of the Pokémon TCG. The web app runs it for
+local play (`src/game/localHost.ts`) and the lobby Durable Object runs it as the authority for
+online matches (`apps/api/src/lobby/match.ts`). The rules spec is `reference/ptcg-rules.md`; the
+engine's coding rules are in `conventions.md` "Code & quality". The July plan and the milestone
+notes are in `archive/simulator-history.md`.
 
 ## Approach
-1. **Rules first.** `reference/ptcg-rules.md` (researched by a sub-agent) is the
-   spec: setup, turn structure, zones, status conditions, KO/prizes, win
-   conditions, first-turn restrictions, weakness/resistance math.
+1. **Rules first.** `reference/ptcg-rules.md` is the spec: setup, turn structure, zones, status
+   conditions, KO/prizes, win conditions, first-turn restrictions, weakness/resistance math.
+   Code cites it by section (`§8.1`).
 2. **Deterministic core.** A pure, seedable state machine:
    `GameState → Action → GameState` (+ emitted events for the UI/log). No
    randomness except a **seeded RNG** (shuffle, coin flips) so games are
@@ -17,147 +18,119 @@ approximately, then more accurately each pass. Reused by online matches (P4).
    under a 256-bit CSPRNG key (security audit MI1). A bare number is the old
    mulberry32 generator. Local saves made before the switch carry it and replay
    on it unchanged, and numeric seeds stay for tests, fixtures and `bun run bench`.
-3. **Composable, data-driven card effects.** Most cards are minor variations on a
-   few archetypes, so effects are authored as **data** — parameterized primitive
-   ops over shared templates, not one function per card — and every op emits a
-   semantic **event** the UI animates. Full design in the next section.
-4. **State shape** builds on the existing playmat types
-   (`src/features/playmat/types.ts`: BoardState, PlayerBoard, CardModel, zones)
-   and the canonical `Card` (D5).
 
-## Card-effect system — composable & data-driven
+## Engine as built
 
-Most cards are minor variations on a **small set of effect archetypes**, so the
-engine models effects as **composable primitives authored as data**, not a
-bespoke function per card. Four layers:
+**Turn structure.** `createGame` (`setup.ts`) deals and opens setup. `GameState.phase` says who
+must act and how: `setup:chooseFirst`, `setup:drawExtra`, `setup:place`, `turn:action`,
+`ko:takePrizes`, `ko:promote`, `effect:choose` and `gameOver` (`types.ts`; `phaseView.ts` is the
+one exhaustive switch over it). Whatever runs between player decisions (end of turn, the Pokémon
+Checkup, the next turn's draw, KO prizes and promotion, on-KO and on-damaged triggers) is queued
+as `PendingStage`s in `GameState.pending` and drained by `advance` (`flow.ts`), so a Knock Out can
+stop the tail for a decision and resume it.
 
-1. **Primitive ops (`EffectOp`)** — the engine's instruction set: `Damage`,
-   `ModifyDamage`, `PlaceDamageCounters`, `Heal`, `HealStatus`, `ApplyStatus`,
-   `DrawCards`, `SearchDeck`, `Shuffle`, `AttachEnergy`, `DiscardEnergy`,
-   `MoveCard`, `Switch`, `CoinFlip`, `ForEach`, `Conditional`, … Each op is a
-   pure `(GameState, Ctx) → GameState` **and emits a semantic event** (below).
-2. **Selectors & filters** — declarative targets (`self`, `opponentActive`,
-   `yourBench`, `allYourPokemonMatching(filter)`, `playerChooses(filter)`) and
-   card predicates (category / type / stage / isBasic / nameTag / energyCount…).
-   Parameters, not code.
-3. **Card effects as programs** — an attack is
-   `{ cost, baseDamage, ops: EffectOp[] }`; an ability is
-   `{ trigger, timing, oncePerTurn?, ops }`; a trainer / special energy is
-   `{ provides?, ops }`. The whole effect is a small **data tree**.
-4. **Archetype templates** — named builders for the common shapes, so a new card
-   in a known family is one line of params:
-   - `ballSearch({ cost, filter, dest })` → Nest / Great / Ultra / Quick / Level Ball
-   - `handRefresh({ mode })` → Iono / Judge / Marnie / N
-   - `gust()` → Boss's Orders-likes · `coinFlipDamage({ base, perHeads, flips })`
-   - `energyAccelFromDiscard({ filter, target })`, …
+**The action pipeline.** `applyAction(state, action)` (`index.ts`) is the only reducer. It never
+throws or mutates its input, including for malformed actions from the wire: a refusal is
+`{ok: false, error}`. It dispatches on `action.type` to `setup.ts`, `turn.ts` (attach, bench,
+evolve, retreat, end turn), `cardplay.ts` (Trainers, Tools, Abilities, `resolveEffect`),
+`attack.ts` (attack, prizes, promote), `bench.ts` and `flow.ts` (concede), then runs `postStepChecks`
+(`stateChecks.ts`) and `advance` when stages were queued. A choice is an action; anything with no
+choice in it (mulligan redraws, prize setting, the turn-start draw) resolves inside the reducer.
+Every state change is described by the `GameEvent`s it returns (`events.ts`).
 
-### Grounded in real tcgdex data (fetched live)
+**Where a card's behaviour comes from.** `programFor(id)` (`registry.ts`) returns the card's
+`CardProgram` (`programTypes.ts`): op lists for its attacks, Trainer effect, Abilities and
+triggers, plus passive, Stadium and Special Energy shapes. It reads `REGISTRY[id]`, then the row
+of the card's print_key group through `PROGRAM_ALIAS` (`registryAliases.generated.ts`), so a
+same-name, same-text reprint plays like its canonical printing. An attack with no program row is
+read from its printed text by the deriver (`effects.ts`, the `deriveAttack*` readers). Trainers
+and Abilities have no deriver. A card's `damage` field is a number, or a number with a `+`, `×`
+or `?` marker that the effect text resolves (`parseAttackDamage`, `cards.ts`).
 
-| Card | tcgdex `effect` | Op program |
-|---|---|---|
-| Nest Ball | "Search your deck for a Basic Pokémon, put it on your Bench, shuffle." | `SearchDeck(filter=BasicPokémon, dest=Bench)` → `Shuffle` — the shared **ball** archetype |
-| Gardevoir ex · *Psychic Embrace* | "…attach a Basic {P} Energy from discard to 1 of your {P} Pokémon… put 2 damage counters on it…" | ability: `AttachEnergy(from=Discard, filter=BasicP, target=chooseYourP)` → `PlaceDamageCounters(sameTarget, 2)`, guarded `notIfWouldKO` |
-| Pikachu ex · *Thunderbolt* | "Discard all Energy from this Pokémon." | attack `baseDamage:150` → `DiscardEnergy(self, all)` |
-| Iono's Voltorb · *Voltaic Chain* | damage `"20+"`: "+20 for each {L} Energy on all your Iono's Pokémon." | attack `baseDamage:20` → `ModifyDamage(+20 × count(energy=L, on=allYour(nameTag="Iono's")))` |
-| Jet Energy | "provides {C}… when attached to a Benched Pokémon, switch it to Active." | special energy `provides:[C]`, onAttach: `Switch(attached → Active)` |
+**Coverage.** What the engine cannot run is reported, never guessed. An unprogrammed Trainer is
+refused (`TRAINER_NOT_SIMULATED`), an attack text no reader takes still deals its base damage and
+emits `ATTACK_EFFECT_SKIPPED`, and a Special Energy with no program plays as {C}.
+`simulationGaps(card)` lists these per card; the deck builder shows it.
 
-Notes:
-- The **`damage` field encodes an op**: numeric = `baseDamage`; the `+` / `×` /
-  `?` markers (`"20+"`) mean the attack also carries a `ModifyDamage` or
-  `CoinFlip` op.
-- The raw `effect` / `ability.effect` text is stored at ingest and is the
-  **source a human or an LLM reads to author the op program** — tcgdex does not
-  provide the program itself. (Ingest must persist `abilities` text too — add an
-  `abilities_json` column to the `cards` table in `backend-data.md`.)
+**Effects, choices and prompts.** `interpreter.ts` is the one place an op program changes state.
+`runProgram` steps the ops (`stepOp`; the arm bodies are in `ops/*.ts` and the helper modules
+beside it). The op contract is `EffectOp` (`effectTypes.ts`), and each op declares in `OP_TRAITS`
+(`ops/traits.ts`) whether it parks. An op that needs a decision parks: the phase becomes
+`effect:choose` with a `prompt` and a `cont`, a plain-JSON continuation (`effectPrompt.ts`), so a
+parked game persists and replays. The answering seat sends `resolveEffect`; `answerOp` reads the
+answer and `resumeProgram` runs the rest. A choice with only one legal answer resolves without a
+prompt. The interpreter may place damage but never resolves a Knock Out: `settleProgram` and
+`collectKnockOuts` (`flow.ts`) do. Passives, Tools and Stadiums are a read model in
+`continuous.ts` (no events, no RNG); triggered Abilities are scanned in `triggers.ts`.
 
-### Coverage strategy
-Op programs are keyed by card id. A **structured fallback** derives what's purely
-mechanical from the data alone (cost, base damage, weakness / resistance,
-retreat, plain energy provision), so an un-authored card stays **playable** with
-its text-effect flagged "not simulated" rather than guessed. Authoring programs
-across the pool is a natural **Workflow** fan-out (batch by set; an LLM drafts
-the op program from the effect text, each verified against
-`reference/ptcg-rules.md`).
+**What clients see.** `redactGame(state, seat)` (`redact.ts`) builds the `RedactedGame` one viewer
+may see: no opponent hand, deck order or prize contents, no RNG state. `logFromEvents` (`log.ts`)
+turns events into the seat-keyed log, and `cuesFromEvents` (`cues.ts`) attaches the animation cues
+both table sources play. Clients read prompts and phases from the redacted game, never
+`pendingOp`.
 
-### Events → animation (built in, not bolted on)
-The reducer returns `(GameState, GameEvent[])`. Every primitive emits
-**semantic, serializable events** — `DAMAGE`, `ENERGY_ATTACHED`, `CARDS_DRAWN`,
-`SEARCH`, `COIN_FLIP`, `SWITCH`, `STATUS_APPLIED`, `DAMAGE_COUNTERS_PLACED`,
-`KNOCKOUT`, `PRIZE_TAKEN`, … The engine stays pure and knows nothing about
-rendering.
+**Persisted state.** `GAME_STATE_VERSION` and `migrateGameState` (`persist.ts`) version a stored
+game; the lobby's `MATCH_RECORD_VERSION` is the same number. `persistShape.test.ts` fails when the
+persisted shape changes without a bump. A local save is replayed from its actions and is dropped
+when `engineVersion` changes.
 
-- **Web:** an `animation[eventType]` registry maps each event to a playmat
-  animation (the existing Pixi / GSAP layer). Adding or changing an animation is
-  a registry entry — **no engine change**.
-- **Online (P4):** the DO broadcasts the same event stream (hidden-info-filtered
-  per player); clients animate identically. Local and online share one pipeline.
+**Module map.** `packages/engine/src` is flat, plus `ops/`, `deriver/` and `fixtures/`. Test
+helpers are in `fixtures/`, exported through `testFixtures.ts` as `@colorless/engine/testing`; deck
+rules and card classes without the interpreter are `@colorless/engine/rules`. Test-only tables
+(`bannerPool.ts`, `paradoxPool.ts`, `refusedPrintings.ts`, `censusAttackCorpus*.ts`,
+`catalogManifest.ts`) are not exported from the package.
 
-This is why the composable model pays off twice: it makes **authoring** cards
-cheap (params over templates) and makes **animation** a pure consumer of the
-event stream.
+| Area | Modules |
+|---|---|
+| Entry, state, actions | `index.ts`, `types.ts`, `actions.ts`, `events.ts`, `setup.ts`, `mulligans.ts` |
+| Turn and attack flow | `flow.ts`, `turn.ts`, `cardplay.ts`, `attack.ts`, `bench.ts`, `damageCalc.ts`, `stateChecks.ts`, `outcome.ts` |
+| Effects | `interpreter.ts`, `ops/`, `effectTypes.ts`, `effectPrompt.ts`, `effectTargets.ts`, `boardCondition.ts`, `promptText.ts`, `triggers.ts`, `triggerLookup.ts`, `continuous.ts` |
+| Card programs and text | `registry.ts`, `registryBuilders.ts`, `registryAliases.generated.ts`, `printGroups.ts`, `programTypes.ts`, `effects.ts`, `deriver/`, `cardText.ts`, `simulationGaps.ts` |
+| Card data | `cards.ts`, `cardClasses.ts`, `banners.ts`, `fossils.ts`, `deckRules.ts`, `rules.ts` |
+| Output | `redact.ts`, `phaseView.ts`, `log.ts`, `cues.ts`, `persist.ts`, `rng.ts` |
 
----
+## Writing a card program
+
+Find the work in `simulationGaps(card)` or the "Deferred" list in `reference/card-revision.md`.
+Take the printed text from the card's row in the local D1 catalog (`attacks_json`,
+`abilities_json`, `effect`) and quote it exactly.
+
+1. **An attack text** may need no row: if one of the `deriveAttack*` readers in `effects.ts` takes
+   it, or can with a small widening, change the reader and every card with that wording follows.
+   Trainers, Abilities, Tools, Stadiums and Special Energy always need a program.
+2. **The program** goes in `registry.ts`: a `CardProgram` const named for the card or mechanic,
+   with the printed text as its doc comment, built from existing `EffectOp`s and the
+   `registryBuilders.ts` shapes. Add one `REGISTRY` row (`"sv01-181": NEST_BALL`) on one printing;
+   its same-name, same-text reprints follow. If that printing is not the group's canonical one
+   (`canonicalPrinting`, `printGroups.ts`), or after an ingest, run
+   `bun scripts/registry-aliases.ts`. A twin with another name or different text has its own
+   print_key and needs its own row.
+3. **A new op**, when no composition of existing ops says it: a variant in `EffectOp`, its entry in
+   `OP_TRAITS`, a `stepOp` arm (body in `ops/*.ts`) and, if it parks, an `answerOp` arm (a missing
+   one fails to compile), its prompt in `effectPrompt.ts` and caption in `promptText.ts`. A new
+   prompt kind crosses the wire: `redact.ts`, the schema's `RedactedEffectPrompt`, the clients.
+4. **Persisted shape.** A new required field on persisted state, or on an op that can park, fails
+   `persistShape.test.ts`: bump `GAME_STATE_VERSION` and give the old version a migration step
+   (`conventions.md` "Code & quality"). Optional fields and new union members do not bump it.
+5. **The test** is a suite in `packages/engine/src` named for the mechanic. Build the card with its
+   real id and printed text (`trainerCard`, `battler` from `./testFixtures`) so `programFor` finds
+   the row, play it through `applyAction` from a `driveSetup` board, cover each clause and refusal,
+   and `roundTrip` a parked state. `censusAtHead.test.ts` pins the built counts (`BUILT`), so a
+   newly built text moves them.
+6. **Mutants.** Add rows to `scripts/mutation/mutants.ts` for the mistakes an author would make (a
+   neighbouring row's real code copied in), with `decision` naming the `decisions.md` entry and
+   `expectKilledBy` your suite (`bun scripts/mutation/reanchor.ts --write` fills in `symbol`).
+   Run each with `bun run mutants --only <id>` until it is KILLED (`conventions.md` "Mutants are
+   DECLARED").
+7. **Version.** A behaviour change bumps the minor version in `packages/engine/package.json` and
+   `engineVersion` in `index.ts` together, so local saves recorded under the old rules are dropped
+   rather than replayed. Grep the old version string for its other sites (`bun.lock`, a mutant
+   row's `find`, a few test titles).
+8. **A reading the spec does not settle** is recorded as a reading in the test and the
+   `decisions.md` entry, not left as a silent guess.
+9. Run `bun run check`, then write a dated `decisions.md` entry and run `bun run docs:index`.
 
 ## Testing
-- Unit tests per rule (KO → take prize, weakness ×2, status timing, deck-out
-  loss…) and **scripted end-to-end games** with a fixed seed.
+- Unit tests per rule and per card, plus seeded play-forward sweeps (`walkGame`, `fixtures/walk.ts`)
+  and the real-card fuzz (`actionFuzzReal.test.ts`).
 - The action/event log doubles as test fixtures and as the online wire format.
-
-## Milestones
-1. ✅ **Core state machine** — setup, turn phases, draw, energy attach, retreat,
-   pass. Built + reviewed 2026-07-14 (commit `d34146c`); as-built notes below.
-2. ✅ **Attacks** — costs, damage, weakness/resistance, KO + prize-taking, win
-   check. Built + xhigh-reviewed + fixed 2026-07-16; as-built notes below. The
-   **engine → playmat projection** (D17, `src/features/game/projection.ts`)
-   landed alongside it. **Wire-up done 2026-07-17:** the projection drives a
-   playable local hot-seat game at `/play` ("Wire-up as built" below).
-3. ✅ **Status conditions + Pokémon Checkup** — built + reviewed (8 finders /
-   7 verifiers, 10 reported findings all fixed) 2026-07-17; as-built notes
-   below. Includes the first sliver of the effect system: the **text-derived
-   status deriver** (D20).
-4. 🚧 **Evolution + Trainers + Abilities + persistent zones + KO generalized
-   off the Active done** (2026-07-17/18; as-built below). The effect-op
-   interpreter/registry drives real Item/Supporter Trainers and activated +
-   passive Abilities; slice 3 added the shared **Stadium** zone + Pokémon
-   **Tool** attachment with a **continuous-modifier pipeline** (continuous.ts);
-   slice 4 generalized the Knock Out off the Active — **bench spread/snipe
-   damage** and a **mid-turn KO that resumes the actor's turn** (closing the
-   evolve-below-HP gap); slice 5 added **Special Energy** — provision as data
-   (multi-unit + wildcard), a wildcard-aware cost matcher, and on-attach effects
-   (Jet Energy's switch); slice 6 added **triggered Abilities** (§9) at three
-   scan points (on-play-to-Bench, on-evolve, between-turns/Checkup) — board
-   triggers park on effect:choose, a between-turns counter KOs through the
-   Checkup sweep; slice 7 added **Rare Candy** (§7.1) — the Basic→Stage 2
-   evolve-skip Item, a dedicated action reusing the extracted `placeEvolution`
-   (so it inherits carry-over, the on-evolve trigger and the mid-turn KO), with
-   the Basic→Stage 2 link resolved by bridging through the Stage 1 name in the
-   pool; slice 8 added the **mid-turn-damage snipe** (§9) — a `damageChosen` op
-   that puts counters on chosen opponent Benched Pokémon (a multi-Pokémon prompt)
-   and KOs mid-turn through a unified `settleProgram` KO sweep, plus the engine's
-   first ability activation cost (Meowscarada's {G}-discard); slice 9 **CLOSED
-   M4** with **on-KO triggered Abilities** (§8.1) — a "when Knocked Out" Ability
-   fires mid-KO-sweep during the opponent's turn: a coin-flip prize guard
-   (Glimmora) resolved inline in the sweep, and a parking on-KO program run as a
-   `koTrigger` stage that folds through `settleProgram` with `resumeTail` (park
-   for a decision, then resume draining the KO's prize/promotion tail).
-5. 🚧 **Coverage-expansion pass(es) across the SV-era pool** — pass #1 done
-   (2026-07-19): a classify→verify Workflow fan-out over the 140 un-authored
-   sv01–03 Trainers/Energy/Abilities found only **5 expressible with the current
-   ops** (landed) and **113 needing new ops** — coverage is op-bound, so the
-   ranked **new-op backlog** (`docs/reference/coverage-backlog.md`) is the roadmap
-   for the next slices (`attachEnergyFrom` unlocks 11, `discardPileRetrieval` 6,
-   `lookAtTopN`/`moveEnergy`/`conditionalPlay` 5 each, …). First backlog op built:
-   **`attachEnergyFrom`** (2026-07-19) — the single-attach core (Quaquaval,
-   Baxcalibur; engine 0.12.0), the **targetType/bonusCounters/notIfKO riders**
-   authoring **Gardevoir ex** (engine 0.13.0), and **multi-attach (= N ops) +
-   `basicOnly` + the `endsTurn` fold** authoring **Koraidon ex "Dino Cry"** (engine
-   0.14.0). 4 of its 11 cards done; the other 7 need a deck-search source /
-   `lookAtTopN` / self-KO / onEvolve / …. Then **`discardPileRetrieval`** (2026-07-20,
-   engine 0.15.0 — the searchDeck mirror: Energy Retrieval / Pal Pad / Super Rod,
-   3 of 6) and **`lookAtTopN`** (2026-07-20, engine 0.16.0 — the deck-top twin:
-   Great Ball / Pokégear 3.0, 2 of 5; the from-the-top **attach** variant still
-   layers on for Electric Generator / Hydreigon).
-6. Harden for authoritative server use (P4): validation, hidden info, server-owned
-   RNG seed.
-
----
