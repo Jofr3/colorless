@@ -5,6 +5,7 @@
 // both. Not re-exported from ./index.ts, to keep the SDK out of the Worker bundle.
 
 import TCGdex from "@tcgdex/sdk";
+import { deadline } from "../http/deadline";
 
 /** The transports the CLI's `--transport` flag accepts. */
 export const TRANSPORTS = ["fetch", "sdk"] as const;
@@ -90,20 +91,6 @@ function retryAfterMs(value: string | null): number | undefined {
   const seconds = Number(value);
   const ms = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(value) - Date.now();
   return Number.isNaN(ms) ? undefined : Math.min(RETRY_AFTER_MAX_MS, Math.max(0, ms));
-}
-
-/** Rejects with a TimeoutError after `ms` unless `promise` settles first. Used where the request
-    cannot take a signal (the SDK), so the request itself keeps running until it settles. */
-function withDeadline<T>(promise: Promise<T>, ms: number): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const deadline = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => {
-      const error = new Error(`timed out after ${ms} ms`);
-      error.name = "TimeoutError";
-      reject(error);
-    }, ms);
-  });
-  return Promise.race([promise, deadline]).finally(() => clearTimeout(timer));
 }
 
 export interface FetchSourceOptions extends SourceOptions {
@@ -226,13 +213,17 @@ export function createSdkSource(options: SdkSourceOptions = {}): CatalogSource {
   async function read(kind: string, id: string, request: () => Promise<unknown>) {
     await pace();
     let payload: unknown;
+    // The SDK takes no signal, so a request past the deadline keeps running until it settles.
+    const limit = deadline(timeoutMs);
     try {
-      payload = await withDeadline(request(), timeoutMs);
+      payload = await limit.within(request());
     } catch (error) {
       // The SDK throws on a 5xx or a network failure, both worth another try.
       throw new SourceRequestError(`${describeFailure(error, timeoutMs)} for ${kind} ${id}`, true, {
         cause: error,
       });
+    } finally {
+      limit.clear();
     }
     if (payload === undefined) {
       // The SDK collapses 404/429/4xx into `undefined` and drops the status.
