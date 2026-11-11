@@ -1588,15 +1588,18 @@ POST   /auth/logout              # deletes the session row, clears the cookie �
 POST   /auth/logout-all          # session cookie → deletes every session of the account, clears
                                  #   the cookie → 204; 401 without a live session
 GET    /auth/me                  # session cookie → user, else 401 (expiry enforced here)
+PATCH  /auth/me                  # {displayName} → 200 user, and clears namePrompt; 400 blank or
+                                 #   over 64 characters once cleaned; 401 checked before the body;
+                                 #   a retired favouriteDeckId is ignored
 DELETE /auth/me                  # {password?, confirmEmail?} → 204, deletes the account (cascades),
                                  #   clears the cookie; 401 wrong/missing password; 403 OAuth-only
                                  #   account without its typed email; 429 rate-limited
 GET    /auth/oauth/:provider     # google — 302 to provider with a PKCE S256 challenge; 503
-                                 #   until secrets installed
+                                 #   until secrets installed; 404 {"error":"unknown provider"}
 GET    /auth/oauth/:provider/callback  # state-checked code exchange (PKCE verifier) → session, 302
                                  #   to APP_ORIGIN; failures 302 back with ?authError= state |
                                  #   exchange | profile | no-email | email-in-use | email-unverified |
-                                 #   unavailable (D1 failed)
+                                 #   unavailable (D1 failed); 404 for an unknown provider
 POST   /auth/verify-email  ·  POST /auth/reset-password
                                  # both 501 — blocked on choosing an email provider (§3.5)
 
@@ -1617,7 +1620,8 @@ POST   /auth/verify-email  ·  POST /auth/reset-password
 # limited to 60 a minute per account and 180 per IP (Workers Rate Limiting,
 # §3.7.4) → 429 `{"error":"too many requests"}` + Retry-After: 60.
 GET    /decks            # DeckSummary[]: {id, name, format, tint, folderId,
-                         #   updated, version, cardCount, coverCardId, cards?}
+                         #   position, updated, version, cardCount, coverCardId,
+                         #   cards?}, ordered by position
                          #   — cardCount = summed copy counts (0 when empty);
                          #   `cards` (as GET /decks/:id orders them) only on a
                          #   deck of exactly DECK_SIZE, so the sandbox/online
@@ -1625,8 +1629,10 @@ GET    /decks            # DeckSummary[]: {id, name, format, tint, folderId,
                          #   per-deck GET, and each row stays ≤60 entries.
                          #   Optional on the wire: a client falls back to
                          #   GET /decks/:id when it is absent (an older api)
-GET    /decks/:id        # full Deck: summary shape minus cardCount, plus
-                         #   cards: [{cardId, count}]
+GET    /decks/:id        # full Deck: {id, name, format, tint, folderId, position,
+                         #   updated, version, cards: [{cardId, count}],
+                         #   chosenCoverCardId} — the owner's cover pick, null for
+                         #   automatic (the summary's coverCardId is the face drawn)
 POST   /decks            # {name, tint 0–360, format?, folderId? (null), cards?}
                          #   → 201 Deck (server-minted UUID id, version 0);
                          #   409 {"error":"deck limit reached","limit":500} once
@@ -1635,8 +1641,12 @@ POST   /decks            # {name, tint 0–360, format?, folderId? (null), cards
                          #   (INSERT … SELECT … WHERE count < cap) and the cards
                          #   insert is guarded by EXISTS on the deck row, so
                          #   racing creates never pass the cap (security DK2)
-PATCH  /decks/:id        # any of {name, tint, format?, folderId? (null)} (null clears
-                         #   the nullable ones) AND/OR wholesale `cards`
+PATCH  /decks/:id        # any of {name, tint, format?, folderId? (null),
+                         #   chosenCoverCardId?} (null clears the nullable ones;
+                         #   a cover must be a card the deck holds after the patch,
+                         #   else 400 {"error":"cover card not in deck"}, and a
+                         #   `cards` replacement drops a pin whose card left)
+                         #   AND/OR wholesale `cards`
                          #   replacement (only the differing rows, in one
                          #   db.batch); writes only the named fields; refreshes
                          #   `updated` and bumps `version`; an empty patch (or
@@ -1657,7 +1667,8 @@ PATCH  /decks/:id        # any of {name, tint, format?, folderId? (null)} (null 
 DELETE /decks/:id        # 204 (deck_cards cascade away)
 
 # Lobby (Durable Object) — implemented (P1 m8, apps/api/src/lobby/; §3.6
-# as-built). Account-less: neither route reads the session cookie. Both are
+# as-built). Neither route needs a session; the upgrade forwards the `session`
+# cookie to the DO, which binds a signed-in seat to its account. Both are
 # limited per IP (Workers Rate Limiting) → 429 + Retry-After: 60.
 POST   /lobby                    # mint an unused code (draw + claim via the DO,
                                  #   retry on 409 collision) → 201 {code}; 503
@@ -1675,3 +1686,19 @@ GET    /lobby/:code/ws           # strict code check (404) → upgrade check (42
                                  #   handshakes aren't CORS-guarded and the 101
                                  #   response's headers are immutable
 ```
+
+**Adding an API route.**
+1. Write the handler in its area's `routes.ts` (`apps/api/src/<area>/`). Validate a body or
+   query with `validate("json" | "query", schema)` (`apps/api/src/http/validation.ts`), behind
+   `requireUser` when it needs a session, so a signed-out caller gets 401 before validation.
+2. Put the request and response schemas in `packages/schema/src/<area>/` and export them from
+   the package index; the web client (`src/lib/api.ts`) imports only their types.
+3. Mount a new area in `apps/api/src/index.ts` with `app.route`, after the CORS, cross-site and
+   body-limit middleware (only the lobby WebSocket mounts before them).
+4. Classify the route in `ACCESS` (`apps/api/src/routeAccess.d1.test.ts`) as `public`,
+   `requireUser` or `owner`; the sweep fails on a route missing there.
+5. Name any new log `evt` and `kind` in §3.7.4 (`scripts/log-guard.ts` fails otherwise). A new
+   rate limit is a `ratelimits` entry in `apps/api/wrangler.jsonc` with an unused
+   `namespace_id`, and a row in §3.7.4's binding table.
+6. Add the route's line above, and its tests beside it (`useTestD1` from
+   `apps/api/src/testing/d1.ts` for one that needs D1).
