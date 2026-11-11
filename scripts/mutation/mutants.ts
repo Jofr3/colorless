@@ -71051,4 +71051,25 @@ export const MUTANTS: Mutant[] = [
     replace: "    if (FENCE.test(joined)) inFence = false;",
     expectKilledBy: ["scripts/docsWrites.test.ts"],
   },
+  {
+    id: "DOC-P5-index-skips-archive",
+    decision: "DOC-P5",
+    what: "The index reads only decisions.md's table, so D101-D647, archived to decisions-numbered.md, drop out of it and their citations stop resolving.",
+    file: "scripts/decision-index.ts",
+    symbol: "TABLES",
+    find: "const TABLES = [DECISIONS, NUMBERED_ARCHIVE];",
+    replace: "const TABLES = [DECISIONS];",
+    expectKilledBy: ["scripts/decisionIndex.test.ts"],
+  },
+  {
+    id: "DOC-P5-archive-rows-say-decisions",
+    decision: "DOC-P5",
+    what: "Archived rows are listed under decisions.md, so the index sends a reader to a line of the live file that holds something else.",
+    file: "scripts/decision-index.ts",
+    symbol: "decisionIndex",
+    find: '      if (row) record(Number(row[1]), { file, line: i + 1, title: row[2] ?? "" });',
+    replace:
+      '      if (row) record(Number(row[1]), { file: DECISIONS, line: i + 1, title: row[2] ?? "" });',
+    expectKilledBy: ["scripts/decisionIndex.test.ts"],
+  },
 ];
