@@ -1,5 +1,7 @@
 # Simulator coverage — the new-op backlog (P3-M5)
 
+> **Finished program.** The coverage program this file tracked finished in October 2026 (`decisions.md` D580 for `sv`, D646 for `me`); this file is its history. The live list is `simulationGaps(card)` in the engine and the "Deferred" list in `card-revision.md`.
+
 The engine simulates cards as **data-driven op programs** (registry.ts). A card
 is playable when its printed effect maps onto the op vocabulary
 (`effects.ts` EffectOp, plus the continuous/energy/ability shapes in

@@ -1,5 +1,7 @@
 # Simulator coverage — the MEGA EVOLUTION serie backlog (D581, 2026-10-07)
 
+> **Finished program.** The coverage program this file tracked finished in October 2026 (`decisions.md` D580 for `sv`, D646 for `me`); this file is its history. The live list is `simulationGaps(card)` in the engine and the "Deferred" list in `card-revision.md`.
+
 > The `me` serie's legal printings, measured against the **LOCAL D1** right after D581
 > ingested it (`apps/api/.wrangler/state/v3/d1/…/8437d866….sqlite`; the remote D1 has not
 > been re-ingested). Engine **0.465.0**. The `sv` serie's census is
