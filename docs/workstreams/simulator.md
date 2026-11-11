@@ -113,7 +113,7 @@ Take the printed text from the card's row in the local D1 catalog (`attacks_json
    `persistShape.test.ts`: bump `GAME_STATE_VERSION` and give the old version a migration step
    (`conventions.md` "Code & quality"). Optional fields and new union members do not bump it.
 5. **The test** is a suite in `packages/engine/src` named for the mechanic. Build the card with its
-   real id and printed text (`trainerCard`, `battler` from `./testFixtures`) so `programFor` finds
+   real id and printed text (`trainerCard`, `battler` from `testFixtures.ts`) so `programFor` finds
    the row, play it through `applyAction` from a `driveSetup` board, cover each clause and refusal,
    and `roundTrip` a parked state. `censusAtHead.test.ts` pins the built counts (`BUILT`), so a
    newly built text moves them.
