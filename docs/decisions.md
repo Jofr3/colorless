@@ -152,6 +152,9 @@
   fetch+Zod posture is unchanged and remains the default.
 - Server **sessions** (http-only cookie), not stateless JWT.
 - Ingest filters to SV-era but writes the full-history schema.
+  **Amended 2026-11-11 (DOC-P0):** the catalog spans the `sv` and `me` series plus the
+  `swsh10.5` reprint set (the Mega serie since D581); the full-catalog ingest is in
+  `workstreams/backend-data.md` §3.4.1.
 - attacks/weaknesses/resistances stored as JSON columns for now (promote to
   child tables only if we need to query inside them).
 - English (`en`) first; schema leaves room for i18n later.
@@ -676,7 +679,7 @@ simply not updated for sixty slices. `docs/README.md` still names this file as *
 decision log, so a reader arriving here would otherwise conclude the project stopped
 deciding things in August. **It did not; the trail moved.** D369 records the fact
 rather than back-filling sixty rows, and adds its own row above so the file is at
-least current at the head. **Read `docs/progress.md`'s session log for D309–D368.**
+least current at the head. **Read `docs/archive/progress.md`'s session log for D309–D368.**
 
 ### 2026-10-09 — Requested rotated-card support
 

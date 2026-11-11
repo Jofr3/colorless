@@ -511,8 +511,9 @@ server's (`settleFirstPlayer`, apps/api/src/lobby/match.ts): a lobby's first
 game (or one after a tie) goes to the coin winner with no choice, and each
 rematch's previous loser picks Go first / Go second. The server is
 authoritative: refused actions pop the red error, Prizes and mulligan draws are
-taken automatically, and only the Supporter allowance is on the wire, so the
-Energy cell is hidden. Options become Settings / Concede / Leave match. Leave
+taken automatically, and the HUD's Energy and Supporter cells read the frame's
+`allowances` (a server that sends none leaves only the Supporter cell, recovered
+from the log). Options become Settings / Concede / Leave match. Leave
 during a live game uses the press-again pattern ("Leave? Forfeits", 3-second
 window); after the game it is immediate. Game over offers Rematch (Waiting...
 once sent) / Leave / Game log / View table. Both players stay at the finished
@@ -521,8 +522,10 @@ the second readies the other player, and the next game opens on the same table.
 Only an opponent who leaves or disconnects sends the wait back to the lobby
 modal. When the opponent drops, a
 `boss_warning_text` banner names them and counts down the 90-second forfeit
-locally; "{name} is back" pops when they return. Coin flips, the Energy and
-Retreat allowances and effect titles are not carried by the wire yet.
+locally; "{name} is back" pops when they return. Coin flips animate from the
+log's cues, and effect prompts take their title from the frame's `invokedBy` and
+`abilityName`. Only the top card of each stack is on the wire, so the bench order
+key (a stack's bottom card) is inferred from frame to frame and resets on reload.
 
 Protocol: Lua prints `COLORLESS:online:<cmd>` (fields encoded with
 `ui/codec.lua`, TAB-separated), which the bridge's shell hands to `LuaOnline`. Commands:

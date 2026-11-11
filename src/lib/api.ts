@@ -326,7 +326,7 @@ export function oauthStartUrl(provider: OAuthProvider, redirect = "/"): string {
 
 // ---- Decks (every route needs a session; 401 otherwise) --------------------
 
-/** Every deck of mine as list rows (`cardCount`, no card lists). */
+/** Every deck of mine as list rows: `cardCount`, and the card list of a complete deck. */
 export function listDecks(): Promise<DeckSummary[]> {
   return request("/decks");
 }

@@ -28,7 +28,9 @@ wire change: the Lua pages talk to the same lobby Durable Object as React.
   React-created lobby.
 - Not on the wire, so absent online: coin-flip events, the Energy/Retreat allowances, effect
   continuation titles and stack bottoms for bench order (a server deploy would have to add them to
-  `RedactedGame` first).
+  `RedactedGame` first). *Superseded 2026-10-26/27: the frame carries `allowances`, coin flips come
+  from the log's cues, and prompts carry `invokedBy`/`abilityName`; only stack bottoms are still
+  inferred client-side (`frontend/lua/README.md`, "Online").*
 
 ## Status — match RNG (security Phase 4, MI1, 2026-10-27)
 

@@ -68,7 +68,7 @@ Notes:
 - **Prizes** are face-down; a player who KOs an opponent's Pokémon chooses which of
   **their own** prize cards to take and reveals it to hand.
 - **Stadium** is a single shared zone — only one Stadium is in play at a time for
-  the whole game (see §8.3).
+  the whole game (see §7.3).
 - **Lost Zone** is a one-way removal zone (distinct from discard).
 
 ---
@@ -153,16 +153,16 @@ A turn is: **Start-of-turn** → **Action phase** → **Attack (optional, ends t
 |---|---|---|
 | Play a **Basic Pokémon** to the Bench | any number | Bench cap 5 |
 | **Evolve** a Pokémon | any number (each Pokémon once) | §10 timing rules |
-| **Attach 1 Energy** from hand to one of your Pokémon | **exactly 1 total** | §7 |
-| Play an **Item** | any number | §8.1 |
-| Play a **Supporter** | **1 per turn** | §8.2; P1 not on turn 1 |
-| Play a **Stadium** | **1 per turn** | §8.3; replaces existing |
-| Attach a **Pokémon Tool** | any number (1 Tool per Pokémon at a time) | §8.4 |
+| **Attach 1 Energy** from hand to one of your Pokémon | **exactly 1 total** | §6 |
+| Play an **Item** | any number | §7.1 |
+| Play a **Supporter** | **1 per turn** | §7.2; P1 not on turn 1 |
+| Play a **Stadium** | **1 per turn** | §7.3; replaces existing |
+| Attach a **Pokémon Tool** | any number (1 Tool per Pokémon at a time) | §7.4 |
 | **Retreat** the Active Pokémon | **1 per turn** | §11 |
 | Use an **Ability** | per the Ability's own limit | §9; some once-per-turn, some passive |
 
 ### 5.3 Attack step (optional; ends the turn [🆕 D570 (D539): except under Festival Lead, below])
-- The player **may** declare **one attack** with their **Active Pokémon** (see §9) [🆕 D570 (D539): Festival Lead (7 printings) is the built exception — with Festival Grounds in play, the same Pokémon may attack twice].
+- The player **may** declare **one attack** with their **Active Pokémon** (see §8) [🆕 D570 (D539): Festival Lead (7 printings) is the built exception — with Festival Grounds in play, the same Pokémon may attack twice].
 - Declaring an attack **ends the action phase**; after the attack resolves, the turn
   ends (proceed to Between-turns). A player may also **end the turn without attacking**.
   [🆕 D570 (D539): under Festival Lead, the FIRST attack instead opens an attack-again window
