@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fakeLobbyChannel, testSeatId, testSeatSecret } from "../test/fakeLobbyChannel";
 import { fullCardsFrom, json, stubFetch } from "../test/fetchStub";
 import { cardBrief } from "../test/fixtures";
+import { memoryStorage } from "../test/storageStub";
 import { clearCardPoolCache } from "../game/cardPool";
 import { deckStore } from "../decks/deckStore";
 import { LobbyClient, type LobbyClientOptions, UNREACHABLE_MS } from "../online/lobbyClient";
@@ -112,20 +113,12 @@ const identity = (code = CODE) => {
 };
 /** The public id of the seat this tab's staked secret claims. */
 const myId = () => publicSeatId(identity().secret);
-const store = () => {
-  const values = new Map<string, string>();
-  return {
-    getItem: (key: string) => values.get(key) ?? null,
-    setItem: (key: string, value: string) => values.set(key, value),
-    removeItem: (key: string) => values.delete(key),
-  };
-};
 
 let writeText: ReturnType<typeof vi.fn>;
 beforeEach(() => {
   vi.useFakeTimers();
-  vi.stubGlobal("sessionStorage", store());
-  vi.stubGlobal("localStorage", store());
+  vi.stubGlobal("sessionStorage", memoryStorage());
+  vi.stubGlobal("localStorage", memoryStorage());
   localStorage.setItem("online.playerName", "Ash");
   writeText = vi.fn(async () => {});
   vi.stubGlobal("navigator", { clipboard: { writeText } });
