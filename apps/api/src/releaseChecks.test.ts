@@ -15,6 +15,7 @@ import {
   envValue,
   healthTagProblem,
   MESSAGE_MAX,
+  movedRecordProblem,
   PIN_TTL_MS,
   pageReferences,
   parseBuildInfo,
@@ -23,6 +24,7 @@ import {
   previousReleaseTag,
   probeProblem,
   type ReleasePin,
+  recordsRoot,
   releaseLogLine,
   releaseTagName,
   remoteMainOf,
@@ -348,6 +350,44 @@ describe("the release record", () => {
     expect(line).toBe(
       `2026-11-10T09:05:00.000Z release-20261110-0905 commit=${HEAD} colorless-api=a1->a2 colorless=w1->? bookmark=bm balatro-source=f01aba9f`,
     );
+  });
+});
+
+describe("where the records live", () => {
+  it("is the main checkout, also from a worktree, and this checkout when git gives no checkout", () => {
+    expect(recordsRoot("/home/u/colorless/.git\n", "/home/u/colorless/.claude/worktrees/a")).toBe(
+      "/home/u/colorless",
+    );
+    expect(recordsRoot("/home/u/colorless/.git/", "/elsewhere")).toBe("/home/u/colorless");
+    expect(recordsRoot("/srv/colorless.git\n", "/home/u/clone")).toBe("/home/u/clone");
+    expect(recordsRoot(undefined, "/home/u/clone")).toBe("/home/u/clone");
+  });
+
+  it("names the move while a record is still in tmp/, and nothing once it has moved", () => {
+    const root = "/home/u/colorless";
+    const files =
+      (...paths: string[]) =>
+      (path: string) =>
+        paths.includes(path);
+    expect(movedRecordProblem(root, "releases.log", files(`${root}/tmp/releases.log`))).toBe(
+      `${root}/tmp/releases.log now lives in .local/; move it with: mkdir -p ${root}/.local && mv ${root}/tmp/releases.log ${root}/.local/releases.log`,
+    );
+    expect(
+      movedRecordProblem(
+        root,
+        "releases.log",
+        files(`${root}/tmp/releases.log`, `${root}/.local/releases.log`),
+      ),
+    ).toBe(
+      `${root}/tmp/releases.log is the older part of ${root}/.local/releases.log; join them with: cat ${root}/.local/releases.log >> ${root}/tmp/releases.log && mv ${root}/tmp/releases.log ${root}/.local/releases.log`,
+    );
+    expect(
+      movedRecordProblem(root, "releases.log", files(`${root}/.local/releases.log`)),
+    ).toBeUndefined();
+    expect(movedRecordProblem(root, "releases.log", files())).toBeUndefined();
+    expect(
+      movedRecordProblem(root, "releases.log", files(`${root}/tmp/d1-bookmarks.log`)),
+    ).toBeUndefined();
   });
 });
 

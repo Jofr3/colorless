@@ -16,6 +16,7 @@
 //             clean-tree requires the commit `check` and the gates saw. Refuses while another
 //             commit's release holds a pin younger than 15 minutes (`unlock` drops a dead one); a
 //             pin of the same commit is an earlier, failed run of this release and is taken over.
+//             Refuses, printing the move, while tmp/ still holds releases.log or d1-bookmarks.log.
 // clean-tree  No uncommitted changes; HEAD is the remote's main (`git ls-remote`, not the local
 //             origin/main ref, which a merge on GitHub leaves behind); and HEAD is the pinned commit
 //             while a release holds one. Checked again right before each wrangler deploy, because
@@ -45,7 +46,7 @@
 // web-health  The deployed page's <meta name="build"> is the released commit, and every /assets/
 //             and /love/ file it references answers 200, a script or style not as text/html.
 //             SITE_ORIGIN overrides .env.production's VITE_SITE_ORIGIN.
-// finish      Appends the release-log line (tmp/releases.log), prints the release notes (commit
+// finish      Appends the release-log line (.local/releases.log), prints the release notes (commit
 //             subjects since the previous release tag), tags HEAD `release-YYYYMMDD-HHMM` (UTC),
 //             pushes the tag and drops the pin.
 // abort       Drops a pin of HEAD and exits 1, so a failed release does not hold the next one.
@@ -85,6 +86,7 @@ import {
   deployTokenEnv,
   envValue,
   healthTagProblem,
+  movedRecordProblem,
   pageReferences,
   parseBuildInfo,
   parsePin,
@@ -99,12 +101,12 @@ import {
   webDistProblems,
 } from "../src/releaseChecks";
 import { missingSecrets, REQUIRED_SECRETS } from "../src/requiredSecrets";
-import { API_ROOT, type D1Target, d1Query, recordBookmark, wrangler } from "./d1";
+import { API_ROOT, type D1Target, d1Query, RECORDS_ROOT, recordBookmark, wrangler } from "./d1";
 import { readText } from "./with-deploy-token";
 
 const REPO_ROOT = join(API_ROOT, "..", "..");
 const PIN_FILE = join(REPO_ROOT, "tmp", "release.json");
-const RELEASE_LOG = join(REPO_ROOT, "tmp", "releases.log");
+const RELEASE_LOG = join(RECORDS_ROOT, ".local", "releases.log");
 const CI_REPO = "Jofr3/colorless";
 /** Each Worker by its wrangler.jsonc name, with the directory its config is in. */
 const WORKERS = [
@@ -197,6 +199,10 @@ const releasedCommit = () => currentPin()?.commit ?? git("rev-parse", "HEAD");
 
 const STEPS: Record<string, () => void | Promise<void>> = {
   pin: () => {
+    for (const name of ["releases.log", "d1-bookmarks.log"]) {
+      const unmoved = movedRecordProblem(RECORDS_ROOT, name, existsSync);
+      if (unmoved !== undefined) throw new Error(`pin: FAIL — ${unmoved}`);
+    }
     const head = git("rev-parse", "HEAD");
     const now = Date.now();
     const active = currentPin();
@@ -420,7 +426,7 @@ const STEPS: Record<string, () => void | Promise<void>> = {
       'A D1 error is logged as evt = "d1" in Workers Logs. To put the previous API back, from',
       "apps/api: `bunx wrangler deployments list`, then",
       "`bun scripts/with-deploy-token.ts bunx wrangler rollback <version id>`",
-      "(tmp/releases.log names the version each release replaced).",
+      "(.local/releases.log names the version each release replaced).",
       "See the recovery table in docs/workstreams/backend-data.md §3.7.2.",
     ];
     const versionProblem = await retried(async () => {
@@ -509,7 +515,7 @@ const STEPS: Record<string, () => void | Promise<void>> = {
         "A missing file: rebuild and deploy with `bun run deploy`. A bad build: from the repo root,",
         "`bunx wrangler deployments list`, then",
         "`bun apps/api/scripts/with-deploy-token.ts bunx wrangler rollback <version id>` (Worker colorless;",
-        "tmp/releases.log names the version the release replaced).",
+        ".local/releases.log names the version the release replaced).",
       ].join("\n"),
     );
   },
@@ -546,7 +552,7 @@ const STEPS: Record<string, () => void | Promise<void>> = {
     mkdirSync(join(RELEASE_LOG, ".."), { recursive: true });
     appendFileSync(RELEASE_LOG, `${line}\n`);
     rmSync(PIN_FILE, { force: true });
-    console.log(`finish: logged to tmp/releases.log:\n  ${line}`);
+    console.log(`finish: logged to ${RELEASE_LOG}:\n  ${line}`);
     const notes =
       previous === undefined
         ? []

@@ -364,7 +364,7 @@ export function balatroCommitOf(manifest: unknown): string | undefined {
   return isRecord(git) && typeof git.commit === "string" ? git.commit : undefined;
 }
 
-/** One tmp/releases.log line: when, the tag, the commit, each Worker's version before and after,
+/** One .local/releases.log line: when, the tag, the commit, each Worker's version before and after,
     the D1 bookmark taken before the migration, and the balatro-source commit in game.data. */
 export function releaseLogLine(input: {
   at: Date;
@@ -385,6 +385,31 @@ export function releaseLogLine(input: {
     `bookmark=${pin.bookmark ?? "?"}`,
     `balatro-source=${balatro ?? "?"}`,
   ].join(" ");
+}
+
+// ---- The records: .local/releases.log and .local/d1-bookmarks.log ----
+
+/** The checkout whose `.local/` holds the records, from `git rev-parse --path-format=absolute
+    --git-common-dir` (undefined when git failed): the main checkout, also from a worktree, so
+    removing a worktree cannot take a record with it. Else `fallback`, this checkout. */
+export function recordsRoot(commonDir: string | undefined, fallback: string): string {
+  const dir = commonDir?.trim().replace(/\/+$/, "");
+  return dir?.endsWith("/.git") ? dir.slice(0, -"/.git".length) : fallback;
+}
+
+/** The one-line fix when record `name` still sits in `root`'s tmp/, where it lived before
+    .local/; undefined once it has moved. */
+export function movedRecordProblem(
+  root: string,
+  name: string,
+  exists: (path: string) => boolean,
+): string | undefined {
+  const old = `${root}/tmp/${name}`;
+  const moved = `${root}/.local/${name}`;
+  if (!exists(old)) return undefined;
+  return exists(moved)
+    ? `${old} is the older part of ${moved}; join them with: cat ${moved} >> ${old} && mv ${old} ${moved}`
+    : `${old} now lives in .local/; move it with: mkdir -p ${root}/.local && mv ${old} ${moved}`;
 }
 
 // ---- The deploy token ----

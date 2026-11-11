@@ -2,14 +2,25 @@
 // queries against the local or remote D1, and the Time Travel bookmark recorded before a remote write.
 
 import { spawnSync } from "node:child_process";
-import { appendFileSync, mkdirSync } from "node:fs";
-import { join } from "node:path";
+import { appendFileSync, existsSync, mkdirSync } from "node:fs";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { movedRecordProblem, recordsRoot } from "../src/releaseChecks";
 
 export const DATABASE = "colorless";
 export const API_ROOT = fileURLToPath(new URL("..", import.meta.url));
-/** Gitignored at the repo root; one line per recorded bookmark, newest last. */
-export const BOOKMARK_LOG = join(API_ROOT, "..", "..", "tmp", "d1-bookmarks.log");
+
+const commonDir = spawnSync("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], {
+  cwd: API_ROOT,
+  encoding: "utf8",
+});
+/** The main checkout, whose gitignored `.local/` keeps the release log and the D1 bookmarks. */
+export const RECORDS_ROOT = recordsRoot(
+  commonDir.status === 0 ? commonDir.stdout : undefined,
+  resolve(API_ROOT, "..", ".."),
+);
+/** One line per recorded bookmark, newest last. */
+export const BOOKMARK_LOG = join(RECORDS_ROOT, ".local", "d1-bookmarks.log");
 
 export type D1Target = "--local" | "--remote";
 export type Row = Record<string, unknown>;
@@ -70,6 +81,8 @@ export function d1Query(target: D1Target, sql: string, persistTo?: string): Row[
  * window (7 days on the Free plan); the bookmark names the exact point before `reason`'s writes.
  */
 export function recordBookmark(reason: string): string {
+  const unmoved = movedRecordProblem(RECORDS_ROOT, "d1-bookmarks.log", existsSync);
+  if (unmoved !== undefined) throw new Error(unmoved);
   const out = wrangler(["d1", "time-travel", "info", DATABASE, "--json"]);
   let bookmark: unknown;
   try {
@@ -83,7 +96,7 @@ export function recordBookmark(reason: string): string {
   const at = new Date().toISOString();
   mkdirSync(join(BOOKMARK_LOG, ".."), { recursive: true });
   appendFileSync(BOOKMARK_LOG, `${at} ${bookmark} ${reason}\n`);
-  console.log(`D1 bookmark before ${reason}: ${bookmark} (logged to tmp/d1-bookmarks.log)`);
+  console.log(`D1 bookmark before ${reason}: ${bookmark} (logged to ${BOOKMARK_LOG})`);
   console.log(
     `  restore: bun scripts/with-deploy-token.ts bunx wrangler d1 time-travel restore ${DATABASE} --bookmark=${bookmark} (from apps/api)`,
   );
