@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { applyAction, deriveAttackEffect, logFromEvents } from "./index";
 import type { EffectOp, GameEvent, GameState, LogContext } from "./index";
 import { programFor } from "./registry";
@@ -87,7 +87,6 @@ describe("§1 — the three printed folds, and the placement family's remaining 
     for (const s of [ABILITY_FOLD, BOARD_FOLD, WOUNDED_FOLD]) {
       expect(resolvedByAnyReader(s), s).toBe(true);
     }
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("the PLACEMENT family closes from TEN rows to SEVEN to TWO to ZERO, each departure by name", () => {

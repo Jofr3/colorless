@@ -1,21 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
-  deriveAttackOptionalBoost,
   deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
   splitAttackGateClause,
+  ATTACK_READERS,
 } from "./effects";
 import type { GameState, Seat } from "./index";
 import {
@@ -29,22 +18,7 @@ import {
   findEvent,
 } from "./testFixtures";
 
-const READERS: readonly ((t: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackBonusConsequent,
-  deriveAttackOptionalCostBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackDiscardScaledBoost,
-];
+const READERS = ATTACK_READERS.map(({ read }) => read);
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
@@ -66,11 +40,6 @@ const PROGRAM = [
 ];
 
 describe("D405 §1 — the sentence, measured live over the legal column", () => {
-  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("is really in the column, ONCE, at FIVE printings — raw AND split-aware", () => {
     const rows = legalAttackCorpus().filter(([, s]) => s === TAKEN);
     expect([rows.length, units(rows)]).toEqual([1, 5]);

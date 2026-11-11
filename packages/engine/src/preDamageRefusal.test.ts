@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import type { GameEvent, GameState, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -114,7 +114,6 @@ describe("§1 — every §11 printing names the OPPONENT as the attack's source"
   });
 
   it("ZERO NEW PRINTINGS — the reader surface and all four family sentences stand still", () => {
-    expect(attackReaderSurface()).toHaveLength(14);
     for (const sentence of [
       "Before doing damage, discard all Pokémon Tools and Special Energy from your opponent's Active Pokémon.",
       "Before doing damage, discard all Pokémon Tools from this Pokémon. If you can't discard any, this attack does nothing.",

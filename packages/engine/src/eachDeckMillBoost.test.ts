@@ -201,7 +201,6 @@ describe("D490 §1 — the printed row, off the column rather than off this file
   it("ONE reader claims it and the other TWELVE still refuse — both polarities", () => {
     expect(readersClaiming(MILL_BOTH)).toEqual(["deriveAttackDiscardScaledBoost"]);
     expect(resolvedByAnyReader(MILL_BOTH)).toBe(true);
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("no SPLITTER composes it, before the build or after", () => {

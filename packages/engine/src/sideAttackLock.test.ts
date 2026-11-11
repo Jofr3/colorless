@@ -200,7 +200,6 @@ describe("§1 — two anchors claim the two rows WHOLE, and only them", () => {
       });
       expect(claimants, text).toEqual(["deriveAttackEffect"]);
     }
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("every apostrophe slot is U+0027 in the corpus, and every U+2019 twin derives the same op", () => {

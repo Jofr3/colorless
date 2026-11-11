@@ -1,21 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
-} from "./effects";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { deriveAttackDamageBonus, ATTACK_READERS } from "./effects";
 import type { BoardCondition, GameEvent, GameState, PokemonRef, Seat } from "./index";
 import { conditionHolds, conditionNote } from "./boardCondition";
 import {
@@ -43,22 +28,7 @@ const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus()
     module-private. Whole-sentence anchored at BOTH ends, like the reader's. */
 const BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
 
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackBonusConsequent,
-  deriveAttackOptionalCostBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackDiscardScaledBoost,
-];
+const READERS = ATTACK_READERS.map(({ read }) => read);
 
 const TAKEN = "If this Pokémon was healed during this turn, this attack does 100 more damage.";
 const TAKEN_CLAUSE = "this Pokémon was healed during this turn";
@@ -125,20 +95,11 @@ function picnicBasket(state: GameState, seat: Seat): { state: GameState; events:
 const SEEDS = [7001, 7013, 7027] as const;
 
 describe("§1 — the price, RE-DERIVED: the residue steps, and the 2-printing band EMPTIES", () => {
-  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the residue goes 20 / 24 → 19 / 22, and the band it leaves behind is EMPTY", () => {
     const refused = corpus().filter(([, s]) => BONUS.test(s.trim()) && !resolvedByAnyReader(s));
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
     expect(refused.length).toBe(0);
     expect(units(refused)).toBe(0);
-    expect([refused.length + 20, units(refused) + 24]).toEqual([20, 24]);
-    expect([refused.length + 21, units(refused) + 25]).toEqual([21, 25]);
-    expect([refused.length + 22, units(refused) + 26]).toEqual([22, 26]);
-    expect([refused.length + 24, units(refused) + 28]).toEqual([24, 28]);
 
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {

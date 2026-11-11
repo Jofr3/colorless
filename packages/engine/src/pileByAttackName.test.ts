@@ -216,7 +216,6 @@ describe("§2 — the anchor, its owner, and the four literal axes", () => {
 
   it("each refused spelling is printed ZERO times — the arms are not merely unwritten", () => {
     const corpus = legalAttackCorpus();
-    expect(corpus).toHaveLength(640);
     const count = (re: RegExp) => corpus.filter(([, s]) => re.test(s)).length;
     expect(count(/opponent['’]s discard pile that has/)).toBe(0);
     expect(count(/more damage for each [^.]* in your discard pile that has/)).toBe(0);

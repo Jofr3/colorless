@@ -1,21 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
-} from "./effects";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { deriveAttackDamageBonus, deriveAttackRequirement } from "./effects";
 import type { BoardCondition, GameEvent, GameState, Seat } from "./index";
 import { isImmobilized } from "./index";
 import { conditionHolds, conditionNote } from "./boardCondition";
@@ -40,23 +25,6 @@ const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus()
     module-private. Whole-sentence anchored at BOTH ends, like theirs. */
 const BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
 const NOTHING = /^If (.+), this attack does nothing\.$/;
-
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackBonusConsequent,
-];
 
 const ROASTING_HEAT =
   "If your opponent's Active Pokémon is Burned, this attack does 40 more damage.";
@@ -159,11 +127,6 @@ function readings(
 }
 
 describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a phrase to a WORD", () => {
-  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the bonus residue steps by exactly TWO sentences and TWO printings", () => {
     const refused = corpus().filter(([, s]) => BONUS.test(s.trim()) && !resolvedByAnyReader(s));
     // The DEPARTURE and the SIZE are asserted separately: a guard that only checked
@@ -172,19 +135,12 @@ describe("§1 — the price, RE-DERIVED: a 3:3 step, and a census widened from a
     expect(refused.some(([, s]) => s === MENTAL_CRUSH)).toBe(false);
     expect(refused.length).toBe(0);
     expect(units(refused)).toBe(0);
-    expect([refused.length + 24, units(refused) + 28]).toEqual([24, 28]);
-    expect([refused.length + 25, units(refused) + 30]).toEqual([25, 30]);
-    expect([refused.length + 26, units(refused) + 32]).toEqual([26, 32]);
-    expect([refused.length + 27, units(refused) + 34]).toEqual([27, 34]);
   });
 
   it("the CANCEL residue steps too — the third printing nobody was counting", () => {
     const refused = corpus().filter(([, s]) => NOTHING.test(s.trim()) && !resolvedByAnyReader(s));
     expect(refused.some(([, s]) => s === CHARRING_BREATH)).toBe(false);
     expect(refused).toEqual([]);
-    expect([refused.length + 1, units(refused) + 2]).toEqual([1, 2]);
-    expect([refused.length + 2, units(refused) + 4]).toEqual([2, 4]);
-    expect([refused.length + 3, units(refused) + 5]).toEqual([3, 5]);
   });
 
   it("THREE sentences, ONE legal printing each — a 3:3 step, which this run has not taken", () => {

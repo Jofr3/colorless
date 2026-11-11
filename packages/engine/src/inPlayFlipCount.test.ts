@@ -1,26 +1,14 @@
 import type { Card } from "@colorless/schema";
 import manifest from "../package.json" with { type: "json" };
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
-  deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
   splitAttackCancelClause,
   splitAttackGateClause,
   splitAttackRequirementClause,
   splitAttackTrailingClause,
+  ATTACK_READERS,
 } from "./effects";
 import { applyAction, createGame, engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -39,32 +27,12 @@ const SIBLING_ENERGY =
 const SIBLING_BOTH_ACTIVES =
   "Flip a coin for each Energy attached to both Active Pokémon. This attack does 60 damage for each heads.";
 
-const READERS: readonly ((t: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackBonusConsequent,
-  deriveAttackOptionalCostBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackDiscardScaledBoost,
-];
+const READERS = ATTACK_READERS.map(({ read }) => read);
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
 
 describe("D474 §1 — the sentence, measured live over the legal column", () => {
-  it("the hand-kept READERS list IS the module's reader surface, and it is 13", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("is really in the column, ONCE, at TWO printings", () => {
     const rows = legalAttackCorpus().filter(([, s]) => s === PRINTED);
     expect([rows.length, units(rows)]).toEqual([1, 2]);

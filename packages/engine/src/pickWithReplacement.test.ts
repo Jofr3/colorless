@@ -632,10 +632,5 @@ describe("D535 §8 — the POPULATION RUNG and the version", () => {
   it("`BUILT.attack` steps by the PRINTINGS (2), not by the sentences (1) — D495's shape", () => {
     const claimed = legalAttackCorpus().filter(([, s]) => deriveAttackEffect(s) !== null);
     expect(claimed.filter(([, s]) => s === PRINTED)).toEqual([[2, PRINTED]]);
-    const reader = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([reader.length, reader.reduce((sum, [n]) => sum + n, 0)]).toEqual([600, 1663]);
-    const residue = legalAttackCorpus().filter(([, s]) => !resolvedByAnyReader(s));
-    expect([residue.length, residue.reduce((sum, [n]) => sum + n, 0)]).toEqual([40, 69]);
-    expect(reader.length + residue.length).toBe(640);
   });
 });

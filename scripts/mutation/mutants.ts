@@ -14032,16 +14032,6 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["packages/engine/src/bonusConsequentThen.test.ts"],
   },
   {
-    id: "D382-refusal-instrument-loses-the-tenth-reader",
-    decision: "D382",
-    what: "\u{1F6D1} **THE DEFECT THIS SLICE FOUND, RE-INSTALLED.** `stadiumPresence.test.ts`'s `READERS` array loses `deriveAttackOptionalCostBoost` — the state it was actually in from D381 until D382, during which its `DISCARD_OP` list asserted a sentence was REFUSED while the tenth reader had been claiming it for a whole slice. **A REFUSAL GUARD WHOSE INSTRUMENT CANNOT SEE THE READER THAT EXPIRED IT READS GREEN FOR THE WRONG REASON**, and the `TAKEN_SINCE` list added in the same commit is what makes that detectable rather than silent",
-    file: "packages/engine/src/stadiumPresence.test.ts",
-    symbol: "READERS",
-    find: "  deriveAttackBonusConsequent,\n  deriveAttackOptionalCostBoost,\n  deriveAttackDiscardScaledBoost,\n];",
-    replace: "  deriveAttackBonusConsequent,\n  deriveAttackDiscardScaledBoost,\n];",
-    expectKilledBy: ["packages/engine/src/stadiumPresence.test.ts"],
-  },
-  {
     id: "D383-shuffled-energy-lands-in-the-discard-pile",
     decision: "D383",
     what: '\u{1F6D1} C1 — **THE DESTINATION DROPPED FROM THE DERIVER, so the printed *shuffle into your deck* becomes a DISCARD.** The card gets strictly worse (three Energy gone for good instead of recycled) and **EVERY "the Energy left the body" ASSERTION STAYS GREEN** — the Active ends empty either way, the snipe still lands, the confirm still parks. Only a read of BOTH zones reaches it, which is why `torrentialPump.test.ts` §5 asserts the deck GREW BY THREE and the pile did NOT. ⚠️ It is the SECOND PRODUCER of this field and owes its own row: `D296-the-derived-destination-falls-back-to-the-pile` mutates a different arm for a different value, and each is green under the other\'s kill',

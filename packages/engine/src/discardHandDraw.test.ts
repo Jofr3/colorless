@@ -1,21 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
-} from "./effects";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { deriveAttackEffect, ATTACK_READERS } from "./effects";
 import type { GameState } from "./index";
 import { programFor } from "./registry";
 import {
@@ -33,22 +18,7 @@ import {
 
 const attack = { type: "attack", seat: "p1", index: 0 } as const;
 
-const READERS: readonly ((t: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackBonusConsequent,
-  deriveAttackOptionalCostBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackDiscardScaledBoost,
-];
+const READERS = ATTACK_READERS.map(({ read }) => read);
 
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
@@ -66,11 +36,6 @@ const shuffledProgram = (count: number) => [
 const program = (count: number) => [{ op: "discardHand" }, { op: "drawCards", count }];
 
 describe("D404 §1 — the sentence, measured live over the legal column", () => {
-  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("is really in the column, ONCE, at SEVEN printings", () => {
     const rows = legalAttackCorpus().filter(([, s]) => s === TAKEN);
     expect([rows.length, units(rows)]).toEqual([1, 7]);

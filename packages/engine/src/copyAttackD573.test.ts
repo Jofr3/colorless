@@ -1,7 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { redactedEffectPromptSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackCopy, deriveAttackEffect, isResolvedAttackCopy } from "./effects";
 import { COPY_FAMILY_MARKER } from "./deriver/vocabulary";
 import type { EffectOp } from "./effectTypes";
@@ -655,11 +655,6 @@ describe("D573 §1 — the reader: four whole-sentence anchors, nine printings, 
     for (const [, s] of claimed) expect(resolvedByAnyReader(s)).toBe(true);
     expect(resolvedByAnyReader(HAUGHTY_ORDER)).toBe(true);
     expect(resolvedByAnyReader(SEEK_INSPIRATION)).toBe(true);
-  });
-
-  it("is on the ATTACK READER SURFACE by its prefix — 13 → 14", () => {
-    expect(attackReaderSurface()).toContain("deriveAttackCopy");
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("every copier's REAL printing carries no registry attack row at the copy index (the reader is the whole build)", () => {

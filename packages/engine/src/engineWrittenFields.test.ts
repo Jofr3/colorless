@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
-import * as effects from "./effects";
 import {
   bonusConsequentProgram,
   deriveAttackBonusConsequent,
@@ -11,6 +10,7 @@ import {
   discardScaledBoostProgram,
   optionalBoostProgram,
   optionalCostBoostProgram,
+  ATTACK_READERS,
 } from "./effects";
 import { ENGINE_ONLY_OPS, ENGINE_WRITTEN_FIELDS, type EffectOp } from "./effectTypes";
 import { programFor, registryCardIds } from "./registry";
@@ -50,15 +50,7 @@ function auditedOpsIn(value: unknown): string[] {
   );
 }
 
-type Reader = (text: string) => unknown;
-
-function isReader(value: unknown): value is Reader {
-  return typeof value === "function";
-}
-
-const READERS: readonly Reader[] = Object.entries(effects as Record<string, unknown>).flatMap(
-  ([name, value]) => (name.startsWith("deriveAttack") && isReader(value) ? [value] : []),
-);
+const READERS = ATTACK_READERS.map(({ read }) => read);
 
 /** Every program the deriver builds for one printed sentence, its boost builders included. */
 function derivedFor(text: string): unknown[] {

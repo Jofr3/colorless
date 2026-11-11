@@ -1,23 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
-  splitAttackGateClause,
-} from "./effects";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { deriveAttackEffect, splitAttackGateClause } from "./effects";
 import type { GameEvent, GameState, Seat } from "./index";
 import {
   applyAction,
@@ -53,23 +37,6 @@ const ANGELITE_CLAUSE =
 
 const MAGICAL_CHARM =
   "During your opponent's next turn, attacks used by the Defending Pokémon do 100 less damage (before applying Weakness and Resistance).";
-
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackBonusConsequent,
-];
 
 const SYLVEON = "sv08-086";
 const SYLVEON_PRE = "sv08.5-041";
@@ -214,11 +181,6 @@ function afterAngelite(seed: number, first: Seat, seat: Seat, activeId: string):
 }
 
 describe("D396 §1 — the corpus, the consequent it shares with Terapagos, and the split that buys THREE (D541)", () => {
-  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the corpus holds the sentence ONCE at THREE printings, and no reader takes it", () => {
     const rows = legalAttackCorpus().filter(([, text]) => text === ANGELITE);
     expect(rows.length).toBe(1);

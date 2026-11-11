@@ -1,21 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
   deriveAttackOptionalBoost,
   deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
   optionalCostBoostProgram,
+  ATTACK_READERS,
 } from "./effects";
 import { conditionHolds, conditionNote } from "./boardCondition";
 import type { BoardCondition, EffectOp, GameState, Seat } from "./index";
@@ -33,22 +22,7 @@ const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
 const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus();
 
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackBonusConsequent,
-  deriveAttackOptionalCostBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackDiscardScaledBoost,
-];
+const READERS = ATTACK_READERS.map(({ read }) => read);
 
 const PURGING =
   "You may discard your hand. If you discarded any cards in this way, this attack does 120 more damage.";
@@ -104,11 +78,6 @@ const say = (state: GameState, yes: boolean) =>
 const SEEDS = [9001, 9013, 9029] as const;
 
 describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", () => {
-  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the reading goes 7 sentences / 14 printings → 8 / 15, and the REFUSED half stands still", () => {
     const narrow = corpus().filter(([, s]) => NARROW.test(s));
     expect([narrow.length, units(narrow)]).toEqual([7, 14]);

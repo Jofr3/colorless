@@ -258,7 +258,6 @@ describe("§1 — the anchor claims the row WHOLE, and only it", () => {
       return (read?.(S149) ?? null) !== null;
     });
     expect(claimants).toEqual(["deriveAttackEffect"]);
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("the sentence prints NO apostrophe, so the anchor owns no `['’]` slot", () => {

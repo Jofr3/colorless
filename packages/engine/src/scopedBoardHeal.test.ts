@@ -96,7 +96,7 @@ describe("§1 — the two anchors, the corpus, and the disjointness", () => {
     expect((corpus.get(BASIC_TEXT) ?? 0) + (corpus.get(BENCH_TEXT) ?? 0)).toBe(4);
   });
 
-  it("THE FAMILY IS CLOSED AT TWO ADJECTIVES, measured over all 640 corpus rows", () => {
+  it("THE FAMILY IS CLOSED AT TWO ADJECTIVES, measured over every corpus row", () => {
     const loose = /^Heal (\d+) damage from each of your (.+) Pokémon\.$/;
     const hits = legalAttackCorpus()
       .filter(([, text]) => loose.test(text))

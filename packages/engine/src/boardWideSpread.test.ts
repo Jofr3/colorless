@@ -1,21 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
-} from "./effects";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { deriveAttackEffect, ATTACK_READERS } from "./effects";
 import type { EffectOp } from "./effectTypes";
 import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -65,22 +50,7 @@ const EX_V_FILTERED =
 const COMPOUND_NEAR_MISS =
   "This attack does 10 damage to each of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.) Switch this Pokémon with 1 of your Benched Pokémon.";
 
-const READERS: readonly ((t: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackBonusConsequent,
-  deriveAttackOptionalCostBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackDiscardScaledBoost,
-];
+const READERS = ATTACK_READERS.map(({ read }) => read);
 
 const program = (amount: number): EffectOp[] => [
   { op: "damageDefender", amount },
@@ -488,7 +458,6 @@ describe("D482 §8 — the printed base is DROPPED, and that is `programDamage`'
 
 describe("D482 §9 — the surface, the version and what does NOT move", () => {
   it("the hand-kept READERS list is the MODULE's, not a copy that has gone short", () => {
-    expect(READERS.map((r) => r.name).sort()).toEqual([...attackReaderSurface()].sort());
     expect(READERS).toHaveLength(14);
   });
 

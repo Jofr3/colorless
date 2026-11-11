@@ -1,24 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
   splitAttackCancelClause,
   splitAttackGateClause,
   splitAttackRequirementClause,
   splitAttackTrailingClause,
+  ATTACK_READERS,
 } from "./effects";
 import type { CardFilter, DamageCountSource } from "./effectTypes";
 import { applyAction } from "./index";
@@ -79,22 +69,7 @@ const READING = {
   count: { kind: "pokemonInPlay", seat: "you", filter: { kind: "anyPokemon" }, damagedOnly: true },
 } as const;
 
-const READERS = [
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackRequirement,
-];
+const READERS = ATTACK_READERS.map(({ read }) => read);
 
 const SPLITTERS = [
   splitAttackCancelClause,
@@ -722,11 +697,6 @@ describe("D519 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is still no car
     expect(parked.phase.kind).toBe("effect:choose");
     const prompt = parked.phase.kind === "effect:choose" ? parked.phase.prompt : undefined;
     expect(JSON.stringify(prompt)).toContain("that has any damage counters on it");
-  });
-
-  it("the reader SURFACE is unmoved at THIRTEEN, and the hand-kept list IS the module's", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("`FIXTURE_POOL` is BYTE-UNCHANGED — the demonstrator is a per-board clone", () => {

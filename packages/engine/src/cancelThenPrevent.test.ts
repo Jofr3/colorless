@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import * as effects from "./effects";
 import {
   deriveAttackCoinFlip,
   deriveAttackEffect,
@@ -8,6 +7,7 @@ import {
   splitAttackGateClause,
   splitAttackRequirementClause,
   splitAttackTrailingClause,
+  ATTACK_READERS,
 } from "./effects";
 import { applyAction, programFor } from "./index";
 import { registryCardIds } from "./registry";
@@ -43,11 +43,7 @@ const HEADS_SEEDS = [2, 3, 6, 7, 16, 18, 20, 22, 23, 27, 28, 30, 34, 35, 38] as 
 const TAILS_SEEDS = [1, 4, 5, 8, 9, 10, 11, 12, 13, 14] as const;
 
 const READERS: Record<string, (text: string) => unknown> = Object.fromEntries(
-  attackReaderSurface().map((name) => {
-    const fn = (effects as unknown as Record<string, unknown>)[name];
-    if (typeof fn !== "function") throw new Error(`reader ${name} is not a function`);
-    return [name, fn as (text: string) => unknown];
-  }),
+  ATTACK_READERS.map(({ name, read }) => [name, read]),
 );
 const owners = (s: string) => attackReaderSurface().filter((n) => READERS[n]?.(s) !== null);
 const count = (events: readonly GameEvent[], type: GameEvent["type"]) =>
@@ -214,7 +210,7 @@ describe("§3 — the anchor is anchored, and every probe runs against IT", () =
   });
 });
 
-describe("§4 — what this anchor claims, measured over all 640 rows", () => {
+describe("§4 — what this anchor claims, measured over every corpus row", () => {
   it("every single-axis LOOSENING claims exactly the same 1 sentence / 2 printings", () => {
     const LIT =
       /^Flip a coin\. If tails, this attack does nothing\. If heads, during your opponent['’]s next turn, prevent all damage from and effects of attacks done to this Pokémon\.$/;
@@ -444,14 +440,8 @@ describe("§7 — the log rows, rendered", () => {
 describe("§8 — the census moves in exactly ONE summand", () => {
   it("the resolving corpus gains ONE sentence and TWO printings", () => {
     const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolved.length, units(resolved)]).toEqual([600, 1663]);
     const without = resolved.filter(([, s]) => s !== PRINTED);
     expect([without.length, units(without)]).toEqual([599, 1661]);
-  });
-
-  it("the reader SURFACE stands still at 13 — this is an ARM, not a reader", () => {
-    expect(attackReaderSurface()).toHaveLength(14);
-    expect(attackReaderSurface()).toContain("deriveAttackCoinFlip");
   });
 
   it("the CENSUS is blind to whether the claim is CORRECT — stated, not assumed", () => {

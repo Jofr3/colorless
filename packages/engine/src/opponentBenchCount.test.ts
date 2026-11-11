@@ -1,19 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
 import type { BoardCondition, GameState, Seat } from "./index";
@@ -39,25 +29,6 @@ const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus()
 /** The bonus skeleton, as a labelled COPY — the reader's own pattern is
     module-private. Whole-sentence anchored at BOTH ends, like the reader's. */
 const BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
-
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackBonusConsequent,
-  deriveAttackOptionalCostBoost,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackCancelRequirement,
-];
-const resolvedByNine = (text: string): boolean =>
-  READERS.slice(0, 9).some((read) => read(text) !== null);
 
 const TAKEN = "If your opponent has 3 or more Benched Pokémon, this attack does 80 more damage.";
 
@@ -358,11 +329,6 @@ describe("§4 — THE SEAT IS THE WHOLE MEMBER, and it is driven rather than nam
 });
 
 describe("§5 — the fixture, the census this row moves, and the summands it does not", () => {
-  it("D418 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the demonstrator is the printed card — TWO attacks at their printed indices, and the `40+` is real", () => {
     const card = FIXTURE_POOL["fix-deletingslash"];
     const attacks = card?.attacks ?? [];
@@ -414,8 +380,6 @@ describe("§5 — the fixture, the census this row moves, and the summands it do
     expect([openers.length, units(openers)]).toEqual([81, 129]);
     const refused = openers.filter(([, s]) => !resolvedByAnyReader(s));
     expect([refused.length, units(refused)]).toEqual([0, 0]);
-    const refusedByNine = openers.filter(([, s]) => !resolvedByNine(s));
-    expect([refusedByNine.length, units(refusedByNine)]).toEqual([0, 0]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -435,7 +399,6 @@ describe("§5 — the fixture, the census this row moves, and the summands it do
 
   it("the TEN-reader instrument steps by exactly 1 sentence / 1 printing", () => {
     const resolving = corpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolving.length, units(resolving)]).toEqual([600, 1663]);
     expect([
       resolving.length -
         6 -

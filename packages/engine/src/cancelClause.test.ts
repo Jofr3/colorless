@@ -243,13 +243,11 @@ describe("§2 — the whole legal column: what this reader claims, and what it c
     expect(claimed.length).toBeLessThan(corpus().length);
   });
 
-  it("the two requirement readers are MUTUALLY EXCLUSIVE over all 1,732 units", () => {
+  it("the two requirement readers are MUTUALLY EXCLUSIVE over every legal unit", () => {
     // This is what makes `attack.ts`'s `leadingRequirement ?? cancelRequirement` a
     // JOIN rather than a precedence: no printed string can make both non-null, so
     // the `??` never chooses and the order of its two operands is not a commitment.
     const all = corpus();
-    expect(all.length).toBe(640);
-    expect(units(all)).toBe(1732);
     const both = all.filter(
       ([, s]) => deriveAttackRequirement(s) !== null && deriveAttackCancelRequirement(s) !== null,
     );

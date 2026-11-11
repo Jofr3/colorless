@@ -1,22 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { isStage1Pokemon, isStage2Pokemon } from "./cards";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
-} from "./effects";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { deriveAttackDamageBonus, deriveAttackRequirement } from "./effects";
 import type { BoardCondition, GameState } from "./index";
 import { conditionHolds, conditionNote } from "./boardCondition";
 import { programFor, registryCardIds } from "./registry";
@@ -38,23 +23,6 @@ const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus()
 /** The bonus skeleton, as a labelled COPY — the reader's own pattern is
     module-private. Whole-sentence anchored at BOTH ends, like the reader's. */
 const BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
-
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackBonusConsequent,
-];
 
 const TAKEN =
   "If your opponent's Active Pokémon is a Stage 1 Pokémon, this attack does 90 more damage.";
@@ -124,11 +92,6 @@ function damageDealt(state: GameState): number {
 }
 
 describe("§1 — the SHAPE question, settled from the catalog before the price one", () => {
-  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the sentence is real, is worth ONE printing, and was refused at D386's head", () => {
     expect(units(corpus().filter(([, s]) => s === TAKEN))).toBe(1);
     expect(corpus().filter(([, s]) => s === TAKEN)).toHaveLength(1);

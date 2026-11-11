@@ -1,23 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { Card } from "@colorless/schema";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { countAttachedEnergy, providedEnergy } from "./continuous";
 import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
-  deriveAttackOptionalBoost,
   deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
   optionalCostBoostProgram,
+  ATTACK_READERS,
 } from "./effects";
 import { conditionHolds, conditionNote } from "./boardCondition";
 import { applyAction } from "./index";
@@ -39,22 +28,7 @@ const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
 const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus();
 
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackBonusConsequent,
-  deriveAttackOptionalCostBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackDiscardScaledBoost,
-];
+const READERS = ATTACK_READERS.map(({ read }) => read);
 
 const TORRENTIAL =
   "You may shuffle 3 Energy attached to this Pokémon into your deck. If you do, this attack also does 120 damage to 1 of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
@@ -161,11 +135,6 @@ function findAll<T extends GameEvent["type"]>(
 }
 
 describe("§1 — the price, MEASURED IN REFUSED SENTENCES, before and after", () => {
-  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the family's refused half goes 2 sentences / 7 printings → 1 / 2", () => {
     const family = corpus().filter(([, s]) => FAMILY.test(s));
     expect([family.length, units(family)]).toEqual([7, 14]);

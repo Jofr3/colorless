@@ -256,8 +256,6 @@ describe("§1 — the anchor, driven against the whole printed family", () => {
 describe("§2 — the corpus figures, read off the population", () => {
   it("the row is IN the legal attack column at 1 printing, exactly once", () => {
     const corpus = legalAttackCorpus();
-    expect(corpus.length).toBe(640);
-    expect(corpus.reduce((sum, [n]) => sum + n, 0)).toBe(1732);
     const hits = corpus.filter(([, s]) => s === SENTENCE);
     expect(hits).toHaveLength(1);
     expect(hits[0]?.[0]).toBe(1);

@@ -1,21 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
-} from "./effects";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { deriveAttackDamageBonus, ATTACK_READERS } from "./effects";
 import type { BoardCondition, GameState, Seat } from "./index";
 import { conditionHolds, conditionNote } from "./boardCondition";
 import {
@@ -39,22 +24,7 @@ const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus()
     module-private. Whole-sentence anchored at BOTH ends, like the reader's. */
 const BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
 
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackBonusConsequent,
-];
+const READERS = ATTACK_READERS.map(({ read }) => read);
 
 const TAKEN =
   "If any of your Benched Cubone have any damage counters on them, this attack does 120 more damage.";
@@ -124,11 +94,6 @@ function other(seat: Seat): Seat {
 }
 
 describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", () => {
-  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the sentence is real, is worth ONE printing, and reached the SKELETON all along", () => {
     expect(corpus().filter(([, s]) => s === TAKEN)).toHaveLength(1);
     expect(units(corpus().filter(([, s]) => s === TAKEN))).toBe(1);
@@ -165,7 +130,6 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
     expect(resolvedByAnyReader(TAKEN)).toBe(true);
     expect([refused.length, units(refused)]).toEqual([0, 0]);
-    expect([refused.length + 9, units(refused) + 12]).toEqual([9, 12]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";

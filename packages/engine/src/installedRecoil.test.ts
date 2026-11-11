@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { installedRecoilOf, passivesOf } from "./continuous";
 import { deriveAttackEffect } from "./effects";
 import { applyAction, programFor } from "./index";
@@ -574,7 +574,7 @@ function intoWindow(state: GameState): GameState {
 }
 
 describe("D456 §1 — the datum, and the family CLOSED over the corpus", () => {
-  it("`Attacking Pokémon` over all 640 sentences returns THREE rows — and none is a ten", () => {
+  it("`Attacking Pokémon` over every corpus sentence returns THREE rows — and none is a ten", () => {
     const family = legalAttackCorpus().filter(([, t]) => /Attacking Pokémon/.test(t));
     expect(family).toHaveLength(3);
     expect(family.reduce((sum, [n]) => sum + n, 0)).toBe(8);
@@ -586,7 +586,6 @@ describe("D456 §1 — the datum, and the family CLOSED over the corpus", () => 
     expect(family.some(([, t]) => t.includes("10 damage counters"))).toBe(false);
     // …and ALL THREE now resolve, so the ATTACK column's half of this family is CLOSED.
     for (const [, t] of family) expect(resolvedByAnyReader(t), t).toBe(true);
-    expect(attackReaderSurface()).toHaveLength(14); // no fourteenth reader
   });
 
   it("the parenthetical varies BY PRINTING, which is why the alternation is not invented", () => {

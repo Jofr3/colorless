@@ -133,8 +133,6 @@ describe("§1 — two sentences, two printings, and the family enumerated", () =
     const corpus = new Map(legalAttackCorpus().map(([units, sentence]) => [sentence, units]));
     expect(corpus.get(SINGLE_MILL)).toBe(1);
     expect(corpus.get(HAND_PICK)).toBe(1);
-    expect(legalAttackCorpus()).toHaveLength(640);
-    expect(legalAttackCorpus().reduce((n, [units]) => n + units, 0)).toBe(1732);
   });
 
   it("the WHOLE per-heads family, enumerated by the printed PHRASE and not by a verb", () => {

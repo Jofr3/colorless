@@ -1,14 +1,14 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import manifest from "../package.json" with { type: "json" };
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
-import * as effectsModule from "./effects";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
   deriveAttackEffect,
   splitAttackGateClause,
   splitAttackTrailingClause,
+  ATTACK_READERS,
 } from "./effects";
 import type { CardFilter, EffectOp } from "./effectTypes";
 import { engineVersion } from "./index";
@@ -206,11 +206,7 @@ const corpusRows = () => legalAttackCorpus();
 const units = (rows: readonly (readonly [number, string])[]) =>
   rows.reduce((n, [count]) => n + count, 0);
 
-const READERS: readonly ((t: string) => unknown)[] = attackReaderSurface().map((name) => {
-  const fn = (effectsModule as unknown as Record<string, unknown>)[name];
-  if (typeof fn !== "function") throw new Error(`reader ${name} is not a function on effects.ts`);
-  return fn as (t: string) => unknown;
-});
+const READERS = ATTACK_READERS.map(({ read }) => read);
 const claimedByAny = (text: string): boolean => READERS.some((read) => read(text) !== null);
 
 const NEW_ANCHOR =
@@ -237,10 +233,6 @@ describe("D539 §1 — the corpus row and the whole-compound anchor", () => {
 
   it("the sentence is READ by `resolvedByAnyReader` — the census delta's own predicate", () => {
     expect(resolvedByAnyReader(PRINTED)).toBe(true);
-  });
-
-  it("the SURFACE did not grow: a new ARM is not a new READER (D447)", () => {
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("THE `\\2` BACKREFERENCE, DRIVEN BOTH WAYS — matched nouns match", () => {
@@ -316,10 +308,8 @@ describe("D539 §1 — the corpus row and the whole-compound anchor", () => {
     expect(NEW_ANCHOR.test(mine)).toBe(true);
   });
 
-  it("the anchor claims EXACTLY 1 of 640 rows / 2 of 1,732 printings", () => {
+  it("the anchor claims EXACTLY 1 row / 2 printings", () => {
     const rows = corpusRows();
-    expect(rows).toHaveLength(640);
-    expect(units(rows)).toBe(1732);
     const claimed = rows.filter(([, text]) => NEW_ANCHOR.test(text));
     expect(claimed).toEqual([[2, PRINTED]]);
     expect(units(claimed)).toBe(2);

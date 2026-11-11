@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import * as effects from "./effects";
 import {
   deriveAttackDamageMultiplier,
@@ -96,10 +96,6 @@ const benchDamage = (state: GameState, seat: Seat): number[] =>
 // ── §1 ─────────────────────────────────────────────────────────────────────────
 
 describe("§1 — the price and the family, re-derived off the corpus rather than quoted", () => {
-  it("the reader surface is the MODULE's, and it did not grow", () => {
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the printed sentence is real, is worth THREE printings, and is now CLAIMED", () => {
     const row = corpus().filter(([, s]) => s === PRINTED);
     expect(row).toHaveLength(1);

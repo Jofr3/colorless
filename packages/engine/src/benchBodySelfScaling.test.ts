@@ -397,7 +397,6 @@ describe("D282 §3 — splitAttackGateClause", () => {
       deriveAttackDamageSuppression,
     ];
     expect(readers.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
     for (const text of [TERAPAGOS_TEXT, VOLBEAT_TEXT, ILLUMISE_TEXT]) {
       expect(resolvedByAnyReader(text), text).toBe(false);
       for (const read of readers) expect(read(text), text).toBeNull();

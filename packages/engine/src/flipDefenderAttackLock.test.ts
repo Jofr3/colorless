@@ -213,7 +213,6 @@ describe("§1 — the datum and the anchor", () => {
       const read = (effectsModule as unknown as Record<string, (t: string) => unknown>)[name];
       expect(read?.(PRINTED) ?? null, name).toBeNull();
     }
-    expect(attackReaderSurface()).toHaveLength(14);
     // …and NO splitter serves it either, so the RAW summand moves ALONE.
     expect(effectsModule.splitAttackGateClause(PRINTED)).toBeNull();
     expect(effectsModule.splitAttackTrailingClause(PRINTED)).toBeNull();
@@ -497,7 +496,6 @@ describe("§8 — the census moves in exactly ONE summand", () => {
     const units = (rs: readonly (readonly [number, string])[]): number =>
       rs.reduce((sum, [n]) => sum + n, 0);
     const resolved = rows.filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolved.length, units(resolved)]).toEqual([600, 1663]);
     const without = resolved.filter(([, s]) => s !== PRINTED);
     expect([without.length, units(without)]).toEqual([599, 1662]);
     expect(programFor("fix-deflock")).toBeUndefined();

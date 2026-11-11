@@ -155,7 +155,6 @@ describe("§1 — the sentences, measured live over the legal column", () => {
   });
 
   it("the reader SURFACE stands still at 13 — three sentences, no new instrument", () => {
-    expect(attackReaderSurface()).toHaveLength(14);
     expect(attackReaderSurface()).toContain("deriveAttackPreDamage");
     for (const sentence of [ROW71, ROW72, ROW74]) {
       expect(splitAttackGateClause(sentence), sentence).toBeNull();

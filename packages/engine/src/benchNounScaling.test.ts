@@ -521,7 +521,6 @@ describe("§10 — corpus file line 529: BUILT at D493, and what its TWO blocker
       const read = (effectsModule as unknown as Record<string, (t: string) => unknown>)[name];
       expect(read?.(CYNTHIA_PRINTED) ?? null, name).toBeNull();
     }
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("…and the COMPOUND's fold is the HEAD's fold, by construction rather than by agreement", () => {

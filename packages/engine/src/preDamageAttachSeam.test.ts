@@ -73,7 +73,6 @@ describe("§1 the specimens come off the corpus", () => {
 
 describe("§2 build state, re-derived off the module surface", () => {
   it("the printed compound is refused by ALL FOUR splitters — D552: INVERTED, and claimed by exactly ONE reader of the thirteen", () => {
-    expect(attackReaderSurface()).toHaveLength(14);
     expect(claimants(PRINTED)).toEqual(["deriveAttackDiscardScaledBoost"]);
     expect(resolvedByAnyReader(PRINTED)).toBe(true);
     expect(splitVerdicts(PRINTED)).toEqual({

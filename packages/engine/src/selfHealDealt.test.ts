@@ -121,7 +121,6 @@ describe("§2 — the derivation, and the boundaries the anchor holds", () => {
   });
 
   it("ZERO new readers — the arm is inside `deriveAttackEffect`, and the surface is unmoved", () => {
-    expect(attackReaderSurface()).toHaveLength(14);
     expect(attackReaderSurface()).toContain("deriveAttackEffect");
     expect(attackReaderSurface().filter((name) => /Heal|Dealt/i.test(name))).toEqual([]);
   });

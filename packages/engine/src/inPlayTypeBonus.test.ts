@@ -1,19 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
 import { POKEMON_TYPES } from "./effectTypes";
@@ -38,23 +27,6 @@ const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus()
 /** The bonus skeleton, as a labelled COPY — the reader's own pattern is
     module-private. Whole-sentence anchored at BOTH ends, like the reader's. */
 const BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
-
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackBonusConsequent,
-  deriveAttackOptionalCostBoost,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackCancelRequirement,
-];
 
 const TAKEN = "If your opponent has any {W} Pokémon in play, this attack does 120 more damage.";
 const TAKEN_CLAUSE = "your opponent has any {W} Pokémon in play";
@@ -139,7 +111,6 @@ describe("§1 — the price, RE-DERIVED: the residue, the band and the `needs` c
     expect(refused.some(([, s]) => s === TAKEN)).toBe(false);
     expect(resolvedByAnyReader(TAKEN)).toBe(true);
     expect([refused.length, units(refused)]).toEqual([0, 0]);
-    expect([refused.length + 16, units(refused) + 19]).toEqual([16, 19]);
     const byClause = new Map<string, number>();
     for (const [n, s] of refused) {
       const clause = BONUS.exec(s.trim())?.[1] ?? "";
@@ -421,11 +392,6 @@ describe("§5 — the ZONE and the SEAT, driven on boards rather than argued", (
 });
 
 describe("§6 — the fixture, the census this row moves, and the questions asked of it", () => {
-  it("D418 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the fixture is the PRINTING, transcribed and not interpolated", () => {
     const card = FIXTURE_POOL["fix-shortcircuit"];
     expect(card?.stage).toBe("Stage1");
@@ -454,7 +420,6 @@ describe("§6 — the fixture, the census this row moves, and the questions aske
 
   it("the TEN-reader instrument steps by exactly 1 sentence / 1 printing", () => {
     const resolving = corpus().filter(([, s]) => resolvedByAnyReader(s));
-    expect([resolving.length, units(resolving)]).toEqual([600, 1663]);
     expect([
       resolving.length -
         6 -

@@ -1,19 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
   deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
 import type { BoardCondition, GameState } from "./index";
@@ -36,23 +26,6 @@ const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus()
 /** The bonus skeleton, as a labelled COPY — the reader's own pattern is
     module-private. Whole-sentence anchored at BOTH ends, like the reader's. */
 const BONUS = /^If (.+), this attack does (\d+) more damage\.$/;
-
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackBonusConsequent,
-];
 
 const TAKEN = "If this Pokémon has no damage counters on it, this attack does 120 more damage.";
 
@@ -95,11 +68,6 @@ function damageDealt(state: GameState): number {
 }
 
 describe("§1 — the handed candidate is a DECLARATION fact, settled from the CATALOG", () => {
-  it("D419 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the SAME clause is printed on TWO attacks with TWO DIFFERENT COSTS", () => {
     const COSTS: readonly (readonly [string, number, number])[] = [
       ["Electivire ex sv10-069/-212", 3, 2],

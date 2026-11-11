@@ -1,25 +1,10 @@
 import { describe, expect, it } from "vitest";
-import {
-  attackReaderSurface,
-  legalAttackCorpus,
-  resolvedByAnyReader as readByAny,
-} from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader as readByAny } from "./censusAttackCorpus";
 import { effectiveRetreatCost } from "./continuous";
 import {
-  deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
   splitAttackCancelClause,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
   deriveAttackRequirement,
 } from "./effects";
 import type { EffectOp, GameState, Seat } from "./index";
@@ -38,23 +23,6 @@ import {
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
 const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus();
-
-const READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackBonusConsequent,
-  deriveAttackOptionalCostBoost,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackCancelRequirement,
-];
 
 const BARE = "Discard a Stadium in play.";
 const MAY = "You may discard a Stadium in play.";
@@ -121,11 +89,6 @@ const attack = (state: GameState, seat: Seat = "p1") =>
 const SEEDS = [9001, 9013, 9029] as const;
 
 describe("§1 — the price, MEASURED: six printings on one op, against ONE for the best clause row", () => {
-  it("D418 — the hand-kept READERS list IS the module's reader surface", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("the family is 6 sentences / 11 printings, and 5 / 10 of them now resolve", () => {
     const family = corpus().filter(([, s]) => s.includes("Stadium") && s.includes("iscard"));
     expect([family.length, units(family)]).toEqual([6, 11]);

@@ -1,24 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
   splitAttackCancelClause,
   splitAttackGateClause,
   splitAttackRequirementClause,
   splitAttackTrailingClause,
+  ATTACK_READERS,
 } from "./effects";
 import { applyAction, conditionHolds } from "./index";
 import type { DamageCountSource, EffectOp, GameEvent, GameState } from "./index";
@@ -60,22 +50,7 @@ const UNPRINTED_SELF =
     that has drifted from what the file means by it. */
 const READING = { per: 100, count: { kind: "specialConditionsOnOpponentActive" } } as const;
 
-const READERS = [
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackRequirement,
-];
+const READERS = ATTACK_READERS.map(({ read }) => read);
 
 const SPLITTERS = [
   splitAttackCancelClause,
@@ -574,11 +549,6 @@ describe("D518 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is no carrier a
       visit(p, `program[${i}]`);
     });
     expect(carriers).toEqual([]);
-  });
-
-  it("the reader SURFACE is unmoved at THIRTEEN, and the hand-kept list IS the module's", () => {
-    expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("`FIXTURE_POOL` is BYTE-UNCHANGED — the demonstrator is a per-board clone", () => {

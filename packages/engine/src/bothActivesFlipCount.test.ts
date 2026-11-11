@@ -1,27 +1,17 @@
 import type { Card } from "@colorless/schema";
 import manifest from "../package.json" with { type: "json" };
 import { describe, expect, it } from "vitest";
-import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
+import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { countAttachedEnergy, countEnergyInPlay, providedEnergy } from "./continuous";
 import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
-  deriveAttackCopy,
   deriveAttackDamageBonus,
   deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
   splitAttackCancelClause,
   splitAttackGateClause,
   splitAttackRequirementClause,
   splitAttackTrailingClause,
+  ATTACK_READERS,
 } from "./effects";
 import { applyAction, createGame, engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
@@ -50,32 +40,12 @@ const BODY_SIDE =
 const DAMAGE_TWIN =
   "This attack does 30 more damage for each Energy attached to both Active Pokémon.";
 
-const ALL_READERS: readonly ((t: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackBonusConsequent,
-  deriveAttackOptionalCostBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackDiscardScaledBoost,
-];
+const ALL_READERS = ATTACK_READERS.map(({ read }) => read);
 
 const printings = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
 
 describe("D475 §1 — the sentence, measured live over the legal column", () => {
-  it("the hand-kept reader list IS the module's reader surface, and it is 13", () => {
-    expect(ALL_READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
-  });
-
   it("is really in the column, ONCE, at ONE printing", () => {
     const rows = legalAttackCorpus().filter(([, s]) => s === PRINTED);
     expect([rows.length, printings(rows)]).toEqual([1, 1]);

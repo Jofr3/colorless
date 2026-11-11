@@ -181,7 +181,7 @@ describe("D487 §1 — the sentence and its family, measured rather than quoted"
     expect(row?.[0]).toBe(1);
   });
 
-  it("it is the ONLY printed draw in the whole 640-row column that names a SOURCE", () => {
+  it("it is the ONLY printed draw in the whole column that names a SOURCE", () => {
     const ends = legalAttackCorpus().filter(([, s]) =>
       /bottom of|top of (?:your|their) deck/.test(s),
     );
@@ -231,7 +231,7 @@ describe("D487 §2 — the thirteen readers, run rather than read", () => {
 });
 
 describe("D487 §3 — the yield, and five widenings that buy nothing", () => {
-  it("the anchor claims EXACTLY this row — 1 sentence / 1 printing over 640", () => {
+  it("the anchor claims EXACTLY this row — 1 sentence / 1 printing", () => {
     const claimed = legalAttackCorpus().filter(([, s]) => {
       const program = deriveAttackEffect(s);
       return program?.some((op) => op.op === "drawCards" && op.from === "bottom") === true;

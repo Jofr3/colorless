@@ -2,27 +2,9 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { parseAttackDamage } from "./cards";
 import { attackReaderSurface, resolvedByAnyReader } from "./censusAttackCorpus";
-import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCopy,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  optionalBoostProgram,
-} from "./effects";
+import { deriveAttackOptionalBoost, optionalBoostProgram, ATTACK_READERS } from "./effects";
 import type { EffectOp } from "./effectTypes";
-import {
-  deriveAttackCoinFlip,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackEffect,
-  deriveAttackRequirement,
-  applyAction,
-} from "./index";
+import { deriveAttackEffect, applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { programFor } from "./registry";
 import {
@@ -252,21 +234,9 @@ function count(events: readonly GameEvent[], type: GameEvent["type"]): number {
 }
 
 /** The other ELEVEN readers, run as one — the disjointness control. */
-const OTHER_READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackCopy,
-  deriveAttackDamageSuppression,
-];
+const OTHER_READERS = ATTACK_READERS.map(({ read }) => read).filter(
+  (read) => read !== deriveAttackOptionalBoost,
+);
 
 // ────────────────────────────────────────────────────────────────────────────
 describe("D316 §1 — the print, and the reading each of the four sentences gets", () => {
@@ -337,7 +307,6 @@ describe("D316 §2 — the REFUSALS, which are what keep an unread sentence loud
     expect([...OTHER_READERS.map((read) => read.name), "deriveAttackOptionalBoost"].sort()).toEqual(
       attackReaderSurface(),
     );
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("all ELEVEN other readers refuse all four sentences", () => {
