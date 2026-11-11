@@ -101,7 +101,7 @@ const RETRIEVAL_CARDS: Record<string, Card> = {
     hp: 130,
     retreat: 2,
     attacks: [
-      /** index 0 — FILE LINE 219 verbatim, with a DECLARED base and cost. */
+      /** index 0 — PRINTED verbatim, with a DECLARED base and cost. */
       { cost: ["Colorless"], name: "Salvage Toss", damage: BASE, effect: PRINTED },
       /** index 1 — the control: no effect, no flip, no program. */
       { cost: ["Colorless"], name: "Plain Jab", damage: BASE },

@@ -453,7 +453,7 @@ describe("D519 §3 — the fold on a board: the rider, the zone, the seat and th
   });
 
   it("the INDICATOR sibling on the same board is a CEILING, not a tally", () => {
-    // `:358`'s 0-or-1 reading of the same printed clause, driven against this one. The
+    // INDICATOR's 0-or-1 reading of the same printed clause, driven against this one. The
     // indicator reads the DEFENDING Active and pays `per` once; damaging the defender turns
     // it on and nothing about the attacker's six bodies changes it.
     const state = setBenchDamage(canonical(), "p2", 1, 10);

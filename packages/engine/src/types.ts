@@ -281,8 +281,8 @@ export interface SideAttackLock {
   /** The single turn this lock is live on — `+ 2` for the self form (the installer's
       own next turn), `+ 1` for the opponent form (the opponent's next turn). */
   turn: number;
-  /** `null` — EVERY Pokémon on the side is locked (`:169`). A number — only a body
-      with AT MOST that many Energy CARDS attached is locked (`:170`, "2 or less"),
+  /** `null` — EVERY Pokémon on the side is locked ("your Pokémon can't attack"). A number — only a body
+      with AT MOST that many Energy CARDS attached is locked ("2 or less Energy attached"),
       counted LIVE at each declaration through `countAttachedEnergy(…, null)` (R4):
       attaching a third Energy unlocks the body on the same turn. */
   maxEnergy: number | null;

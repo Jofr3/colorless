@@ -102,7 +102,7 @@ const SEARCH_CARDS: Record<string, Card> = {
     hp: 130,
     retreat: 2,
     attacks: [
-      /** index 0 — FILE LINE 454 verbatim, with a DECLARED base and cost. */
+      /** index 0 — PRINTED verbatim, with a DECLARED base and cost. */
       { cost: ["Colorless"], name: "Bench Call", damage: BASE, effect: PRINTED },
       /** index 1 — the CONTROL: the printed-digit sibling, `max: 3` on every board. */
       { cost: ["Colorless"], name: "Plain Call", damage: BASE, effect: UP_TO_THREE },

@@ -32,7 +32,7 @@ const S176 =
   "During your opponent's next turn, if the Defending Pokémon tries to use an attack, your opponent flips a coin. If tails, that attack doesn't happen.";
 const P176: readonly EffectOp[] = [{ op: "flipLockAttack" }];
 
-const APPLY = 0; // {C}, 10 — the installer (:176)
+const APPLY = 0; // {C}, 10 — the installer (S176)
 const JAB = 0; // the target's {C}, 30
 const NAP = 1; // the target's {C}, no damage — "Draw a card."
 
@@ -42,7 +42,7 @@ const TARGET_ATTACKS = [
 ] as Card["attacks"];
 
 const LOCAL_CARDS: Record<string, Card> = {
-  /** The `:176` installer, plus a plain second attack. */
+  /** The S176 installer, plus a plain second attack. */
   "d547-locker": battler("d547-locker", {
     types: ["Colorless"],
     hp: 300,

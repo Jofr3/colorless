@@ -35,8 +35,8 @@ const S170 =
 const P169: readonly EffectOp[] = [{ op: "lockSideAttacks", whose: "self", maxEnergy: null }];
 const P170: readonly EffectOp[] = [{ op: "lockSideAttacks", whose: "opponent", maxEnergy: 2 }];
 
-const SEAL = 0; // {C}, 10 — :169, the installer's own side
-const DRAIN = 1; // {C}, 10 — :170, the opponent's side
+const SEAL = 0; // {C}, 10 — S169, the installer's own side
+const DRAIN = 1; // {C}, 10 — S170, the opponent's side
 const JAB = 2; // {C}, 20 — a plain attack
 
 const LOCKER_ATTACKS = [
@@ -353,7 +353,7 @@ describe("§4 — bodies that come into play AFTER the install are locked by con
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// §5 — :170's Energy count, LIVE (R4).
+// §5 — S170's Energy count, LIVE (R4).
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§5 — :170 counts Energy CARDS at each declaration", () => {
@@ -410,7 +410,7 @@ describe("§6 — same seat, same window: null dominates, else the larger cap", 
     const { state, events } = attack(victim, DRAIN, "p2");
     expect(findEvent(events, "SIDE_ATTACKS_LOCKED")).toBeUndefined();
     expect(state.players.p1.sideAttackLock).toStrictEqual({ turn: 5, maxEnergy: null });
-    // P1's 3-Energy Active would be FREE under `:170` alone — `null` must dominate.
+    // P1's 3-Energy Active would be FREE under S170 alone — `null` must dominate.
     expect(body(state.players.p1.active).energy).toHaveLength(3);
     expect(refusal(state, "p1", JAB)).toBe("ATTACK_PREVENTED");
   });

@@ -110,7 +110,7 @@ const TWO_COIN_CARDS: Record<string, Card> = {
     attacks: [
       /** index 0 — the control: no effect, so no coin and no rng draw on the same deck. */
       { cost: ["Colorless"], name: "Plain Jab", damage: 30 },
-      /** index 1 — FILE LINE 202 verbatim, with a printed base so the base-lands-then-recoil
+      /** index 1 — PRINTED verbatim, with a printed base so the base-lands-then-recoil
           path is driven (the BASE RULE, the one-coin sibling's). */
       { cost: ["Colorless"], name: "Double Tails Charge", damage: BASE, effect: PRINTED },
     ],

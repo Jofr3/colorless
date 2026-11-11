@@ -49,7 +49,7 @@ const ALT_PRINTED = ["Water", "Water", "Colorless"] as const;
 const WAIVE_PRINTED = ["Grass", "Grass", "Colorless"] as const;
 
 const LOCAL_CARDS: Record<string, Card> = {
-  /** `:316` at index 0, and an unclaused attack at index 1 — the address control. */
+  /** ALT at index 0, and an unclaused attack at index 1 — the address control. */
   "d545-alt": {
     ...(FIXTURE_POOL["fix-basic-1"] as Card),
     id: "d545-alt",
@@ -62,7 +62,7 @@ const LOCAL_CARDS: Record<string, Card> = {
       { cost: [...ALT_PRINTED], name: "Plain Rock", damage: "30" },
     ],
   },
-  /** `:324` at index 0, and an unclaused attack at index 1. */
+  /** WAIVE at index 0, and an unclaused attack at index 1. */
   "d545-waive": {
     ...(FIXTURE_POOL["fix-basic-1"] as Card),
     id: "d545-waive",
@@ -302,7 +302,7 @@ describe("§2 — `yourActiveHasSpecialCondition` is the SELF twin, and reads th
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// §3 — `:316`, the ALTERNATE.
+// §3 — ALT, the ALTERNATE.
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§3 — `:316` is an ALTERNATE cost: never stricter than printed", () => {
@@ -392,7 +392,7 @@ describe("§4 — THE TRAP: a cost clause whose condition HOLDS never blocks", (
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// §5 — `:324`, the WAIVE.
+// §5 — WAIVE, the waived cost.
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§5 — `:324` waives the whole cost while the attacker carries a Special Condition", () => {

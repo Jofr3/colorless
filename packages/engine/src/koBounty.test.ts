@@ -35,7 +35,7 @@ const S149 =
 const P149: readonly EffectOp[] = [{ op: "bountyDefender", amount: 2 }];
 const BOUNTY = 2;
 
-const MARK = 0; // {C}, 10 — the installer (:149)
+const MARK = 0; // {C}, 10 — the installer (S149)
 const STRIKE = 1; // {C}, 400 — the Knock Out
 const POISON = 2; // {C}, 80, Poisons — the Checkup Knock Out (100 HP: 10 + 80 + 10)
 

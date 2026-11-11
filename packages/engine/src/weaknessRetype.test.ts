@@ -34,7 +34,7 @@ const S629 =
   "Until the end of your next turn, the Defending Pokémon's Weakness is now {C}. (The amount of Weakness doesn't change.)";
 const P629: readonly EffectOp[] = [{ op: "retypeDefenderWeakness", type: "Colorless" }];
 
-const MARK = 0; // {C}, 10 — the installer (:629)
+const MARK = 0; // {C}, 10 — the installer (S629)
 const STRIKE = 1; // {C}{C}, 50
 const PICK_OFF = 2; // {C}, a chosen 30 onto any of the opponent's Pokémon (the snipe site)
 const CLEAN = 3; // {C}{C}, 50, "isn't affected by Weakness or Resistance" (a null path)

@@ -124,7 +124,7 @@ const SNIPE_CARDS: Record<string, Card> = {
     hp: 130,
     retreat: 2,
     attacks: [
-      /** index 0 — FILE LINE 551 verbatim, with a DECLARED cost and NO base. */
+      /** index 0 — PRINTED verbatim, with a DECLARED cost and NO base. */
       { cost: ["Colorless"], name: "Counter Snipe", effect: PRINTED },
       /** index 1 — the control: a flat hit on the Active, no effect, no program. */
       { cost: ["Colorless"], name: "Plain Jab", damage: JAB },
