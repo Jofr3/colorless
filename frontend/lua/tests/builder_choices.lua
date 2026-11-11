@@ -1,6 +1,6 @@
--- The builder's option lists (UI-FU3): Enter on a focused filter cycle, or a click on its centre,
--- opens that filter's searchable, paged, multi-select list; the arrows and Left/Right still step
--- the cycle. The list searches, picks, pages, marks what is chosen, announces each change, keeps
+-- The builder's option lists: Enter on a focused filter cycle, or a click on its centre, opens
+-- that filter's searchable, paged, multi-select list; the arrows and Left/Right still step the
+-- cycle. The list searches, picks, pages, marks what is chosen, announces each change, keeps
 -- focus on the control it was on, and Back or Escape returns to the Filters dialog.
 package.path='frontend/lua/?.lua;frontend/lua/tests/?.lua;'..package.path
 require('support.draw_stub').install()

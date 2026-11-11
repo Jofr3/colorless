@@ -1,7 +1,7 @@
 -- The frame pacer (ui/frame_pacer.lua) caps update and draw at 60 or 144 a second on any
 -- display: a display at the cap runs every frame through jitter, a faster one is held to the cap
--- without bursts, and a stall is not paid back. Motion stays dt-based under it (audit LC11):
--- a 60 fps update on a 144 Hz display moves a card like a steady 60 Hz one.
+-- without bursts, and a stall is not paid back. Motion stays dt-based under it: a 60 fps update
+-- on a 144 Hz display moves a card like a steady 60 Hz one.
 package.path='frontend/lua/?.lua;'..package.path
 local Pacer=require('ui.frame_pacer')
 local Motion=require('ui.motion')
@@ -62,9 +62,9 @@ do
   check(runs>=59 and runs<=61,('The second after a stall runs at the cap, not a catch-up burst (%d)'):format(runs))
 end
 
--- LC11: main.lua's smoothed dt (smoothedDt) feeds Motion the time since the last run frame. A
--- card moved and juiced under a 60 fps update on a 144 Hz display follows a steady 60 Hz
--- update's path within a few hundredths of a tile and settles at the same place.
+-- main.lua's smoothed dt (smoothedDt) feeds Motion the time since the last run frame. A card
+-- moved and juiced under a 60 fps update on a 144 Hz display follows a steady 60 Hz update's
+-- path within a few hundredths of a tile and settles at the same place.
 local function trace(hz,cap)
   local pacer,motion=Pacer.new(),Motion.new(2,3,0)
   local clock,previous,last,smoothed,time=0,0,0,1/100,12

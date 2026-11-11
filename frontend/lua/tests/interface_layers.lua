@@ -1,9 +1,9 @@
--- The real main.lua under Settings' Interface Size (audit LQX2). 100% keeps every layer where it
--- was. 125% and 150% shrink the canvas each growing layer lays out in, so it draws larger over
--- the same part of the screen: home in landscape, Settings as far as its tallest form fits
--- (125% at most on a 16:10 canvas), the collection panel without its 0.9 inset. A pointer lands
--- on what is drawn under it. Portrait layers fill their canvas and stay; the table's notice grows.
--- Changing the size in Settings lays everything out again at once.
+-- The real main.lua under Settings' Interface Size. 100% leaves every layer as it is. 125% and
+-- 150% shrink the canvas each growing layer lays out in, so it draws larger over the same part of
+-- the screen: home in landscape, Settings as far as its tallest form fits (125% at most on a 16:10
+-- canvas), the collection panel without its 0.9 inset. A pointer lands on what is drawn under it.
+-- Portrait layers fill their canvas and stay; the table's notice grows. Changing the size in
+-- Settings lays everything out again at once.
 package.path='frontend/lua/?.lua;'..package.path
 local noop=function() end
 local function check(ok,message) if not ok then error(message,2) end end
@@ -131,7 +131,7 @@ files['__page.txt']='3\tsimulator\t';for _=1,5 do frame() end
 files['__notice.txt']='1\tOffline';frame()
 check(noticeSize==24,'The table notice is 16 x 1.5 at 150%, got '..tostring(noticeSize))
 check(scenes.simulator.w==1280 and scenes.simulator.h==800,'The table lays out in 1280x800')
--- Its text overlays grow instead (audit FU1), in portrait too.
+-- Its text overlays grow instead, in portrait too.
 local Display=require('ui.display')
 check(Display.tableText==1.5,'The table text grows by 1.5 at 150%, got '..tostring(Display.tableText))
 view('390 844 1 390 844')

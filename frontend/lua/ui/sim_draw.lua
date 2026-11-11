@@ -1,7 +1,7 @@
 local D=require('ui.card_dimensions')
--- The table's drawing (audit SM14), mixed into ui/simulator.lua's Simulator: card faces for the
--- card canvases, then each frame's wells, piles, Prizes, cards with their attached cards and
--- badges, the HUD, controls, attached and hover popups, the away banner, juice and overlays.
+-- The table's drawing, mixed into ui/simulator.lua's Simulator: card faces for the card
+-- canvases, then each frame's wells, piles, Prizes, cards with their attached cards and badges,
+-- the HUD, controls, attached and hover popups, the away banner, juice and overlays.
 local T=require('ui.theme')
 local Button=require('ui.button')
 local CardFrame=require('ui.card_frame')
@@ -172,8 +172,7 @@ local function hoverPlace(self,c,w,h)
   return px,py
 end
 -- Where the hover popup draws and how large (x, y, w, h, scale). Interface Size grows it as a whole
--- (audit FU1) as far as it stays on the table, off its card and off every control it cleared at
--- 100%.
+-- as far as it stays on the table, off its card and off every control it cleared at 100%.
 function Simulator:hoverPopup()
   local c,box=self.popup,self.popupBox
   local x,y=hoverPlace(self,c,box.w,box.h)
@@ -194,8 +193,8 @@ function Simulator:hoverPopup()
   end)
   return k==1 and base or placed(k)
 end
--- The away text's scale over the board centre: Interface Size's step (audit FU1) as far as both
--- lines stay narrower than the table and cover no control they cleared at 100%.
+-- The away text's scale over the board centre: Interface Size's step as far as both lines stay
+-- narrower than the table and cover no control they cleared at 100%.
 function Simulator:awayScale()
   local factor=Display.tableText
   if factor==1 then return 1 end

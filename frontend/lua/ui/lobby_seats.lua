@@ -19,11 +19,11 @@ local function mix(a,b,t) return {a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t,a[3]+(b[
 function Online:deckBox(p)
   local scale=self:pickerScale()
   if self.compact then
-    -- In the compact arrangement (UI-FU2) the pile shrinks to the seat's free height: its name
-    -- 100 below the seat's top as at 1280x800 (32 above the stack, which rises 15 per unit of
-    -- scale over the card's half height), its count 8 above Choose deck. The count keeps the
-    -- size it has on screen at 100% (FU2b): its em is a fixed `em` pixels of this smaller canvas,
-    -- 0.83 of it tall, under a row 0.08 + 0.95 half card + 0.06 tiles below the centre.
+    -- In the compact arrangement the pile shrinks to the seat's free height: its name 100 below
+    -- the seat's top as at 1280x800 (32 above the stack, which rises 15 per unit of scale over
+    -- the card's half height), its count 8 above Choose deck. The count keeps the size it has on
+    -- screen at 100%: its em is a fixed `em` pixels of this smaller canvas, 0.83 of it tall,
+    -- under a row 0.08 + 0.95 half card + 0.06 tiles below the centre.
     local tile=D.W/D.TILE_W
     local full=math.min(0.82,((800-72-260)/2-84)/D.H) -- the preview's scale at 1280x800
     local em=0.3*tile*full*self.width/1280

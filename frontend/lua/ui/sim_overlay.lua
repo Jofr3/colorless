@@ -285,8 +285,8 @@ function Overlay:build(keepCards)
     end
     footer(d.footer,bottom-50)
     for _,o in ipairs(d.options) do self:add(o.label,x+24,bottom,bw,38,'invoke',o.colour,{token=o.token,fontSize=26}) end
-    -- Interface Size grows the captions under the coins (audit FU1) while they end above the
-    -- buttons and stay narrower than a coin's spacing and the frame.
+    -- Interface Size grows the captions under the coins while they end above the buttons and
+    -- stay narrower than a coin's spacing and the frame.
     local n=#self.flips
     local spacing=math.min(130,(w-60)/math.max(n,1))
     local cy=y+h/2-14
@@ -306,7 +306,7 @@ function Overlay:build(keepCards)
     self.logLines={}
     -- One spoken entry per row, at the first drawn line it wraps onto.
     self.logEntries={}
-    -- Interface Size grows its lines (audit FU1): a page holds fewer of them, in the same frame.
+    -- Interface Size grows its lines: a page holds fewer of them, in the same frame.
     local s=Display.tableText
     self.logScale=s
     local textW=bw-24-(p and 0 or 150*s)
@@ -367,9 +367,9 @@ function Overlay:build(keepCards)
     h=math.min(sim.boardH-20,contentH+78)
     y=(sim.boardH-h)/2
     self.popupScale=1
-    -- Interface Size grows the rules text as a whole (audit FU1). The frame grows upward by as much
-    -- and the zoomed card rides up with its top, so the action rows and Back stay where 100% puts
-    -- them; the step shrinks to what fits the board's top and the frame's width.
+    -- Interface Size grows the rules text as a whole. The frame grows upward by as much and the
+    -- zoomed card rides up with its top, so the action rows and Back stay where 100% puts them; the
+    -- step shrinks to what fits the board's top and the frame's width.
     if Display.tableText>1 and self.popup then
       local room=p and bw or w-(24+D.W*scale+24)-24
       local popup=self.popup
@@ -423,8 +423,8 @@ function Overlay:build(keepCards)
     end
   end
   if kind=='gameover' then
-    -- Interface Size grows the result rows (audit FU1) while their box ends above the buttons and
-    -- the online notice over them, and each label stays in its half of the box.
+    -- Interface Size grows the result rows while their box ends above the buttons and the online
+    -- notice over them, and each label stays in its half of the box.
     local rows=d.rows or {}
     local limit=y+h-150-(sim.mode=='online' and 34 or 0)-8
     self.rowScale=Size.grow(Display.tableText,function(k)
@@ -619,7 +619,7 @@ local function cycle(self,x,y,w,h)
   Button.cycleFace(x,y,w,h,hovered)
   self.pageText:draw(self.time or 0,self.sim.reduced,x,y,w,h,self.sim.boardW,0.4)
 end
--- The inspector's rules text as drawn: x, y, w, h and its Interface Size scale (audit FU1).
+-- The inspector's rules text as drawn: x, y, w, h and its Interface Size scale.
 function Overlay:popupRect()
   local p,c,k=self.sim.portrait,self.cards[1],self.popupScale or 1
   local x,y,w=self.x,self.y,self.w
@@ -646,8 +646,8 @@ function Overlay:draw(shaders)
     local top=y+(kind=='pile' and 64 or 66)
     for i=1,math.min(2,#(self.noteLines or {})) do Dyna.static(self.noteLines[i],0.28,x+32,top+(i-1)*16,w-64,16,T.jokerGrey,{roomWidth=rw}) end
     if (self.instructionText or '')~='' then
-      -- Interface Size grows it about its line's centre (audit FU1), in the band above the cards;
-      -- fit keeps it in the tray's width.
+      -- Interface Size grows it about its line's centre, in the band above the cards; fit keeps
+      -- it in the tray's width.
       local k=Display.tableText
       if k==1 then Dyna.static(self.instructionText,0.28,x+32,y+22,w-64,16,T.jokerGrey,{roomWidth=rw,fit=true})
       else Dyna.static(self.instructionText,0.28*k,x+32,y+30-8*k,w-64,16*k,T.jokerGrey,{roomWidth=rw,fit=true}) end

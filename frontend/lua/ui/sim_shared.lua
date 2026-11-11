@@ -9,7 +9,7 @@ function Shared.groupLabel(group)
   return labels[group] or (group:gsub('^%l',string.upper))
 end
 -- Whether `box` covers no visible control's face that one of the `bases`, the same text at 100%,
--- leaves clear (audit FU1): grown text keeps off the controls it cleared.
+-- leaves clear: grown text keeps off the controls it cleared.
 function Shared.clears(controls,box,...)
   for _,b in ipairs(controls) do
     if not b.invisible then

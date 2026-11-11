@@ -15,9 +15,9 @@ function Builder:filterCycle(label,value,key,y,count,index,selected,x,width)
   -- Format and sort step through their own commands; every other filter cycles.
   local action=(key=='format' or key=='sort') and key or 'cycle'
   local own=action~='cycle'
-  -- One focus stop per filter: '>' takes focus and Left/Right step it; '<' answers the pointer.
-  -- A filter's list (UI-FU3) opens by Enter on '>' or a click on the centre, which takes no focus
-  -- and keeps its look; Format and Sort have none, so their centres stay inert.
+  -- One focus stop per filter: '>' takes focus and Left/Right step it; '<' answers the pointer. A
+  -- filter's list opens by Enter on '>' or a click on the centre, which takes no focus and keeps
+  -- its look; Format and Sort have none, so their centres stay inert.
   local list=not own or nil
   self:add('<',x,y,28.8,38.4,action,T.red,own and -1 or {key,-1},{skipFocus=true,cycleKey=key,optionTitle=label,optionValue=value}).fontSize=24
   self.filterTexts=self.filterTexts or {}

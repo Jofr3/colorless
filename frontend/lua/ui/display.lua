@@ -1,8 +1,8 @@
--- How large the layout draws on the player's screen, for choices made by on-screen size (audit
--- LC4, QA11, PG8). main.lua's layout sets it before the pages lay out. Sizes are CSS pixels per
--- virtual pixel: of the base canvas (`scale`), of the collection panel (decks, builder, sandbox)
--- and of Settings. `tableText` is Interface Size's step for the table's text overlays (audit FU1):
--- the table keeps its board and cards at 100% and grows its text panels instead.
+-- How large the layout draws on the player's screen, for choices made by on-screen size.
+-- main.lua's layout sets it before the pages lay out. Sizes are CSS pixels per virtual pixel: of
+-- the base canvas (`scale`), of the collection panel (decks, builder, sandbox) and of Settings.
+-- `tableText` is Interface Size's step for the table's text overlays: the table keeps its board
+-- and cards at 100% and grows its text panels instead.
 local Display={scale=1,collection=1,popup=1,tableText=1,portrait=false,coarse=false}
 -- The smallest secondary text on a phone held upright, in CSS pixels.
 Display.MIN_TEXT_CSS=11

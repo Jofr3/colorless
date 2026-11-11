@@ -33,8 +33,8 @@ const bunScript = (script, args) =>
     encoding: "utf8",
     stdio: ["ignore", "pipe", "inherit"],
   });
-// love.js must be the pinned 11.4.1 (scripts/love-inputs.ts, dependency audit VER10): a mismatch
-// stops the build, naming each file that differs; otherwise it reports the source tree's commit.
+// love.js must be the pinned 11.4.1 (scripts/love-inputs.ts): a mismatch stops the build, naming
+// each file that differs; otherwise it reports the source tree's commit.
 /** @type {{ loveJs: object, balatroSource: object | null }} */
 let inputs;
 try {
@@ -85,8 +85,8 @@ const assets = [
 // The menu music downloads after Lua is ready (web/host.js), outside game.data, which must arrive
 // in full before Lua starts.
 const music = "sounds/music1.ogg";
-// The screen wipe's fallback scans download after ready too (web/host.js, audit BT9), each beside
-// game.data under its content hash; Lua lists only those already written.
+// The screen wipe's fallback scans download after ready too (web/host.js), each beside game.data
+// under its content hash; Lua lists only those already written.
 const transitionCards = "transition_cards";
 // Kept in the repo for tools/logo_bake.lua and attribution; Lua never reads them.
 const unpackaged = new Set(["assets/branding/colorless.png", "assets/branding/colorless-menu.png"]);
@@ -161,9 +161,9 @@ try {
   // The root index.html is the host page; drop the compiler's own page and theme.
   rmSync(join(output, "index.html"), { force: true });
   rmSync(join(output, "theme"), { recursive: true, force: true });
-  // The build's record of what it took from outside the repo (VER10): the pinned love.js, the
-  // Balatro tree's commit (null when it is not a git checkout) and one digest over every file
-  // copied from it, beside each file's own hash.
+  // The build's record of what it took from outside the repo: the pinned love.js, the Balatro
+  // tree's commit (null when it is not a git checkout) and one digest over every file copied
+  // from it, beside each file's own hash.
   const copied = [...assets, music].map((asset) => `${asset} ${manifest[asset]}\n`).join("");
   const record = {
     inputs: {
@@ -176,8 +176,8 @@ try {
     files: manifest,
   };
   writeFileSync(join(output, "asset-manifest.json"), `${JSON.stringify(record, null, 2)}\n`);
-  // The credits Settings and the page's Credits link open (TRN4): every third-party licence and
-  // credit for what this build ships, Balatro's files listed from `assets`.
+  // The credits Settings and the page's Credits link open: every third-party licence and credit
+  // for what this build ships, Balatro's files listed from `assets`.
   bunScript("third-party-notices.ts", [
     "--love-js",
     join(source, "node_modules/love.js"),

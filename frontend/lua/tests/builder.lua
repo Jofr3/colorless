@@ -163,7 +163,7 @@ for i,c in ipairs(tabs.controls)do
    assert(tabs:hit(c.x+c.w/2,c.y+c.h/2)~=i,'The Format value has no list to click')
    tabs:activate(i);assert(tabs.modal.mode=='filters')
   else
-   -- UI-FU3: a click on a filter's value opens its list.
+   -- A click on a filter's value opens its list.
    assert(tabs:hit(c.x+c.w/2,c.y+c.h/2)==i,'Filter value must answer a click')
    tabs:activate(i);assert(tabs.modal.mode=='choices' and commands[#commands][1]=='options' and commands[#commands][2]==c.arg)
    lists=lists+1;tabs:closeModal();tabs:openModal('filters')

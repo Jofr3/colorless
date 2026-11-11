@@ -271,9 +271,9 @@ local function cell(x,y,b,label,text,roomWidth,on)
     g.pop()
   end
 end
--- The portrait prompt's smallest scale (audit QA11): under it the note leaves the box for a strip
--- over the table's top band, just under the HUD, of STRIP_LINES lines; a note longer than that
--- shrinks down to the phone's smallest text and then takes more lines.
+-- The portrait prompt's smallest scale: under it the note leaves the box for a strip over the
+-- table's top band, just under the HUD, of STRIP_LINES lines; a note longer than that shrinks
+-- down to the phone's smallest text and then takes more lines.
 Hud.PORTRAIT_PROMPT_MIN=0.24
 local STRIP_LINES=2
 local STRIP_COLOUR={BOSS_DARK[1],BOSS_DARK[2],BOSS_DARK[3],0.92}
@@ -333,9 +333,9 @@ function Hud:drawPrompt(sim,L,x,y,w,h)
     Dyna.static(line,noteScale,x,yy,w,nh,T.jokerGrey,{roomWidth=L.w,shadow=false,fit=true});yy=yy+nh+3
   end
 end
--- Interface Size grows the prompt (audit FU1) from its 100% fit, self.promptFit: in the box, as far
--- as its lines still fit there; a note in the portrait strip grows in no more lines than at 100%,
--- covering no control the strip cleared. Nil at 100% or when nothing larger fits.
+-- Interface Size grows the prompt from its 100% fit, self.promptFit: in the box, as far as its
+-- lines still fit there; a note in the portrait strip grows in no more lines than at 100%, covering
+-- no control the strip cleared. Nil at 100% or when nothing larger fits.
 function Hud:growPrompt(sim,L)
   local factor=Display.tableText
   if factor==1 then self.promptGrow=nil;return nil end
@@ -365,8 +365,8 @@ function Hud:growPrompt(sim,L)
   self.promptGrow={fit=fit,factor=factor,grown=grown}
   return grown
 end
--- A touch screen held sideways with the table drawn under Screen.SMALL_LAYOUT (audit LC4): the
--- portrait layout would draw it far larger, so the HUD's empty top band suggests turning.
+-- A touch screen held sideways with the table drawn under Screen.SMALL_LAYOUT: the portrait
+-- layout would draw it far larger, so the HUD's empty top band suggests turning.
 Hud.ROTATE_HINT={'Turn your phone upright','for a larger table'}
 function Hud.rotateHint()
   return Display.coarse and not Display.portrait and Display.scale<Screen.SMALL_LAYOUT
@@ -377,8 +377,8 @@ function Hud:hintText(sim,time)
   if sim.pendingSince and time-sim.pendingSince>=Hud.SENDING_AFTER then return 'Sending...' end
   return self.hint
 end
--- The landscape hint's scale: 0.32, grown by Interface Size (audit FU1) while its lines and the
--- warning's still fit the box.
+-- The landscape hint's scale: 0.32, grown by Interface Size while its lines and the warning's
+-- still fit the box.
 function Hud:hintScale(text,w,h)
   local factor=Display.tableText
   if factor==1 then return 0.32 end
@@ -425,7 +425,7 @@ function Hud:draw(sim,L,time,reduced,hovered)
   local ix,iw=x+L.hud.inset,w-2*L.hud.inset
   local cy=self:top(L)
   if Hud.rotateHint() then
-    -- Interface Size grows it (audit FU1) while it stays above the turn panel.
+    -- Interface Size grows it while it stays above the turn panel.
     local k=Size.grow(Display.tableText,function(k) return 8+#Hud.ROTATE_HINT*30*k-2<=cy-4 end)
     for i,line in ipairs(Hud.ROTATE_HINT) do
       Dyna.static(line,0.42*k,ix,8+(i-1)*30*k,iw,28*k,T.jokerGrey,{roomWidth=rw,fit=true,shadow=false})
@@ -452,7 +452,7 @@ function Hud:draw(sim,L,time,reduced,hovered)
   if choosingFirst then
     -- Online only a rematch's loser chooses, so the hint says why on both sides.
     local line=(#(sim.actions or {})==0 or sim.mode=='online') and (sim.hint or '')~='' and sim.hint or sim.title
-    -- Interface Size grows it (audit FU1), downward into the empty panel; fit keeps it in its width.
+    -- Interface Size grows it, downward into the empty panel; fit keeps it in its width.
     local k=Display.tableText
     if k==1 then Dyna.static(line,0.34,ix+14,cy+th/2+10,iw-28,24,LIGHT,{roomWidth=rw,fit=true})
     else Dyna.static(line,0.34*k,ix+14,cy+th/2+10,iw-28,24*k,LIGHT,{roomWidth=rw,fit=true}) end
@@ -508,7 +508,7 @@ function Hud:draw(sim,L,time,reduced,hovered)
 end
 -- Upright, the hint (or a standing warning in its place) wraps in the prompt's box under the
 -- buttons, shrinking to fit no further than the prompt note's floor: on a phone that is
--- Display.MIN_TEXT_CSS, where one 230 px line drew a turn's hint at 4-5 CSS px (QA6).
+-- Display.MIN_TEXT_CSS, where one 230 px line would draw a turn's hint at 4-5 CSS px.
 function Hud:drawPortraitHint(sim,L,time,x,y,w,h)
   local hint=self:hintText(sim,time)
   local warn=hint==self.hint and (self.warning or '')~=''
@@ -531,8 +531,7 @@ function Hud:drawPortraitHint(sim,L,time,x,y,w,h)
     Dyna.static(line,fit.scale,x,yy,w,fit.lh,warn and T.red or T.jokerGrey,{roomWidth=L.w,shadow=false,fit=true});yy=yy+fit.lh+3
   end
 end
--- Interface Size grows the portrait hint from its 100% fit (audit FU1) while its lines still fit
--- the box.
+-- Interface Size grows the portrait hint from its 100% fit while its lines still fit the box.
 function Hud:growPortraitHint(fit)
   local factor=Display.tableText
   if factor==1 then return fit end

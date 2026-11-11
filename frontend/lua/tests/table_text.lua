@@ -1,10 +1,10 @@
--- Interface Size on the table (audit FU1): the board and its cards stay at 100%, and 125% or 150%
--- enlarges the text overlays instead. The card inspector's text, the hover popup, the game log,
--- the HUD's prompt and hint, the history tooltips, the coin captions, the game-over rows and the
--- away text grow by the chosen step where it fits, else by less, never below 100%. Every button
--- keeps its rectangle and font size, and grown text stays inside its panel and on the board,
--- covering no control it cleared at 100%. Landscape 1280x800, portrait 480x850 and the 844x390
--- phone (1280x800 drawn at 390/800).
+-- Interface Size on the table: the board and its cards stay at 100%, and 125% or 150% enlarges
+-- the text overlays instead. The card inspector's text, the hover popup, the game log, the HUD's
+-- prompt and hint, the history tooltips, the coin captions, the game-over rows and the away text
+-- grow by the chosen step where it fits, else by less, never below 100%. Every button keeps its
+-- rectangle and font size, and grown text stays inside its panel and on the board, covering no
+-- control it cleared at 100%. Landscape 1280x800, portrait 480x850 and the 844x390 phone
+-- (1280x800 drawn at 390/800).
 package.path='frontend/lua/?.lua;frontend/lua/tests/?.lua;'..package.path
 local Stub=require('support.draw_stub')
 Stub.install()

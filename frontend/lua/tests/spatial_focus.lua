@@ -1,8 +1,8 @@
--- Keyboard focus by layout (audit PG14): on the library, builder, sandbox, online lobby and
--- Settings the arrows move to the nearest control in their direction, measured on the pages'
--- real control geometry, while Tab and Shift+Tab keep list order, start at the page's content
--- rather than Back, and the arrows' older meanings (tabs, sliders, option cycles) stay. The
--- builder's shortcuts: '/' searches, 'D' jumps to the deck list, '-' and '+' change a row.
+-- Keyboard focus by layout: on the library, builder, sandbox, online lobby and Settings the
+-- arrows move to the nearest control in their direction, measured on the pages' real control
+-- geometry, while Tab and Shift+Tab keep list order, start at the page's content rather than
+-- Back, and the arrows' older meanings (tabs, sliders, option cycles) stay. The builder's
+-- shortcuts: '/' searches, 'D' jumps to the deck list, '-' and '+' change a row.
 package.path='frontend/lua/?.lua;frontend/lua/tests/?.lua;'..package.path
 local Stub=require('support.draw_stub')
 Stub.install()
@@ -185,8 +185,8 @@ do
     b.focus=i1;local down=press(b,'down')
     check(down.action=='card' and down.y>c1.y and math.abs(centre(down)-centre(c1))<1,name..': Down moves to the card below')
     -- The rows are fanned, so the outer cards sit a few pixels lower than the inner ones: Down and
-    -- Up still leave the row rather than step along it (QA7 bug 2), with a single page too, where
-    -- the pager takes no focus and the nearest control below is far.
+    -- Up still leave the row rather than step along it, with a single page too, where the pager
+    -- takes no focus and the nearest control below is far.
     revision=revision+1;b:sync(builderSnapshot({revision=revision,pages=1}))
     if portrait then b.tab='catalog' end
     b:update(1/60,10,-1000,-1000,true);b:build()

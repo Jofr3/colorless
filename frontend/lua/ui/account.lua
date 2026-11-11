@@ -14,9 +14,9 @@ function Account:sync(raw)
   local resetName=reset or self.draftName==self.name
   local previous=self.message
   self.status,self.busy,self.message=f[H.status],f[H.busy]=='1',f[H.message]
-  -- A failed submit (audit PG9) marks the fields it refused anew, a repeat of the last one too,
-  -- and its message is said again. Other snapshots keep the marks typing has cleared, until the
-  -- host clears them all. A host without the fields marks nothing.
+  -- A failed submit marks the fields it refused anew, a repeat of the last one too, and its
+  -- message is said again. Other snapshots keep the marks typing has cleared, until the host
+  -- clears them all. A host without the fields marks nothing.
   local failures,invalid=tonumber(f[H.failures]) or self.failures or 0,f[H.invalid] or ''
   self.refused=failures~=(self.failures or 0)
   self.failures=failures

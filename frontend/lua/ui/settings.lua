@@ -19,7 +19,7 @@ local TAB=Settings.tabs
 local rows={
   {{kind='slider',key='screenshake',label='Screenshake'},
    {kind='toggle',key='reducedMotion',label='Reduced Motion'},
-   -- How large the whole interface draws (audit LQX2): main.lua grows each layer that fits.
+   -- How large the whole interface draws: main.lua grows each layer that fits.
    {kind='cycle',key='interfaceSize',label='Interface Size',options=Size.labels}},
   {{kind='slider',key='crt',label='CRT'},
    {kind='cycle',key='bloom',label='CRT Bloom'},
@@ -33,9 +33,8 @@ local rows={
 -- The toggle's emboss, made once rather than per draw.
 local TOGGLE_EMBOSS={[true]={0.5,0.5,0.5,1},[false]={0.7,0.7,0.7,1}}
 local DELETE_WARNING='This permanently deletes your account, your decks and your folders. It cannot be undone.'
--- The one-time prompt for an account whose name may have come from its email or Google account
--- (security audit AU3). Saving a name or keeping this one answers it for good; Later asks again
--- on the next visit.
+-- The one-time prompt for an account whose name may have come from its email or Google account.
+-- Saving a name or keeping this one answers it for good; Later asks again on the next visit.
 local NAME_PROMPT_TITLE='Choose your public name'
 local NAME_PROMPT='Opponents and spectators see this name. It may come from your email or your Google account. Keep it, or choose another.'
 function Settings.new(preferences,callbacks,reduced,keyboard,account)
@@ -119,7 +118,7 @@ function Settings:arm()
 end
 function Settings:disarm() if self.armed then self.armed=nil; self:build() end end
 -- A failed submit opens the first field it refused for editing, as a web form focuses its first
--- invalid field (audit PG9); a failure that names no field leaves focus where it is.
+-- invalid field; a failure that names no field leaves focus where it is.
 function Settings:focusInvalid()
   for i,item in ipairs(self.items) do
     if item.kind=='auth-field' and self.account.invalid[item.field] then
@@ -239,8 +238,8 @@ function Settings:build()
     end
     self.items[#self.items+1]=item
   end
-  -- Credits opens the third-party notices in a new browser tab (dependency audit TRN4), as
-  -- Balatro's options carry a Credits button; blue, like the other button that leaves the game.
+  -- Credits opens the third-party notices in a new browser tab, as Balatro's options carry a
+  -- Credits button; blue, like the other button that leaves the game.
   if self.tab==TAB.game then
     self.items[#self.items+1]={kind='credits',label='Credits',x=self.x+(self.w-200)/2,y=self.y+472,
       w=200,h=38,fontSize=24,colour=T.blue}
@@ -300,7 +299,7 @@ function Settings:describe(item)
   return item.label..': '..((item.kind=='toggle' or item.kind=='cycle') and (self:value(item)==1 and 'on' or 'off') or self:value(item))
 end
 -- The box the field a text proxy edits is drawn in, the popup's slide included, for main.lua to
--- hand the page (audit BR6): a sign-in field, or the account name; nothing while none edits.
+-- hand the page: a sign-in field, or the account name; nothing while none edits.
 function Settings:editBox()
   local field=self.auth and self.auth.editing~='' and self.auth.editing
   local name=not self.auth and self.account.editing
@@ -433,7 +432,7 @@ function Settings:keypressed(key)
   elseif (key=='left' or key=='right') and item and item.kind=='tab' then
     self:activate((item.tab-1+(key=='left' and -1 or 1))%#tabs+1)
   elseif key=='tab' or key=='down' or key=='up' or key=='left' or key=='right' then
-    -- Every row is a stop, the disabled email too; arrows move by layout (audit PG14).
+    -- Every row is a stop, the disabled email too; arrows move by layout.
     local found
     self.focus,found=Controls.move(self.focus,key,self.items,function() return false end)
     if not found then return end
@@ -441,10 +440,10 @@ function Settings:keypressed(key)
     self.callbacks.announce(self:describe(self.items[self.focus]))
   elseif key=='return' or key=='space' then self:activate(self.focus) end
 end
--- The sign-in form's message (audit PG9) sits between its button's face and the next one's, a
--- GAP-px band starting 9 px above authMessageY: one 22 px line at authMessageY, or, when it wraps,
--- the largest size down to 16 px whose lines (each its size tall) and their 3 px shadow fit the
--- band, centred in it. Two 22 px lines ran into Continue with Google.
+-- The sign-in form's message sits between its button's face and the next one's, a GAP-px band
+-- starting 9 px above authMessageY: one 22 px line at authMessageY, or, when it wraps, the largest
+-- size down to 16 px whose lines (each its size tall) and their 3 px shadow fit the band, centred
+-- in it. Two 22 px lines would run into Continue with Google.
 local AUTH_MESSAGE_SIZE,AUTH_MESSAGE_MIN,AUTH_MESSAGE_GAP,SHADOW=22,16,45,3
 function Settings:drawAuthMessage(text)
   local x,y,w=self.x+30,self.y+self.authMessageY,self.w-60
@@ -507,7 +506,7 @@ function Settings:draw()
       end
     elseif item.kind=='auth-field' then
       local a=self.auth
-      -- A refused field is ringed in the page errors' red on ink (PG10).
+      -- A refused field is ringed in the page errors' red on ink.
       if self.account.invalid[item.field] then
         panel(item.x-6,item.y-6,item.w+12,item.h+16,T.ink)
         panel(item.x-3,item.y-3,item.w+6,item.h+10,T.red)

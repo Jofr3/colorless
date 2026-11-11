@@ -51,7 +51,7 @@ function Library:offset()
   return self.motion and self.motion.VT.y*60 or 0
 end
 -- The box the field a text proxy edits is drawn in, its dialog's slide included, for main.lua to
--- hand the page (audit BR6); nothing while none edits.
+-- hand the page; nothing while none edits.
 function Library:editBox()
   local action=self.editing=='search' and 'input-search' or self.editing=='name' and 'input-name'
   for _,b in ipairs(action and self.controls or {}) do
@@ -187,7 +187,7 @@ function Library:build()
     return
   end
   local contentX=p and 24 or (w-1000)/2
-  -- Drawn first, reached last: Tab starts at the page's content (audit PG14).
+  -- Drawn first, reached last: Tab starts at the page's content.
   self:add('Back',contentX,h-66,p and w-48 or 1000,40,'home',T.orange,{ringLast=true})
   if self.phase=='ready' then
     self:add('',contentX,48,p and 432 or 476,42,'input-search',T.ink,{input=true,placeholder='Search decks'})
@@ -196,13 +196,13 @@ function Library:build()
     for i,card in ipairs(self.cards) do
       local s=card.baseScale
       self.controls[#self.controls+1]={label=card.item.name,x=card.homeX-D.HALF_W*s,y=card.homeY-D.HALF_H*s,w=D.W*s,h=D.H*s,action='card',card=i}
-      -- Rename and Delete live in the Manage dialog: a dots button under the
-      -- pile's left half (the count sits under the right), focused after its deck.
-      -- Arrows pass over it, so Down from a pile reaches the pile below (audit PG14).
+      -- Rename and Delete live in the Manage dialog: a dots button under the pile's
+      -- left half (the count sits under the right), focused after its deck. Arrows
+      -- pass over it, so Down from a pile reaches the pile below.
       self:add('Manage',card.homeX-D.HALF_W*s,card.homeY+D.HALF_H*s+2,40,24,'manage',T.blue,{card=i,displayLabel='',hitGrow='down',arrowSkip=true})
     end
-    -- PG8: Manage answers over about 34x34 (24 CSS px at least) hanging from its face, inside
-    -- the tray and clear of its pile and every other control.
+    -- Manage answers over about 34x34 (24 CSS px at least) hanging from its face, inside the
+    -- tray and clear of its pile and every other control.
     local manage={}
     for _,b in ipairs(self.controls) do if b.action=='manage' then manage[#manage+1]=b end end
     local size=math.max(34,Display.units(24,Display.collection))

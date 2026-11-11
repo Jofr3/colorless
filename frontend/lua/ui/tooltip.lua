@@ -1,8 +1,9 @@
--- A short name beside an icon-only control (audit SM12). The table's hot-seat history row draws
--- pixel icons only, so after DELAY seconds on one, under the pointer or keyboard focus, its spoken
--- label shows in the card popup's frame beside it. It is only drawn: it takes no clicks, covers
--- neither its control nor, where there is room, any control without a tooltip or any card, stays on the board and goes as soon as the pointer or focus moves on. With
--- motion it grows in over GROW seconds; under reduced motion it appears whole.
+-- A short name beside an icon-only control. The table's hot-seat history row draws pixel icons
+-- only, so after DELAY seconds on one, under the pointer or keyboard focus, its spoken label shows
+-- in the card popup's frame beside it. It is only drawn: it takes no clicks, covers neither its
+-- control nor, where there is room, any control without a tooltip or any card, stays on the board
+-- and goes as soon as the pointer or focus moves on. With motion it grows in over GROW seconds;
+-- under reduced motion it appears whole.
 local T=require('ui.theme')
 local Popup=require('ui.popup')
 local Dyna=require('ui.dynatext')
@@ -65,8 +66,8 @@ function Tooltip:box(boardW,boardH)
   local tw,th=Dyna.measure(b.label,scale)
   local w,h=tw+2*PAD_X,th+2*PAD_Y
   local x,y=Tooltip.place(b,w,h,boardW,boardH,self.others,self.cards)
-  -- Interface Size grows the label and its padding (audit FU1) as far as it still finds a place on
-  -- the board clear of its icon, the controls and the cards, when it found one at 100%.
+  -- Interface Size grows the label and its padding as far as it still finds a place on the board
+  -- clear of its icon, the controls and the cards, when it found one at 100%.
   local factor=Display.tableText
   if factor>1 and free(x,y,w,h,b,self.others,self.cards) then
     local function sized(k)

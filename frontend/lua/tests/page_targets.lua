@@ -1,8 +1,8 @@
--- Small page controls get larger hit areas, never larger buttons (audit PG8, QA11; the user's
--- rule: a button keeps its look, text, size and place). The library's Manage, the builder's
--- deck-row - and + and its Retry / Retry save answer the pointer over an invisible rectangle of
--- about 34x34 virtual pixels, at least 24 CSS pixels where the screen is small, around the
--- unchanged face. No hit area reaches another control's, and the press still lands.
+-- Small page controls get larger hit areas, never larger buttons (the user's rule: a button
+-- keeps its look, text, size and place). The library's Manage, the builder's deck-row - and +
+-- and its Retry / Retry save answer the pointer over an invisible rectangle of about 34x34
+-- virtual pixels, at least 24 CSS pixels where the screen is small, around the unchanged face.
+-- No hit area reaches another control's, and the press still lands.
 package.path='frontend/lua/?.lua;frontend/lua/tests/?.lua;'..package.path
 local Stub=require('support.draw_stub').install()
 local Card=require('ui.card');Card.rebuild=function(self) self.texture={release=function() end} end
@@ -30,7 +30,7 @@ local function apart(controls,where)
     end
   end
 end
--- The screens PG8 and QA11 name: desktop, a phone sideways and a phone upright.
+-- The screens checked: desktop, a phone sideways and a phone upright.
 local SCREENS={
   {name='1280x800',w=1280,h=800,display={scale=1,collection=0.9,portrait=false}},
   {name='844x390',w=1280,h=800,display={scale=0.4875,collection=0.4875*0.9,portrait=false}},
@@ -139,7 +139,7 @@ end
 Display.set({scale=1,collection=1,portrait=false})
 print('PASS: builder row actions and Retry hit areas; no hit area reaches another control')
 
--- QA11: a pile's card count is secondary text, at least 11 CSS px on a phone held upright.
+-- A pile's card count is secondary text, at least 11 CSS px on a phone held upright.
 local Labels=require('ui.deck_labels')
 local Pile=require('ui.deck_pile')
 local function countEm(css,portrait)

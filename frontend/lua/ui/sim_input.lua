@@ -1,6 +1,6 @@
--- The table's input (audit SM14), mixed into ui/simulator.lua's Simulator: what a control does,
--- the overlays it opens (options, inspector, discard pile), Rematch, and the pointer, keyboard
--- and wheel handlers.
+-- The table's input, mixed into ui/simulator.lua's Simulator: what a control does, the overlays
+-- it opens (options, inspector, discard pile), Rematch, and the pointer, keyboard and wheel
+-- handlers.
 local Controls=require('ui.controls')
 local Overlay=require('ui.sim_overlay')
 local Speech=require('ui.sim_speech')

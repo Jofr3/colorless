@@ -72,7 +72,7 @@ local function textAt(list,value)
   end
 end
 
--- PG5: a search keeps the results on screen, dimmed, until its page lands.
+-- A search keeps the results on screen, dimmed, until its page lands.
 for _,view in ipairs(VIEWS) do
   local b,sent=builder(view)
   local cards={};for i,c in ipairs(b.cards) do cards[i]=c;check(not c.greyed,view[4]..': results are not dimmed while idle') end
@@ -102,7 +102,7 @@ for _,view in ipairs(VIEWS) do
 end
 print('PASS: results stay, dimmed and still usable, while a search is out; the pager says Searching...')
 
--- PG6: the save caption beside the deck name, and its Retry.
+-- The save caption beside the deck name, and its Retry.
 local CAPTIONS={pending='Saving...',saving='Saving...',saved='Saved',retrying='Retrying...',failed='Not saved'}
 for _,view in ipairs(VIEWS) do
   for _,tab in ipairs(view[4]=='portrait' and {'catalog','deck'} or {'catalog'}) do
@@ -158,7 +158,7 @@ do
 end
 print('PASS: a failed save and its recovery are each announced once')
 
--- PG4: portrait draws builder messages on a line of their own on both tabs.
+-- Portrait draws builder messages on a line of their own on both tabs.
 do
   local messages={'This card has reached its copy limit.','Resolve unavailable cards before adding more.',
     'Deck changed elsewhere; reloaded the latest.','Could not save. Your edits are kept. Retry.','Card search failed. Try again.'}
@@ -204,7 +204,7 @@ do
 end
 print('PASS: portrait draws builder messages on the catalog and deck tabs, clear of the grid, pager and controls')
 
--- PG4: portrait sorts from the Filters dialog's Cards tab, in its free last slot.
+-- Portrait sorts from the Filters dialog's Cards tab, in its free last slot.
 do
   local b,sent=builder(VIEWS[2])
   b.filterPage=1;b:openModal('filters')

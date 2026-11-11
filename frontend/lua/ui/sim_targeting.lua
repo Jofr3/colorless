@@ -1,7 +1,7 @@
 local D=require('ui.card_dimensions')
--- Targeting on the table (audit SM14), mixed into ui/simulator.lua's Simulator: which cards and
--- Prize slots a host prompt or a grouped card action can pick, the damage-counter transfer's
--- motion, Rare Candy drop targets, and the face-down Prizes' positions and hover motion.
+-- Targeting on the table, mixed into ui/simulator.lua's Simulator: which cards and Prize slots
+-- a host prompt or a grouped card action can pick, the damage-counter transfer's motion, Rare
+-- Candy drop targets, and the face-down Prizes' positions and hover motion.
 local Card=require('ui.card')
 local Motion=require('ui.motion')
 local Layout=require('ui.sim_layout')

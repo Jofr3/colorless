@@ -1,7 +1,7 @@
--- Interface size (audit LQX2): a tenth preference, 100% / 125% / 150%, chosen with a cycle on
--- Settings' Game tab under Reduced Motion. Records saved before it (eight or nine values) keep
--- every setting. The policy (ui/interface_size.lua) grows each layer by the largest step up to
--- the chosen one whose shrunken canvas still holds the layer's content.
+-- Interface size: a tenth preference, 100% / 125% / 150%, chosen with a cycle on Settings'
+-- Game tab under Reduced Motion. Records saved before it (eight or nine values) keep every
+-- setting. The policy (ui/interface_size.lua) grows each layer by the largest step up to the
+-- chosen one whose shrunken canvas still holds the layer's content.
 package.path='frontend/lua/?.lua;frontend/lua/tests/?.lua;'..package.path
 local Stub=require('support.draw_stub').install()
 local T=require('ui.theme')

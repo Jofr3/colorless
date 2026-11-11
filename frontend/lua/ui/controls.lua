@@ -13,8 +13,8 @@ function Controls.cycle(focus,dir,count,skip)
   end
   return focus,false
 end
--- Where Tab's ring starts (audit PG14): after the controls listed first that the page reaches
--- last (`ringLast`, a Back drawn before the page's content), so Tab lands on the primary region.
+-- Where Tab's ring starts: after the controls listed first that the page reaches last
+-- (`ringLast`, a Back drawn before the page's content), so Tab lands on the primary region.
 function Controls.first(controls)
   local first=1
   while controls[first] and controls[first].ringLast do first=first+1 end
@@ -52,9 +52,9 @@ local function better(s,c,best,sideways)
   end
   return c.weight<best.weight
 end
--- Arrow keys by layout (audit PG14): the nearest control in the arrow's direction, by better()
--- above; a control hanging under its pile (`arrowSkip`) is left to Tab. Nothing that way keeps
--- focus where it is. With nothing focused Right and Down land where Tab would, Left and Up where
+-- Arrow keys by layout: the nearest control in the arrow's direction, by better() above; a
+-- control hanging under its pile (`arrowSkip`) is left to Tab. Nothing that way keeps focus
+-- where it is. With nothing focused Right and Down land where Tab would, Left and Up where
 -- Shift+Tab would. Returns the new focus and whether it moved.
 function Controls.grid(focus,key,controls,skip,first)
   local d=ARROWS[key]

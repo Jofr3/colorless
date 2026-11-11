@@ -1,11 +1,11 @@
--- Each screen says where it draws the text field a native proxy edits (audit BR6), so main.lua can
--- tell the page and the page can put the proxy there: the IME window and a phone keyboard's pan
--- then anchor at the field, not at the canvas's corner. editBox returns the box Input draws the
--- editing field in, in the space main.lua draws the screen in (a modal's slide and the lobby's
--- entrance included), and nothing while no field edits. Every text field: the deck library's
--- search and deck name, the builder's name, search, option search, rules text and decklist, the
--- sandbox's search, the lobby's code and deck search, sign-in and sign-up email, password and
--- name, the deletion's password or email, the account name and the name prompt.
+-- Each screen says where it draws the text field a native proxy edits, so main.lua can tell the
+-- page and the page can put the proxy there: the IME window and a phone keyboard's pan then anchor
+-- at the field, not at the canvas's corner. editBox returns the box Input draws the editing field
+-- in, in the space main.lua draws the screen in (a modal's slide and the lobby's entrance
+-- included), and nothing while no field edits. Every text field: the deck library's search and
+-- deck name, the builder's name, search, option search, rules text and decklist, the sandbox's
+-- search, the lobby's code and deck search, sign-in and sign-up email, password and name, the
+-- deletion's password or email, the account name and the name prompt.
 package.path='frontend/lua/?.lua;frontend/lua/tests/?.lua;'..package.path
 local Stub=require('support.draw_stub').install()
 local Card=require('ui.card');Card.rebuild=function(self)self.texture={release=function()end}end

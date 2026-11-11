@@ -90,9 +90,9 @@ local calls=0
 local reduced=Wipe.new(function()calls=calls+1 end,{},true,function()error('Reduced motion must be silent')end)
 reduced:layout(480,850,30);assert(not reduced.card)
 assert(reduced:update(1/60) and calls==1);reduced:update(1/60);assert(calls==1)
--- A first visit's wipe can start before the host has written any transition scan (audit BT9):
--- it neither errors nor waits, and the card burns face down. LÖVE's newImage throws for a file
--- that is not there.
+-- A first visit's wipe can start before the host has written any transition scan: it neither
+-- errors nor waits, and the card burns face down. LÖVE's newImage throws for a file that is
+-- not there.
 local stubImage=love.graphics.newImage
 love.graphics.newImage=function(path)
   if path~='assets/textures/2x/Enhancers.png' then error('Could not open file '..path..'. Does not exist.') end

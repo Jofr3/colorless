@@ -1,4 +1,4 @@
--- The online opponent's presence (audit SM14), mixed into ui/simulator.lua's Simulator.
+-- The online opponent's presence, mixed into ui/simulator.lua's Simulator.
 local T=require('ui.theme')
 local Dyna=require('ui.dynatext')
 local Simulator={}

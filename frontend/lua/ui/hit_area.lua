@@ -1,8 +1,8 @@
--- Larger targets without larger buttons (audit PG8, QA11, LC4): a control keeps its drawn face and
--- gets a larger invisible hit rectangle, `b.hitRect`, which Button.hit tests instead of the face.
--- It grows around the face to a minimum size, stays inside `bounds`, and never reaches another
--- control: two faces that both grow split the gap between them at its middle; anything else (a
--- control that does not grow, its existing hit rectangle, a card) stops it at its edge.
+-- Larger targets without larger buttons: a control keeps its drawn face and gets a larger
+-- invisible hit rectangle, `b.hitRect`, which Button.hit tests instead of the face. It grows
+-- around the face to a minimum size, stays inside `bounds`, and never reaches another control: two
+-- faces that both grow split the gap between them at its middle; anything else (a control that
+-- does not grow, its existing hit rectangle, a card) stops it at its edge.
 local HitArea={}
 local function overlaps(a,b)
   return a.x<b.x+b.w and b.x<a.x+a.w and a.y<b.y+b.h and b.y<a.y+a.h

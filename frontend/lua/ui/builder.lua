@@ -83,7 +83,7 @@ function Builder:summary(phase)
 end
 function Builder:offset() return self.motion and self.motion.VT.y*60 or 0 end
 -- The box the field a text proxy edits is drawn in, its dialog's slide included, for main.lua to
--- hand the page (audit BR6); nothing while none edits.
+-- hand the page; nothing while none edits.
 function Builder:editBox()
   if self.editing=='' then return end
   for _,b in ipairs(self.controls)do
@@ -337,7 +337,7 @@ function Builder:build()
     self:add('Back',x,m.y+m.h-60,bw,40,'close',T.orange)
     return
   end
-  -- Drawn first, reached last: Tab starts at the page's content (audit PG14).
+  -- Drawn first, reached last: Tab starts at the page's content.
   self:add('Back',p and 24 or 48,h-62,p and w-48 or w-96,40,'leave',T.orange,nil,{ringLast=true})
   if self.phase~='ready' then
     self:add(self.phase=='anonymous' and 'Sign in' or 'Try again',w/2-140,h/2+38,280,44,self.phase=='anonymous' and 'signin' or 'retry',T.red)
@@ -376,8 +376,8 @@ function Builder:build()
   elseif self.retry then self:add(p and 'Retry loading' or 'Retry',p and 24 or 1122,p and (self.tab=='deck' and h-124 or h-180) or h-83,p and 432 or 110,p and 36 or 18,'retry',T.profile).fontSize=p and 24 or 16 end
   self:inflateTargets()
 end
--- PG8: the deck rows' - and + and Retry answer the pointer over about 34x34 virtual pixels (24
--- CSS px at least), around their unchanged faces and clear of every other control.
+-- The deck rows' - and + and Retry answer the pointer over about 34x34 virtual pixels (24 CSS
+-- px at least), around their unchanged faces and clear of every other control.
 function Builder:inflateTargets()
   local small={}
   for _,b in ipairs(self.controls) do
@@ -662,9 +662,9 @@ function Builder:mousereleased(x,y)
   elseif self.pressed and self.pressed==self:hit(x,y)then self:activate(self.pressed)end
   self.drag=nil;self.pressed=nil
 end
--- The page's shortcuts (audit PG14), listed in its canvas description: '/' opens the card search,
--- 'D' focuses the deck list, '-' and '+' change the focused deck entry by a copy. None works
--- under a dialog. Returns whether `key` is one.
+-- The page's shortcuts, listed in its canvas description: '/' opens the card search, 'D' focuses
+-- the deck list, '-' and '+' change the focused deck entry by a copy. None works under a dialog.
+-- Returns whether `key` is one.
 local MINUS,PLUS={['-']=true,['kp-']=true},{['+']=true,['=']=true,['kp+']=true}
 function Builder:focusFirst(pred)
   for i,b in ipairs(self.controls)do if pred(b) and not Controls.unfocusable(b) then self.focus=i;return i,b end end
