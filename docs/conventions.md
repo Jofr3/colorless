@@ -197,7 +197,7 @@ something else.
   reasons a deck is illegal. The server enforces them: `beginMatch` refuses a deck that is not
   legal in its own stored format, and the lobby drops both players back to selecting with the
   reason. The builder (`src/decks/deckMath.ts`) and the online picker (`sandboxDecks.ts`
-  `playableDecks`, its `online` verdict) call the same functions. Local play asks only what
+  `playableDecksFrom`, its `online` verdict) call the same functions. Local play asks only what
   `createGame` asks: 60 cards, all in the catalog, and a Basic Pokémon.
 - The client's one view of a game is `redactGame`'s `RedactedGame` plus the seat log. Both table
   sources read prompts and the effect phase (`unit`, `counterTransfer`, `invokedBy`,
@@ -212,8 +212,9 @@ something else.
   bytes already read correctly, `withDefaultKeys` when the change only adds side installs
   (`clearedSideInstalls`) or attack-effect fields (`clearedAttackEffects`), or a hand-written step
   otherwise. A version with no entry is retired: the DO answers its record `stale` and retires the
-  match, and a local save is already refused by its `engineVersion`. The oldest migratable version
-  is 42. Each step gets a `*Migration.test.ts` beside `persist.ts`, built on the
+  match. A local save is refused when its `SAVE_VERSION` or `engineVersion` differs, or when its
+  replay does not reproduce the saved fingerprint. The oldest migratable version is 42.
+  Each step gets a `*Migration.test.ts` beside `persist.ts`, built on the
   `storedAt`/`migrateStored`/`mustMigrate` fixtures; the DO's read is tested in
   `apps/api/src/lobby/matchLoad.test.ts`.
   - **A hand-written step also gets one real record** (reliability audit EN6). `storedAt` strips
@@ -769,11 +770,11 @@ Two or three agents share this checkout. Work like it:
 - **Commit with EXPLICIT PATHS.** Never `git add -A`, never `git commit -a`.
 - ⚠️ **`decisions.md` and the engine version are SERIALISATION POINTS.**
   `decisions.md` lost three rows to concurrent writes (D177's and D187's had to
-  be reconstructed after the fact — D176, D187), and three pairs of slices claimed
-  the same engine version from the same base (D186/D199 both took 0.127.0;
-  D202/D204; D207/D210/D208 all took 0.133.0). Every collision needed hand
-  arbitration, and two engine-behaviour commits reached HEAD with **no version
-  block at all** (D208 paid it). If you cannot hold `index.ts`, declare the bump
+  be reconstructed after the fact — D176, D187). Only a change to what an action
+  does bumps the engine version (simulator.md step 7); a refactor, a test or a
+  `GAME_STATE_VERSION` change alone does not. Two branches that bump it from the
+  same base claim the same version (D186/D199 both took 0.127.0), so the later
+  merge takes the next minor. If you cannot hold `index.ts`, declare the bump
   **OWED** in the commit body.
 - **Annotate provenance; never overwrite it.** How a claim was warranted at the
   time is what this repo keeps losing (D178; D180's follow-up kept the

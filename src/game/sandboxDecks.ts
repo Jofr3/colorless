@@ -97,13 +97,6 @@ export function sandboxDecksFrom(summaries: Deck[], verdicts: Map<string, DeckVe
   });
 }
 
-export async function validSandboxDecks(
-  summaries: Deck[],
-  current: () => boolean,
-): Promise<Deck[]> {
-  return sandboxDecksFrom(summaries, await judgeDecks(summaries, current));
-}
-
 export type PlayableDeck = Deck & {
   /** Legal in its own format, so a lobby will start a match with it. */
   online: boolean;
@@ -125,13 +118,6 @@ export function playableDecksFrom(
     const { name, legal, formatName, standard, expanded } = v;
     return [{ ...summary, name, online: legal, formatName, standard, expanded }];
   });
-}
-
-export async function playableDecks(
-  summaries: Deck[],
-  current: () => boolean,
-): Promise<PlayableDeck[]> {
-  return playableDecksFrom(summaries, await judgeDecks(summaries, current));
 }
 
 /** Per-deck legality in each deck's own format, for the library's illegal-deck alert: an
