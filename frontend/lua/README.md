@@ -504,13 +504,15 @@ upper-cases and drops look-alike characters; Join stays disabled until four
 characters), **joining**, **waiting** (code pill, Copy code, Copy link =
 `<origin>/online/CODE`, the label flashes Copied), **versus** (your seat
 and the opponent's, presence pip, Waiting / Choosing deck / Ready / Away pills,
-Choose deck, Ready / Cancel ready; the Lua host has no Kick), the deck **picker**
+Choose deck, Ready / Cancel ready), the deck **picker**
 (search, 5×2 or 2×2 pile grid, pages and a regulation cycle: All decks, Standard
 legal, Not Standard legal, Expanded legal, Not Expanded legal; the filter only
 changes the view and every listed deck already passes the Sandbox's playable
 check), **countdown** (3, 2, 1, GO! as `attention_text`; only Leave works),
-**starting**, and the info steps **invalid / not-found / full / kicked** with
-Back to online. Spectating is not offered: a full lobby shows "Lobby is full".
+**starting**, and the info steps **invalid / not-found / full / unreachable /
+outdated** with Back to online. There is no kick and no spectating: a full lobby
+shows "Lobby is full", and a page older than the lobby protocol (close 4026)
+shows "A new version is available".
 Anonymous players can create and join,
 and sign in from the menu or the picker; the socket then reopens with the same
 seat and the account's name.
@@ -540,14 +542,14 @@ key (a stack's bottom card) is inferred from frame to frame and resets on reload
 Protocol: Lua prints `COLORLESS:online:<cmd>` (fields encoded with
 `ui/codec.lua`, TAB-separated), which the bridge's shell hands to `LuaOnline`. Commands:
 `open [code]`, `close`, `create`, `join code`, `leave [home]`, `decks`,
-`select deckId`, `ready 1|0`, `kick` (no Lua control sends it yet), `copy code|link`; `input` and
+`select deckId`, `ready 1|0`, `copy code|link`; `input` and
 `finish-input` stay in the shell for the native code/search proxies. `LuaOnline`
 publishes to `__online.txt`: a header
 (revision, step, busy, message, code, role, link, countdown, notice, decks
-state, name, account, canKick, status), `P` seat rows (the opponent's deck is
+state, name, account, status), `P` seat rows (the opponent's deck is
 never sent) and `D,id,name,cardCount,standard,expanded` deck rows. Proxy edits
 arrive in `__online_input.txt`. The table keeps `__simulator.txt`; its new
-`L,mode,spectating,awayName,awayMs,flags,allow` row carries the online
+`L,mode,awayName,awayMs,flags,allow` row carries the online
 lifecycle (flags `concede`, `rematch`, `rematch-sent`, `leave`).
 
 Keyboard: Tab / Shift+Tab or up/down move focus and announce the control;
@@ -563,7 +565,7 @@ Online checks: `bunx vitest run src/online src/lua`,
 `lua frontend/lua/tests/online.lua`, `lua frontend/lua/tests/simulator_online.lua`,
 `lua frontend/lua/tests/options.lua` and
 `lua frontend/lua/tests/screen_wipe_navigation.lua`. Browser QA uses two
-sessions against a local API: create, invite link, typed join, kick and
+sessions against a local API: create, invite link, typed join, leave and
 rejoin, anonymous sign-in, picker and filter, ready/cancel, countdown, setup and
 turns, a refused second Energy, away banner and resume, concede, rematch,
 press-again Leave, browser Back forfeit, full / not-found / invalid links,
