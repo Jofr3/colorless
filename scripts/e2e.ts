@@ -23,7 +23,8 @@
  * else Xvfb on PATH, else nixpkgs#xorg.xvfb), with Mesa's software GL (MESA, else nixpkgs#mesa)
  * where the system has none in /run/opengl-driver. --gpu adds the CRT parity check
  * (frontend/lua/tests/effects_gpu.lua). --keep leaves the temporary directory (site, D1 state, API
- * log); a failed run always leaves it.
+ * log); a failed run always leaves it, with a screenshot of each page, and prints each page's console
+ * tail.
  */
 
 import { type ChildProcess, spawn, spawnSync } from "node:child_process";
@@ -998,6 +999,16 @@ async function report(error: unknown) {
       `location.pathname + ' | ' + document.body.className + ' | ' + document.getElementById('status').textContent`,
     ).catch(() => "(no answer)");
     log(`${page.name}: ${state}`);
+    const shot = join(root, `${page.name}.png`);
+    await Promise.race([
+      driver().screenshot(page),
+      sleep(10_000).then(() => Promise.reject(new Error("no answer in 10 s"))),
+    ])
+      .then((png) => {
+        writeFileSync(shot, png);
+        log(`${page.name} screenshot: ${shot}`);
+      })
+      .catch((reason: unknown) => log(`${page.name}: no screenshot (${String(reason)})`));
     const prints = await evaluate<string[]>(page, "window.__e2e.prints.slice(-15)").catch(() => []);
     if (prints.length > 0) log(`${page.name} last prints: ${JSON.stringify(prints)}`);
     for (const name of [MAILBOXES.simulator, MAILBOXES.online]) {
@@ -1009,6 +1020,9 @@ async function report(error: unknown) {
     }
     if (page.consoleErrors.length > 0)
       log(`${page.name} errors: ${JSON.stringify(page.consoleErrors.slice(-5))}`);
+    // A Lua traceback's frame lines reach console.log; only its first lines are errors.
+    if (page.consoleLines.length > 0)
+      log(`${page.name} console tail:\n  ${page.consoleLines.slice(-20).join("\n  ")}`);
   }
   if (apiLog && existsSync(apiLog))
     log(`API log tail:\n${readFileSync(apiLog, "utf8").split("\n").slice(-20).join("\n")}`);
