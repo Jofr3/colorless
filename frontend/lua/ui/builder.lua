@@ -16,6 +16,7 @@ local Display=require('ui.display')
 local HitArea=require('ui.hit_area')
 local Modal=require('ui.modal')
 local Codec=require('ui.codec')
+local TextRecord=require('ui.text_record')
 local Mailbox=require('ui.mailbox')
 local W=require('ui.wire_fields').builder
 local Fit=require('ui.text_fit')
@@ -567,8 +568,9 @@ function Builder:update(dt,time,mx,my,reduced)
     local raw=Mailbox.read(file)
     if raw then
       if file=='builder' then self:sync(raw)
-      elseif file=='builderInput' and raw~=self.inputRaw then
-        self.inputRaw=raw;local f=Codec.fields(raw);self.editing=f[6]=='input' and f[2] or '';self.values[f[2]]=f[3];self.first,self.last=tonumber(f[4]),tonumber(f[5]);if f[2]=='transfer'then self.transfer=f[3];self.clipboard=nil end
+      elseif file=='builderInput' then
+        local r=TextRecord.read(self,raw)
+        if r then self.editing=r.action=='input' and r.field or '';self.values[r.field]=r.value;self.first,self.last=r.selectionStart,r.selectionEnd;if r.field=='transfer'then self.transfer=r.value;self.clipboard=nil end end
       elseif file=='art' and raw~=self.artRaw then
         self.artRaw=raw;local old=self.art;self.art=Mailbox.artMap(raw)
         for _,c in ipairs(self.cards)do if self.art[c.item.id] and old[c.item.id]~=self.art[c.item.id]then c:rebuild()end end

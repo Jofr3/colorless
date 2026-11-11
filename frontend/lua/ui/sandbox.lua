@@ -7,6 +7,7 @@ local Controls=require('ui.controls')
 local Button=require('ui.button')
 local Modal=require('ui.modal')
 local Codec=require('ui.codec')
+local TextRecord=require('ui.text_record')
 local W=require('ui.wire_fields').sandbox
 local Mailbox=require('ui.mailbox')
 local PageText=require('ui.page_text')
@@ -154,13 +155,11 @@ function Sandbox:describe(b)
   return b.label
 end
 function Sandbox:input(raw)
-  if not raw or raw==self.inputRaw then return end
-  self.inputRaw=raw
-  local f=Codec.fields(raw);if #f<6 or f[2]~='search' then return end
-  self.editing=f[6]=='input';self.first,self.last=tonumber(f[4]),tonumber(f[5])
-  if self.query~=f[3] then
+  local r=TextRecord.read(self,raw);if not r or r.field~='search' then return end
+  self.editing=r.action=='input';self.first,self.last=r.selectionStart,r.selectionEnd
+  if self.query~=r.value then
     local had=#self.cards>0
-    self.query=f[3];self.page=1;self:makeCards(true);self:build();self.pressed=nil;self.focus=0
+    self.query=r.value;self.page=1;self:makeCards(true);self:build();self.pressed=nil;self.focus=0
     if had~=(#self.cards>0) and #self.items>0 then self.callbacks.announce(had and 'No matches' or #self.cards..' decks shown') end
   end
 end

@@ -252,6 +252,26 @@ export const WIRE_ROWS = {
       ],
     },
   },
+  /** The text proxies' records (src/host/textProxy.ts): `text` for one field, `auth` for the
+   * sign-in form, its password masked. */
+  input: {
+    text: {
+      fields: ["revision", "field", "value", "selectionStart", "selectionEnd", "action"],
+    },
+    auth: {
+      fields: [
+        "revision",
+        "editing",
+        "email",
+        "password",
+        "name",
+        "selectionStart",
+        "selectionEnd",
+        "action",
+        "field",
+      ],
+    },
+  },
 } as const satisfies Record<string, Record<string, RowKind>>;
 
 /** A row's columns in declared order, its tag first; a kind with several tags names the one. */

@@ -2,6 +2,7 @@
  * and a mobile keyboard, while the visible field and caret are drawn in the Lua canvas. */
 
 import { encodeFields } from "../lua/wire";
+import { WIRE_ROWS, wireRow } from "../lua/wireFields";
 
 /** `input` while the edit is live; `enter`, `done` and `previous`/`next` (Tab, auth only) end it,
  * and `reset` clears the auth form. */
@@ -100,7 +101,7 @@ export function proxyElement<K extends "input" | "textarea">(
 
 export interface TextProxyOptions {
   element: TextElement;
-  /** Writes one record, `[revision, field, value, selectionStart, selectionEnd, action]`. */
+  /** Writes one record, a `WIRE_ROWS.input.text` row. */
   write(record: string): void;
   /** Hands focus back to the canvas once an edit ends. */
   release(): void;
@@ -129,14 +130,16 @@ export function createTextProxy(options: TextProxyOptions): TextProxy {
   let revision = 0;
   const publish = (action: ProxyAction = "input", name = field) => {
     options.write(
-      encodeFields([
-        ++revision,
-        name,
-        element.value,
-        element.selectionStart ?? 0,
-        element.selectionEnd ?? 0,
-        action,
-      ]),
+      encodeFields(
+        wireRow(WIRE_ROWS.input.text, {
+          revision: ++revision,
+          field: name,
+          value: element.value,
+          selectionStart: element.selectionStart ?? 0,
+          selectionEnd: element.selectionEnd ?? 0,
+          action,
+        }),
+      ),
     );
     options.published?.(name, element.value, action);
   };
@@ -194,8 +197,8 @@ export type AuthField = (typeof AUTH_FIELDS)[number];
 
 export interface AuthProxyOptions {
   inputs: Record<AuthField, HTMLInputElement>;
-  /** Writes one record, `[revision, editing, email, masked password, name, selectionStart,
-   * selectionEnd, action, field]`; the password itself never leaves its input. */
+  /** Writes one record, a `WIRE_ROWS.input.auth` row; the password itself never leaves its
+   * input, only its length as asterisks. */
   write(record: string): void;
   release(): void;
   keyTarget?: EventTarget;
@@ -220,17 +223,19 @@ export function createAuthProxy(options: AuthProxyOptions): AuthProxy {
   const publish = (action: ProxyAction = "input", field: AuthField | "" = editing) => {
     const input = field ? inputs[field] : undefined;
     options.write(
-      encodeFields([
-        ++revision,
-        editing,
-        inputs.email.value,
-        "*".repeat(inputs.password.value.length),
-        inputs.name.value,
-        input?.selectionStart ?? 0,
-        input?.selectionEnd ?? 0,
-        action,
-        field,
-      ]),
+      encodeFields(
+        wireRow(WIRE_ROWS.input.auth, {
+          revision: ++revision,
+          editing,
+          email: inputs.email.value,
+          password: "*".repeat(inputs.password.value.length),
+          name: inputs.name.value,
+          selectionStart: input?.selectionStart ?? 0,
+          selectionEnd: input?.selectionEnd ?? 0,
+          action,
+          field,
+        }),
+      ),
     );
   };
   const finish = (action: ProxyAction = "done", cancel = false) => {

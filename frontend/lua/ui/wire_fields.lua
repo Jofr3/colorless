@@ -40,4 +40,8 @@ return {
   account={
     header={revision=1,status=2,busy=3,message=4,id=5,displayName=6,email=7,hasPassword=8,namePrompt=9,invalid=10,failures=11},
   },
+  input={
+    text={revision=1,field=2,value=3,selectionStart=4,selectionEnd=5,action=6},
+    auth={revision=1,editing=2,email=3,password=4,name=5,selectionStart=6,selectionEnd=7,action=8,field=9},
+  },
 }
