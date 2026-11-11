@@ -1,6 +1,5 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackCoinFlip,
@@ -11,7 +10,6 @@ import {
   ATTACK_READERS,
 } from "./effects";
 import type { AttackCoinFlip } from "./effects";
-import { engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { flipCoin, type RngState } from "./rng";
 import type { CoinFace } from "./rng";
@@ -584,10 +582,6 @@ describe("D526 §3 — the census moved in exactly ONE summand, by 1 sentence / 
 });
 
 describe("D526 §4 — the version steps, the heading is written, the prose is corrected, and what stands still", () => {
-  it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(manifest.version).toBe(engineVersion);
-  });
-
   it("`MATCH_RECORD_VERSION` HOLDS at 30 — DRIVEN: the member is never serialized (it is spent into a NUMBER at the fold), the attack never parks, and the post-attack board is BYTE-EQUAL through a JSON round-trip", () => {
     expect(roundTrip(READING)).toEqual(READING);
     for (const faces of [HHH, HHT, HTT, TTT]) {

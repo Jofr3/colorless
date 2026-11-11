@@ -1,9 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
-import { engineVersion } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import {
@@ -686,10 +684,6 @@ describe("D507 §9 — the residue, the surface, the version, and what stands st
       expect(splitAttackGateClause(text)).toBeNull();
       expect(splitAttackTrailingClause(text)).toBeNull();
     }
-  });
-
-  it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(engineVersion).toBe(manifest.version);
   });
 
   it("what this slice does NOT move, stated as zeroes (D496)", () => {

@@ -5031,16 +5031,6 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["packages/engine/src/namedBodiesSpread.test.ts"],
   },
   {
-    id: "D275-engine-version-drifts-again",
-    decision: "D275",
-    what: "🛑 THE DEBT THIS SLICE PAID FOR THE FIFTH TIME, RE-INSTALLED: `engineVersion` falls a minor behind `packages/engine/package.json`, which is EXACTLY the state the tree was in at the head of D275 (0.187.0 against 0.189.0) and had been for two slices with nothing comparing them. The tie is the guard; this row is the proof it is one",
-    file: "packages/engine/src/index.ts",
-    symbol: "engineVersion",
-    find: 'export const engineVersion = "0.555.0";',
-    replace: 'export const engineVersion = "0.193.0";',
-    expectKilledBy: ["packages/engine/src/fanCall.test.ts"],
-  },
-  {
     id: "D402-zone-hard-coded-to-the-active",
     decision: "D402",
     what: '\ud83d\uded1 C1 \u2014 **THE ZONE HARD-CODED TO `yourActive`, AND IT IS THE FOUR NEIGHBOURING ARMS\' REAL CODE COPIED VERBATIM** (D190b\'s neighbour-copy shape: arms 7, 8, 9 and 10 each emit `from: "yourActive"` as a literal, because every sentence THEY read says "this Pokemon"). Three of this anchor\'s six sentences print "from **your** Pokemon" \u2014 the whole own side, Bench included \u2014 so the mutant strips Energy off the Active where the card lets you take it off any body, and on a board whose Active holds none it discards NOTHING and the attack deals ZERO. **THE SENTENCE STILL MATCHES AND EVERY CENSUS FIGURE IS UNMOVED**, which is this family\'s standing hazard: `BUILT.attack` counts sentences, not programs. \u00a72 pins the `from` on all six',

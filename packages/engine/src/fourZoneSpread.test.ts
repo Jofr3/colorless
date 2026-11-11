@@ -1,6 +1,5 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackDamageMultiplier,
@@ -11,7 +10,6 @@ import {
   splitAttackTrailingClause,
   ATTACK_READERS,
 } from "./effects";
-import { engineVersion } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { conditionHolds, countPokemonInPlay } from "./boardCondition";
@@ -646,12 +644,6 @@ describe("D520 §7 — zeros measured over every corpus row", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // §8 — the version.
 // ─────────────────────────────────────────────────────────────────────────────
-
-describe("D520 §8 — the version steps, and the heading is written", () => {
-  it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(manifest.version).toBe(engineVersion);
-  });
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // §9 — what stands still.

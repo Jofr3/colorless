@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import { searchTopOrderProgram } from "./registryBuilders";
 import type { EffectOp } from "./effectTypes";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { logFromEvents } from "./log";
 import type { LogContext } from "./log";
@@ -649,8 +649,3 @@ describe("§9 the short deck — the floor clamps and the second park collapses"
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§10 the version anchor", () => {
-  it("the engine version moved PAST the D342 bump", () => {
-    expect(engineVersion >= "0.248.0").toBe(true);
-  });
-});

@@ -1,6 +1,5 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { energyProvidesOf, matchesFilter } from "./cards";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
@@ -13,7 +12,7 @@ import {
   ATTACK_READERS,
 } from "./effects";
 import type { EffectOp } from "./effectTypes";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState } from "./index";
 import type { EffectContext, EffectContinuation, EffectPrompt } from "./effectPrompt";
 import { runProgram } from "./interpreter";
@@ -912,11 +911,5 @@ describe("D531 §4 — the park offers EXACTLY the Pokémon whose type is a Basi
     pick(parked, [x]);
     expect(JSON.stringify(before)).toBe(snapshot);
     expect(JSON.stringify(parked)).toBe(parkedSnapshot);
-  });
-});
-
-describe("D531 §6 — the version steps and the bytes this suite drove are the bytes that shipped", () => {
-  it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(manifest.version).toBe(engineVersion);
   });
 });

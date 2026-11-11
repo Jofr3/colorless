@@ -1,12 +1,10 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { matchesFilter } from "./cards";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import type { CardFilter, EffectOp } from "./effectTypes";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
 import type { GameEvent } from "./events";
-import { engineVersion } from "./index";
 import type { GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import { type LogContext, formatElapsed, logFromEvents } from "./log";
@@ -500,9 +498,3 @@ describe("§8 — the persisted record cannot hold this op", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 // §9 — THE VERSION PINS
 // ─────────────────────────────────────────────────────────────────────────────
-
-describe("§9 — the version, and what it is owed for", () => {
-  it("engineVersion is 0.555.0 and the bump is owed for BEHAVIOUR", () => {
-    expect(manifest.version).toBe(engineVersion);
-  });
-});

@@ -1,6 +1,5 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackDamageBonus,
@@ -11,7 +10,6 @@ import {
   ATTACK_READERS,
 } from "./effects";
 import type { CardFilter, EffectOp } from "./effectTypes";
-import { engineVersion } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { runProgram } from "./interpreter";
 import {
@@ -770,10 +768,6 @@ describe("D539 §7 — the widening at a persisted address, and the version does
       }
     }
     expect([...seen].sort()).toEqual(["opponentAny", "opponentBench", "yourAny", "yourBench"]);
-  });
-
-  it("the engine version moved and the two spellings agree", () => {
-    expect(manifest.version).toBe(engineVersion);
   });
 });
 

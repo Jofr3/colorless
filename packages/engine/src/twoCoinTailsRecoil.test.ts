@@ -1,6 +1,5 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { programPlayable } from "./cardplay";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
@@ -12,7 +11,7 @@ import {
   splitAttackTrailingClause,
   ATTACK_READERS,
 } from "./effects";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { flipCoin } from "./rng";
 import {
@@ -537,10 +536,6 @@ describe("D521 §3 — the census moved in exactly ONE summand, by 1 sentence / 
 });
 
 describe("D521 §4 — the version steps, the heading is written, and what stands still", () => {
-  it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(manifest.version).toBe(engineVersion);
-  });
-
   it("`MATCH_RECORD_VERSION` HOLDS at 30: zero new serialized bytes, `damageSelf` never parks, the gate is spliced", () => {
     expect(roundTrip(PROGRAM)).toEqual(PROGRAM);
     // The declaration never parks: no board above ended in `effect:choose`.

@@ -1,5 +1,4 @@
 import type { Card } from "@colorless/schema";
-import manifest from "../package.json" with { type: "json" };
 import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import * as effects from "./effects";
@@ -10,7 +9,6 @@ import {
   discardScaledBoostProgram,
 } from "./effects";
 import type { GameEvent } from "./events";
-import { engineVersion } from "./index";
 import type { GameState, Seat } from "./index";
 import type { EffectRecord } from "./effectPrompt";
 import { runProgram } from "./interpreter";
@@ -850,8 +848,7 @@ describe("D490 §9 — `MATCH_RECORD_VERSION` stays 29: reachability, driven", (
     ).toBe(false);
   });
 
-  it("engineVersion is 0.555.0 and `manifest.version` agrees — the bump is for BEHAVIOUR", () => {
-    expect(manifest.version).toBe(engineVersion);
+  it("the discard-scaled reader claims the both-decks mill", () => {
     expect(deriveAttackDiscardScaledBoost(MILL_BOTH)).not.toBeNull();
   });
 });

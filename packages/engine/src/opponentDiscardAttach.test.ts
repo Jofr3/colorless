@@ -1,6 +1,5 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { programPlayable } from "./cardplay";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import * as effects from "./effects";
@@ -14,7 +13,7 @@ import {
 } from "./effects";
 import { ENERGY_TYPE_BY_CODE } from "./deriver/vocabulary";
 import type { EffectOp } from "./effectTypes";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import type { EffectContext, EffectContinuation, EffectPrompt, PokemonRef } from "./effectPrompt";
 import { runProgram } from "./interpreter";
@@ -927,11 +926,5 @@ describe('D532 §5 — the grey-out gate reads the OPPONENT\'s pile for a `whose
     const p2 = table({ attacker: "p2", opponentPile: [ITEM] });
     expect(programPlayable(p2, PROGRAM, "p2", activeUid(p2, "p2"))).toBe(false);
     expect(programPlayable(p2, own, "p2", activeUid(p2, "p2"))).toBe(true);
-  });
-});
-
-describe("D532 §6 — the version steps and the bytes this suite drove are the bytes that shipped", () => {
-  it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(manifest.version).toBe(engineVersion);
   });
 });

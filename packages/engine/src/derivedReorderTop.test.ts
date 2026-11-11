@@ -2,7 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import type { EffectOp } from "./effectTypes";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { logFromEvents } from "./log";
 import type { LogContext } from "./log";
@@ -618,10 +618,6 @@ describe("§8 the census arithmetic this row is accountable for", () => {
       return effect !== undefined && deriveAttackEffect(effect) !== null;
     });
     expect(resolved).toHaveLength(4);
-  });
-
-  it("the engine version has moved PAST D341's bump and the anchor has moved on", () => {
-    expect(engineVersion >= "0.247.0").toBe(true);
   });
 });
 

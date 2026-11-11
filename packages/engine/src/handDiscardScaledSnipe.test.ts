@@ -825,7 +825,7 @@ describe("D489 §8 — the DESCRIBER obligation, discharged rather than asserted
 });
 
 describe("D489 §9 — the census this row moves, and the summands it does not", () => {
-  it("engineVersion is 0.555.0 and the bump is owed for BEHAVIOUR", () => {
+  it("the effect reader claims the printed sentence", () => {
     expect(deriveAttackEffect(PRINTED)).not.toBeNull();
   });
 });

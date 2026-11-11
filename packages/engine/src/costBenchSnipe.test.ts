@@ -1,9 +1,7 @@
 import type { Card } from "@colorless/schema";
-import manifest from "../package.json" with { type: "json" };
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
-import { engineVersion } from "./index";
 import type { GameEvent, GameState, PokemonRef, Seat } from "./index";
 import {
   FIXTURE_POOL,
@@ -665,10 +663,6 @@ describe("§7 — the self-discard half, on its own terms", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§8 — the surface, the version, and the mechanisms this slice did not add", () => {
-  it("engineVersion is 0.555.0 and `manifest.version` agrees", () => {
-    expect(manifest.version).toBe(engineVersion);
-  });
-
   it("the three sentences produce NO op this engine did not already emit", () => {
     const kinds = new Set(
       [TWO_THEN_120, ALL_THEN_90, TYPED_THEN_180].flatMap((s) =>

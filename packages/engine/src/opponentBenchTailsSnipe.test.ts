@@ -1,5 +1,4 @@
 import type { Card } from "@colorless/schema";
-import manifest from "../package.json" with { type: "json" };
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
@@ -11,7 +10,7 @@ import {
   splitAttackTrailingClause,
   ATTACK_READERS,
 } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { type LogContext, logFromEvents } from "./log";
 import { flipCoin, type RngState } from "./rng";
@@ -526,9 +525,5 @@ describe("D550 §4 — nothing new is persisted, so the record version holds", (
       effect: PRINTED,
       damage: "80×",
     });
-  });
-
-  it("engineVersion is 0.555.0 and `manifest.version` agrees", () => {
-    expect(manifest.version).toBe(engineVersion);
   });
 });

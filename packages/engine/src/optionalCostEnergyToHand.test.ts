@@ -1,6 +1,5 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackEffect,
@@ -13,7 +12,7 @@ import {
   ATTACK_READERS,
 } from "./effects";
 import type { AttackOptionalCostBoost } from "./effects";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { logFromEvents } from "./log";
 import { redactGame } from "./redact";
@@ -541,10 +540,6 @@ describe("D524 §3 — the census moved in exactly ONE summand, by 1 sentence / 
 });
 
 describe("D524 §4 — the version steps, the heading is written, the prose is corrected, and what stands still", () => {
-  it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(manifest.version).toBe(engineVersion);
-  });
-
   it("`MATCH_RECORD_VERSION` HOLDS at 30: zero new serialized bytes — the reading and the program round-trip unchanged, and the park is D381's shipped confirm", () => {
     expect(roundTrip(READING)).toEqual(READING);
     const program = optionalCostBoostProgram(READING, BASE, PRINTED);

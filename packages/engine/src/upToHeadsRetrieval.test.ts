@@ -1,6 +1,5 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackCoinFlip,
@@ -12,7 +11,7 @@ import {
   ATTACK_READERS,
 } from "./effects";
 import type { AttackCoinFlip } from "./effects";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { logFromEvents } from "./log";
 import { redactGame } from "./redact";
@@ -651,10 +650,6 @@ describe("D525 §3 — the census moved in exactly ONE summand, by 1 sentence / 
 });
 
 describe("D525 §4 — the version steps, the heading is written, the prose is corrected, and what stands still", () => {
-  it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(manifest.version).toBe(engineVersion);
-  });
-
   it("`MATCH_RECORD_VERSION` HOLDS at 30 — DRIVEN in three directions: the parked board round-trips and resumes from its bytes; the continuation's alphabet is the SHIPPED op with a `number` max; a record whose `max` is LOST refuses the pick a live one accepts", () => {
     expect(roundTrip(READING)).toEqual(READING);
     const { after: parked } = swing({ faces: HHH });

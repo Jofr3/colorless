@@ -1,6 +1,5 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { programPlayable } from "./cardplay";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
@@ -14,7 +13,7 @@ import {
   ATTACK_READERS,
 } from "./effects";
 import type { EffectOp } from "./effectTypes";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import type { PokemonRef } from "./effectPrompt";
 import {
@@ -662,11 +661,5 @@ describe("D530 §5 — the grey-out funnel reads only `snipeTargets`: a damage-f
         programPlayable(table(bench), PROGRAM, "p1"),
       );
     }
-  });
-});
-
-describe("D530 §6 — the version steps and the bytes this suite drove are the bytes that shipped", () => {
-  it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(manifest.version).toBe(engineVersion);
   });
 });

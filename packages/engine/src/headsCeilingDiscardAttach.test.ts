@@ -1,6 +1,5 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
   deriveAttackCoinFlip,
@@ -13,7 +12,7 @@ import {
 } from "./effects";
 import type { AttackCoinFlip } from "./effects";
 import type { EffectOp } from "./effectTypes";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import type { PokemonRef } from "./effectPrompt";
 import { logFromEvents } from "./log";
@@ -813,9 +812,5 @@ describe("D528 §4 — the census moved in exactly ONE summand, by 1 sentence / 
     expect(splitAttackTrailingClause(PRINTED)).toBeNull();
     expect(splitAttackCancelClause(PRINTED)).toBeNull();
     expect(splitAttackRequirementClause(PRINTED)).toBeNull();
-  });
-
-  it("engineVersion and `manifest.version` agree, and the bump is owed for BEHAVIOUR", () => {
-    expect(manifest.version).toBe(engineVersion);
   });
 });

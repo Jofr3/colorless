@@ -28,8 +28,9 @@ import {
 import { attachEnergy, discardFromPlay, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState } from "./types";
 import { isSeat } from "./types";
+import manifest from "../package.json" with { type: "json" };
 
-export const engineVersion = "0.555.0";
+export const engineVersion: string = manifest.version;
 
 export type {
   ApplyResult,

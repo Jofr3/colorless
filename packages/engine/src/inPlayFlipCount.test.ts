@@ -1,5 +1,4 @@
 import type { Card } from "@colorless/schema";
-import manifest from "../package.json" with { type: "json" };
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import {
@@ -10,7 +9,7 @@ import {
   splitAttackTrailingClause,
   ATTACK_READERS,
 } from "./effects";
-import { applyAction, createGame, engineVersion } from "./index";
+import { applyAction, createGame } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { countPokemonInPlay } from "./boardCondition";
 import { flipCoin, type RngState } from "./rng";
@@ -657,9 +656,5 @@ describe("D474 §6 — `MATCH_RECORD_VERSION` stays 29, and this is D473's FIRST
       // …and no continuation was written at all, on either board.
       expect(done.phase.kind, build.name).not.toBe("effect:choose");
     }
-  });
-
-  it("engineVersion is 0.555.0 and `manifest.version` agrees", () => {
-    expect(manifest.version).toBe(engineVersion);
   });
 });

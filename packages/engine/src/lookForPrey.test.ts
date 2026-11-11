@@ -1,10 +1,9 @@
-import manifest from "../package.json" with { type: "json" };
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { programPlayable } from "./cardplay";
 import type { EffectOp } from "./effectTypes";
 import type { GameEvent } from "./events";
-import { applyAction, engineVersion, programFor } from "./index";
+import { applyAction, programFor } from "./index";
 import type { GameState, Seat } from "./index";
 import type { EffectContext } from "./effectPrompt";
 import { runProgram } from "./interpreter";
@@ -633,11 +632,5 @@ describe("MATCH_RECORD_VERSION stays 16 — and it is DRIVEN, not asserted", () 
     const keys = Object.keys(state).sort();
     expect(keys).toContain("phase");
     expect(keys).not.toContain("crossSeatPuts");
-  });
-});
-
-describe("the engine version", () => {
-  it("moved past 0.204.0 with the new op field, and the two files agree", () => {
-    expect(engineVersion).toBe(manifest.version);
   });
 });

@@ -559,7 +559,7 @@ describe("§6 — the census moves in exactly ONE summand", () => {
 // §7 — the version questions, driven rather than reasoned from a name.
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("§7 — engineVersion, and why MATCH_RECORD_VERSION does not move", () => {
+describe("§7 — why MATCH_RECORD_VERSION does not move", () => {
   it("`MATCH_RECORD_VERSION` STAYS 29 — the SERIALIZED ALPHABET, and REACHABILITY too", () => {
     const program = deriveAttackEffect(PRINTED);
     expect(program).toHaveLength(1);

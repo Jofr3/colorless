@@ -1,10 +1,9 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import manifest from "../package.json" with { type: "json" };
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import * as effects from "./effects";
 import { deriveAttackEffect, splitAttackGateClause, splitAttackTrailingClause } from "./effects";
-import { applyAction, engineVersion } from "./index";
+import { applyAction } from "./index";
 import type { EffectOp, GameEvent, GameState, PokemonRef, Seat } from "./index";
 import { logFromEvents } from "./log";
 import type { LogContext } from "./log";
@@ -89,10 +88,6 @@ describe("§1 — the sentence, the corpus row, and D230's refusal paid", () => 
       { op: "moveEnergy", filter: { kind: "anyEnergy" }, max: 1, route: "selfToBench" },
     ]);
     expect(Object.hasOwn(sibling[0] ?? {}, "destRecorded")).toBe(false);
-  });
-
-  it("engineVersion stepped for a behaviour a card can reach, and `manifest.version` agrees", () => {
-    expect(manifest.version).toBe(engineVersion);
   });
 });
 
