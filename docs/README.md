@@ -47,7 +47,8 @@ to your task.
 | `archive/backend-data-plan.md` | backend-data.md's original plan, the 2026-08 runbook and its deploy-debt notes, verbatim. |
 
 The frontend has its own guide, `frontend/lua/README.md` (structure, the mailbox and print
-protocol, the Lua tests).
+protocol, the Lua tests). `packages/engine`, `apps/api`, `frontend/lua` and `scripts/mutation` each
+have a short `CLAUDE.md` that points at the docs for that root; the content stays here.
 
 > **Code paths in older entries.** The web frontend is the Lua (love.js) app
 > (`frontend/lua/README.md`). The React app is deleted, so `src/features/...` paths in the archive,
@@ -60,11 +61,20 @@ protocol, the Lua tests).
 |---|---|
 | First run on a new machine | README.md, "Getting started" |
 | Load or refresh the local card catalog | `workstreams/backend-data.md` §3.4.1 |
+| Add a card set or serie | `workstreams/backend-data.md` §3.4.1: it joins `CATALOG_SCOPE`, then the list after an ingest |
+| Regenerate the generated files, or resolve a conflict in one | `bun run gen` (`conventions.md`, "Code & quality") |
 | Run one test file | `bunx vitest run <path> [-t <name>]`; one project with `--project engine\|app\|app-isolated`; the tests that import an app source with `bunx vitest related <src> --run` (for an engine file, nearly the whole suite); the full gate is `bun run check` |
 | Run the Lua tests | `bun run test:lua`, or one file with `bun run test:lua <name>.lua` (`frontend/lua/README.md`) |
 | Author or fix a card program | `workstreams/simulator.md` |
-| Add an API route | `workstreams/backend-data.md` §6 |
+| Add an attack reader | A row in `ATTACK_READERS` (`packages/engine/src/effects.ts`) and its field in `readAttackText`; the census pins the table against the `deriveAttack` exports |
+| Change the persisted game shape | `conventions.md`, "Persisted state is versioned and migrated in the engine" |
+| Add an API route | `workstreams/backend-data.md` §6, "To add a route" |
+| Change what the server sends a client (a new prompt kind, literal or frame) | `workstreams/backend-data.md` §3.7.1, "Client first" |
+| Make a lobby change an older page cannot work with | `workstreams/backend-data.md` §3.6 (`LOBBY_PROTOCOL`, `MIN_LOBBY_PROTOCOL`); `conventions.md`, "Compat code has a sunset" |
+| Add a Lua screen, a wire field or a text-input record field | `frontend/lua/README.md`, "Adding a screen or a wire field" |
+| Add a Lua → page print channel | `SHELL_PRINT_CHANNELS` (`src/host/mailboxes.ts`) and a `runPrint` case, which the compiler requires; lua-bridge-guard checks the Lua side |
 | Add a migration | `conventions.md`, "Database migrations" |
+| Add a `check:static` step | One line in `STATIC_STEPS` (`scripts/check.ts`); `conventions.md`, "Code & quality" |
 | Write or run a mutant | `conventions.md`, "Mutants are DECLARED, not narrated"; `bun run mutants` |
 | Drive the real page in a browser | `bun run e2e` (`scripts/e2e.ts` says what it covers and its options); a web+API pair on free ports for your own browser: `bun run dev:local` (`frontend/lua/README.md`, "Run") |
 | Debug a Lua error, the Worker or the local D1 | `frontend/lua/README.md`, "Debugging" |
