@@ -39,6 +39,66 @@ export function linesWithOverflow<T>(
   return lines;
 }
 
+/** A script's flags: those that stand alone, and those that take the next argument as a value. */
+export type FlagSpec = { booleans?: readonly string[]; values?: readonly string[] };
+
+/** A command line read against a `FlagSpec`. */
+export type ParsedFlags = {
+  given: ReadonlySet<string>;
+  values: ReadonlyMap<string, string>;
+  problems: string[];
+};
+
+/**
+ * Reads `argv` against `spec`, listing every problem in argument order. An unknown flag or a
+ * positional is a problem because the script would ignore it: a mistyped flag then runs the
+ * default configuration and passes.
+ */
+export function parseFlags(argv: readonly string[], spec: FlagSpec): ParsedFlags {
+  const booleans = spec.booleans ?? [];
+  const valueFlags = spec.values ?? [];
+  const given = new Set<string>();
+  const values = new Map<string, string>();
+  const problems: string[] = [];
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i] ?? "";
+    if (!booleans.includes(arg) && !valueFlags.includes(arg)) {
+      problems.push(
+        arg.startsWith("-") ? `unknown flag \`${arg}\`` : `unexpected argument \`${arg}\``,
+      );
+      continue;
+    }
+    if (given.has(arg)) problems.push(`\`${arg}\` given more than once`);
+    given.add(arg);
+    if (!valueFlags.includes(arg)) continue;
+    const value = argv[i + 1];
+    if (value === undefined || value.startsWith("-")) {
+      problems.push(`\`${arg}\` needs a value`);
+      continue;
+    }
+    values.set(arg, value);
+    i++;
+  }
+  return { given, values, problems };
+}
+
+/** `parseFlags` for a script's own command line: any problem exits 1 with the usage line. */
+export function flags(
+  command: string,
+  argv: readonly string[],
+  spec: FlagSpec,
+): Omit<ParsedFlags, "problems"> {
+  const { given, values, problems } = parseFlags(argv, spec);
+  if (problems.length > 0) {
+    const usage = [
+      ...(spec.booleans ?? []).map((f) => `[${f}]`),
+      ...(spec.values ?? []).map((f) => `[${f} <value>]`),
+    ];
+    fail([...problems, `usage: ${[command, ...usage].join(" ")}`].join("\n"));
+  }
+  return { given, values };
+}
+
 /** An integer from the environment, or `fallback` when unset; anything else is an error. */
 export function envInt(name: string, fallback: number): number {
   const raw = process.env[name];

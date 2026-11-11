@@ -51,12 +51,15 @@ import {
   type Page,
   type PageOptions,
 } from "./lib/browser";
-import { fail } from "./lib/cli";
+import { fail, flags } from "./lib/cli";
 import { systemPort } from "./lib/ports";
 import { localBin, REPO_ROOT, repoPath } from "./lib/repo";
 
-const keep = process.argv.includes("--keep");
-const gpu = process.argv.includes("--gpu");
+const { given } = flags("bun run e2e", process.argv.slice(2), {
+  booleans: ["--firefox", "--gpu", "--keep"],
+});
+const keep = given.has("--keep");
+const gpu = given.has("--gpu");
 const BOOT_MS = 60_000;
 /** host.js's BOOT_STALL_MS, plus room for a busy machine. */
 const STALL_NOTE_MS = 45_000 + 20_000;
@@ -65,7 +68,7 @@ const t0 = Date.now();
 const log = (line: string) => console.log(`[${((Date.now() - t0) / 1000).toFixed(1)}s] ${line}`);
 const sleep = (ms: number) => new Promise((done) => setTimeout(done, ms));
 
-const firefox = process.argv.includes("--firefox");
+const firefox = given.has("--firefox");
 
 /** The browser binary: $CHROMIUM or $FIREFOX, else the first of its usual names on PATH. */
 function findBrowser(): string {
