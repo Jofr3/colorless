@@ -7,6 +7,8 @@
  * It reads comments only (TypeScript and JavaScript through the TypeScript scanner, Lua `--` and
  * `--[[ ]]`, YAML `#`), never strings: a test title, a mutant row's `id` and `decision` and a log
  * line are data, and the coverage tests' titles name the decision whose sections they pin.
+ * A test title is read for one thing: struck-through `~~` text, a withdrawn claim the title should
+ * have dropped.
  */
 
 import { readFileSync } from "node:fs";
@@ -221,6 +223,41 @@ export function commentsOf(path: string, text: string): Comment[] {
   return scriptComments(text);
 }
 
+const TEST_FILE = /\.test\.[cm]?[jt]sx?$/;
+const TEST_CALLS = new Set(["it", "test", "describe"]);
+
+/** Whether a callee is `it`, `test` or `describe`, through `.each(...)`, `.skip` and the like. */
+function isTestCall(callee: ts.Expression): boolean {
+  if (ts.isIdentifier(callee)) return TEST_CALLS.has(callee.text);
+  if (ts.isPropertyAccessExpression(callee)) return isTestCall(callee.expression);
+  if (ts.isCallExpression(callee)) return isTestCall(callee.expression);
+  return false;
+}
+
+/** The titles of a test file's `it`, `test` and `describe` calls that keep struck-through text. */
+export function struckTitles(path: string, text: string): Comment[] {
+  if (!text.includes("~~")) return [];
+  const file = ts.createSourceFile(path, text, ts.ScriptTarget.Latest, true);
+  const out: Comment[] = [];
+  const visit = (node: ts.Node): void => {
+    if (ts.isCallExpression(node) && isTestCall(node.expression)) {
+      const title = node.arguments[0];
+      const literal =
+        title &&
+        (ts.isStringLiteral(title) ||
+          ts.isNoSubstitutionTemplateLiteral(title) ||
+          ts.isTemplateExpression(title));
+      if (literal && title.getText(file).includes("~~")) {
+        const { line } = file.getLineAndCharacterOfPosition(title.getStart(file));
+        out.push({ line: line + 1, text: title.getText(file) });
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(file);
+  return out;
+}
+
 export type SourceFile = { path: string; text: string };
 
 export function commentGuardReport(files: readonly SourceFile[]): Report {
@@ -231,14 +268,30 @@ export function commentGuardReport(files: readonly SourceFile[]): Report {
       if (form) problems.push(`  ${path}:${comment.line}: (${form}) ${comment.text.trim()}`);
     }
   }
-  if (problems.length > 0) {
+  const titles = files
+    .filter(({ path }) => TEST_FILE.test(path))
+    .flatMap(({ path, text }) =>
+      struckTitles(path, text).map((title) => `  ${path}:${title.line}: ${title.text}`),
+    );
+  if (problems.length > 0 || titles.length > 0) {
     return {
       ok: false,
       lines: [
-        `comment-guard: FAIL — ${problems.length} comment line(s) carry an id, a date or a line number:`,
-        ...problems,
-        "Keep the reason and drop the id, date or history, which belong in docs/decisions.md and git;",
-        'name a function or a sentence instead of a line (conventions.md "Code & quality").',
+        ...(problems.length > 0
+          ? [
+              `comment-guard: FAIL — ${problems.length} comment line(s) carry an id, a date or a line number:`,
+              ...problems,
+              "Keep the reason and drop the id, date or history, which belong in docs/decisions.md and git;",
+              'name a function or a sentence instead of a line (conventions.md "Code & quality").',
+            ]
+          : []),
+        ...(titles.length > 0
+          ? [
+              `comment-guard: FAIL — ${titles.length} test title(s) keep struck-through text:`,
+              ...titles,
+              "A title states what the test checks today; drop the withdrawn claim.",
+            ]
+          : []),
       ],
     };
   }

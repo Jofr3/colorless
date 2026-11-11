@@ -5,6 +5,7 @@ import {
   hashComments,
   luaComments,
   scriptComments,
+  struckTitles,
 } from "./comment-guard";
 
 const report = (path: string, text: string) => commentGuardReport([{ path, text }]);
@@ -101,6 +102,28 @@ describe("comment-guard", () => {
       'const at = "effects.ts:5438 (:171) line 214";',
     ].join("\n");
     expect(report("scripts/a.test.ts", text).ok).toBe(true);
+  });
+
+  it("fails a test title that keeps struck-through text, in a test file only", () => {
+    const text = [
+      'describe("the lobby", () => {',
+      '  it("seats the guest ~~and kicks~~", () => {});',
+      "  it.each([1])(`~~counts~~ %s`, () => {});",
+      '  test.skip("keeps ~~no~~ board", () => {});',
+      '  expect("~~ data ~~").toBe(x);',
+      "});",
+    ].join("\n");
+    expect(struckTitles("a.test.ts", text)).toEqual([
+      { line: 2, text: '"seats the guest ~~and kicks~~"' },
+      { line: 3, text: "`~~counts~~ %s`" },
+      { line: 4, text: '"keeps ~~no~~ board"' },
+    ]);
+    const result = report("apps/api/src/a.test.ts", text);
+    expect(result.ok).toBe(false);
+    expect(result.lines[0]).toBe("comment-guard: FAIL — 3 test title(s) keep struck-through text:");
+    expect(result.lines[1]).toBe('  apps/api/src/a.test.ts:2: "seats the guest ~~and kicks~~"');
+    expect(report("apps/api/src/a.ts", text).ok).toBe(true);
+    expect(report("a.test.ts", 'it("seats the guest", () => {});').ok).toBe(true);
   });
 
   it("names the line of each hit inside a block comment", () => {
