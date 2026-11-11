@@ -42,7 +42,7 @@ Each names where it is written up (`decisions.md` entries by date and title).
 
 ## Known limitations
 
-- **Cards:** `simulationGaps` marks card text the engine does not run (none in Standard), and the builder shows it on the card. Data and design gaps are in `reference/card-revision.md` "Deferred"; readings left for a rulings review are the `R-…` entries in `decisions.md` and that file's "Ruling notes".
+- **Cards:** `simulationGaps` marks card text the engine does not run (none in Standard), and the builder shows it on the card. Data and design gaps are in `reference/card-revision.md` "Deferred"; readings left for a rulings review are the `R-…` entries in `archive/decisions-numbered.md` (look them up through `decision-index.md`) and card-revision.md's "Ruling notes".
 - **Local play** does not enforce deck legality (online does), and a saved local game is dropped on any engine version change (2026-10-26 "Engine↔client contract").
 - **No spectating** in the Lua client: a full lobby says so (`frontend/lua/README.md`, Online).
 - **No email:** password reset and email verification answer 501 until an email provider is chosen (`workstreams/backend-data.md` §3.5).

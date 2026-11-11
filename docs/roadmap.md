@@ -9,7 +9,7 @@ mirror images to R2, add accounts + auth (email/password + Google),
 persist decks/folders, and stand up the lobby Durable Object (WebSocket) server.
 **Unblocks everything else.**
 
-## Phase 2 — Deck Builder & Decks List (real cards) → `workstreams/deck-builder.md`
+## Phase 2 — Deck Builder & Decks List (real cards) → `archive/workstreams/deck-builder.md`
 Replace the fixture card pool with the live catalog API. Complete the deck
 editor (add/remove, counts, format validation, save/load) and the decks list
 page (folders, CRUD, persistence). Upgrade filters using the richer tcgdex
@@ -31,7 +31,7 @@ BroadcastChannel to WebSocket. Same engine as local play, with tweaks for
 authority/hidden info.
 *Depends on: P3 engine + P1 lobby DO.*
 
-## Phase 5 — Polish → `workstreams/polish.md`
+## Phase 5 — Polish → `archive/workstreams/polish.md`
 Now that user + card data exist: player names & profile pictures on the lobby,
 profiles, real deck-cover art, and general refinement. Threads through P2–P4 but
 tracked separately so it isn't forgotten.

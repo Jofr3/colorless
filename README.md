@@ -119,7 +119,7 @@ so account and session tables are ready on a fresh checkout. This applies to
 release gates, migrates the remote D1, deploys the API, then the web app,
 checks that both answer with the new commit, and tags the release
 `release-YYYYMMDD-HHMM`. What to do before and after it, and how to recover
-from a failed step, is in `docs/workstreams/backend-data.md` §3.7.
+from a failed step, is in `docs/workstreams/backend-data.md` §3.7.1, "Releasing".
 `bun run deploy` (web only) and `bun run api:deploy` (API only) are partial
 deploys: they skip the full gate, take no D1 bookmark and leave no release tag.
 

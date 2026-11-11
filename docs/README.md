@@ -44,6 +44,7 @@ to your task.
 | `archive/decisions-numbered.md` | The numbered decision rows D101-D647 (the card-coverage program), verbatim. |
 | `archive/conventions-lessons.md` | conventions.md's lessons from the finished programs (D421 on), verbatim. |
 | `archive/workstreams/deck-builder.md`, `archive/workstreams/polish.md` | The React-era deck builder and polish plans, to 2026-10-22. |
+| `archive/backend-data-plan.md` | backend-data.md's original plan, the 2026-08 runbook and its deploy-debt notes, verbatim. |
 
 The frontend has its own guide, `frontend/lua/README.md` (structure, the mailbox and print
 protocol, the Lua tests).
