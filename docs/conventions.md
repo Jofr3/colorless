@@ -1026,3 +1026,59 @@ uncovered set. It names the files. **Delete a directory from `files.include` and
   — pulling drizzle's generated snapshots into the lint set is its own decision),
   and it says nothing about whether the rules are good, only whether the linter
   can see the file.
+
+## Tool gotchas
+
+Lessons from the card-coverage program that still hold. Each ends with the start of its section's
+heading in `archive/conventions-lessons.md`.
+
+- `grep` in the agent shell is ugrep (`type grep`): it skips ignored files and has dropped every
+  other match of an ERE. Check a count that goes into a doc with `command grep` or a script.
+  *"`grep` here is `ugrep`"*, *"This repo's `grep` can silently UNDER-COUNT an ERE"*
+- `grep -c` counts lines, not structure, and `grep -oP` with a negated class counts prefixes: grep
+  the structural spelling (`file: "…"`, a key) or derive the count from the module.
+  *"`grep -c` counts text, not structure"*, *"`grep -oP` with a negated class can MERGE"*
+- An anchored pattern misses a match mid-line, and a stem misses its derived noun (`devolv` finds
+  no "devolution"). Grep the loosest shape and say what it cannot see.
+  *"A chain head can sit MID-LINE"*, *"Grepping prose: the derived noun"*
+- Run repo scripts from the repo root: tsconfig references, vitest globs and mutant `file` paths
+  are root-relative. *"Run every repo script FROM THE REPO ROOT"*
+- Vitest stops an `it` at its first failing `expect`: after a red run, fix every site in the file,
+  not one per run. *"Vitest stops an `it` at its first throw"*
+- `s.replace(find, str)` reads `$&`, `$n` and `` $` `` in `str`, so pass `() => str`; Python's
+  `re.sub` reads backslashes in its replacement, so splice with slices.
+  *"`String.replace(find, replacementString)` interprets `$`"*, *"`re.sub`'s replacement string"*
+- `open(p, "w")` empties the file before `.write()` runs, so encode first. A script that patches a
+  source file asserts its `find` count and restores the file in `finally`.
+  *"ENCODE FIRST, WRITE SECOND"*, *"A probe that patches a source file must restore it"*
+- `biome --write` rewrites whole files: in a shared checkout format only the paths you changed,
+  and rerun `bun scripts/mutation/precheck.ts` after a format or lint fix to a file the corpus
+  quotes. *"Never run a formatter on a shared tree"*, *"`biome --write` on explicit paths"*
+- Biome counts a file over `files.maxSize` as checked and lints none of it; `lint-coverage` then
+  fails, and the fix is raising the limit (`mutants.ts` is the file nearest it).
+  *"The mutation corpus is a source file and Biome refuses it above `files.maxSize`"*
+- The harness picks rows with `--only a,b` or `--decision D<nnn>`; the precheck is its own script.
+  `run.ts` refuses an unknown or repeated flag (an ignored one used to run the whole corpus).
+  *"The row-selection flag is `--only`"*, *"Process: the precheck command"*
+- A killed run leaves its mutant in the file, and two concurrent `--allow-dirty` probes restore
+  each other's files: run one at a time, and let the next `run.ts` restore from the journal.
+  *"A killed `--allow-dirty` probe leaves its PATCH"*
+- A sweep is done when its summary line is in the log; a modified file mid-sweep is normal. Copy
+  the line, never retype it:
+  `<n> killed · <n> known survivor(s) · <n> GAP(S) · <n> stale · <n> skipped(dirty) · <n> clobber(s) · <n> error(s) · <n>s total`.
+  *"The only reliable done-signal for a sweep"*, *"Quote the harness line VERBATIM"*
+- `pgrep -f` and `ps aux | grep` match the asking shell's own command line: anchor on argv
+  (`ps -eo args | grep -E '^bun scripts/mutation/run\.ts'`) and check the journal's pid.
+  *"Process finding: argv-anchored process checks"*, *"`pgrep -f` matches the command"*
+- Detach a long sweep with `setsid --fork` (plain `setsid` does not fork a backgrounded job) and
+  put the `ps` read in the log; `SID == PID` is the proof, and the PPID may be systemd's, not 1:
+  `setsid --fork sh -c 'ps -o pid,ppid,sid,cmd -p $$; date -Is; exec bun scripts/mutation/run.ts' > tmp/sweep-<name>.log 2>&1 < /dev/null`.
+  It still dies on a reboot, with the same log tail. *"Plain `setsid` does not FORK"*,
+  *"Put the `ps` read INTO the log"*, *"A detached sweep survives its LAUNCHER but not a REBOOT"*
+- `$?` after a pipe is the last stage's status: use `set -o pipefail` or `${PIPESTATUS[0]}`.
+  *"Three small harness facts D467 paid for"*
+- In a second worktree, install there and check that every `@colorless` link, nested ones
+  included, resolves inside it; a borrowed `node_modules` tests the main tree's source.
+  *"Building a slice in a SECOND CHECKOUT"*, *"A worktree's isolation check is EVERY"*
+- Auto mode refuses `git commit --amend`: write the final message when you commit.
+  *"`git commit --amend` is refused in auto mode"*
