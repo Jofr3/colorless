@@ -53,7 +53,6 @@ export class LuaLibrary {
 
   visible() {
     const q = this.query.trim().toLocaleLowerCase();
-    // Include decks from every existing folder without modifying their ownership.
     const decks = this.decks.filter((d) => !q || d.name.toLocaleLowerCase().includes(q));
     const compare = (a: { name: string }, b: { name: string }) =>
       a.name.localeCompare(b.name) * (this.sort === "name-desc" ? -1 : 1);
@@ -214,7 +213,7 @@ export class LuaLibrary {
   async command(raw: string) {
     const fields = decodeFields(raw);
     if (!fields) return;
-    const [action, a = "", b = "", c = ""] = fields;
+    const [action, a = "", b = ""] = fields;
     if (action === "open") {
       this.active = true;
       await this.load();
@@ -253,15 +252,10 @@ export class LuaLibrary {
       this.emit();
       return;
     }
-    if (action === "edit" && this.decks.some((d) => d.id === a)) this.openDeck(a);
-    // Folder commands from stale clients cannot create, move or delete folders.
-    const item = a === "deck" ? this.decks.find((d) => d.id === b) : undefined;
-    if (a !== "deck") {
-      this.emit();
-      return;
-    }
+    const item = this.decks.find((d) => d.id === a);
+    if (action === "edit" && item) this.openDeck(a);
     if (action === "create" || (action === "rename" && item)) {
-      const name = deckNameOrNull(action === "create" ? b : c);
+      const name = deckNameOrNull(action === "create" ? a : b);
       if (!name) {
         this.message = `Use 1 to ${DECK_NAME_MAX} characters for the name.`;
         this.emit();
@@ -276,15 +270,15 @@ export class LuaLibrary {
                 tint: Math.floor(Math.random() * 360),
                 cards: [],
               })
-            : await api.patchDeck(b, { name });
+            : await api.patchDeck(a, { name });
         deckStore.put(this.user, deck);
       });
       return;
     }
     if (action === "delete" && item) {
       await this.mutate(async () => {
-        await api.deleteDeck(b);
-        deckStore.remove(this.user, b);
+        await api.deleteDeck(a);
+        deckStore.remove(this.user, a);
       });
       return;
     }

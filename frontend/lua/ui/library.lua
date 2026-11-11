@@ -256,9 +256,9 @@ end
 function Library:submit()
   local m=self.modal; if not m or self.busy then return end
   self:command('finish-input')
-  if m.mode=='delete' then self:command('delete',m.item.kind,m.item.id)
-  elseif m.mode=='create' then self:command('create',m.item.kind,self.draft)
-  elseif m.mode=='rename' then self:command('rename',m.item.kind,m.item.id,self.draft)
+  if m.mode=='delete' then self:command('delete',m.item.id)
+  elseif m.mode=='create' then self:command('create',self.draft)
+  elseif m.mode=='rename' then self:command('rename',m.item.id,self.draft)
   else return end
   m.pending=true
   -- The reply is heard even when it repeats the last message.
