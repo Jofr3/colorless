@@ -2013,3 +2013,8 @@ Phase 3 of the observability audit (MET2 with METX1, MET5, MET6, OPS2, OPS3, OPS
   - whether a `console.info` line now carries a level (the next `d1 sweep` line, or a sign-in; `bun tmp/obs/probe/logs/levels.ts 24`);
   - the user's Real-Time Issue notification;
   - the first `workflow_dispatch` run of Production watch and GitHub's Actions failure email.
+
+### 2026-11-11 — No email alert for a new Workers issue (amends decision 2a)
+- Decision 2a planned one "Real-Time Issue" email notification. The account has none to create: Alerts → Platform Notifications → Availability & performance lists no Workers type, and a search for "worker" finds nothing. Issues → Automations sends only to a coding agent, a webhook, a chat or an incident tool, not to email.
+- So nothing emails a new issue. The Issues page is read by hand after each release and when a player reports a problem (runbook §3.7.4). An outage still emails, through the Production watch's failed run.
+- Revisit if Cloudflare adds a Workers issue alert type, or with the 2026-12-01 Workers Logs pricing change.

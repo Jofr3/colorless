@@ -1152,10 +1152,13 @@ ERR1, decision 2a), set in config because a deploy without it turns Issues off.
 It is free while in beta; recheck that with the 2026-12-01 Workers Logs change.
 An `http` `unhandled` line is both a 5xx and a logged error. Whether Issues
 groups the app's `console.error` lines, and Durable Object exceptions, is
-checked on the first release with it. Look there first. What tells the
-developer of a new issue is one "Real-Time Issue" notification to the account
-email (dashboard → Notifications), which the repo cannot set: it is created by
-hand.
+checked on the first release with it. Look there first. Nothing emails the
+developer about a new issue: the account's Alerts → Platform Notifications list
+has no Workers issue type (checked 2026-11-11; searching "worker" finds none),
+and Issues → Automations sends only to a coding agent, a webhook, a chat or an
+incident tool, never to email. So the Issues page is read by hand after each
+release and when a player reports a problem; an outage still emails through the
+Production watch's failed run.
 
 The web Worker (`colorless` → Observability) has Workers Logs on too. Its
 script runs only on an asset miss that is not a navigation, so it logs a few

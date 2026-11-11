@@ -73,6 +73,7 @@ the script after adding a decision.
 | 2026-11-10 | Observability audit Phases 1, 2 and 4 merged | decisions.md:1911 |
 | 2026-11-10 | Observability audit Phase 3: prod:report: production usage, latency, 5xx, D1, thresholds and SLOs in one read… | decisions.md:1915 |
 | 2026-11-10 | Observability audit released | decisions.md:2004 |
+| 2026-11-11 | No email alert for a new Workers issue (amends decision 2a) | decisions.md:2017 |
 
 ## Numbered decisions
 
