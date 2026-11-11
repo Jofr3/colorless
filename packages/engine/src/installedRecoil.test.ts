@@ -696,7 +696,7 @@ describe("D456 §2 — the record, the row and the merge", () => {
 
   it("a SPENT stamp does not lend its flag to the next install — the stale-record read", () => {
     let state = ready();
-    state = armScaled(state).state; // line 180: {turn: T+1, amount: 0, ofDamageTaken}
+    state = armScaled(state).state; // {turn: T+1, amount: 0, ofDamageTaken}
     const spent = state.players.p1.active?.installedRecoil;
     expect(spent).toEqual({ turn: state.turn + 1, amount: 0, ofDamageTaken: true });
     // …a full round later the stamp is SPENT and still on the body.

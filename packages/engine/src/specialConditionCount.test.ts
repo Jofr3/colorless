@@ -44,11 +44,11 @@ const PRINTED =
 const INDICATOR =
   "If your opponent's Active Pokémon is affected by a Special Condition, this attack does 120 more damage.";
 
-const RECOVER = "This Pokémon recovers from all Special Conditions."; // :513
+const RECOVER = "This Pokémon recovers from all Special Conditions.";
 const COST_WAIVER =
-  "If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost."; // :324
+  "If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.";
 const RAISED_CONFUSION =
-  "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition."; // :685
+  "Your opponent's Active Pokémon is now Confused. Put 8 damage counters instead of 3 on that Pokémon for this Special Condition.";
 
 const UNPRINTED_ADDITIVE =
   "This attack does 100 more damage for each Special Condition affecting your opponent's Active Pokémon.";

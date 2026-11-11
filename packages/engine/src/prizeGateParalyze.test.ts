@@ -39,11 +39,11 @@ const PRINTED =
 const BARE = "Your opponent's Active Pokémon is now Paralyzed.";
 
 const SIB_MORE =
-  "If you have more Prize cards remaining than your opponent, this attack does 90 more damage."; // :343
+  "If you have more Prize cards remaining than your opponent, this attack does 90 more damage.";
 const SIB_NOT_34 =
-  "If your opponent doesn't have exactly 3 or 4 Prize cards remaining, this attack does nothing."; // :350
+  "If your opponent doesn't have exactly 3 or 4 Prize cards remaining, this attack does nothing.";
 const SIB_4_FEWER =
-  "If your opponent has 4 or fewer Prize cards remaining, this attack does 70 more damage."; // :353
+  "If your opponent has 4 or fewer Prize cards remaining, this attack does 70 more damage.";
 
 const WIN_ROW =
   "If you use this attack when you have exactly 1 Prize card remaining, you win this game.";
@@ -234,7 +234,7 @@ describe("D517 §2 — the program, read against the consequent and against the 
     const req = deriveAttackRequirement(SIB_NOT_34) as BoardCondition & { counts: number[] };
     expect(req.counts).toEqual([3, 4]);
     expect(JSON.stringify(req)).not.toContain("not");
-    // And `:353`'s inequality is spelled the same way: as the SATISFYING SET — read off
+    // And SIB_4_FEWER's inequality is spelled the same way: as the SATISFYING SET — read off
     // the whole `count` rather than through a cast, so the shape is asserted too.
     expect(deriveAttackDamageBonus(SIB_4_FEWER)?.count).toEqual({
       kind: "boardCondition",

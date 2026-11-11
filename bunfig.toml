@@ -1,4 +1,4 @@
-# Bun's settings for this repository (dependency audit PRCM2).
+# Bun's settings for this repository.
 
 [install]
 # A release-age cooldown: `bun add`, `bun update` and any install that resolves
@@ -11,3 +11,7 @@
 #   bun update hono --minimum-release-age=0
 # (docs/conventions.md, "Dependencies").
 minimumReleaseAge = 259200
+
+[test]
+# Tests run under Vitest; `bun test` stops here with the command to use.
+preload = ["./scripts/no-bun-test.ts"]

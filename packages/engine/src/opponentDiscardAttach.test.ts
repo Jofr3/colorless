@@ -143,7 +143,7 @@ const ATTACH_CARDS: Record<string, Card> = {
     hp: 120,
     retreat: 1,
     attacks: [
-      /** index 0 — FILE LINE 70 verbatim, with a DECLARED base and cost. */
+      /** index 0 — PRINTED verbatim, with a DECLARED base and cost. */
       { cost: ["Colorless"], name: "Borrowed Charge", damage: BASE, effect: PRINTED },
       /** index 1 — the DARK twin: the own-seat bare plural, no reader claims it (the LOUD control). */
       { cost: ["Colorless"], name: "Own Charge", damage: BASE, effect: TWIN },

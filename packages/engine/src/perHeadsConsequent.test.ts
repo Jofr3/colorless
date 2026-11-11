@@ -47,8 +47,8 @@ const BUILT_AT_D463 = [
   "Flip a coin until you get tails. For each heads, discard an Energy from your opponent's Active Pokémon.",
 ] as const;
 
-const MILL = 0; // {C}, no damage — line 201
-const PICK = 1; // {C}, no damage — line 216
+const MILL = 0; // {C}, no damage — SINGLE_MILL
+const PICK = 1; // {C}, no damage — HAND_PICK
 const PLAIN = 2; // {C}, no damage, no effect — the ONE-AXIS control
 const MILL3 = 3;
 

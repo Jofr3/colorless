@@ -555,7 +555,7 @@ describe("D535 §6 — `ignoreWR` and `deals` ON THE BOARD", () => {
     expect(events.filter((e) => e.type === "DAMAGE_DEALT")).toHaveLength(6);
     expect(events.filter((e) => e.type === "COUNTERS_PLACED")).toHaveLength(0);
     // The control, one family over: the counter-spread sibling's own sentence is the
-    // one that emits `COUNTERS_PLACED`, and its op carries NO `deals` (effects.ts:5438).
+    // one that emits `COUNTERS_PLACED`, and its op carries NO `deals` (effectTypes.ts).
     const spread = deriveAttackEffect(
       "Put 3 damage counters on your opponent's Pokémon in any way you like.",
     );

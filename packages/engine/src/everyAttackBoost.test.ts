@@ -37,7 +37,7 @@ const P76: readonly EffectOp[] = [
   { op: "applyStatus", target: "self", status: "asleep" },
   { op: "boostAttack", attack: null, amount: 100 },
 ];
-/** The named additive neighbour (`:165`) and the base-set one (`:166`). */
+/** The named additive neighbour and the base-set one. */
 const ECHOED_VOICE =
   "During your next turn, this Pokémon's Echoed Voice attack does 80 more damage (before applying Weakness and Resistance).";
 const HYPER_FANG = "During your next turn, this Pokémon's Hyper Fang attack's base damage is 240.";
@@ -46,7 +46,7 @@ const HYPER_FANG = "During your next turn, this Pokémon's Hyper Fang attack's b
 const ABILITY_WITNESS =
   "Once during your turn, you may put 5 damage counters on this Pokémon. If you do, during this turn, attacks used by this Pokémon do 120 more damage to your opponent's Active Pokémon (before applying Weakness and Resistance).";
 
-const REV_UP = 0; // {C}, 10 — the installer (:148)
+const REV_UP = 0; // {C}, 10 — the installer (S148)
 const STRIKE = 1; // {C}{C}, 50
 const SWIPE = 2; // {C}, 20
 const REST = 3; // {C}, no damage — "Draw a card."
@@ -75,7 +75,7 @@ const ATTACKS = [
 ] as Card["attacks"];
 
 const LOCAL_CARDS: Record<string, Card> = {
-  /** ONE body carrying the `:148` installer and five other attacks: two plain
+  /** ONE body carrying the S148 installer and five other attacks: two plain
       damage numbers (the EVERY-index claim needs two), a no-damage attack, a chosen
       snipe and a Bench spread. */
   "d546-buffer": battler("d546-buffer", {
@@ -92,7 +92,7 @@ const LOCAL_CARDS: Record<string, Card> = {
     retreat: 1,
     attacks: ATTACKS,
   }),
-  /** The `:76` installer: the Sleep prefix plus the 100 buff, and two plain attacks. */
+  /** The S76 installer: the Sleep prefix plus the 100 buff, and two plain attacks. */
   "d546-lullaby": battler("d546-lullaby", {
     types: ["Colorless"],
     hp: 300,
@@ -441,7 +441,7 @@ describe("§4 — no boost without damage or on the Bench; the Active snipe pays
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// §5 — the Sleep prefix (`:76`): both Actives, and a buff the holder may sleep through.
+// §5 — the Sleep prefix (S76): both Actives, and a buff the holder may sleep through.
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("§5 — `:76`: both Actives fall Asleep, and the holder may sleep through its window", () => {

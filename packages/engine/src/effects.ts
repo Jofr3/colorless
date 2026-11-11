@@ -4330,7 +4330,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       // PRINTED amount and never the printed total. `amount: amount * count` on one op
       // is the exact direction the sibling's comment names as the way this family goes
       // wrong, and it is a DIFFERENT ACTION here rather than a different number: one op
-      // parks once, cannot be answered with a repeat (`cardplay.ts:1419`), and hands a
+      // parks once, cannot be answered with a repeat (`validatePokemonMultiChoice`), and hands a
       // single body 120 in one blow instead of six 20s.
       return Array.from({ length: count }, () => ({
         op: "damageChosen" as const,
@@ -4341,7 +4341,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         count: 1,
         source: "attack" as const,
         // "do 20 damage to it" is ATTACK DAMAGE (`DAMAGE_DEALT`), not a placed counter
-        // (`COUNTERS_PLACED`) — effects.ts:5438.
+        // (`COUNTERS_PLACED`); `deals` on the `damageChosen` op in effectTypes.ts.
         deals: true as const,
         // Bare tail: ignores Weakness/Resistance only.
         ignoreWR: true as const,

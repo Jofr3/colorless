@@ -32,7 +32,7 @@ const S171 =
   "During your opponent's next turn, attacks used by the Defending Pokémon cost {C} more, and its Retreat Cost is {C} more.";
 const P171: readonly EffectOp[] = [{ op: "taxDefender" }];
 
-const TAX = 0; // {C}, 10 — the installer (:171)
+const TAX = 0; // {C}, 10 — the installer (S171)
 const COUNT = 1; // {C}, 50 per {C} in the opponent's Active's Retreat Cost (attack.ts)
 const THRESHOLD = 2; // {C}, 10 + 110 if that Retreat Cost is {C}{C} or more (interpreter.ts)
 const JAB = 0; // the victim's {C} attack

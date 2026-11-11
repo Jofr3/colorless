@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { repoPath } from "./lib/repo";
-import { lockCheckReport, runtimeVersions } from "./lock-check";
+import { bunPinReport, lockCheckReport, runtimeVersions } from "./lock-check";
 
 const entry = (path: string, spec: string) => `    "${path}": ["${spec}", "", {}, "sha512-x"],`;
 
@@ -62,5 +62,38 @@ describe("lock-check", () => {
     const found = runtimeVersions(readFileSync(repoPath("bun.lock"), "utf8"));
     expect(found.get("miniflare")?.size).toBe(1);
     expect(found.get("workerd")?.size).toBe(1);
+  });
+});
+
+describe("lock-check's bun pins", () => {
+  it("passes .bun-version and packageManager naming the bun that runs it", () => {
+    expect(bunPinReport("1.4.2\n", "bun@1.4.2", "1.4.2")).toEqual({
+      ok: true,
+      lines: ["bun 1.4.2 pinned"],
+    });
+  });
+
+  it.each([
+    ["a different version", "bun@1.4.1"],
+    ["another package manager", "npm@10.9.0"],
+    ["no packageManager", undefined],
+  ])("fails %s in packageManager", (_label, packageManager) => {
+    const report = bunPinReport("1.4.2\n", packageManager, "1.4.2");
+    expect(report.ok).toBe(false);
+    expect(report.lines[0]).toContain(".bun-version pins bun 1.4.2");
+  });
+
+  it("only warns when the running bun differs from the pin", () => {
+    const report = bunPinReport("1.4.2", "bun@1.4.2", "1.4.3");
+    expect(report.ok).toBe(true);
+    expect(report.warning).toBe(
+      "lock-check: warning — running bun 1.4.3, but the repo pins 1.4.2 (.bun-version).",
+    );
+  });
+
+  it("reads the repository's pins, which agree", () => {
+    const manifest = JSON.parse(readFileSync(repoPath("package.json"), "utf8"));
+    const pinned = readFileSync(repoPath(".bun-version"), "utf8");
+    expect(bunPinReport(pinned, manifest.packageManager, pinned.trim()).ok).toBe(true);
   });
 });

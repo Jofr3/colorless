@@ -53,7 +53,7 @@ const FIFTY =
 const BARE_SPREAD =
   "This attack also does 30 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
 const BARE_DISCARD = "Discard a Stadium in play.";
-/** The family's other two `^If a Stadium is in play` rows — FILE LINES 294 and 295 — each
+/** The family's other two `^If a Stadium is in play` rows, each
     another reader's. */
 const MELTER_TEXT =
   "If a Stadium is in play, this attack does 60 more damage. Then, discard that Stadium.";
@@ -111,7 +111,7 @@ const GATED_SPREAD_CARDS: Record<string, Card> = {
     attacks: [
       /** index 0 — the control: no effect, no program. */
       { cost: ["Colorless"], name: "Plain Jab", damage: 30 },
-      /** index 1 — FILE LINE 293 verbatim, with a DECLARED base so the base-lands-then-program
+      /** index 1 — PRINTED verbatim, with a DECLARED base so the base-lands-then-program
           path is driven (the BASE RULE). */
       { cost: ["Colorless"], name: "Ground Crasher", damage: BASE, effect: PRINTED },
     ],

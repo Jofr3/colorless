@@ -77,8 +77,8 @@ const NO_ROTATION = "none";
 describe("§1 — the three sentences are CORPUS ROWS, and the fixture is them", () => {
   it("each is in `legalAttackCorpus()` at its measured printing count", () => {
     const corpus = new Map(legalAttackCorpus().map(([units, text]) => [text, units]));
-    expect(corpus.get(EITHER_HEADS)).toBe(2); // file line 214
-    expect(corpus.get(BOTH_TAILS)).toBe(1); // file line 213
+    expect(corpus.get(EITHER_HEADS)).toBe(2);
+    expect(corpus.get(BOTH_TAILS)).toBe(1);
     expect(corpus.get(AT_LEAST_TWO)).toBe(1);
     expect([3, 2 + 1 + 1]).toEqual([3, 4]);
   });

@@ -23,4 +23,13 @@ describe("lua-bridge-guard", () => {
     expect(result.ok).toBe(false);
     expect(result.lines.join("\n")).toContain("frontend/lua/main.lua");
   });
+
+  it("names the line of each hit, every rule it breaks there, in line order", () => {
+    const text = "local a=1\nio.write(a)\nlocal b=2\nprint('COLORLESS:x')\nprint(b)";
+    expect(report("ui/x.lua", text).lines.filter((line) => line.startsWith("  "))).toEqual([
+      "  frontend/lua/ui/x.lua:2: io.write or io.stdout",
+      "  frontend/lua/ui/x.lua:4: the global print, a COLORLESS: literal",
+      "  frontend/lua/ui/x.lua:5: the global print",
+    ]);
+  });
 });

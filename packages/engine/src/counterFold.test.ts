@@ -145,7 +145,7 @@ describe("§1 — the three printed folds, and the placement family's remaining 
       expect(deriveAttackEffect(s)?.[0]?.op, s).toBe("counterUntilRemainingHp");
     }
     // …and the FOLD really is the near miss, driven rather than asserted in prose: arm
-    // 23e's sentence and line 425 differ on the amount AND on the zone, so the two
+    // 23e's sentence and the Bench sibling differ on the amount AND on the zone, so the two
     // programs are unequal and neither is null.
     expect(deriveAttackEffect(BOARD_FOLD)).not.toEqual(
       deriveAttackEffect(

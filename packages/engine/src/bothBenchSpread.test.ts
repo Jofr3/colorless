@@ -23,7 +23,7 @@ import {
 
 const PRINTED_BOTH =
   "This attack also does 10 damage to each Benched Pokémon (both yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)";
-/** File line 526 — the same reading NARROWED by the printed board predicate. */
+/** The same reading NARROWED by the printed board predicate. */
 const PRINTED_DAMAGED =
   "This attack also does 40 damage to each Benched Pokémon that has any damage counters on it (both yours and your opponent's). (Don't apply Weakness and Resistance for Benched Pokémon.)";
 const FLAT_OPP =

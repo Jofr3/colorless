@@ -270,7 +270,7 @@ describe("§1 — the five printed sentences, their population, and the fixture"
     expect(FIXTURE_POOL["fix-stage2body"]?.attacks?.map((a) => [a.damage, a.effect])).toEqual([
       ["40+", BENCH_STAGE2],
     ]);
-    // …and the holder of file line 586 is ITSELF a Stage 1, which is the same trick
+    // …and the in-play-bodies holder is ITSELF a Stage 1, which is the same trick
     // one zone over: the Active participates in an "in play" count and does not
     // participate in a Bench one.
     expect(FIXTURE_POOL["fix-inplaybodies"]?.stage).toBe("Stage1");

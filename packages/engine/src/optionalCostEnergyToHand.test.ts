@@ -121,7 +121,7 @@ const ENERGY_TO_HAND_CARDS: Record<string, Card> = {
     attacks: [
       /** index 0 — the control: no effect, no program. */
       { cost: ["Colorless"], name: "Plain Jab", damage: 30 },
-      /** index 1 — FILE LINE 652 verbatim, with a DECLARED base and cost. */
+      /** index 1 — PRINTED verbatim, with a DECLARED base and cost. */
       { cost: ["Colorless"], name: "Volt Surrender", damage: BASE, effect: PRINTED },
       { cost: [], name: "Free Volt Surrender", damage: BASE, effect: PRINTED },
     ],

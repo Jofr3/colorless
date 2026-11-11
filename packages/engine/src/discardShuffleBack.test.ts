@@ -107,7 +107,7 @@ const SHUFFLE_BACK_CARDS: Record<string, Card> = {
     attacks: [
       /** index 0 — the control: no effect, no program. */
       { cost: ["Colorless"], name: "Plain Jab", damage: 30 },
-      /** index 1 — FILE LINE 485 verbatim, with a DECLARED base so the base-lands-then-park path
+      /** index 1 — PRINTED verbatim, with a DECLARED base so the base-lands-then-park path
           is driven (the BASE RULE). */
       { cost: ["Colorless"], name: "Energy Recall", damage: BASE, effect: PRINTED },
       /** index 2 — the SAME shape at 2: the count-not-pinned witness (C7). */

@@ -130,7 +130,7 @@ const SEARCH_CARDS: Record<string, Card> = {
     hp: 130,
     retreat: 2,
     attacks: [
-      /** index 0 — FILE LINE 483 verbatim, with a DECLARED base and cost. */
+      /** index 0 — PRINTED verbatim, with a DECLARED base and cost. */
       { cost: ["Colorless"], name: "Typed Call", damage: BASE, effect: PRINTED },
       /** index 1 — the CONTROL: the flat twin, every Pokémon in the deck on every board. */
       { cost: ["Colorless"], name: "Plain Call", damage: BASE, effect: FLAT },
