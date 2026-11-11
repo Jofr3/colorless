@@ -2021,3 +2021,46 @@ Phase 3 of the observability audit (MET2 with METX1, MET5, MET6, OPS2, OPS3, OPS
 - Decision 2a planned one "Real-Time Issue" email notification. The account has none to create: Alerts → Platform Notifications → Availability & performance lists no Workers type, and a search for "worker" finds nothing. Issues → Automations sends only to a coding agent, a webhook, a chat or an incident tool, not to email.
 - So nothing emails a new issue. The Issues page is read by hand after each release and when a player reports a problem (runbook §3.7.4). An outage still emails, through the Production watch's failed run.
 - Revisit if Cloudflare adds a Workers issue alert type, or with the 2026-12-01 Workers Logs pricing change.
+
+### 2026-11-11 — Documentation audit decisions and Phase 0: wrong facts fixed, and production writes only through the deploy token (DOC-P0)
+- **The audit.** A read-only audit of the docs against the user's 15-point checklist (main 7a3a2f2f2; the report, `tmp/docs/docs-audit.md`, is untracked). 40 findings: 0 high, 15 medium, 14 low, 11 info, in five areas: entry and onboarding, architecture and limitations, reference, operations, staleness. The mechanical health is good: every `bun run` name in the live docs exists and the entry docs have no dead paths. The problems are semantic:
+  - values copied into prose that the code has since changed (README's KV TTL, status.md's deployed release);
+  - copy-paste production writes that the read-only ambient token refuses;
+  - history presented as current (conventions.md's lessons, decisions.md's numbered rows, React-era workstreams);
+  - comments that cite ids and history against the minimal-comments rule.
+- **The user's decisions (all recommendations accepted).**
+  1. (a) No CHANGELOG: release tags and `git log` between them, as build audit decision 7 chose. No tag-annotation notes.
+  2. (a) A pointer-only root CLAUDE.md.
+  3. (a) conventions.md's finished-program lessons move verbatim to `docs/archive/conventions-lessons.md`, with a short tool-gotchas list kept.
+  4. (a) The numbered decision rows D101-D647 move to `docs/archive/decisions-numbered.md`, and the index reads both files.
+  5. (a) The minimal-comments rule stays as written: ids and history phrases are swept (reasons kept), and a grep guard joins `check:static`.
+  6. (a) deck-builder.md and polish.md move to `docs/archive/workstreams/`.
+  7. (a) Open items a session could act on are listed in status.md, and the auto-memory points there.
+  8. The Lua/love.js frontend, in the user's words: "because it's easier to replicate Balatro's visual and feel". Phase 5 writes it up with the accepted costs.
+  9. (a) README describes the Balatro source tree without naming its private repository.
+  10. (a) The only new docs guard is the bare production-write check.
+- **The plan.** Phase 0 runs alone and merges first; Phases 1-6 run as parallel worktrees on its tip, each owning disjoint files.
+  - Phase 0: wrong facts on the paths people follow, and the bare-write guard (this entry).
+  - Phase 1: entry: README getting started, status.md open items as pointers, one doc map, CLAUDE.md, the Lua README file map.
+  - Phase 2: backend-data.md: one "Releasing" checklist replacing the D203 runbook, the lobby and match lifecycle, the §5.3 and §6 gaps.
+  - Phase 3: conventions.md and its archive.
+  - Phase 4: workstreams and reference: simulator.md as built, the React-era docs archived, the backlogs marked finished.
+  - Phase 5: the decision log: the archive split, forward pointers on superseded entries, the "how to add" rule, the frontend's why.
+  - Phase 6: the comment sweep and its guard.
+- **Phase 0, what changed.**
+  - **Production writes (OPS1).** Every write in README and the workstream docs runs through `bun scripts/with-deploy-token.ts` from `apps/api/` (or `bun apps/api/scripts/with-deploy-token.ts` from the root, for the web Worker's rollback). That covers the four secret puts, the rollbacks, the Time Travel restores, the catalog epoch KV puts, the export rebuild loop and every remote ingest; no repo-root form is given for an API secret. backend-data.md §3.7.2's wrapped-writes list adds the remote KV put. README's Deployment opens with a "Cloudflare access" paragraph. The six hints the scripts print on a failure give the wrapped form: release-gate.ts (secrets, `health`, `web-health`), d1.ts (the restore printed with every bookmark), ingest.ts (the epoch, wrapped only for `--remote`) and prod-report.ts.
+  - **The guard (decision 10).** `scripts/docs-writes.ts` in `check:static`, with `scripts/docsWrites.test.ts` on fixture strings: conventions.md forbids a test that reads doc text, so it is a script like `log-guard.ts`. It applies the audit probe's write pattern to README.md, `docs/workstreams/*.md` and `apps/api/scripts/*.ts`. A line passes when it names the wrapper, the token loader, the drill database or `--dry-run`. In Markdown, an inline code span wrapped over two lines is read as one line; that is how it found deck-builder.md's wrapped ingest, which the probe missed. A bare `wrangler secret put` planted at the end of README made it fail with the line, and it passed again once the plant was removed.
+  - **README (OLD2).** KV 1 day (of `/cards`, pages 1-3), retired by the catalog epoch; no `/folders`; the web Worker's 404 script; `src/host`, `src/seam` and `notFoundWorker.ts` in the tree; `bun run e2e` and a pointer to the other scripts; Lua 5.1 only for `check:lua`. The `web-health` explanation (backend-data.md §3.7.2) and `assetProblem`'s message name the host page rather than the SPA fallback.
+  - **status.md (ENT3 a, c, d).** The deployed line names the command that tells the truth (the newest `release-*` tag, the commits after it, `/health` and `<meta name="build">`) instead of a release value. The `print_key` step says the gate refuses a difference. The `src/` row and docs/README.md's code-paths note list `host` and `seam`.
+  - **Online limits (DES3).** frontend/lua/README.md's Online section says the HUD reads the frame's allowances, coin flips come from the log's cues and prompts carry their titles; only stack bottoms are still inferred client-side. online.md's old "not on the wire" bullet is marked superseded. The cookie "known limit" in the 2026-10-22 entry was already corrected by 2026-10-27; the forward pointers are Phase 5's.
+  - **Catalog scope (DESX1).** The locked assumption "Ingest filters to SV-era" is amended in place. backend-data.md §3.4.1 gives the full catalog: `--serie sv`, `--serie me` and `--sets swsh10.5`.
+  - **Small fixes.**
+    - ptcg-rules.md: seven internal § references corrected (DES9).
+    - Two comments fixed (REF6): `listDecks` returns the card list of a complete deck; the lobby routes' header names `src/online/session.ts` and says an account binds the seat it first claims.
+    - OLD9: conventions.md defers the `check:static` step list to package.json; the runbook's lobby address is `/online/<CODE>`; §3.7.2 lists the `bun install --frozen-lockfile` step; the Balatro source defaults to `../balatro-source`.
+    - The D369 note's path is `docs/archive/progress.md` (DES4). release-gate.ts's header lists CI's jobs as static, test, mutants (OPS2).
+- **Mutants.** 5 DOC-P0 rows, all killed (`bun run mutants --decision DOC-P0`):
+  - the secrets hint and the restore hint printed bare again, killed by the guard itself;
+  - the guard wanting `--remote` right after `ingest.ts`, reading Markdown without joining wrapped spans, and ignoring fences, killed by `docsWrites.test.ts`.
+- `bun run check` green: 754 files, 17,462 tests, 76 Lua files (with `BALATRO_SOURCE`).
+- Not done here: conventions.md:534's prose mention of a rollback (Phase 3's file), and the drill block in §3.7.3, which writes to a throwaway database and gets a one-line note instead of wrapped lines.
