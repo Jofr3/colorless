@@ -1,4 +1,4 @@
-// GET /assets/* — the lazy tcgdex→R2 asset mirror (D9, §3.4).
+// GET /assets/cards/* — the lazy tcgdex→R2 card-image mirror (D9, §3.4).
 //
 // Cache-aside per request: validate the id and the file name against strict allowlists
 // (anything else 404s without touching the origin) → serve from R2 on hit →
@@ -6,13 +6,13 @@
 // query in the app), fetch the original, respond, and store it in R2 after
 // the response. A missing asset's 404 is cached by the browser for an hour. Rerunning
 // ingest never touches R2 — objects are only ever written here, keyed
-// `cards/{cardId}/{file}` / `sets/{setId}/{file}`, and immutable thereafter.
+// `cards/{cardId}/{file}`, and immutable thereafter.
 
 import { isTcgdexId } from "@colorless/schema";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { type Context, Hono } from "hono";
-import { cards, sets } from "../db/schema";
+import { cards } from "../db/schema";
 import type { Env } from "../env";
 import { afterResponse } from "../http/afterResponse";
 import { deadline } from "../http/deadline";
@@ -25,11 +25,7 @@ import {
   type ImageType,
   isAssetOriginUrl,
   isCardAssetFile,
-  isSetAssetFile,
   MAX_ASSET_BYTES,
-  setAssetKey,
-  setAssetKind,
-  setOriginUrl,
   sniffImageType,
 } from "./files";
 
@@ -38,7 +34,7 @@ export const assetsRoutes = new Hono<{ Bindings: Env }>();
 /** Mirrored assets never change for a given key — cache them forever. */
 const CACHE_FOREVER = "public, max-age=31536000, immutable";
 
-/** An unknown card or set, or one the origin has no image for: briefly, since ingest can add it. */
+/** An unknown card, or one the origin has no image for: briefly, since ingest can add it. */
 const MISSING_ASSET_CACHE = "public, max-age=3600";
 
 /** How long a mirror miss waits on the asset origin, body included, before it answers 502. */
@@ -194,29 +190,6 @@ assetsRoutes.get("/cards/:cardId/:file", async (c) => {
         .where(eq(cards.id, cardId))
         .get();
       return row?.imageUrl ? cardOriginUrl(row.imageUrl, file) : null;
-    },
-    (work) => afterResponse(c, work),
-  );
-  return response ?? missingAsset(c);
-});
-
-assetsRoutes.get("/sets/:setId/:file", async (c) => {
-  const { setId, file } = c.req.param();
-  if (!isTcgdexId(setId) || !isSetAssetFile(file)) {
-    return c.notFound();
-  }
-  const response = await serveMirroredAsset(
-    c.env,
-    setAssetKey(setId, file),
-    contentTypeFor(file),
-    async () => {
-      const row = await drizzle(c.env.DB)
-        .select({ logoUrl: sets.logoUrl, symbolUrl: sets.symbolUrl })
-        .from(sets)
-        .where(eq(sets.id, setId))
-        .get();
-      const base = setAssetKind(file) === "logo" ? row?.logoUrl : row?.symbolUrl;
-      return base ? setOriginUrl(base, file) : null;
     },
     (work) => afterResponse(c, work),
   );

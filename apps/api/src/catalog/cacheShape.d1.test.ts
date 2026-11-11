@@ -19,6 +19,7 @@ import { CACHED_RESPONSE_SCHEMAS, catalogRoutes } from "./routes";
  */
 const CACHED_SHAPES: Record<string, string> = {
   v12: "7159e8ad7eaf81e8",
+  v13: "4ca1f3bba5089887",
 };
 
 /** Append-only, likewise: each CARD_INDEX_VERSION with the fingerprint of its columns. */
@@ -70,7 +71,6 @@ const d1 = useTestD1((db) =>
 /** A request path for each parameterized catalog route. */
 const EXAMPLE_PATHS: Record<string, string> = {
   "/cards/:id": "/cards/sv01-004",
-  "/sets/:id": "/sets/sv01",
 };
 
 describe("the routes the pins cover", () => {

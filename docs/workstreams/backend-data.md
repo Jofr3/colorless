@@ -41,7 +41,7 @@ migrations.
 ### 3.3 Storage & compute bindings (Cloudflare)
 
 - **D1** `DB`, two logical schemas in one database: the catalog and user data (§5.3).
-- **R2** `ASSETS`: mirrored card images and set logos and symbols, served through `/assets/*`.
+- **R2** `ASSETS`: mirrored card images, served through `/assets/cards/*`.
 - **KV** `CACHE`: the catalog response cache and its `catalog:epoch` (§6). No rate limit lives
   in KV.
 - **Durable Objects** `LOBBY`: one `LobbyDO` per lobby code (§3.6).
@@ -81,8 +81,8 @@ migrations.
    the CACHE namespace of the same target (§6). Idempotent by tcgdex `id` —
    rerunning is always safe; `--dry-run` writes SQL, applies nothing.
 
-**Images are NOT mirrored at ingest time.** The Worker's `GET /assets/*`
-routes (§6) mirror lazily, cache-aside: R2 hit → serve; miss → resolve the
+**Images are NOT mirrored at ingest time.** The Worker's `GET /assets/cards/*`
+route (§6) mirrors lazily, cache-aside: R2 hit → serve; miss → resolve the
 origin base URL from D1, fetch the original from tcgdex, store it in R2,
 respond. Only `assets.tcgdex.net` over https is fetched, and only an `image/*`
 body of the file's type (by magic bytes) up to 5 MB is stored; the allowlist
@@ -990,7 +990,7 @@ and reset at 00:00 UTC; past one, the binding fails until then:
 | D1 rows read | 5,000,000 | free-text searches (about 5,100 rows each), deep /cards pages, decklist import, catalog KV misses (a /cards miss runs its page and a `count(*)`, each about 5k rows unless the filter is `set`, `id` or `nameExact`; pages 1-3 of one new filter cost 15-30k) |
 | D1 rows written | 100,000 | remote ingest, deck saves, sessions, sign-in counters (two per allowed attempt, one more per failed login below the per-email cap), the daily sweep (at most 20,000) |
 | KV reads | 100,000 | every KV-cached catalog request |
-| KV writes | 1,000 | catalog KV misses (only /facets, /series, /sets, /sets/:id and /cards pages 1-3 at page size 4, 8 or 50; never an empty result) |
+| KV writes | 1,000 | catalog KV misses (only /facets, /series, /sets and /cards pages 1-3 at page size 4, 8 or 50; never an empty result) |
 | Worker requests | 100,000 | every API request, including WebSocket upgrades and the asset mirror; nothing limits traffic before the Worker on workers.dev |
 | Durable Object requests | 100,000 | lobby creation, each WebSocket upgrade and each incoming frame |
 | Durable Object rows written | 100,000 | lobby snapshot and match writes (one per accepted change, a socket's frames capped at 40 then 5 a second), each liveness `setAlarm` (one per 30 s while a lobby has sockets, for at most an hour without play), and about 5 per lobby created and wiped |
@@ -1046,7 +1046,7 @@ address counts as its /64). It runs after the KV cache, so a hit never spends
 it and every miss does: a cacheable page that misses, a query that bypasses KV,
 a key too long for KV, and each repeat once the day's KV writes are spent. An
 `id` or `nameExact` query is an index lookup and is never limited. `/facets`
-and `/cards/index` spend the same budget on a miss; `/sets`, `/sets/:id`,
+and `/cards/index` spend the same budget on a miss; `/sets`,
 `/series`, `/cards/:id` and `/cards/full` read a few hundred rows at most and
 are not limited. Until its card index has loaded, the builder asks `/cards`
 only for the pages KV caches (pages 1-3 at its page sizes, three requests per
@@ -1272,8 +1272,9 @@ Researched from the official docs so the implementation can be exact.
 
 > We **mirror into R2 lazily (D4/D9)**: the catalog stores these extensionless
 > origin base URLs (`cards.image_url`, `sets.logo_url`/`symbol_url`,
-> `series.logo_url`), and the `/assets/*` routes (§3.4, §6) copy an asset into
-> R2 the first time it is requested. tcgdex ids (`swsh3-136`) become our
+> `series.logo_url`), and the `/assets/cards/*` route (§3.4, §6) copies a card
+> image into R2 the first time it is requested; no route serves the set or
+> serie art. tcgdex ids (`swsh3-136`) become our
 > canonical id — no more Scrydex reconciliation.
 
 ---
@@ -1319,11 +1320,11 @@ fixtures in `__fixtures__/`; live sweep via `packages/schema/scripts/validate-li
 ### 5.2 Canonical domain `Card` (D5 = unify)
 
 One flat `Card` per print, in `packages/schema/src/catalog/` with `CardBrief`,
-`Set`/`SetBrief`/`SetWithCards`, `Serie`/`SerieBrief` and the `paginatedSchema` envelope. Its
+`SetBrief`, `Serie`/`SerieBrief` and the `paginatedSchema` envelope. Its
 nullability follows the §5.3 columns rather than tcgdex's optionality; consumers narrow on
-`category`. `image`, `logo` and `symbol` are this API's asset base paths (`/assets/cards/{id}`,
-`/assets/sets/{id}`; the client appends `/high.webp`, `/logo.webp` or `/symbol.webp`), null when
-the row has no origin URL. The deck library's schemas are in `packages/schema/src/decks/`:
+`category`. `image` is this API's asset base path (`/assets/cards/{id}`; the client appends
+`/high.webp`), null when the row has no origin URL. A set's `logo` and `symbol` are always null:
+no client shows set art (2026-11-11). The deck library's schemas are in `packages/schema/src/decks/`:
 `Deck` (with `cards: [{cardId, count}]`), `DeckSummary` and the request bodies.
 
 ### 5.3 D1 relational schema
@@ -1497,15 +1498,15 @@ GET    /health/db        # one D1 read: {ok:true, migrations:<applied count>} or
                          #   {ok:false}; no-store; post-deploy check (§3.7.4)
 
 # Catalog (public; every 200 carries `public, max-age=300, swr=3600` + ETag;
-# best-effort KV cache-aside, 1-day TTL, on the 200s of /facets, /series, /sets,
-# /sets/:id and /cards pages 1-3 only (MAX_CACHED_CARDS_PAGE) — each miss spends
+# best-effort KV cache-aside, 1-day TTL, on the 200s of /facets, /series, /sets
+# and /cards pages 1-3 only (MAX_CACHED_CARDS_PAGE) — each miss spends
 # one of the account's 1,000 KV writes/day;
 # `x-colorless-cache: hit|miss|bypass` (bypass: /cards/:id, /cards/full, /cards
 # page 4+, a /cards query carrying `total` or a pageSize other than 4, 8 or 50,
 # and free-text/id/hpMin/hpMax queries); an empty list or page is never stored;
-# key = `catalog:<CACHE_VERSION>:<ingest epoch>:` + path (route params decoded)
+# key = `catalog:<CACHE_VERSION>:<ingest epoch>:` + path
 # + the VALIDATED query: only schema keys, defaults dropped, repeats sorted —
-# /facets, /series and /sets/:id ignore the query, so `?bust=N` cannot mint
+# /facets and /series ignore the query, so `?bust=N` cannot mint
 # entries; bump the version prefix whenever a cached shape — or its values for
 # already-ingested rows — changes (catalog/cacheShape.d1.test.ts pins each
 # version's response schemas and card index columns, so a shape change fails
@@ -1558,8 +1559,8 @@ GET    /cards/:id        # full canonical Card; 404 JSON if absent; never in KV 
                          #   1-row PK read is cheaper than a KV write)
 GET    /cards/full       # full Card[] for ?id= (repeatable, 1-100) in id order; unknown
                          #   ids are omitted; id batches never enter KV (card-pool load)
-GET    /sets             # SetBrief[] (optional ?serie=), ordered by releaseDate
-GET    /sets/:id         # full Set + cards: CardBrief[] (ordered by local_id)
+GET    /sets             # SetBrief[] (optional ?serie=), ordered by releaseDate;
+                         #   logo and symbol are null (no client shows set art)
 GET    /series           # Serie[] = SerieBrief + nested SetBrief[]
 GET    /facets           # CatalogFacets — the EIGHT filter vocabularies actually
                          #   present: rarities, types, stages, trainerTypes,
@@ -1573,14 +1574,13 @@ GET    /facets           # CatalogFacets — the EIGHT filter vocabularies actua
                          #   empties a page (D198, §5.3.3)
                          #   A KV miss spends CATALOG_SEARCH_LIMIT.
 
-# Assets — lazy tcgdex→R2 mirror (D9, §3.4); strict :file allowlists and tcgdex-id
-# shaped :cardId/:setId, else 404. Fetches only https://assets.tcgdex.net/ (also
+# Assets — lazy tcgdex→R2 mirror (D9, §3.4); a strict :file allowlist and a tcgdex-id
+# shaped :cardId, else 404. Fetches only https://assets.tcgdex.net/ (also
 # after redirects) and stores only an image/* body whose magic bytes match the
 # file type, at most 5 MB; anything else answers as missing (404, logged). An
 # origin 404/410 is missing (404, max-age=3600); any other non-200 origin status,
 # a network error or a timeout is an uncached 502 (§3.4)
 GET    /assets/cards/:cardId/:file   # high.webp only (the one file the web app shows)
-GET    /assets/sets/:setId/:file     # logo.webp | symbol.webp
 
 # Auth (D2a) — implemented (§3.5 as-built); bodies validated, users
 # boundary-parsed through @colorless/schema userSchema (never any hash field)

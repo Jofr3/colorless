@@ -40,7 +40,7 @@ const CACHE_TTL_SECONDS = 86_400;
  * need a bump: it writes a new catalog epoch. cacheShape.d1.test.ts fails on a shape change until
  * this is bumped; a change to derived values it cannot see.
  */
-export const CACHE_VERSION = "v12";
+export const CACHE_VERSION = "v13";
 
 /** How long an isolate reuses the epoch it read, and how long KV's edge cache may hold it. */
 const EPOCH_MEMO_MS = 60_000;
@@ -105,12 +105,6 @@ async function catalogEpoch(kv: KVNamespace, route: string): Promise<string | nu
   }
 }
 
-/** The request path rebuilt from the route pattern and its decoded params, so a percent-encoded
-    spelling of `/sets/sv01` cannot mint a second entry for the same set. */
-function canonicalPath(c: Context, route: string): string {
-  return route.replace(/:(\w+)/g, (_, name: string) => encodeURIComponent(c.req.param(name) ?? ""));
-}
-
 /** The weak ETag of whatever `key` serves, hit or miss, which hono/etag uses instead of a digest
     of the body. */
 export async function catalogETag(key: string): Promise<string> {
@@ -128,8 +122,7 @@ async function cacheAside(
   const kv = c.env.CACHE;
   const route = routePath(c);
   const epoch = query === null ? undefined : await catalogEpoch(kv, route);
-  const key =
-    epoch === undefined ? undefined : catalogCacheKey(canonicalPath(c, route), query ?? "", epoch);
+  const key = epoch === undefined ? undefined : catalogCacheKey(route, query ?? "", epoch);
   if (key === undefined || key.length > KV_MAX_KEY_BYTES) {
     await next();
     if (c.res.status === 200) {
@@ -182,7 +175,7 @@ function emptyResult(body: string): boolean {
     it. */
 export const catalogHttpCache = every(conditionalGet, cacheControl(PUBLIC_CATALOG_CACHE));
 
-/** For a route whose response depends on its path alone (/facets, /series, /sets/:id): the query
+/** For a route whose response depends on its path alone (/facets, /series): the query
     is ignored, so `/facets?bust=1` is the `/facets` entry. */
 export const catalogPathCache = every(
   catalogHttpCache,

@@ -28,13 +28,13 @@ const ACCESS: Record<string, Access> = {
   "POST /auth/verify-email": { kind: "public" },
   "POST /auth/reset-password": { kind: "public" },
   "GET /assets/cards/:cardId/:file": { kind: "public" },
-  "GET /assets/sets/:setId/:file": { kind: "public" },
+
   "GET /cards": { kind: "public" },
   "GET /cards/index": { kind: "public" },
   "GET /cards/full": { kind: "public" },
   "GET /cards/:id": { kind: "public" },
   "GET /sets": { kind: "public" },
-  "GET /sets/:id": { kind: "public" },
+
   "GET /series": { kind: "public" },
   "GET /facets": { kind: "public" },
   // Seats are account-less; the DO reads the cookie only to owner-scope the deck it loads.

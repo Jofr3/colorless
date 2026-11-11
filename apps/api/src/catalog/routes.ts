@@ -2,11 +2,11 @@
 //
 // Every route: browser cache headers, query params validated with
 // @hono/zod-validator (invalid → terse 400 JSON), KV cache-aside where a KV
-// write pays for itself (./cache.ts: /facets, /series, /sets, /sets/:id and
-// /cards pages 1-3, keyed by the validated query), Drizzle over D1, and the
+// write pays for itself (./cache.ts: /facets, /series, /sets and /cards pages
+// 1-3, keyed by the validated query), Drizzle over D1, and the
 // outgoing payload parsed through the canonical domain schemas at the
 // boundary (the /health pattern) so row/schema drift fails loudly instead of
-// leaking. Paired queries (page + count, set + its cards)
+// leaking. Paired queries (page + count, series + sets)
 // go through db.batch() — one D1 round trip — except a free-text page, which
 // carries its own count (cardsCountedPageStatement). A /cards or /facets request
 // that misses KV is limited per IP, and what /cards reads then is logged
@@ -29,7 +29,6 @@ import {
   serieSchema,
   setBriefSchema,
   setsQuerySchema,
-  setWithCardsSchema,
 } from "@colorless/schema";
 import { asc, count, eq, sql } from "drizzle-orm";
 import { type DrizzleD1Database, drizzle } from "drizzle-orm/d1";
@@ -48,7 +47,6 @@ import {
   mapCardRow,
   mapSerieRow,
   mapSetBriefRow,
-  mapSetRow,
 } from "./map";
 import { buildCardsWhere, cardIdIn, cardsOrder } from "./query";
 import {
@@ -71,7 +69,6 @@ const seriesResponseSchema = z.array(serieSchema);
 export const CACHED_RESPONSE_SCHEMAS = {
   "/cards": cardsResponseSchema,
   "/sets": setsResponseSchema,
-  "/sets/:id": setWithCardsSchema,
   "/series": seriesResponseSchema,
   "/facets": catalogFacetsSchema,
 };
@@ -158,15 +155,6 @@ export function cardsQueryScans(query: CardsQuery): boolean {
   return query.id === undefined && query.nameExact === undefined;
 }
 
-/** A set's cards in collector order. */
-export function setCardsStatement(db: DrizzleD1Database, setId: string) {
-  return db
-    .select(cardBriefColumns)
-    .from(cards)
-    .where(eq(cards.setId, setId))
-    .orderBy(asc(cards.localId));
-}
-
 catalogRoutes.get(
   "/cards",
   catalogHttpCache,
@@ -234,22 +222,6 @@ catalogRoutes.get(
     return c.json(setsResponseSchema.parse(rows.map(mapSetBriefRow)));
   },
 );
-
-catalogRoutes.get("/sets/:id", catalogPathCache, async (c) => {
-  const setId = c.req.param("id");
-  const db = drizzle(c.env.DB);
-  const [setRows, cardRows] = await db.batch([
-    db.select().from(sets).where(eq(sets.id, setId)),
-    setCardsStatement(db, setId),
-  ]);
-  const row = setRows[0];
-  if (row === undefined) {
-    return c.json({ error: "set not found" }, 404);
-  }
-  return c.json(
-    setWithCardsSchema.parse({ ...mapSetRow(row), cards: cardRows.map(mapCardBriefRow) }),
-  );
-});
 
 catalogRoutes.get("/series", catalogPathCache, async (c) => {
   const db = drizzle(c.env.DB);

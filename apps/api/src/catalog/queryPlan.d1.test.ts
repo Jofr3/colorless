@@ -5,12 +5,7 @@ import { type CardsQuery, cardsQuerySchema } from "@colorless/schema";
 import { drizzle } from "drizzle-orm/d1";
 import { describe, expect, it } from "vitest";
 import { useTestD1 } from "../testing/d1";
-import {
-  cardsCountedPageStatement,
-  cardsPageStatements,
-  facetsStatement,
-  setCardsStatement,
-} from "./routes";
+import { cardsCountedPageStatement, cardsPageStatements, facetsStatement } from "./routes";
 
 const SET_IDS = ["sv01", "sv02", "sv03", "sv04", "sv05", "sv06"];
 const CARDS_PER_SET = 120;
@@ -175,13 +170,5 @@ describe("catalog query plans", () => {
     const statement = facetsStatement(db());
     expect((await planOf(statement)).match(/SCAN cards/g)).toHaveLength(1);
     expect(await rowsRead(statement)).toBeLessThanOrEqual(TOTAL_CARDS);
-  });
-
-  it("lists a set's cards for /sets/:id without a sort pass", async () => {
-    const statement = setCardsStatement(db(), "sv05");
-    const plan = await planOf(statement);
-    expect(plan).toContain("SEARCH cards USING INDEX cards_set_local_idx (set_id=?)");
-    expect(plan).not.toContain("TEMP B-TREE");
-    expect(await rowsRead(statement)).toBeLessThanOrEqual(CARDS_PER_SET + 1);
   });
 });

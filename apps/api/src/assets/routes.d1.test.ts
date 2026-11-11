@@ -65,8 +65,8 @@ describe("GET /assets for an id that is not a tcgdex id", () => {
       "cards/a%0Ab/high.webp",
       "cards/.hidden/high.webp",
       `cards/${"a".repeat(65)}/high.webp`,
-      "sets/sv01..x/logo.webp",
-      "sets/-x/symbol.webp",
+      "sets/sv01/logo.webp",
+      "sets/sv01/symbol.webp",
     ]) {
       expect((await app.request(`/assets/${path}`, {}, env)).status).toBe(404);
     }

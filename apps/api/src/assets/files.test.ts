@@ -7,11 +7,6 @@ import {
   contentTypeFor,
   isAssetOriginUrl,
   isCardAssetFile,
-  isSetAssetFile,
-  SET_ASSET_FILES,
-  setAssetKey,
-  setAssetKind,
-  setOriginUrl,
   sniffImageType,
 } from "./files";
 
@@ -19,12 +14,6 @@ describe("asset file allowlists", () => {
   it("accepts every allowlisted card file", () => {
     for (const file of CARD_ASSET_FILES) {
       expect(isCardAssetFile(file)).toBe(true);
-    }
-  });
-
-  it("accepts every allowlisted set file", () => {
-    for (const file of SET_ASSET_FILES) {
-      expect(isSetAssetFile(file)).toBe(true);
     }
   });
 
@@ -42,30 +31,17 @@ describe("asset file allowlists", () => {
       "../high.webp",
       "high",
       "",
-      "logo.png", // a set file is not a card file
+      "logo.webp",
     ];
     for (const file of rejected) {
       expect(isCardAssetFile(file)).toBe(false);
-    }
-    for (const file of [
-      "logo.png",
-      "symbol.png",
-      "logo.jpg",
-      "symbol.gif",
-      "logo",
-      "high.webp",
-      "logo.webp.exe",
-      "",
-    ]) {
-      expect(isSetAssetFile(file)).toBe(false);
     }
   });
 });
 
 describe("R2 keys", () => {
-  it("builds card and set keys under their prefixes", () => {
+  it("builds card keys under their prefix", () => {
     expect(cardAssetKey("sv06.5-001", "high.webp")).toBe("cards/sv06.5-001/high.webp");
-    expect(setAssetKey("sv01", "symbol.webp")).toBe("sets/sv01/symbol.webp");
   });
 });
 
@@ -75,25 +51,11 @@ describe("origin URLs (§4.4)", () => {
       "https://assets.tcgdex.net/en/sv/sv01/081/high.webp",
     );
   });
-
-  it("sets append ONLY the extension — no quality segment", () => {
-    expect(setOriginUrl("https://assets.tcgdex.net/en/sv/sv01/logo", "logo.webp")).toBe(
-      "https://assets.tcgdex.net/en/sv/sv01/logo.webp",
-    );
-    expect(setOriginUrl("https://assets.tcgdex.net/univ/sv/sv01/symbol", "symbol.webp")).toBe(
-      "https://assets.tcgdex.net/univ/sv/sv01/symbol.webp",
-    );
-  });
-
-  it("splits set files into the asset kind that picks the DB column", () => {
-    expect(setAssetKind("logo.webp")).toBe("logo");
-    expect(setAssetKind("symbol.webp")).toBe("symbol");
-  });
 });
 
 describe("contentTypeFor", () => {
   it("maps each allowlisted extension", () => {
-    for (const file of [...CARD_ASSET_FILES, ...SET_ASSET_FILES]) {
+    for (const file of CARD_ASSET_FILES) {
       expect(contentTypeFor(file)).toBe("image/webp");
     }
   });
