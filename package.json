@@ -29,6 +29,7 @@
     "mutants:precheck": "bun scripts/mutation/precheck.ts",
     "check": "bun scripts/check.ts 'bun run check:static' 'bun run check:lua' && bun run check:test",
     "docs:index": "bun scripts/decision-index.ts",
+    "gen": "bun scripts/gen.ts",
     "deps:check": "bun scripts/deps-check.ts",
     "check:static": "bun scripts/check.ts --static",
     "check:lua": "bun scripts/test-lua.ts --require-source",

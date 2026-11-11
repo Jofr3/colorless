@@ -140,6 +140,26 @@ What each run writes (2026-10-27):
   rows, so cached pages and the KV writes to refill them survive a no-op run.
   Run `bun run db:check -- --remote` afterwards.
 
+A new serie or loose set first joins `CATALOG_SCOPE`. After a local ingest
+that adds or changes printings, from the repo root:
+1. `bun run gen` rewrites the files generated from the local catalog:
+   the reprint alias table (`registry-aliases`), the catalog snapshot
+   (`catalog-manifest`) and the census attack corpora (`census-corpus`).
+   `check:static` runs all three with `--check` (they skip without a local
+   D1), and `release:gate` refuses a release whose local and remote
+   `print_key` differ.
+2. Run the engine suites. The census population pins (`POPULATION` and
+   `POPULATION_ME` in `censusAtHead.test.ts`) and the snapshot's fixture
+   checks fail where the new counts moved; update them.
+3. A Standard-legal Pokémon with no Weakness is named at the end of the
+   ingest: add it to `apps/api/src/ingest/weakResSupplement.ts` and ingest
+   again.
+4. A new Antique Fossil joins `FOSSIL_IDS` (`packages/engine/src/fossils.ts`);
+   its reprints follow through the alias table.
+5. Text the engine does not play shows in `simulationGaps(card)`; check the
+   "Deferred" list in `docs/reference/card-revision.md` for rows the new data
+   settles.
+
 #### 3.4.2 Transport seam — `--transport=fetch|sdk` (D188)
 
 Network access lives behind `apps/api/src/ingest/source.ts`, a three-method
