@@ -50,7 +50,7 @@ local function snapshot(step,opts,rows)
   opts=opts or {};revision=revision+1
   local lines={row(nil,W.header,{revision=revision,step=step,busy=opts.busy and 1 or 0,message=opts.message or '',
     code=opts.code or 'ABCD',role='host',link='connected',countdown=opts.countdown or '',
-    notice='',deckPhase=opts.decks or 'idle',name='Ash',account=opts.account or 'authenticated',canKick=0,status=''})}
+    notice='',deckPhase=opts.decks or 'idle',name='Ash',account=opts.account or 'authenticated',status=''})}
   for _,r in ipairs(rows or {}) do lines[#lines+1]=row(r[1],r[1]=='P' and W.seat or W.deck,r[2]) end
   o:sync(table.concat(lines,'\n'))
 end

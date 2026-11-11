@@ -295,7 +295,7 @@ describe("the web client against the lobby DO", () => {
     expect(late.client.state.status).toBe("full");
   });
 
-  it("a signed-out seat's rematch is refused, and the tab keeps its result as a watcher", async () => {
+  it("a signed-out seat's rematch is refused, and the tab keeps its result", async () => {
     const { host, guest } = await inGame();
     concede(host);
     await b.run(300);
@@ -304,7 +304,7 @@ describe("the web client against the lobby DO", () => {
     guest.user = undefined;
     guest.match.rematch();
     await b.run(3000);
-    expect(guest.client().state.status).toBe("spectating");
+    expect(guest.client().state.status).toBe("full");
     expect(guest.match.view()?.outcome).toMatchObject({ winner: "you" });
     expect(guest.match.lifecycle()).toMatchObject({ flags: ["leave"], warning: SEAT_LOST });
     expect(guest.route).not.toHaveBeenLastCalledWith("online", SEAM_CODE, true);

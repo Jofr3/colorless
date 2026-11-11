@@ -397,7 +397,7 @@ for _,view in ipairs(layouts) do
     local name=view.name..' online at '..factor*100 ..'%'
     Display.set(view.display);Display.set({tableText=factor})
     sim:layout(view.w,view.h);sim:open(true,false,'online','ABCD')
-    snapshot({row('L','online','false','Misty',42000,'concede,leave','partial')},{match='ABCD:1'});run(0.5)
+    snapshot({row('L','online','Misty',42000,'concede,leave','partial')},{match='ABCD:1'});run(0.5)
     check(sim.away,name..': the opponent is away')
     local s=sim:awayScale()
     unit=unit or s

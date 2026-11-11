@@ -5,6 +5,7 @@ import { drbgSeed } from "@colorless/engine/testing";
 import {
   LOBBY_WS_CLOSED,
   LOBBY_WS_NOT_FOUND,
+  LOBBY_WS_OUTDATED,
   type LobbyClientMessage,
   type LobbyIntent,
 } from "@colorless/schema";
@@ -29,6 +30,7 @@ import {
   LIVENESS_SWEEP_MS,
   LOBBY_SOCKET_CAP,
   LOBBY_SOCKET_HARD_CAP,
+  MIN_LOBBY_PROTOCOL,
   OVERFLOW_HELLO_MS,
   OVERFLOW_SOCKETS_MAX,
 } from "./logic";
@@ -438,7 +440,7 @@ describe("lobby abuse — sockets and lifetime (LB2, LB3)", () => {
     expect(refused).toBe(10 - accepted.length);
   });
 
-  it("LB2: spectators are capped, and each distinct match frame is built once per broadcast", async () => {
+  it("LB2: refused sockets are capped and sent no board, and each seat's frame is built once", async () => {
     const { host, guest, actor, actorSocket } = await matchInTurnOne();
     const watchers: FakeSocket[] = [];
     for (let i = 0; i < 20; i++) {
@@ -446,25 +448,25 @@ describe("lobby abuse — sockets and lifetime (LB2, LB3)", () => {
       await h.send(ws, hello(`watcher-${String(i)}`));
       watchers.push(ws);
     }
-    const spectators = watchers.filter((ws) => ws.framesOf("match").length > 0);
+    const refused = watchers.filter((ws) => ws.closed === null);
     const turnedAway = watchers.filter((ws) => ws.closed !== null);
-    // The two seats and ten spectators fill the cap, and the rest are answered "full" and
-    // closed.
-    expect(spectators).toHaveLength(LOBBY_SOCKET_CAP - 2);
-    expect(turnedAway).toHaveLength(20 - spectators.length);
-    expect(turnedAway.every((ws) => ws.last("reject")?.reason === "full")).toBe(true);
+    // The two seats and ten refused tabs fill the cap, and the rest are closed as well.
+    expect(refused).toHaveLength(LOBBY_SOCKET_CAP - 2);
+    expect(turnedAway).toHaveLength(20 - refused.length);
+    expect(watchers.every((ws) => ws.last("reject")?.reason === "full")).toBe(true);
     expect(turnedAway.every((ws) => ws.closed?.code === 1013)).toBe(true);
+    expect(watchers.every((ws) => ws.framesOf("match").length === 0)).toBe(true);
 
-    const sockets = [host, guest, ...spectators];
+    const sockets = [host, guest];
     const before = sockets.map((ws) => ws.framesOf("match").length);
     const uid = (await storedState()).players[actor].bench[0]?.stack[0];
     const stringify = vi.spyOn(JSON, "stringify");
     await h.send(actorSocket, { kind: "action", action: { type: "reorderBench", uid, index: 1 } });
     const sent = sockets.map((ws, i) => ws.framesOf("match").length - (before[i] ?? 0));
-    expect(sent).toEqual(sockets.map(() => 1));
-    // One redaction and encoding per distinct frame, not per socket: each seat's delta and the
-    // spectators' shared one, plus the harness encoding the action it sends.
-    expect(stringify).toHaveBeenCalledTimes(1 + 3);
+    expect(sent).toEqual([1, 1]);
+    expect(refused.every((ws) => ws.framesOf("match").length === 0)).toBe(true);
+    // One redaction and encoding per seat's delta, plus the harness encoding the action it sends.
+    expect(stringify).toHaveBeenCalledTimes(1 + 2);
     stringify.mockRestore();
   });
 
@@ -545,12 +547,6 @@ describe("lobby abuse — sockets and lifetime (LB2, LB3)", () => {
 describe("lobby abuse — the match log (MIX2)", () => {
   it("MIX2: a log past its cap is trimmed behind a marker and sent whole, and its old chunks go", async () => {
     const { host, guest, actorSocket } = await matchInTurnOne();
-    for (const [ws, from] of [
-      [host, "h"],
-      [guest, "g"],
-    ] as const) {
-      await h.send(ws, { kind: "hello", from, name: `anon-${from}`, logDeltas: true });
-    }
     const record = await storedRecord();
     const filler = Array.from({ length: MATCH_LOG_MAX - record.log.length }, () => ({
       kind: "turn" as const,
@@ -695,7 +691,7 @@ describe("lobby abuse — a socket left on a seat that is then bound (LBX1)", ()
     expect(shadow.framesOf("match")).toEqual([]);
   });
 
-  it("LBX1: a shadow on the host's seat cannot kick the guest", async () => {
+  it("LBX1: no socket can remove the guest, the host's own included (kick is gone)", async () => {
     await h.create();
     const shadow = await h.connect();
     await h.send(shadow, hello("h", "Evil"));
@@ -705,7 +701,8 @@ describe("lobby abuse — a socket left on a seat that is then bound (LBX1)", ()
     await h.send(host, hello("h"));
     const guest = await h.connect("bo");
     await h.send(guest, hello("g"));
-    await h.send(shadow, { kind: "reject", to: seatIdOf("g"), reason: "kicked" });
+    for (const from of [shadow, host])
+      await h.send(from, JSON.stringify({ kind: "reject", to: seatIdOf("g"), reason: "kicked" }));
     expect(host.last("state")?.snapshot.guest?.id).toBe(seatIdOf("g"));
     expect(guest.framesOf("reject")).toEqual([]);
   });
@@ -753,7 +750,7 @@ describe("lobby abuse — names that forge client bridge commands (WC1)", () => 
     await h.send(spectator, hello("watcher"));
 
     expect(victim.framesOf("match").length).toBeGreaterThan(0);
-    expect(spectator.framesOf("match").length).toBeGreaterThan(0);
+    expect(spectator.framesOf("state").length).toBeGreaterThan(0);
     const seen = [...victim.sent, ...spectator.sent].flatMap(strings);
     expect(seen.filter((text) => /[\p{Cc}\p{Cf}]/u.test(text))).toEqual([]);
     expect(seen.some((text) => text.includes(`Mal${CLEAN}`))).toBe(true);
@@ -764,7 +761,7 @@ describe("lobby abuse — what a snapshot gives away (LB5, LB6)", () => {
   /** Everything a socket was sent, as the text it went out as. */
   const wire = (ws: FakeSocket) => ws.sent.map((frame) => JSON.stringify(frame)).join("\n");
 
-  it("LB5, LB6: no frame carries a deck id or a seat secret, to an opponent, a spectator or a lurker", async () => {
+  it("LB5, LB6: no frame carries a deck id or a seat secret, to an opponent, a refused socket or a lurker", async () => {
     await h.create();
     const lurker = await h.connect();
     const host = await h.connect("ana");
@@ -782,7 +779,7 @@ describe("lobby abuse — what a snapshot gives away (LB5, LB6)", () => {
     expect(host.last("state")?.snapshot.phase).toBe("in-game");
     const spectator = await h.connect("eve");
     await h.send(spectator, hello("w"));
-    expect(spectator.framesOf("match").length).toBeGreaterThan(0);
+    expect(spectator.last("reject")?.reason).toBe("full");
     await h.send(guest, { kind: "action", action: { type: "concede" } });
     await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
 
@@ -817,12 +814,12 @@ describe("lobby abuse — what a snapshot gives away (LB5, LB6)", () => {
     const hostId = seen.host.id;
     const guestId = seen.guest.id;
 
-    // A signed-in intruder's hello with either seat's public id neither takes the seat nor binds
-    // it to the intruder's account.
+    // A signed-in intruder's hello with either seat's public id is dropped: it neither takes the
+    // seat nor binds it to the intruder's account.
     const intruder = await h.connect("eve");
     for (const id of [hostId, guestId]) {
       await h.send(intruder, { kind: "hello", from: id, name: "Evil" });
-      expect(intruder.last("reject")).toEqual({ kind: "reject", to: id, reason: "full" });
+      expect(intruder.sent).toEqual([]);
     }
     // A secret of its own names a seat of its own, which the held guest seat refuses.
     await h.send(intruder, hello("eve"));
@@ -832,7 +829,7 @@ describe("lobby abuse — what a snapshot gives away (LB5, LB6)", () => {
       reason: "full",
     });
     // No hello seated it, so it acts for neither seat.
-    await h.send(intruder, { kind: "reject", to: guestId, reason: "kicked" });
+    await h.send(intruder, JSON.stringify({ kind: "reject", to: guestId, reason: "kicked" }));
     await h.send(intruder, {
       kind: "intent",
       from: guestId,
@@ -845,7 +842,7 @@ describe("lobby abuse — what a snapshot gives away (LB5, LB6)", () => {
     expect(after?.guest).toMatchObject({ id: guestId, name: "Guest", connected: true });
     expect(guest.framesOf("reject")).toEqual([]);
     expect(h.storage.data.has("seatUsers")).toBe(false);
-    expect(logged("hello_refused")[0]).toMatchObject({ cause: "credential" });
+    expect(logged("hello_refused")).toMatchObject([{ cause: "full", signedIn: true }]);
 
     // The guest's own secret still seats it, and binds it to the account it signs in with.
     const signedIn = await h.connect("bo");
@@ -854,13 +851,12 @@ describe("lobby abuse — what a snapshot gives away (LB5, LB6)", () => {
     expect(h.storage.data.get("seatUsers")).toEqual({ [guestId]: "bo" });
   });
 
-  it("LB6: a client from before the split is answered full and holds nothing", async () => {
+  it("LB6: a hello whose from is no seat secret is dropped unanswered and holds nothing", async () => {
     await h.create();
     const old = await h.connect("ana");
     const uuid = "0b7f6a2e-9c1d-4e1f-8a6b-3c2d1e0f9a8b";
-    await h.send(old, { kind: "hello", from: uuid, name: "Ana", logDeltas: true });
-    // The old client shows a full lobby; a reload brings it the current client.
-    expect(old.sent).toEqual([{ kind: "reject", to: uuid, reason: "full" }]);
+    await h.send(old, { kind: "hello", from: uuid, name: "Ana" });
+    expect(old.sent).toEqual([]);
     expect(old.closed).toBeNull();
     await h.send(old, { kind: "intent", from: uuid, intent: { type: "set-ready", ready: true } });
     expect(h.storage.data.has("snapshot")).toBe(false);
@@ -889,7 +885,6 @@ describe("lobby abuse — the audit trail (LB8)", () => {
         lobby: "ABCD",
         cause: "full",
         signedIn: true,
-        spectating: false,
       },
     ]);
 
@@ -898,21 +893,19 @@ describe("lobby abuse — the audit trail (LB8)", () => {
     const shadow = await h.connect();
     await h.send(shadow, hello("g"));
     expect(shadow.last("reject")).toEqual({ kind: "reject", to: seatIdOf("g"), reason: "full" });
-    expect(logged("hello_refused").slice(1)).toMatchObject([
-      { cause: "bound", signedIn: false, spectating: false },
-    ]);
+    expect(logged("hello_refused").slice(1)).toMatchObject([{ cause: "bound", signedIn: false }]);
 
     // Throttled: a refused client that keeps asking writes one line per ten minutes.
     for (let i = 0; i < 5; i++) await h.send(shadow, hello("g"));
     expect(logged("hello_refused")).toHaveLength(2);
   });
 
-  it("LB8: watching a match is not a refusal worth a line", async () => {
+  it("LB8: a refusal during a match is a line like any other", async () => {
     await matchInTurnOne();
     const watcher = await h.connect("vic");
     await h.send(watcher, hello("w"));
-    expect(watcher.framesOf("match").length).toBeGreaterThan(0);
-    expect(logged("hello_refused")).toEqual([]);
+    expect(watcher.framesOf("match")).toEqual([]);
+    expect(logged("hello_refused")).toMatchObject([{ cause: "full", signedIn: true }]);
   });
 
   it("LB8: no lobby line names an account, a session, a seat secret or a deck", async () => {
@@ -957,5 +950,30 @@ describe("lobby abuse — the removed set-name intent (AU8)", () => {
     expect(logged("socket_closed")).toMatchObject([
       { cause: "frame_rate", frames: FRAME_BURST + 1 },
     ]);
+  });
+});
+
+describe("lobby abuse — a page older than the lobby protocol (LEGX1)", () => {
+  it("LEGX1: a hello below the DO's minimum is closed outdated and seats nothing", async () => {
+    await h.create();
+    h.deps.minLobbyProtocol = 1;
+    const old = await h.connect();
+    await h.send(old, hello("h", "Old"));
+    expect(old.closed).toEqual({ code: LOBBY_WS_OUTDATED, reason: "client outdated" });
+    expect(old.sent).toEqual([]);
+    expect(logged("hello_refused")).toMatchObject([{ cause: "outdated", protocol: 0 }]);
+    const current = await h.connect();
+    await h.send(current, { kind: "hello", from: seatSecret("h"), name: "New", protocol: 1 });
+    expect(current.closed).toBeNull();
+    expect(current.last("state")?.snapshot.host).toMatchObject({ id: seatIdOf("h"), name: "New" });
+  });
+
+  it("LEGX1: seats a hello without a protocol while the minimum is 0", async () => {
+    expect(MIN_LOBBY_PROTOCOL).toBe(0);
+    await h.create();
+    const old = await h.connect();
+    await h.send(old, hello("h"));
+    expect(old.closed).toBeNull();
+    expect(old.last("state")?.snapshot.host.id).toBe(seatIdOf("h"));
   });
 });

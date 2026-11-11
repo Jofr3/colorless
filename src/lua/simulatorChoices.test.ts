@@ -1,7 +1,7 @@
 import type { PokemonRef } from "@colorless/engine";
 import type { RedactedEffectPrompt } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { effectMenu, type MenuHost } from "./simulatorChoices";
+import { effectMenu, type MenuHost, UPDATE_NOTE, UPDATE_TITLE } from "./simulatorChoices";
 import type { SimMenu } from "./simulatorTypes";
 
 const you = (spot: "active" | number) =>
@@ -101,5 +101,16 @@ describe("effect menus", () => {
     sim.menu?.options[1]?.run();
     expect(sim.menu?.options.map((o) => o.selected)).toEqual([false, true]);
     expect(choiceOf(sim.menu?.footer?.[0])).toEqual({ kind: "confirm", yes: true, target: you(0) });
+  });
+
+  it("shows a prompt kind this page does not know as a reload note, without throwing", () => {
+    const prompt = { kind: "chooseFutureThing", note: "Pick one" } as unknown;
+    const sim = open(prompt as RedactedEffectPrompt);
+    expect(sim.menu).toMatchObject({
+      title: UPDATE_TITLE,
+      note: UPDATE_NOTE,
+      options: [],
+      mandatory: true,
+    });
   });
 });

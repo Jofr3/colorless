@@ -15,6 +15,8 @@ import {
   LOBBY_NAME_MAX,
   LOBBY_WS_CLOSED,
   LOBBY_WS_NOT_FOUND,
+  LOBBY_WS_NUDGE,
+  LOBBY_WS_OUTDATED,
   LOBBY_WS_PING,
   LOBBY_WS_PONG,
   type LobbyClientMessage,
@@ -44,13 +46,9 @@ import {
   attachedPlayer,
   attachedSession,
   attachedUserId,
-  attachLogDeltas,
   attachOverflow,
   attachPlayer,
-  attachSpectator,
   isOverflow,
-  isSpectating,
-  takesLogDeltas,
 } from "./attachment";
 import { loadCardPool } from "./cardPool";
 import { type DeckOwner, type LoadDeckResult, loadPlayerDeck } from "./deckLoad";
@@ -71,7 +69,6 @@ import {
   type HelloDecision,
   helloDecision,
   INACTIVE_LOBBY_MS,
-  isLegacySnapshot,
   livenessSweepMs,
   LOBBY_SOCKET_CAP,
   LOBBY_SOCKET_HARD_CAP,
@@ -89,7 +86,10 @@ import {
   seatedUsers,
   setSeatConnected,
   slotOf,
+  helloIsOutdated,
+  MIN_LOBBY_PROTOCOL,
   socketIsSilent,
+  socketNeedsNudge,
   spendFrame,
   splitDuePending,
   stampCountdown,
@@ -113,7 +113,6 @@ import {
   type MatchRecord,
   type MatchRng,
   type MatchSlot,
-  type MatchViewer,
   matchFrameFor,
   matchSeatOf,
   playerIdOfSeat,
@@ -131,7 +130,6 @@ import {
   type LobbySeat,
   type LobbyState,
   makeSeat,
-  removeGuest,
   seatGuest,
   wireSnapshot,
 } from "./snapshot";
@@ -245,6 +243,8 @@ export interface LobbyDeps {
   loadPool(ids: readonly string[]): Promise<Record<string, Card>>;
   /** The ids of the `owners`' sessions that still live for their account (`liveSessionIds`). */
   liveSessions(owners: readonly DeckOwner[]): Promise<Set<string>>;
+  /** The oldest lobby protocol a hello may name (`MIN_LOBBY_PROTOCOL`). */
+  minLobbyProtocol: number;
 }
 
 /** The production wiring: the system clock, a CSPRNG-keyed match RNG and shuffle, and the
@@ -253,6 +253,7 @@ export function lobbyDepsFromEnv(env: Env): LobbyDeps {
   const db = () => drizzle(env.DB);
   return {
     now: () => Date.now(),
+    minLobbyProtocol: MIN_LOBBY_PROTOCOL,
     randomSeed: () => freshMatchRng(),
     shuffleDeck: (ids) => cryptoShuffle(ids),
     resolveAccount: (cookie) => resolveAccountFromCookie(db(), cookie),
@@ -324,13 +325,7 @@ export class LobbyDO {
       if (!isWebSocketUpgrade(request.headers.get("Upgrade"))) {
         return Response.json({ error: "expected a websocket upgrade" }, { status: 426 });
       }
-      // A lobby stored before the seat secret split is wiped and answered like an expired one.
-      if (
-        (await this.retireLegacyLobby()) ||
-        (await this.state.storage.get(CREATED_KEY)) === undefined
-      ) {
-        return noSuchLobby();
-      }
+      if ((await this.state.storage.get(CREATED_KEY)) === undefined) return noSuchLobby();
       // The flood guard, before the D1 session read: past it even a seated player is refused.
       // Only a seat-holding account's sockets get past LOBBY_SOCKET_CAP to reach it.
       if (this.members().length >= LOBBY_SOCKET_HARD_CAP) return await this.refuseUpgrade();
@@ -408,8 +403,6 @@ export class LobbyDO {
         return await this.onIntent(ws, frame, snapshot);
       case "action":
         return await this.onAction(ws, frame, snapshot);
-      case "reject":
-        return await this.onReject(ws, frame, snapshot);
       case "bye":
         return await this.onBye(ws, frame, snapshot);
       case "rematch":
@@ -434,20 +427,14 @@ export class LobbyDO {
     frame: ClientFrame<"hello">,
     snapshot: LobbyState | null,
   ): Promise<void> {
-    attachLogDeltas(ws, frame.logDeltas === true);
+    if (helloIsOutdated(frame.protocol, this.deps.minLobbyProtocol)) {
+      await this.log("hello_refused", { cause: "outdated", protocol: frame.protocol ?? 0 }, true);
+      return await this.closeSocket(ws, LOBBY_WS_OUTDATED, "client outdated");
+    }
     // The hello's secret names the seat through its hash: a public id read off a snapshot is
     // not a secret, and the secret of the seat it names is known only to that seat's client. A
-    // `from` that is no secret at all comes from a client older than the split, which is told the
-    // lobby is full: it cannot hold a seat here, and a reload brings the current client.
-    if (!isSeatSecret(frame.from)) {
-      await this.log(
-        "hello_refused",
-        { cause: "credential", signedIn: attachedUserId(ws) !== null, spectating: false },
-        true,
-      );
-      this.send(ws, { kind: "reject", to: frame.from, reason: "full" });
-      return;
-    }
+    // `from` without a secret's shape is dropped like an invalid frame.
+    if (!isSeatSecret(frame.from)) return;
     const seatId = publicSeatId(frame.from);
     const decision = helloDecision(snapshot, seatId);
     if (decision === "reject-full") return await this.refuseSeat(ws, seatId, "full");
@@ -595,20 +582,6 @@ export class LobbyDO {
       : matchSeatOf(snapshot, playerId);
   }
 
-  private async onReject(
-    ws: WebSocket,
-    frame: ClientFrame<"reject">,
-    snapshot: LobbyState | null,
-  ): Promise<void> {
-    // The host's kick. Valid only from the host's socket, aimed at the seated
-    // guest. Relay it first (the sticky "you were removed"), then free the
-    // seat and broadcast the now-waiting lobby.
-    if (snapshot === null || snapshot.guest === null) return;
-    if (frame.to !== snapshot.guest.id || !(await this.ownsSeat(ws, snapshot.host.id))) return;
-    this.sendToPlayer(frame.to, frame);
-    await this.commit(removeGuest(snapshot));
-  }
-
   private async onBye(
     ws: WebSocket,
     frame: ClientFrame<"bye">,
@@ -641,8 +614,8 @@ export class LobbyDO {
     snapshot: LobbyState | null,
   ): Promise<void> {
     // Play again in this same lobby — since a `bye` mid-match forfeits but keeps
-    // the seat, an in-game lobby otherwise has no route back except the host's
-    // kick. Legality is the SERVER's to judge, which is why this is a
+    // the seat, an in-game lobby otherwise has no route back. Legality is the SERVER's to
+    // judge, which is why this is a
     // frame and not a seat `intent`: only the DO can see whether the match it
     // holds has finished, and a rematch mid-game must be refused (conceding is
     // how you leave a live one).
@@ -716,7 +689,7 @@ export class LobbyDO {
     const now = this.deps.now();
     let wiped = false;
     try {
-      wiped = (await this.retireLegacyLobby()) || (await this.maintain(now));
+      wiped = await this.maintain(now);
       this.retryNotBefore = null;
     } catch (error) {
       // Logged and not rethrown: the `finally` re-arms the alarm, and that is the retry. The
@@ -780,11 +753,7 @@ export class LobbyDO {
 
   /** Delete every key of the lobby, freeing its code, and any alarm set since this one fired.
       `sockets` is how many open sockets the wipe closed (4000). */
-  private async wipe(
-    now: number,
-    cause: "empty" | "inactive" | "legacy",
-    sockets = 0,
-  ): Promise<void> {
+  private async wipe(now: number, cause: "empty" | "inactive", sockets = 0): Promise<void> {
     const created = await this.state.storage.get(CREATED_KEY);
     await this.info("lobby_wiped", {
       cause,
@@ -801,32 +770,6 @@ export class LobbyDO {
     // set during this pass is left to clear.
     if (this.alarmAt !== null) await this.state.storage.deleteAlarm();
     this.alarmAt = null;
-  }
-
-  /**
-   * Wipe a lobby stored before the seat secret split, true when it did. Its seats are named
-   * by ids every snapshot broadcast, and no client holds a secret that hashes to them, so nobody
-   * could reclaim them: it is closed like an inactive lobby, and the clients, reloaded onto this
-   * deploy's web build, start a new one. Checked once per wake, before the snapshot is first read;
-   * a lobby this deploy wrote is never legacy.
-   */
-  private async retireLegacyLobby(): Promise<boolean> {
-    if (this.snapshot !== undefined) return false;
-    const raw = await this.state.storage.get(SNAPSHOT_KEY);
-    if (!isLegacySnapshot(raw)) {
-      this.snapshot = readSnapshot(raw);
-      return false;
-    }
-    const sockets = this.liveSockets();
-    for (const ws of sockets) {
-      try {
-        ws.close(LOBBY_WS_CLOSED, "lobby closed by a server update");
-      } catch {
-        // Already gone.
-      }
-    }
-    await this.wipe(this.deps.now(), "legacy", sockets.length);
-    return true;
   }
 
   /**
@@ -1004,23 +947,19 @@ export class LobbyDO {
    * `close()` does not fire `webSocketClose`, so `socketGone` is called explicitly.
    */
   private async sweepSilentSockets(now: number): Promise<void> {
-    const connectedAt = (ws: WebSocket): number => {
-      const at = attachedConnectedAt(ws);
-      if (at !== null) return at;
-      // An attachment from before the upgrade recorded its time: start its window now, so a
-      // socket that never answers is still let go one window later.
-      attachConnectedAt(ws, now);
-      return now;
-    };
     let unanswered = 0;
     for (const ws of this.liveSockets()) {
-      const since = connectedAt(ws);
+      // Every socket is stamped at its upgrade.
+      const since = attachedConnectedAt(ws) ?? 0;
       // A turned-away socket that never sent the hello it would be answered "full" on.
       if (isOverflow(ws) && now - since > OVERFLOW_HELLO_MS) {
         await this.closeSocket(ws, 1013, "lobby full");
         unanswered++;
-      } else if (socketIsSilent(this.state.getWebSocketAutoResponseTimestamp(ws), since, now)) {
-        await this.closeSocket(ws, 1001, "keepalive lost");
+      } else {
+        const answered = this.state.getWebSocketAutoResponseTimestamp(ws);
+        if (socketIsSilent(answered, since, now))
+          await this.closeSocket(ws, 1001, "keepalive lost");
+        else if (socketNeedsNudge(answered, since, now)) this.sendEncoded(ws, LOBBY_WS_NUDGE);
       }
     }
     // One line per sweep, however many it let go.
@@ -1116,8 +1055,7 @@ export class LobbyDO {
    */
   private async turnAway(ws: WebSocket, frame: LobbyClientMessage): Promise<void> {
     if (frame.kind === "hello") {
-      const to = isSeatSecret(frame.from) ? publicSeatId(frame.from) : frame.from;
-      this.send(ws, { kind: "reject", to, reason: "full" });
+      this.send(ws, { kind: "reject", to: publicSeatId(frame.from), reason: "full" });
     }
     await this.closeSocket(ws, 1013, "lobby full");
     await this.log("overflow_closed", { cause: "turned_away", code: 1013, sockets: 1 }, true);
@@ -1383,10 +1321,9 @@ export class LobbyDO {
     const stamped = stampCountdown(next, this.deps.now());
     if (previous !== null && sameSnapshot(previous, stamped)) return;
     // A persisted match outlives EXACTLY the match it describes: when this commit
-    // takes the lobby out of in-game (the host's kick, or `endMatch` retiring an
-    // unreadable record; a mid-match `bye` keeps the seat), drop the stale
-    // GameState so a rematch in this same lobby mints a fresh one instead of
-    // handoffToMatch's guard reusing the old (online.md).
+    // takes the lobby out of in-game (`endMatch` retiring an unreadable record; a mid-match
+    // `bye` keeps the seat), drop the stale GameState so a rematch in this same lobby mints a
+    // fresh one instead of handoffToMatch's guard reusing the old (online.md).
     const abandoned = abandonsMatch(previous, stamped);
     // Stored before it is mirrored, so a failed put leaves memory agreeing with storage.
     await this.state.storage.put(SNAPSHOT_KEY, stamped);
@@ -1503,12 +1440,6 @@ export class LobbyDO {
     }
   }
 
-  private sendToPlayer(playerId: string, message: LobbyServerMessage): void {
-    for (const ws of this.liveSockets()) {
-      if (attachedPlayer(ws) === playerId) this.send(ws, message);
-    }
-  }
-
   /** Send `message` to every member socket; a turned-away one gets nothing but its refusal. */
   private broadcast(message: LobbyServerMessage): void {
     const encoded = JSON.stringify(message);
@@ -1517,7 +1448,7 @@ export class LobbyDO {
 
   /**
    * Send each socket its own redacted view of the match, plus the shared seat-keyed log. `only`
-   * targets one socket; otherwise all live sockets. Unseated non-spectators are skipped.
+   * targets one socket; otherwise all live sockets. Unseated sockets are skipped.
    * `logFrom` is the log length every socket already holds: a socket that takes log deltas gets
    * only the entries after it, and every other socket the whole log.
    */
@@ -1527,18 +1458,16 @@ export class LobbyDO {
     { only, logFrom }: { only?: WebSocket; logFrom?: number } = {},
   ): Promise<void> {
     const seatUsers = await this.seatUsers();
-    // Every spectator, and every socket of one seat, gets the same frame: each distinct one is
-    // redacted and encoded once per broadcast.
+    // Every socket of one seat gets the same frame: each distinct one is redacted and encoded
+    // once per broadcast.
     const frames = new Map<string, string>();
     for (const ws of only === undefined ? this.liveSockets() : [only]) {
       const viewer = viewerOf(ws, snapshot, seatUsers);
       if (viewer === null) continue;
-      const from = takesLogDeltas(ws) ? logFrom : undefined;
-      const key = `${viewer}:${from ?? "all"}`;
-      let encoded = frames.get(key);
+      let encoded = frames.get(viewer);
       if (encoded === undefined) {
-        encoded = JSON.stringify(matchFrameFor(record, viewer, from));
-        frames.set(key, encoded);
+        encoded = JSON.stringify(matchFrameFor(record, viewer, logFrom));
+        frames.set(viewer, encoded);
       }
       this.sendEncoded(ws, encoded);
     }
@@ -1558,41 +1487,13 @@ export class LobbyDO {
   }
 
   /**
-   * No seat for this socket. It is always rejected as full, and if a match is running it becomes a
-   * spectator with the seatless board. Spectators have no playerId, so they cannot act, and anyone
-   * with the lobby code can watch.
-   *
-   * `cause` says why: both seats are held by others (`full`), or the seat is bound to an
-   * account this socket is not signed in as (`bound`). A `full` that only makes a spectator is how
-   * watching works, so it is not logged.
+   * No seat for this socket: it is answered "full" and sent nothing else. `cause` says why: both
+   * seats are held by others (`full`), or the seat is bound to an account this socket is not
+   * signed in as (`bound`).
    */
   private async refuseSeat(ws: WebSocket, to: string, cause: "full" | "bound"): Promise<void> {
     this.send(ws, { kind: "reject", to, reason: "full" });
-    const spectating = await this.watchMatch(ws);
-    if (cause === "bound" || !spectating) {
-      await this.log(
-        "hello_refused",
-        { cause, signedIn: attachedUserId(ws) !== null, spectating },
-        true,
-      );
-    }
-  }
-
-  /** Make a seatless socket a spectator of the running match, true when there is one to watch. */
-  private async watchMatch(ws: WebSocket): Promise<boolean> {
-    const snapshot = await this.loadSnapshot();
-    if (snapshot === null || snapshot.phase !== "in-game") return false;
-    const load = await this.loadOrMigrateMatch();
-    if (load.kind !== "ok") return false;
-    attachSpectator(ws);
-    // The snapshot as well as the board. `state` frames only go out on a lobby
-    // COMMIT, and a match in progress may not produce one for many minutes — so a
-    // spectator who joined mid-match would otherwise have no idea who is playing
-    // (a browser run caught exactly this: their board read "Host vs Guest"). It
-    // carries nothing private; it is the same frame both players already hold.
-    this.send(ws, { kind: "state", snapshot: wireSnapshot(snapshot) });
-    await this.broadcastMatch(load.record, snapshot, { only: ws });
-    return true;
+    await this.log("hello_refused", { cause, signedIn: attachedUserId(ws) !== null }, true);
   }
 
   /**
@@ -1734,13 +1635,13 @@ function ownsSeat(ws: WebSocket, playerId: string, seatUsers: Record<string, str
   );
 }
 
-/** Whose view a socket gets: the seat it owns, a spectator's, or null for any other socket. */
+/** Whose view a socket gets: the seat it owns, or null for any other socket. */
 function viewerOf(
   ws: WebSocket,
   snapshot: LobbyState,
   seatUsers: Record<string, string>,
-): MatchViewer | null {
+): Seat | null {
   const playerId = attachedPlayer(ws);
-  if (playerId === null) return isSpectating(ws) ? "spectator" : null;
+  if (playerId === null) return null;
   return ownsSeat(ws, playerId, seatUsers) ? matchSeatOf(snapshot, playerId) : null;
 }

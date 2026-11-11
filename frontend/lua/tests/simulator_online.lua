@@ -37,7 +37,7 @@ local function snapshot(opts)
   opts=opts or {};revision=revision+1
   local out={row(revision,'ready','Ash','Misty',3,opts.phase or 'turn:action',opts.message or '','Your turn','',0,0,'you','you',opts.seat or 'p1',
     0,opts.supporter and 1 or 0,0,opts.outcome or '',opts.outcome and 'All prize cards taken.' or '','',opts.match or 'ABCD:1')}
-  if not opts.noL then out[#out+1]=opts.L or row('L','online','false','','','concede,leave','partial') end
+  if not opts.noL then out[#out+1]=opts.L or row('L','online','','','concede,leave','partial') end
   for _,r in ipairs(base) do out[#out+1]=r end
   for _,r in ipairs(opts.actions or {}) do out[#out+1]=r end
   sim:sync(table.concat(out,'\n'))
@@ -107,7 +107,7 @@ sim.overlay:activate(find(sim.overlay,'concede'))
 assert(last()=='concede' and sim.overlay==nil,'Concede asks the host')
 
 -- Game over: Rematch / Leave / Game log / View table; Rematch disables.
-snapshot({phase='gameOver',outcome='loss',L=row('L','online','false','','','rematch,leave','partial')})
+snapshot({phase='gameOver',outcome='loss',L=row('L','online','','','rematch,leave','partial')})
 tick(60)
 assert(sim.overlay and sim.overlay.kind=='gameover','Outcome opens game over')
 assert(sim.overlay.titleText.string=='MISTY WINS','The loss names the opponent, got '..sim.overlay.titleText.string)
@@ -121,26 +121,26 @@ assert(r.label=='Waiting...' and r.disabled and r.colour==T.panel,'Rematch disab
 count=#commands;sim.overlay:activate(rematch);assert(#commands==count,'A sent rematch cannot repeat')
 draw(2)
 -- The host's flag keeps it disabled across snapshots; a new match clears it.
-snapshot({phase='gameOver',outcome='loss',L=row('L','online','false','','','rematch,rematch-sent,leave','partial')})
+snapshot({phase='gameOver',outcome='loss',L=row('L','online','','','rematch,rematch-sent,leave','partial')})
 assert(sim.overlay.controls[rematch].label=='Waiting...')
 sim.rematchSent=nil
-snapshot({phase='gameOver',outcome='loss',L=row('L','online','false','','','rematch,rematch-sent,leave','partial')})
+snapshot({phase='gameOver',outcome='loss',L=row('L','online','','','rematch,rematch-sent,leave','partial')})
 assert(sim.overlay.controls[rematch].disabled,'rematch-sent alone disables it')
 -- A refused rematch (a signed-out seat) comes back as a message without the flag.
 sim.rematchSent=true
-snapshot({phase='gameOver',outcome='loss',message="You're signed out. Sign in again to play another game.",L=row('L','online','false','','','rematch,leave','partial')})
+snapshot({phase='gameOver',outcome='loss',message="You're signed out. Sign in again to play another game.",L=row('L','online','','','rematch,leave','partial')})
 assert(not sim:rematchPending(),'A refused rematch can be pressed again')
 assert(sim.overlay.controls[rematch].label=='Rematch' and not sim.overlay.controls[rematch].disabled,'Rematch is live after a refusal')
 draw(2)
 -- Watching after the refusal (the seat refused on reconnect): Rematch is gone, not Waiting...
 sim.rematchSent=true
-snapshot({phase='gameOver',outcome='loss',L=row('L','online','false','','','leave','partial')})
+snapshot({phase='gameOver',outcome='loss',L=row('L','online','','','leave','partial')})
 assert(not sim:rematchPending(),'Losing the seat drops a pending rematch')
 assert(sim.overlay.controls[rematch].label=='Rematch' and sim.overlay.controls[rematch].disabled,'A watcher cannot ask for a rematch')
 sim.rematchSent=true
 snapshot({match='ABCD:2'})
 assert(not sim.rematchSent and not sim:rematchPending(),'A new matchId resets the rematch')
-snapshot({phase='gameOver',outcome='win',match='ABCD:2',L=row('L','online','false','','','rematch,leave','partial')})
+snapshot({phase='gameOver',outcome='win',match='ABCD:2',L=row('L','online','','','rematch,leave','partial')})
 tick(60)
 assert(sim.overlay.titleText.string=='YOU WIN!')
 sim.overlay:activate(find(sim.overlay,'leave'))
@@ -151,7 +151,7 @@ sim.overlay:activate(leave)
 assert(last()=='leave' and not sim.overlay.armed,'Leave after the match needs no confirm')
 -- Portrait keeps the online game over inside the board.
 sim:layout(480,850)
-snapshot({phase='gameOver',outcome='loss',match='ABCD:2',L=row('L','online','false','','','rematch,leave','partial')})
+snapshot({phase='gameOver',outcome='loss',match='ABCD:2',L=row('L','online','','','rematch,leave','partial')})
 sim:openGameOver()
 assert(labels(sim.overlay)=='Rematch|Game log|Leave','Portrait online game over, got '..labels(sim.overlay))
 for _,c in ipairs(sim.overlay.controls) do assert(c.x>=sim.overlay.x and c.x+c.w<=sim.overlay.x+sim.overlay.w,'Inside the frame: '..c.label) end
@@ -163,7 +163,7 @@ assert(Simulator.clock(42)=='0:42' and Simulator.clock(61.2)=='1:02' and Simulat
 sim:open(false,false,'online','ABCD')
 snapshot()
 local chips=0;for _,s in ipairs(sounds) do if s=='chips1' then chips=chips+1 end end
-snapshot({L=row('L','online','false','Misty',42000,'concede,leave','partial')})
+snapshot({L=row('L','online','Misty',42000,'concede,leave','partial')})
 assert(sim.away and sim.away.title.string=='Misty disconnected','Banner appears')
 assert(sim.away.detail.string=='Forfeits in 0:42','Clock from awayMs, got '..sim.away.detail.string)
 assert(said[#said]=='Misty disconnected. Forfeits in 0:42','Banner announces')
@@ -173,10 +173,10 @@ tick(90)
 assert(sim.away.detail.string=='Forfeits in 0:41','Lua counts down locally, got '..sim.away.detail.string)
 draw(2)
 -- A later re-emit restarts the clock from its own ms without a new banner.
-snapshot({L=row('L','online','false','Misty',3000,'concede,leave','partial')})
+snapshot({L=row('L','online','Misty',3000,'concede,leave','partial')})
 assert(sim.away.detail.string=='Forfeits in 0:03')
 tick(200);assert(sim.away.detail.string=='Forfeiting...','Zero reads Forfeiting')
-snapshot({L=row('L','online','false','Misty',-1,'concede,leave','partial')})
+snapshot({L=row('L','online','Misty',-1,'concede,leave','partial')})
 assert(sim.away.detail.string=='Waiting for them to reconnect...','No clock while unlimited')
 -- Return: pop_out plus a blue "is back" attention text, then gone.
 snapshot()
@@ -185,9 +185,9 @@ local back=false;for _,at in ipairs(sim.fx.texts) do if at.text.string=='Misty i
 assert(back and said[#said]=='Misty is back','Return announced')
 tick(40);assert(sim.away==nil,'Banner removed after pop_out')
 -- The banner hides once the match is over, without the return cue.
-snapshot({L=row('L','online','false','Misty',10000,'concede,leave','partial')})
+snapshot({L=row('L','online','Misty',10000,'concede,leave','partial')})
 local n=#said
-snapshot({phase='gameOver',outcome='win',L=row('L','online','false','Misty',10000,'rematch,leave','partial')})
+snapshot({phase='gameOver',outcome='win',L=row('L','online','Misty',10000,'rematch,leave','partial')})
 back=0;for i=n+1,#said do if said[i]=='Misty is back' then back=back+1 end end
 assert(sim.away.leaving and back==0,'Game over removes the banner quietly')
 tick(40,true);assert(sim.away==nil)

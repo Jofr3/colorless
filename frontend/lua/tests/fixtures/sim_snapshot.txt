@@ -1,5 +1,5 @@
 1	ready	Ash	Misty	1	turn%3Aaction		Your%20turn	Attach%20Energy%2C%20play%20Trainers%20and%20Pok%C3%A9mon%2C%20then%20attack%20or%20end%20your%20turn.	0	1	you	you	p1	0	0	0				100	Your%20turn.	0	
-L	local	false			undo%2Cnewgame%2Cchoosedecks%2Cconcede%2Cleave	full
+L	local			undo%2Cnewgame%2Cchoosedecks%2Cconcede%2Cleave	full
 S	you	42	6	8	0	0
 C	p1%2331	sv01-167	Beach%20Court	you	hand	0	false	Trainer	Stadium			0					true	0
 C	p1%2311	fix-attacker	fix-attacker	you	hand	1	false	Pokemon		Basic		0				Fire	true	1

@@ -291,6 +291,9 @@ const BUILDERS: { [K in PromptKind]: MenuBuilder<PromptOf<K>> } = {
   moveEnergy: assignCards,
 };
 
+export const UPDATE_TITLE = "Reload to update";
+export const UPDATE_NOTE = "This choice needs a newer version of the page.";
+
 /** Shared engine prompt shapes, rendered by Lua as button lists, real card
  * rows (the pack picker), board targets or prize slots. Board/prize menus name
  * the top-card uid / prize slot so the table itself becomes the picker. */
@@ -408,7 +411,10 @@ export function effectMenu(
       hideTargetOutline:
         placingCounters || (prompt.kind === "choosePokemon" && !!prompt.counterTransfer),
     };
-    (BUILDERS[prompt.kind] as MenuBuilder<RedactedEffectPrompt>)(menu, prompt, ctx);
+    // A prompt kind from a server newer than this page (backend-data.md §3.7.1).
+    const builder = BUILDERS[prompt.kind] as MenuBuilder<RedactedEffectPrompt> | undefined;
+    if (builder === undefined) return { ...menu, title: UPDATE_TITLE, note: UPDATE_NOTE };
+    builder(menu, prompt, ctx);
     return menu;
   };
   return build();

@@ -422,7 +422,7 @@ are authoritative.
 | `match.ts` | the engine handoff (`beginMatch`), `applyMatchAction`, each viewer's redacted frame (`matchFrameFor`), `MATCH_RECORD_VERSION`, the log cap |
 | `matchStore.ts` | the stored match: a head, the card tables once, and the log in 64-row chunks |
 | `deckLoad.ts`, `sessionCheck.ts` | the D1 reads: a player's deck at the handoff, and the sessions a rematch re-checks |
-| `attachment.ts` | what a socket keeps across hibernation: its seat, account, `logDeltas`, spectating |
+| `attachment.ts` | what a socket keeps across hibernation: its seat, account and upgrade time |
 
 - **Phases.** `waiting` (the host alone) → `selecting` (both seated, choosing decks) →
   `countdown` (both ready, `COUNTDOWN_MS`) → `in-game`. There is no finished phase: a finished
@@ -441,8 +441,8 @@ are authoritative.
   - `rematch`, only on a finished game and after the session re-check below, drops the match,
     returns to `selecting` and readies the asker; the other seat's `rematch` or ready accepts. The
     last game's loser chooses who goes first (`nextChooser`); a tie goes to the coin.
-  - The host's kick (`reject` `kicked`) removes the guest and returns to `waiting`, dropping a
-    running match. Outside a match a guest's `bye` frees its seat; the host's only marks it away.
+  - Outside a match a guest's `bye` frees its seat; the host's only marks it away. There is no
+    kick.
 - **Seats and accounts.** The browser mints a seat secret per lobby (`src/online/session.ts`,
   in sessionStorage). A hello presents it; the DO keeps only its hash, the public seat id that
   snapshots and frames name (`packages/schema/src/lobby/seatId.ts`). The first hello claims the
@@ -451,17 +451,17 @@ are authoritative.
   to at the upgrade. The first signed-in hello binds its seat to that account (`seatUsers`, never
   broadcast): from then on only that account may hold it, and other sockets on it are closed
   (1008). A seat without an account can sit but not play, since the handoff reads only a
-  signed-in player's saved deck. A socket with no seat watches a running match: it is answered
-  `reject` `full` and sent the snapshot and the spectators' board.
+  signed-in player's saved deck. A hello that gets no seat is answered `reject` `full` and is
+  sent no board; there is no spectating, though the engine's seatless redaction
+  (`redactGame(state, seat, true)`) stays.
 - **Frames.** JSON. Every client frame spends from its socket's budget, then is Zod-validated;
   an invalid one, or one whose `from` is not the socket's own seat, is dropped.
 
   | Frame | Direction | Purpose |
   | --- | --- | --- |
-  | `hello` | client → DO | claim or reclaim a seat: the seat secret, a name, `logDeltas` |
+  | `hello` | client → DO | claim or reclaim a seat: the seat secret, a name, `protocol` |
   | `intent` | client → DO | `select-deck` (the deck id stays in the DO) or `set-ready` |
   | `action` | client → DO | a game action, run for the socket's own seat |
-  | `reject` `kicked` | host → DO → guest | the host's kick |
   | `bye` | client → DO | leaving; concedes a running match |
   | `rematch` | client → DO | play again after a finished game |
   | `state` | DO → every socket | the lobby snapshot after each change |
@@ -472,10 +472,19 @@ are authoritative.
 
   The keepalive is a raw `"ping"`/`"pong"` pair answered by `setWebSocketAutoResponse` without
   waking the DO; `heartbeat` exists only in the client's channel union, made from those pongs.
+  The client pings every `LOBBY_PING_MS` (1.5 s), and either end gives a socket up after
+  `LOBBY_SILENCE_MS` (10 s) unanswered. A hidden tab's timers can stop its pings for most of a
+  minute, so the liveness sweep sends a raw `"nudge"` (`LOBBY_WS_NUDGE`) to a socket unanswered
+  for `NUDGE_AFTER_MS` (3 s), and the client answers it with a ping from its message handler.
+  A hello names the page's `LOBBY_PROTOCOL` (absent is 0); one below the DO's
+  `MIN_LOBBY_PROTOCOL` (0 today) is closed with 4026. Raise `LOBBY_PROTOCOL` for a frame change
+  an older page cannot work with, and `MIN_LOBBY_PROTOCOL` to match once older pages have had
+  their 7 days (docs/conventions.md, "Compat code has a sunset").
   Close codes: 1001 keepalive lost; 1008 frame rate, an ended session, or a seat an account
   claimed; 1009 a frame over 16K characters; 1011 the session lookup failed; 1013 lobby full;
-  4000 closed for good (`LOBBY_WS_CLOSED`); 4004 no such lobby (`LOBBY_WS_NOT_FOUND`). The
-  client stops reconnecting on 4000 and 4004 only.
+  4000 closed for good (`LOBBY_WS_CLOSED`); 4004 no such lobby (`LOBBY_WS_NOT_FOUND`); 4026 the
+  page is too old (`LOBBY_WS_OUTDATED`). The client stops reconnecting on 4000, 4004 and 4026
+  only.
 - **Hibernation.** Sockets are accepted hibernatable (`state.acceptWebSocket`), and a socket's
   seat and account survive eviction in its attachment, so a lobby can sleep between alarm passes
   (a two-seat lobby's `SEATED_LIVENESS_SWEEP_MS` keeps it in memory).
@@ -497,9 +506,9 @@ are authoritative.
   up to 32 frames while down, repeats its hello until it is answered, and replaces a socket
   silent for 10 s (`src/online/channel.ts`, `src/online/lobbyClient.ts`). A hello with the seat's
   secret re-seats it with its deck and ready kept and clears any forfeit; in a match it also gets
-  the whole match frame. A socket whose hello set `logDeltas` gets only the new log rows
-  (`logFrom`) after an accepted action or a forfeit. The handoff, a reconnect, a repeated hello,
-  spectating and a trimmed log send the whole log, and the client answers a gap with a hello. A
+  the whole match frame. After an accepted action or a forfeit a seat gets only the new log rows
+  (`logFrom`). The handoff, a reconnect, a repeated hello and a trimmed log send the whole log,
+  and the client answers a gap with a hello. A
   stored match from an older build is migrated on read (`match_migrated`), or retired when
   unreadable: the lobby leaves `in-game` and both seats get `match-error`. A rollback across a
   `MATCH_RECORD_VERSION` change retires the newer matches (§3.7.2).
@@ -509,14 +518,14 @@ are authoritative.
   it closes the socket with 1008, and a frame over 16K characters (the largest
   legitimate one, an action over a whole deck, is about 4K) with 1009. Both run
   `socketGone`, so the seat gets its grace. A lobby holds 12 sockets (2 seats,
-  8 spectators, 2 for a reload's old and new socket); past that a socket is
+  8 more tabs answered "full", 2 for a reload's old and new socket); past that a socket is
   turned away (its hello is answered `reject full`, shown as "Lobby is full",
   and it is closed with 1013), except that an account holding a seat is let in
   up to 16; up to 4 turned-away sockets are held at once and any further
   upgrade is refused with 503. `scheduleMaintenance` keeps an alarm already due
   at or before the next deadline, so a commit no longer re-sets the alarm (one
-  row per commit instead of two). Each distinct match frame (a seat's view, the
-  spectators' shared one) is built once per broadcast. The match log keeps at
+  row per commit instead of two). Each seat's match frame is built once per
+  broadcast. The match log keeps at
   most 2000 rows: past that it is cut to the newest 1500 behind a system row
   "Earlier log entries were trimmed." and sent whole (security MIX2).
 - **Session re-check (security Phase 5, MI4, user decision 13):** a socket
@@ -564,6 +573,24 @@ Run `bun run release` from the repo root. It runs `bun install --frozen-lockfile
 `release:finish`, and drops its pin when a step fails; §3.7.2 has each step and the recovery
 table. `bun run api:deploy` and `bun run deploy` alone are partial deploys: no bookmark, health
 check or tag.
+
+**Client first.** The release deploys the API before the web client, so an open tab meets the new
+server on the old page. That tab reads frames without parsing them, so it survives a new key or a
+dropped value, but not a new literal (a prompt kind, a `dest`, an `invokedBy`, a `GameOverReason`,
+a frame kind), a key removed or retyped, or a key that may now be missing.
+`packages/schema/src/wireShape.test.ts` fails on exactly those, against the shape recorded in
+`wireShape.snapshot.json`. For such a change:
+1. Make the client read both the old and the new wire, since it meets the old API until step 4.
+2. Record the new shape on the branch, which is what lets `check` pass:
+   `WIRE_SHAPE_WRITE=1 bunx vitest run packages/schema/src/wireShape.test.ts -u`. A safe change
+   passes without it; record it anyway, or a later removal of the new key goes unseen.
+3. Merge and push as usual, then run `bun run deploy` (the web client alone; it ends with the
+   `web-health` check).
+4. Run `bun run release`, which deploys the API and then the same web build again.
+
+A tab opened before step 3 still runs the old page. It shows "Reload to update" for a prompt kind
+it does not know (`src/lua/simulatorChoices.ts`). A lobby protocol break uses `LOBBY_PROTOCOL`
+instead (§3.6).
 
 After:
 1. Read the Workers Issues page (`colorless-api` → Observability → Issues, §3.7.4).
@@ -1210,7 +1237,7 @@ the first six:
 
 | `kind` | Fields | When |
 | --- | --- | --- |
-| `hello_refused` *t* | `cause`, `signedIn`, `spectating` | A hello claimed no seat. `cause`: `credential` (the `from` is no seat secret, as from a client older than LB6), `full` (both seats are held by others), `bound` (the seat is bound to an account this socket is not signed in as). A `full` that only makes the socket a spectator of a running match is how watching works, and is not logged. |
+| `hello_refused` *t* | `cause`, `signedIn` or `protocol` | A hello claimed no seat. `cause`: `full` (both seats are held by others), `bound` (the seat is bound to an account this socket is not signed in as), each with `signedIn`; or `outdated` (the hello's `protocol` is below `MIN_LOBBY_PROTOCOL`; the socket is closed with 4026). |
 | `seat_evicted` | `sockets` | An account bound a seat, closing (1008) the sockets on it that were not the account's (LBX1). |
 | `socket_closed` *t* | `cause`, `code`, `frames`, `chars`, `seated`, `ageMs` | A socket closed for its frames (LB1): `frame_rate` (1008, its budget ran out) or `frame_size` (1009, a frame over 16K characters). `frames` counts the frames it sent since the instance woke, the closing one included; `chars` is the closing frame's size; `ageMs` the time since its upgrade. One line per socket, never one per frame. |
 | `overflow_closed` *t* | `cause`, `code`, `sockets` | Sockets past the cap closed with 1013 (LB2): `turned_away` (one sent a frame and was answered full) or `no_hello` (a sweep let go `sockets` that never said hello). |
@@ -1220,7 +1247,7 @@ the first six:
 | `lobby_wiped` | `cause`, `sockets`, `ageMs`, `inGame` | The lobby was deleted: `empty` (its expiry), `inactive` (an hour without play; `sockets` were closed with 4000) or `legacy` (stored before the LB6 cutover). |
 | `handoff_failed`, `handoff_deferred` | `cause`, `error` / `attempts` | A match could not start: `d1_error`, `deck_unresolved` or `match_refused` (the engine refused the decks, or starting the match threw, with `error`; the throw is error level); or the lobby kept changing under the handoff. |
 | `match_started` | | The handoff began a match (one line per match; several under one lobby code are rematches). |
-| `match_ended` | `cause`, `turns`, `durationMs` | A match reached its result. `cause`: the engine's reason for a win (`prizesTaken`, `noPokemon`, `deckOut`, `cardEffect`, `conceded` for the Concede button), `tie`, or a forfeit's `left` or `abandoned` (each also logs `forfeit`). `turns` is the turn it ended on, `durationMs` the time since it started. A `match_started` with no `match_ended` is a match that never finished: retired (`match_retired`), wiped with its lobby, or ended by the host's kick. Count both with `evt = "lobby" AND kind IN (match_started, match_ended)`, grouped by `cause`. |
+| `match_ended` | `cause`, `turns`, `durationMs` | A match reached its result. `cause`: the engine's reason for a win (`prizesTaken`, `noPokemon`, `deckOut`, `cardEffect`, `conceded` for the Concede button), `tie`, or a forfeit's `left` or `abandoned` (each also logs `forfeit`). `turns` is the turn it ended on, `durationMs` the time since it started. A `match_started` with no `match_ended` is a match that never finished: retired (`match_retired`), or wiped with its lobby. Count both with `evt = "lobby" AND kind IN (match_started, match_ended)`, grouped by `cause`. |
 | `forfeit` | `seat`, `cause` | A seat conceded by leaving (`left`) or by its forfeit clock (`abandoned`). |
 | `action_threw` *t* | `type`, `error` | The engine threw on an action, error level; it was refused like any move (MI3). Throttled per action `type`, so a throw on another type still logs (API audit LOB7). |
 | `frame_failed` *t* | `frame`, `error` | Handling a frame threw, error level: most likely a storage write refused (a spent daily DO write quota, or a value too large). `frame` is the frame's kind (`hello`, `intent`, `action`, `reject`, `bye`, `rematch`), and the throttle is per frame kind. The error is rethrown, so the invocation also ends as an exception, and the player gets no reply: the table freezes, and the client's hello retry fails the same way. `lobby` is null when reading the code failed too (ERR3). |

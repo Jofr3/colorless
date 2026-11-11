@@ -1091,7 +1091,8 @@ describe("D575 §7 — N's Sigilyph: at exactly 1 Prize card remaining, you win"
     expect(state.pending).toEqual([]);
     // The wire carries the reason, and the WIDENED schema admits it: each viewer's redacted
     // outcome names `cardEffect`, and the WHOLE redacted game parses through the widened
-    // `redactedGameSchema` (an old client's z.enum would reject it — hence client-first).
+    // `redactedGameSchema`. An open tab parses no frame; it is the client's reader that has no
+    // arm for a new value, hence client-first (backend-data.md §3.7.1, wireShape.test.ts).
     for (const [viewer, winner] of [
       ["p1", "you"],
       ["p2", "opponent"],
@@ -1213,8 +1214,8 @@ describe("D575 §8 — the persisted addresses, and THE FIFTH POSITION's optiona
     expect(attackBlockOf(live, { ...moth, attackBlock: unread }, shocks, 60)).toBeNull();
   });
 
-  it("(iv) the `GameOverReason` widening rides the bump, and an OLD client's enum REJECTS it — client first", () => {
-    // The 0.458 client's enum is this one minus the new member (zod's `exclude`, so no list is retyped).
+  it("(iv) the `GameOverReason` widening rides the bump: the schema is the old one plus `cardEffect`", () => {
+    // The 0.458 enum is this one minus the new member (zod's `exclude`, so no list is retyped).
     const old = redactedGameOverReasonSchema.exclude(["cardEffect"]);
     expect([...old.options].sort()).toEqual(["conceded", "deckOut", "noPokemon", "prizesTaken"]);
     expect(old.safeParse("cardEffect").success).toBe(false);

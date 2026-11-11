@@ -2,6 +2,7 @@ import type { GameAction } from "@colorless/engine";
 import {
   COUNTDOWN_MS,
   createSnapshot,
+  LOBBY_PROTOCOL,
   type LobbyIntent,
   type LobbyMessage,
   type LobbySlot,
@@ -25,21 +26,18 @@ import { createLobbyChannel, type LobbyChannel } from "./channel";
 // this class.
 
 /** How our link to the lobby server is faring. "connecting" also covers a
-    client that lost the server and is trying to reconnect. "kicked" is a
-    terminal state — the host removed us. "not-found" is the server's definite
+    client that lost the server and is trying to reconnect. "not-found" is the server's definite
     word that the code names no lobby; "unreachable" is a first connection that
     never got an answer (a later one still takes the client back). "full" means
-    both seats are held; if a MATCH is running the server also starts feeding us
-    the seatless board, and we become "spectating" — the same
-    connection, no seat. */
+    both seats are held by others. "outdated" is the server's word that this page is too old for
+    the lobby, and a reload fixes it. */
 export type LobbyStatus =
   | "connecting"
   | "connected"
   | "not-found"
   | "unreachable"
   | "full"
-  | "kicked"
-  | "spectating";
+  | "outdated";
 
 export type DeckChoice = { id: string; name: string };
 
@@ -146,9 +144,8 @@ export class LobbyClient {
   private unsubscribe: () => void;
   private tick: ReturnType<typeof setInterval> | null = null;
   private disposed = false;
-  // Why we hold no seat, if we don't. "kicked" is terminal — stop everything.
-  // "full" is NOT: the server may still hand us the match to watch.
-  private refusal: "full" | "kicked" | null = null;
+  /** The server answered our hello "full": we hold no seat, and adopt no frame. */
+  private refused = false;
   private connectedOnce = false;
   private lastServerSeen = 0;
   private mountedAt: number;
@@ -163,7 +160,8 @@ export class LobbyClient {
     this.name = opts.name;
     this.now = deps.now ?? Date.now;
     this.channel =
-      deps.channel ?? createLobbyChannel(opts.code, { onLobbyClosed: () => this.lobbyClosed() });
+      deps.channel ??
+      createLobbyChannel(opts.code, { onLobbyClosed: (reason) => this.lobbyClosed(reason) });
     this.current = {
       ...initialLobbyState(opts.code, opts.role, this.playerId, opts.name),
       ...opts.resume,
@@ -207,13 +205,6 @@ export class LobbyClient {
     this.channel.post({ kind: "bye", from: this.playerId, slot: this.role });
   }
 
-  /** Host only: remove the guest. The server relays the reject to them. */
-  kick() {
-    const guest = this.current.snapshot?.guest?.id;
-    if (this.role !== "host" || !guest) return;
-    this.channel.post({ kind: "reject", to: guest, reason: "kicked" });
-  }
-
   /** Only the server knows whether the match is over, so it decides. */
   requestRematch() {
     this.channel.post({ kind: "rematch", from: this.playerId });
@@ -254,16 +245,22 @@ export class LobbyClient {
     this.tick = setInterval(() => this.poll(), HELLO_RETRY_MS);
   }
 
-  /** The server says the code names no lobby: closed for good, or never there. */
-  lobbyClosed() {
+  /** The server says the code names no lobby (closed for good, or never there), or that this page
+      is too old for it. */
+  lobbyClosed(reason: "closed" | "outdated" = "closed") {
     if (this.disposed) return;
     this.closedForGood = true;
     this.stop();
-    this.set({ status: "not-found" });
+    this.set({ status: reason === "outdated" ? "outdated" : "not-found" });
   }
 
   private hello() {
-    this.channel.post({ kind: "hello", from: this.secret, name: this.name, logDeltas: true });
+    this.channel.post({
+      kind: "hello",
+      from: this.secret,
+      name: this.name,
+      protocol: LOBBY_PROTOCOL,
+    });
   }
 
   private intent(intent: LobbyIntent) {
@@ -275,17 +272,13 @@ export class LobbyClient {
     switch (message.kind) {
       case "state": {
         const snapshot = message.snapshot;
-        // A spectator keeps the public snapshot (for names) but claims nothing.
-        if (this.refusal === "full") {
+        // Only adopt a snapshot that seats US: refused sockets get broadcasts too.
+        if (this.refused) {
           this.lastServerSeen = this.now();
-          this.set(
-            snapshot.phase === "in-game" ? { snapshot } : { snapshot, match: null, matchLog: [] },
-          );
           break;
         }
-        // Only adopt a snapshot that seats US: refused sockets get broadcasts too.
         const seat = this.role === "host" ? snapshot.host : snapshot.guest;
-        if (this.refusal !== null || seat?.id !== this.playerId) break;
+        if (seat?.id !== this.playerId) break;
         this.lastServerSeen = this.now();
         this.connectedOnce = true;
         this.startPoll();
@@ -301,7 +294,7 @@ export class LobbyClient {
         break;
       }
       case "match": {
-        if (this.refusal === "kicked") break;
+        if (this.refused) break;
         this.lastServerSeen = this.now();
         const matchLog = receivedLog(this.current.matchLog, message);
         // A delta that does not continue the held log: the hello path answers with a full frame.
@@ -310,7 +303,6 @@ export class LobbyClient {
           break;
         }
         this.set({
-          ...(this.refusal === "full" && { status: "spectating" as const }),
           match: message.game,
           matchLog,
           actionError: null,
@@ -318,24 +310,24 @@ export class LobbyClient {
         break;
       }
       case "reject-action": {
-        if (this.refusal !== null) break;
+        if (this.refused) break;
         this.lastServerSeen = this.now();
         const nonce = (this.current.actionError?.nonce ?? 0) + 1;
         this.set({ actionError: { reason: message.reason, nonce } });
         break;
       }
       case "match-error": {
-        if (this.refusal !== null) break;
+        if (this.refused) break;
         this.lastServerSeen = this.now();
         this.set({ matchError: message.reason });
         break;
       }
       case "reject": {
         if (message.to !== this.playerId) break;
-        this.refusal = message.reason === "kicked" ? "kicked" : "full";
+        this.refused = true;
         this.lastServerSeen = this.now();
-        if (this.refusal === "full") this.startPoll();
-        this.set({ status: this.refusal });
+        this.startPoll();
+        this.set({ status: "full" });
         break;
       }
       case "heartbeat":
@@ -345,9 +337,9 @@ export class LobbyClient {
   }
 
   private poll() {
-    if (this.disposed || this.refusal === "kicked") return;
+    if (this.disposed) return;
     const idle = this.now() - this.lastServerSeen;
-    if (this.refusal === "full") {
+    if (this.refused) {
       // Re-announce only once the link went quiet, so a full lobby is no storm.
       if (idle > PRESENCE_TIMEOUT_MS) this.hello();
       return;

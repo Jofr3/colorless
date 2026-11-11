@@ -18,8 +18,8 @@ export type MatchSeat = z.infer<typeof matchSeatSchema>;
 
 /**
  * Mirrors the engine `GameOverReason`. `conceded` covers both conceding and an online abandon
- * timeout; `cardEffect` is a card's printed win. Adding a value requires deploying the client
- * first.
+ * timeout; `cardEffect` is a card's printed win. A new value ships client first (backend-data.md
+ * §3.7.1).
  */
 export const redactedGameOverReasonSchema = z.enum([
   "prizesTaken",
@@ -398,7 +398,7 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     // "attach": a searched Tool attached to the searching Pokémon. "swap": a discard-pile card
     // switched in for an in-play top card. "name": a card named, which moves nowhere. "use": a
     // Supporter's effect used from the opponent's revealed hand. "reveal": cards revealed and kept
-    // in hand. Each new value requires deploying the client first.
+    // in hand. A new value ships client first (backend-data.md §3.7.1).
     dest: z.enum([
       "bench",
       "hand",
@@ -513,7 +513,7 @@ export const redactedPhaseSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("effect:choose"),
     prompt: redactedEffectPromptSchema.nullable(),
-    /** What invoked the parked effect; a new value requires deploying the client first. */
+    /** What invoked the parked effect; a new value ships client first (backend-data.md §3.7.1). */
     invokedBy: z.enum(["attack", "item", "supporter", "ability"]).optional(),
     /** The invoking Ability's name, when its Pokémon has exactly one. */
     abilityName: z.string().optional(),

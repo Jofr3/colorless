@@ -155,7 +155,6 @@ export type CardPool = (ids: string[]) => Promise<{ pool: Record<string, Card> }
  * through the one LobbyClient the modal also drives. No engine, no save. */
 export class LuaOnlineMatch implements TableSource {
   readonly mode = "online";
-  readonly spectating = false;
   private seen: RedactedGame | null = null;
   private match = "";
   private logLength = 0;
@@ -255,8 +254,8 @@ export class LuaOnlineMatch implements TableSource {
     const over = !!this.seen?.outcome;
     const opponent = this.client.opponent;
     const sent = this.sentRematch === this.matchId();
-    // A seat refused on reconnect (a signed-out account) leaves this tab watching: no rematch.
-    const seated = !this.watching();
+    // A seat refused on reconnect (a signed-out account) leaves this tab the result, no rematch.
+    const seated = !this.seatLost();
     const flags: LifecycleFlag[] = [];
     if (this.seen && !over) flags.push("concede");
     if (over && seated) flags.push("rematch");
@@ -274,11 +273,11 @@ export class LuaOnlineMatch implements TableSource {
       ...(over && !seated && { warning: SEAT_LOST }),
     };
   }
-  private watching() {
-    return this.client.state.status === "spectating";
+  private seatLost() {
+    return this.client.state.status === "full";
   }
   rematch() {
-    if (!this.seen?.outcome || this.watching() || this.sentRematch === this.matchId()) return;
+    if (!this.seen?.outcome || this.seatLost() || this.sentRematch === this.matchId()) return;
     this.sentRematch = this.matchId();
     // The opponent asked first and the lobby already left the game: agree by readying.
     if (this.client.state.snapshot?.phase === "in-game") this.client.requestRematch();
@@ -327,9 +326,9 @@ export class LuaOnlineMatch implements TableSource {
     const { match, actionError } = this.client.state;
     let shown = false;
     // A rematch takes the lobby out of in-game; the finished board stays up
-    // until the next game's first frame. A tab that lost its seat after the game ended is sent the
-    // spectator view, which this tab's names would mislabel: it keeps the result it saw seated.
-    const keepResult = !!this.seen?.outcome && (match === null || this.watching());
+    // until the next game's first frame, and a tab that lost its seat after the game ended keeps
+    // the result it saw seated.
+    const keepResult = !!this.seen?.outcome && (match === null || this.seatLost());
     if (match !== this.seen && !keepResult) {
       this.pending = false;
       this.frame(match);

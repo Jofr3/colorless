@@ -37,7 +37,7 @@ local info={
   full={'Lobby is full','Lobby %s already has two players.'},
   ['not-found']={'Lobby not found','No open lobby with the code %s. Ask for a fresh code, or create your own.'},
   unreachable={"Can't reach the lobby","Couldn't connect to lobby %s. Check your connection, then try again."},
-  kicked={'Removed from the lobby','The host removed you from this lobby.'},
+  outdated={'A new version is available','Reload the page to play online.'},
 }
 local backs={menu={'Back','home'},joining={'Cancel','leave'},waiting={'Leave','home'},versus={'Leave','leave'},
   countdown={'Leave','leave'},starting={'Leave','home'}}
@@ -248,11 +248,7 @@ function Online:enter(step)
     self.dyna.title=dyna({string='The match is set',scale=0.8,bump=true})
   elseif info[step] then
     self.dyna.title=dyna({string=info[step][1],scale=0.8,colours={T.red},pop_in=0,pop_in_rate=4})
-    if step=='kicked' then
-      -- Blind:alert_debuff's stinger, with the shipped whoosh.
-      local feedback=self.callbacks.feedback
-      feedback('whoosh');self.fx:after(0.1,function() feedback('cancel',0.8) end);self.fx:after(0.1,function() feedback('cancel',0.85) end)
-    else self.callbacks.feedback('cancel',0.8) end
+    self.callbacks.feedback('cancel',0.8)
     return info[step][1]..'. '..info[step][2]:format(self.code)
   end
 end

@@ -195,7 +195,7 @@ export async function openBridge(world: Partial<LobbyWorld> = {}): Promise<Bridg
     client(tab, opts) {
       let client: LobbyClient | null = null;
       const channel = createLobbyChannel(opts.code, {
-        onLobbyClosed: () => client?.lobbyClosed(),
+        onLobbyClosed: (reason) => client?.lobbyClosed(reason),
         openSocket: () => {
           const socket = new BridgeSocket(bridge, tab);
           tab.sockets.push(socket);

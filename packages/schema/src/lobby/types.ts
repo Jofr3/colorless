@@ -68,9 +68,9 @@ export type LobbyIntent =
     server judges a frame by the seat its socket's hello claimed, never by `from`. */
 export type LobbyMessage =
   /** client → server: request to join, or re-announce after a reconnect. `from` is the client's
-      seat secret (seatId.ts), sent in no other frame. `logDeltas` says the client takes `match`
-      frames that carry only the log's new entries. */
-  | { kind: "hello"; from: string; name: string; logDeltas?: boolean }
+      seat secret (seatId.ts), sent in no other frame. `protocol` is the page's `LOBBY_PROTOCOL`
+      (protocol.ts); a hello without one is protocol 0. */
+  | { kind: "hello"; from: string; name: string; protocol?: number }
   /** host → all: the authoritative snapshot after any change. */
   | { kind: "state"; snapshot: LobbySnapshot }
   /** server → one client: that client's REDACTED view of the in-game match.
@@ -80,8 +80,7 @@ export type LobbyMessage =
       so IDENTICAL for both viewers — the client relabels `who` for its own seat);
       it rides here because the log outlives any single snapshot and can't be
       rebuilt from `game`'s current state alone. With `logFrom`, `log` holds only the entries from
-      that index on; only a socket whose hello set `logDeltas` gets one. Without it, `log` is the
-      whole log. */
+      that index on. Without it, `log` is the whole log. */
   | { kind: "match"; game: RedactedGame; log: SeatLogEntry[]; logFrom?: number }
   /** guest → host: apply this change to my seat. */
   | { kind: "intent"; from: string; intent: LobbyIntent }
@@ -89,9 +88,8 @@ export type LobbyMessage =
       to the socket's own seat (a client can't act for the opponent) and runs it
       through the engine's total `applyAction`. */
   | { kind: "action"; action: WireAction }
-  /** host → guest: you're not welcome — the seat is taken ("full"), or the host
-      removed you ("kicked"). */
-  | { kind: "reject"; to: string; reason: "full" | "kicked" }
+  /** server → one client: no seat for this hello, as both are held by others. */
+  | { kind: "reject"; to: string; reason: "full" }
   /** server → the acting client: their last game action was refused — an illegal
       move, or an unsupported type. TRANSIENT, unlike `reject`: it aims at
       the socket that sent the action (no `to`), carries the engine's own reason

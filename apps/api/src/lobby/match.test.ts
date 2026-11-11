@@ -776,18 +776,6 @@ describe("matchFrameFor — the per-viewer match frame", () => {
     expect(matchFrameFor(record, "p1").game).not.toEqual(matchFrameFor(record, "p2").game);
   });
 
-  it("gives a spectator the seatless redaction from the host's side, with no hand face-up", () => {
-    const record = dealtRecord();
-    const frame = matchFrameFor(record, "spectator");
-    expect(frame).toEqual({
-      kind: "match",
-      game: redactGame(record.state, SEAT_OF_SLOT.host, true),
-      log: record.log,
-    });
-    expect(frame.game.seat).toBe("p1");
-    expect(frame.game).not.toEqual(matchFrameFor(record, "p1").game);
-  });
-
   it("carries only the entries from `logFrom` on, and says where they start", () => {
     const record = dealtRecord();
     expect(record.log.length).toBeGreaterThan(2);
@@ -798,7 +786,7 @@ describe("matchFrameFor — the per-viewer match frame", () => {
       log: record.log.slice(2),
       logFrom: 2,
     });
-    expect(matchFrameFor(record, "spectator", record.log.length).log).toEqual([]);
+    expect(matchFrameFor(record, "p1", record.log.length).log).toEqual([]);
     expect(Object.keys(matchFrameFor(record, "p2"))).not.toContain("logFrom");
   });
 });

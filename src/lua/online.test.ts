@@ -1,4 +1,5 @@
 import {
+  LOBBY_PROTOCOL,
   createSnapshot,
   isSeatSecret,
   type LobbySnapshot,
@@ -154,7 +155,7 @@ describe("Lua online adapter", () => {
       kind: "hello",
       from: identity().secret,
       name: "Ash",
-      logDeltas: true,
+      protocol: LOBBY_PROTOCOL,
     });
     await online.command("create");
     expect(route).toHaveBeenCalledOnce();
@@ -220,7 +221,6 @@ describe("Lua online adapter", () => {
       snapshot: snap({ host, guest: { ...makePlayer(me, "Me"), hasDeck: true, deckName: "Mine" } }),
     });
     expect(header().slice(1, 2)).toEqual(["versus"]);
-    expect(header()[H("canKick")]).toBe("0");
     expect(header()[H("status")]).toBe("");
     // A pick this client did not make here (a reload) has no deck id to show, only its name.
     expect(rows().slice(1)).toEqual([
@@ -422,9 +422,9 @@ describe("Lua online adapter", () => {
     expect(calls.filter((call) => call === "GET /cards/full")).toHaveLength(1);
   });
 
-  it("sends select, ready and kick only when they are allowed", async () => {
+  it("sends select and ready only when they are allowed, and a kick never", async () => {
     stubFetch(deckReads);
-    const { online, header, rows, last } = setup();
+    const { online, rows, last } = setup();
     online.session("authenticated", "u");
     await online.command("decks");
     sessionStorage.setItem(
@@ -438,7 +438,6 @@ describe("Lua online adapter", () => {
     await online.command("select\tshort");
     expect(c.kinds()).toEqual(["hello"]);
     c.push({ kind: "state", snapshot: seated(testSeatId("g")) });
-    expect(header()[H("canKick")]).toBe("1");
     const before = c.posts.length;
     await online.command("select\tz");
     expect(c.posts).toHaveLength(before);
@@ -462,7 +461,7 @@ describe("Lua online adapter", () => {
     await online.command("select\ty");
     expect(c.posts.length).toBe(sent);
     await online.command("kick");
-    expect(c.posts.at(-1)).toEqual({ kind: "reject", to: testSeatId("g"), reason: "kicked" });
+    expect(c.posts.length).toBe(sent);
   });
 
   it("warms the game table's code once the lobby counts down, once per countdown", async () => {
@@ -702,5 +701,9 @@ describe("Lua online adapter", () => {
     await online.command(`join\t${CODE}`);
     vi.advanceTimersByTime(UNREACHABLE_MS + 700);
     expect(header()[H("step")]).toBe("unreachable");
+    await online.command("leave");
+    await online.command(`join\t${CODE}`);
+    online.client?.lobbyClosed("outdated");
+    expect(header()[H("step")]).toBe("outdated");
   });
 });

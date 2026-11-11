@@ -4,6 +4,7 @@ import {
   COUNTDOWN_MS,
   LOBBY_WS_CLOSED,
   LOBBY_WS_NOT_FOUND,
+  LOBBY_WS_NUDGE,
   LOBBY_WS_PING,
   LOBBY_WS_PONG,
   type LobbyClientMessage,
@@ -29,6 +30,7 @@ import {
   DISCONNECT_GRACE_MS,
   EMPTY_LOBBY_TTL_MS,
   FIRST_KEEPALIVE_MARGIN_MS,
+  INACTIVE_LOBBY_MS,
   LIVENESS_SWEEP_MS,
   readSnapshot,
   SEATED_LIVENESS_SWEEP_MS,
@@ -422,8 +424,8 @@ describe("LobbyDO — match actions", () => {
     await h.send(host, { kind: "action", action: { type: "setupPlaceActive", uid } });
     const after = await storedMatch();
     expect(after.state.players.p1.active?.stack).toEqual([uid]);
-    expect(host.last("match")).toEqual(matchFrameFor(after, "p1"));
-    expect(guest.last("match")).toEqual(matchFrameFor(after, "p2"));
+    expect(host.last("match")).toEqual(matchFrameFor(after, "p1", before.log.length));
+    expect(guest.last("match")).toEqual(matchFrameFor(after, "p2", before.log.length));
   });
 
   it("reads the match from storage only on the first action after a wake", async () => {
@@ -443,7 +445,7 @@ describe("LobbyDO — match actions", () => {
     expect(matchReads()).toBeGreaterThan(0);
     const after = await storedMatch();
     expect(after.state.players.p1.bench).toHaveLength(1);
-    expect(guest.last("match")).toEqual(matchFrameFor(after, "p2"));
+    expect(guest.last("match")?.game).toEqual(matchFrameFor(after, "p2").game);
   });
 
   it("binds an action to the socket's own seat, whatever seat it claims", async () => {
@@ -470,29 +472,23 @@ describe("LobbyDO — match actions", () => {
     expect(host.sent.length).toBe(hostFrames);
   });
 
-  it("lets a refused socket watch with the seatless view, but not act", async () => {
-    await startedMatch();
+  it("answers a refused socket full and sends it no board, through the match", async () => {
+    const { guest } = await startedMatch();
     const watcher = await h.connect("eve");
     await h.send(watcher, hello("w"));
     const record = await storedMatch();
-    expect(watcher.last("reject")).toEqual({ kind: "reject", to: seatIdOf("w"), reason: "full" });
-    expect(snapshotOf(watcher).phase).toBe("in-game");
-    expect(watcher.last("match")).toEqual(matchFrameFor(record, "spectator"));
-
+    expect(watcher.sent).toEqual([{ kind: "reject", to: seatIdOf("w"), reason: "full" }]);
     await h.send(watcher, { kind: "action", action: { type: "concede" } });
     expect(await storedMatch()).toEqual(record);
+    await h.send(guest, { kind: "action", action: { type: "concede" } });
+    expect(watcher.framesOf("match")).toEqual([]);
   });
 });
 
 describe("LobbyDO — log deltas", () => {
-  const deltaHello = (from: string): LobbyClientMessage => ({
-    kind: "hello",
-    from: seatSecret(from),
-    name: `anon-${from}`,
-    logDeltas: true,
-  });
+  const deltaHello = hello;
 
-  /** A started match whose host announced log deltas and whose guest is an older client. */
+  /** A started match. */
   async function mixedMatch() {
     await h.create();
     const host = await h.connect("ana");
@@ -516,7 +512,7 @@ describe("LobbyDO — log deltas", () => {
     return log;
   }
 
-  it("sends the full log at the handoff, then only new entries to a socket that asked", async () => {
+  it("sends the full log at the handoff, then only new entries", async () => {
     const { host, guest } = await mixedMatch();
     const start = await storedMatch();
     expect(host.last("match")).toEqual(matchFrameFor(start, "p1"));
@@ -528,12 +524,12 @@ describe("LobbyDO — log deltas", () => {
     expect(heldLog(host.sent)).toEqual(after.log);
   });
 
-  it("keeps sending the whole log to a socket that did not ask", async () => {
+  it("sends the delta to both seats, whatever their hello said", async () => {
     const { guest } = await mixedMatch();
+    const start = await storedMatch();
     await h.send(guest, { kind: "action", action: { type: "concede" } });
-    const frame = guest.last("match");
-    expect(frame).toEqual(matchFrameFor(await storedMatch(), "p2"));
-    expect(frame).not.toHaveProperty("logFrom");
+    expect(guest.last("match")).toEqual(matchFrameFor(await storedMatch(), "p2", start.log.length));
+    expect(heldLog(guest.sent)).toEqual((await storedMatch()).log);
   });
 
   it("sends a forfeit as a delta too", async () => {
@@ -560,18 +556,6 @@ describe("LobbyDO — log deltas", () => {
     expect(host.last("match")).toEqual(matchFrameFor(await storedMatch(), "p1"));
   });
 
-  it("gives a spectator the full log on arrival and deltas after", async () => {
-    const { guest } = await mixedMatch();
-    const watcher = await h.connect("eve");
-    await h.send(watcher, deltaHello("w"));
-    const start = await storedMatch();
-    expect(watcher.last("match")).toEqual(matchFrameFor(start, "spectator"));
-    await h.send(guest, { kind: "action", action: { type: "concede" } });
-    expect(watcher.last("match")).toEqual(
-      matchFrameFor(await storedMatch(), "spectator", start.log.length),
-    );
-  });
-
   it("starts a rematch with the full log", async () => {
     const { host, guest } = await mixedMatch();
     await h.send(guest, { kind: "action", action: { type: "concede" } });
@@ -582,13 +566,13 @@ describe("LobbyDO — log deltas", () => {
     expect(host.last("match")).toEqual(matchFrameFor(await storedMatch(), "p1"));
   });
 
-  it("remembers which socket asked across hibernation", async () => {
+  it("keeps sending deltas across hibernation", async () => {
     const { host, guest } = await mixedMatch();
     const start = await storedMatch();
     h.hibernate();
     await h.send(guest, { kind: "action", action: { type: "concede" } });
     expect(host.last("match")?.logFrom).toBe(start.log.length);
-    expect(guest.last("match")).toEqual(matchFrameFor(await storedMatch(), "p2"));
+    expect(guest.last("match")?.logFrom).toBe(start.log.length);
   });
 });
 
@@ -622,7 +606,7 @@ describe("LobbyDO — disconnects", () => {
     expect(over.state.phase).toMatchObject({
       outcome: { result: "win", winner: "p1", reason: "conceded" },
     });
-    expect(host.last("match")).toEqual(matchFrameFor(over, "p1"));
+    expect(host.last("match")?.game).toEqual(matchFrameFor(over, "p1").game);
     expect(snapshotOf(host).guest?.forfeitAt).toBeNull();
     expect(guest.framesOf("match")).toHaveLength(1);
     expect(logged("forfeit", "info")).toEqual([
@@ -705,6 +689,23 @@ describe("LobbyDO — disconnects", () => {
     expect(h.world.now - silentFrom).toBeLessThanOrEqual(20_000);
     // The forfeit clock runs from the moment the host is told.
     expect(snapshotOf(host).guest?.forfeitAt).toBe(h.world.now + ABANDON_GRACE_MS);
+  });
+
+  it("nudges a seated socket whose pings lapsed, and keeps it while it answers (APPX2)", async () => {
+    const { host, guest } = await startedMatch();
+    // A hidden tab: its timers stopped its pings, but its message handler answers a nudge at once.
+    guest.lastPong = new Date(h.world.now);
+    const send = guest.send.bind(guest);
+    guest.send = (data: string) => {
+      if (data === LOBBY_WS_NUDGE) guest.lastPong = new Date(h.world.now);
+      send(data);
+    };
+    const until = h.world.now + 60_000;
+    while (h.world.now < until) await h.fireAlarm();
+    expect(guest.closed).toBeNull();
+    expect(guest.nudges).toBeGreaterThanOrEqual(60_000 / (SEATED_LIVENESS_SWEEP_MS * 2));
+    expect(host.nudges).toBe(0);
+    expect(snapshotOf(host).guest?.connected).toBe(true);
   });
 
   it("keeps a lone host's lobby on the 30s sweep, before and after a guest leaves", async () => {
@@ -951,7 +952,7 @@ describe("LobbyDO — events while the handoff awaits D1", () => {
   });
 });
 
-describe("LobbyDO — lobbies stored before seat secrets (LB6)", () => {
+describe("LobbyDO — a stored lobby whose seats are no public ids (LB6)", () => {
   /** A live match whose stored seats carry the ids clients sent before the split, as a deploy
       finds it: its sockets dropped, the instance woken afresh. `lurker` stays connected. */
   async function legacyLobby() {
@@ -977,25 +978,13 @@ describe("LobbyDO — lobbies stored before seat secrets (LB6)", () => {
     return { lurker };
   }
 
-  it("wipes such a lobby on the next socket and answers it like an expired one", async () => {
-    await legacyLobby();
-    expect(await h.upgrade("ana")).toEqual({
-      kind: "closed",
-      code: LOBBY_WS_NOT_FOUND,
-      reason: "no such lobby",
-    });
-    expect(h.storage.data.size).toBe(0);
-    expect(h.storage.alarm).toBeNull();
-    expect(logged("lobby_wiped", "info")).toMatchObject([{ lobby: "ABCD", cause: "legacy" }]);
-    expect((await h.create()).status).toBe(201);
-  });
-
-  it("wipes such a lobby on its next alarm, closing what is still connected for good", async () => {
+  it("reads such a lobby as none, and wipes it once it has gone an hour without play", async () => {
     const { lurker } = await legacyLobby();
-    await h.fireAlarm();
-    expect(h.storage.data.size).toBe(0);
-    expect(h.storage.alarm).toBeNull();
+    const stored = h.world.now;
+    await fireAlarmsUntil(() => h.storage.data.size === 0, 200);
+    expect(h.world.now - stored).toBeLessThanOrEqual(INACTIVE_LOBBY_MS + LIVENESS_SWEEP_MS);
     expect(lurker.closed?.code).toBe(LOBBY_WS_CLOSED);
+    expect(logged("lobby_wiped", "info")).toMatchObject([{ lobby: "ABCD", cause: "inactive" }]);
   });
 });
 
@@ -1247,10 +1236,10 @@ describe("LobbyDO — a rematch re-checks each seat's session (MI4)", () => {
 
   it("starts the rematch after one read of both sessions, and never reads them per frame", async () => {
     const { host, guest, checks } = await finishedMatch();
-    // A signed-in spectator holds no seat, so its session is not the rematch's to check.
+    // A signed-in socket refused a seat holds none, so its session is not the rematch's to check.
     const watcher = await h.connect("vic");
     await h.send(watcher, hello("w"));
-    expect(watcher.framesOf("match").length).toBeGreaterThan(0);
+    expect(watcher.last("reject")?.reason).toBe("full");
     await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
     expect(snapshotOf(host).phase).toBe("selecting");
     expect(checks).toEqual([[sessionIdOf("ana"), sessionIdOf("bo")]]);
@@ -1289,16 +1278,14 @@ describe("LobbyDO — a rematch re-checks each seat's session (MI4)", () => {
     ]);
 
     // Without a live cookie the reload is anonymous: the account-bound seat refuses it, and it
-    // watches the finished board instead of acting for the seat.
+    // is sent no board and cannot act for the seat.
     const reloaded = await h.connect();
     await h.send(reloaded, hello("g"));
     expect(reloaded.last("reject")).toEqual({ kind: "reject", to: seatIdOf("g"), reason: "full" });
-    expect(reloaded.framesOf("match").length).toBeGreaterThan(0);
+    expect(reloaded.framesOf("match")).toEqual([]);
     await h.send(reloaded, { kind: "rematch", from: seatIdOf("g") });
     expect(snapshotOf(host).phase).toBe("in-game");
-    expect(logged("hello_refused")).toMatchObject([
-      { cause: "bound", signedIn: false, spectating: true },
-    ]);
+    expect(logged("hello_refused")).toMatchObject([{ cause: "bound", signedIn: false }]);
   });
 
   it("refuses a rematch with an opponent whose account was deleted", async () => {
@@ -1437,7 +1424,7 @@ describe("LobbyDO — bounded growth", () => {
     await fireAlarmsUntil(() => h.storage.data.size === 0);
   });
 
-  it("starts the window of a socket attached before connection times were recorded at its first sweep", async () => {
+  it("lets go at its first sweep of a never-answered socket whose attachment has no upgrade time", async () => {
     await h.create();
     const host = await h.connect("ana");
     await h.send(host, hello("h"));
@@ -1445,10 +1432,7 @@ describe("LobbyDO — bounded growth", () => {
     host.serializeAttachment({ playerId: seatIdOf("h"), userId: "ana", displayName: "Ana" });
     h.hibernate();
     await h.fireAlarm();
-    const firstSweep = h.world.now;
-    expect(host.closed).toBeNull();
-    await fireAlarmsUntil(() => host.closed !== null);
-    expect(h.world.now - firstSweep).toBeGreaterThan(SOCKET_SILENCE_MS + FIRST_KEEPALIVE_MARGIN_MS);
+    expect(host.closed).toEqual({ code: 1001, reason: "keepalive lost" });
   });
 });
 
