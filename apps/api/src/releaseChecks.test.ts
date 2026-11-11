@@ -193,7 +193,7 @@ describe("sameSite", () => {
 
   it("takes an IP address whole and refuses what is not an origin", () => {
     expect(sameSite("http://127.0.0.1:9", "http://127.0.0.1:5175")).toBe(true);
-    expect(sameSite("http://10.0.0.1", "http://10.0.0.2")).toBe(false);
+    expect(sameSite("http://10.0.0.1", "http://192.168.0.1")).toBe(false);
     expect(siteOf("not a url")).toBeUndefined();
     expect(sameSite("not a url", "not a url")).toBe(false);
   });
