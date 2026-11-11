@@ -451,6 +451,12 @@ export function selfCheck(): string[] {
       `import-graph: SELF-CHECK FAILED — expected one package import in ${PROD_WATCH}'s closure, zod in scripts/d.ts, got ${JSON.stringify(closure)}.`,
     );
   }
+  const reported = problemsOf(graph).join("\n");
+  for (const line of ['src/lib/l.ts imports "../lua/u" from a later layer', 'imports "zod" and']) {
+    if (!reported.includes(line)) {
+      problems.push(`import-graph: SELF-CHECK FAILED — problemsOf reports no "${line}".`);
+    }
+  }
   return problems;
 }
 
