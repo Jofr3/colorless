@@ -5,7 +5,9 @@
  * `miniflare`) and `wrangler dev`/deploy (wrangler's own miniflare) run different workerd builds,
  * and every install carries another 120 MB+ binary. A Dependabot wrangler bump alone does exactly
  * that: it nests `wrangler/miniflare` beside the exact `miniflare` pin. Bump wrangler and miniflare
- * together, then regenerate the Worker's types. A step of `check:static`.
+ * together, then regenerate the Worker's types. It also fails when `.bun-version` and package.json's
+ * `packageManager` pin different bun versions, and warns when the bun running it is neither: the
+ * system bun moves with the OS, and `release` runs on it. A step of `check:static`.
  *
  *   bun scripts/lock-check.ts
  */
@@ -78,5 +80,40 @@ export function lockCheckReport(lock: string): Report {
   };
 }
 
-if (import.meta.main)
-  runReport("lock-check", () => lockCheckReport(readFileSync(repoPath("bun.lock"), "utf8")));
+/** The bun pins agree, or the lines that say they do not. `running` differing is only a warning. */
+export function bunPinReport(
+  bunVersionFile: string,
+  packageManager: unknown,
+  running: string,
+): Report & { warning?: string } {
+  const pinned = bunVersionFile.trim();
+  if (packageManager !== `bun@${pinned}`)
+    return {
+      ok: false,
+      lines: [
+        `lock-check: FAIL — .bun-version pins bun ${pinned}, but package.json's packageManager is ${JSON.stringify(packageManager)}.`,
+        `Set both to the same version: \`bun@${pinned}\` in package.json, or the new one in both.`,
+      ],
+    };
+  if (running !== pinned)
+    return {
+      ok: true,
+      lines: [`bun ${pinned} pinned`],
+      warning: `lock-check: warning — running bun ${running}, but the repo pins ${pinned} (.bun-version).`,
+    };
+  return { ok: true, lines: [`bun ${pinned} pinned`] };
+}
+
+function repoReport(): Report {
+  const pin = bunPinReport(
+    readFileSync(repoPath(".bun-version"), "utf8"),
+    JSON.parse(readFileSync(repoPath("package.json"), "utf8")).packageManager,
+    process.versions.bun ?? "none",
+  );
+  if (!pin.ok) return pin;
+  if (pin.warning) console.warn(pin.warning);
+  const lock = lockCheckReport(readFileSync(repoPath("bun.lock"), "utf8"));
+  return lock.ok ? { ok: true, lines: [`${lock.lines[0]}, ${pin.lines[0]}`] } : lock;
+}
+
+if (import.meta.main) runReport("lock-check", repoReport);
