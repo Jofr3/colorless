@@ -97,6 +97,9 @@ bun run deps:check  # the monthly dependency report (needs the network, never fa
 
 Other scripts: `package.json`; operations: `docs/workstreams/backend-data.md` §3.7.
 
+In Claude Code, each file an Edit or Write touches is formatted with Biome by the
+hook in `.claude/settings.json` (`scripts/format-hook.ts`).
+
 The toolchain upgrade routine is in `docs/conventions.md` ("Dependencies").
 
 `dev` (and so `dev:all` and `dev:tailnet`) runs Vite under
