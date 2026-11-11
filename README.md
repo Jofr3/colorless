@@ -80,13 +80,13 @@ it.
 bun run dev         # build the Lua app, serve it on :5175 (127.0.0.1 or localhost), rebuild on Lua edits
 bun run dev:all     # frontend (5175) + API (8787); Ctrl+C stops both
 bun run dev:tailnet # both servers over Tailnet HTTPS; selects available ports
+bun run dev:local   # both servers on free 127.0.0.1 ports, no Tailscale; prints both URLs
 bun run build:lua   # rebuild the Lua app into public/love/ (refresh the page)
 bun run build       # tsc -b, build:lua, vite build → dist/
 bun run deploy      # web Worker only: production build + publish dist/ (partial; see Deployment)
 bun run api:deploy  # API Worker only (partial; see Deployment)
-bun run preview
 bun run typecheck
-bun run lint        # biome
+bun run lint        # biome ci: formatting and lint, warnings fail, as in check:static
 bun run format      # biome --write over the whole tree; for your files only: bunx biome format --write <paths>
 bun run test:run    # vitest (src, apps, packages)
 bun run check       # check:static + check:lua + check:test (the full gate, as in CI)
@@ -96,6 +96,9 @@ bun run deps:check  # the monthly dependency report (needs the network, never fa
 ```
 
 Other scripts: `package.json`; operations: `docs/workstreams/backend-data.md` §3.7.
+
+In Claude Code, each file an Edit or Write touches is formatted with Biome by the
+hook in `.claude/settings.json` (`scripts/format-hook.ts`).
 
 The toolchain upgrade routine is in `docs/conventions.md` ("Dependencies").
 
