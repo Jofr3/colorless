@@ -1,16 +1,8 @@
 // Maps D1 rows to the catalog domain shapes. The mappers normalise the "None" sentinel to null,
-// since rows already written may still carry it. Asset columns are rewritten from tcgdex origin
-// bases to our /assets paths, and only when the origin column is non-null.
+// since rows already written may still carry it. A card's image column is rewritten from its
+// tcgdex origin base to our /assets path, and only when the origin column is non-null.
 
-// The domain `Set` is aliased locally so it can't be confused with the global.
-import type {
-  Card,
-  CardBrief,
-  Serie,
-  SerieBrief,
-  Set as CatalogSet,
-  SetBrief,
-} from "@colorless/schema";
+import type { Card, CardBrief, Serie, SerieBrief, SetBrief } from "@colorless/schema";
 import { isBasicEnergy, isSpecialEnergy } from "@colorless/engine";
 import { sql } from "drizzle-orm";
 import { cards, type series, type sets } from "../db/schema";
@@ -67,11 +59,6 @@ function briefEnergyType(
 /** OUR card-image base path (clients append `/{quality}.{ext}`, §4.4). */
 function cardImagePath(cardId: string): string {
   return `/assets/cards/${cardId}`;
-}
-
-/** OUR set-asset base path (clients append `/logo.{ext}` / `/symbol.{ext}`). */
-function setAssetPath(setId: string): string {
-  return `/assets/sets/${setId}`;
 }
 
 /** A print's served legality: the reprint-rule verdict when the ingest
@@ -140,19 +127,11 @@ export function mapSetBriefRow(row: SetRow): SetBrief {
     id: row.id,
     serieId: row.serieId,
     name: row.name,
-    logo: row.logoUrl !== null ? setAssetPath(row.id) : null,
-    symbol: row.symbolUrl !== null ? setAssetPath(row.id) : null,
+    logo: null,
+    symbol: null,
     releaseDate: row.releaseDate,
     cardCount: { total: row.countTotal, official: row.countOfficial },
     abbreviation: row.abbreviation,
-  };
-}
-
-export function mapSetRow(row: SetRow): CatalogSet {
-  return {
-    ...mapSetBriefRow(row),
-    legal: { standard: row.legalStandard, expanded: row.legalExpanded },
-    tcgOnline: row.tcgOnline,
   };
 }
 

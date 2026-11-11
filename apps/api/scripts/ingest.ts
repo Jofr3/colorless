@@ -9,7 +9,6 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import {
-  isTcgdexId,
   type TcgdexCard,
   type TcgdexSerie,
   type TcgdexSet,
@@ -39,6 +38,7 @@ import {
   rerunCommand,
   shouldStampEpoch,
 } from "../src/ingest/run";
+import { ingestScope } from "../src/ingest/scope";
 import { createSource, parseTransport } from "../src/ingest/source";
 import { sqlFilePath } from "../src/ingest/sqlFile";
 import { API_ROOT, DATABASE, d1Query, recordBookmark, WRANGLER_TIMEOUT_MS } from "./d1";
@@ -65,25 +65,17 @@ const { values: args } = parseArgs({
   strict: true,
 });
 
-if (args.sets !== undefined && args.serie !== undefined) {
-  console.error("pass either --sets or --serie, not both");
+const scoped = ingestScope(args);
+if ("error" in scoped) {
+  console.error(scoped.error);
   process.exit(1);
 }
+const { scope } = scoped;
 let transport: ReturnType<typeof parseTransport>;
 try {
   transport = parseTransport(args.transport);
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));
-  process.exit(1);
-}
-const targetSetIds = args.sets
-  ?.split(",")
-  .map((id) => id.trim())
-  .filter((id) => id.length > 0);
-const targetSerieId = targetSetIds ? undefined : (args.serie ?? "sv");
-const badId = [...(targetSetIds ?? []), targetSerieId ?? ""].find((id) => id && !isTcgdexId(id));
-if (badId !== undefined) {
-  console.error(`not a tcgdex id: ${JSON.stringify(badId)}`);
   process.exit(1);
 }
 const dryRun = args["dry-run"] ?? false;
@@ -244,26 +236,21 @@ console.log(`SQL files: ${outDir}\n`);
 // Phase A — resolve the serie row(s) and the target set list. Failures here
 // are fatal: a handful of requests, and FK order depends on them.
 const setDetails = new Map<string, TcgdexSet>();
-let serieRowsSource: TcgdexSerie[];
-let setIds: string[];
-if (targetSetIds) {
-  for (const setId of targetSetIds) {
-    setDetails.set(setId, await fetchSet(setId));
-  }
-  const serieIds = [...new Set([...setDetails.values()].map((set) => set.serie.id))];
-  serieRowsSource = [];
-  for (const serieId of serieIds) {
-    serieRowsSource.push(await fetchSerie(serieId));
-  }
-  setIds = targetSetIds;
-} else {
-  if (targetSerieId === undefined) {
-    throw new Error("unreachable: no --sets and no serie id");
-  }
-  const serie = await fetchSerie(targetSerieId);
-  serieRowsSource = [serie];
-  setIds = serie.sets.map((set) => set.id);
+const serieRows = new Map<string, TcgdexSerie>();
+const setIds: string[] = [];
+for (const serieId of scope.series) {
+  const serie = await fetchSerie(serieId);
+  serieRows.set(serieId, serie);
+  setIds.push(...serie.sets.map((set) => set.id));
 }
+for (const setId of scope.sets) {
+  const set = await fetchSet(setId);
+  setDetails.set(setId, set);
+  // A loose set's serie row is written too, since its set row references it.
+  if (!serieRows.has(set.serie.id)) serieRows.set(set.serie.id, await fetchSerie(set.serie.id));
+  if (!setIds.includes(setId)) setIds.push(setId);
+}
+const serieRowsSource = [...serieRows.values()];
 
 // A restore point before the first remote write.
 if (args.remote && !dryRun) recordBookmark(`ingest ${setIds.join(",")}`);

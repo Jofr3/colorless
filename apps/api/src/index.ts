@@ -114,7 +114,7 @@ app.use(
 // Accounts + sessions (§3.5): register/login/logout/me, OAuth, 501 stubs.
 app.route("/auth", authRoutes);
 
-// Lazy R2 mirror for tcgdex images (D9): /assets/cards/…, /assets/sets/….
+// Lazy R2 mirror for tcgdex card images (D9): /assets/cards/….
 app.route("/assets", assetsRoutes);
 
 // The authenticated deck library (§6): deck CRUD, session-gated.

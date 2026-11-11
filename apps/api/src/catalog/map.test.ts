@@ -1,4 +1,4 @@
-import { cardBriefSchema, cardSchema, serieSchema, setSchema } from "@colorless/schema";
+import { cardBriefSchema, cardSchema, serieSchema, setBriefSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import {
   type CardRow,
@@ -6,7 +6,6 @@ import {
   mapCardRow,
   mapSerieRow,
   mapSetBriefRow,
-  mapSetRow,
   type SerieRow,
   type SetRow,
 } from "./map";
@@ -235,23 +234,18 @@ describe("mapCardBriefRow", () => {
   });
 });
 
-describe("mapSetRow / mapSetBriefRow", () => {
-  it("rewrites logo and symbol to the set asset base path independently", () => {
-    const set = setSchema.parse(mapSetRow(shroudedFableRow));
-    expect(set).toMatchObject({
+describe("mapSetBriefRow", () => {
+  it("maps a set row and serves no set art, whatever its origin columns hold", () => {
+    expect(setBriefSchema.parse(mapSetBriefRow(shroudedFableRow))).toEqual({
       id: "sv06.5",
-      logo: "/assets/sets/sv06.5",
-      symbol: "/assets/sets/sv06.5",
+      serieId: "sv",
+      name: "Shrouded Fable",
+      logo: null,
+      symbol: null,
+      releaseDate: "2024-08-02",
       cardCount: { total: 99, official: 64 },
-      legal: { standard: false, expanded: true },
-      tcgOnline: null,
+      abbreviation: "SFA",
     });
-  });
-
-  it("nulls each asset path only when ITS origin column is null", () => {
-    const brief = mapSetBriefRow({ ...shroudedFableRow, logoUrl: null });
-    expect(brief.logo).toBeNull();
-    expect(brief.symbol).toBe("/assets/sets/sv06.5");
   });
 });
 

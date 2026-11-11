@@ -114,7 +114,7 @@ describe("GET /cards param validation", () => {
 describe("catalog KV cache middleware", () => {
   it("serves a seeded key as a hit without touching D1", async () => {
     const cachedBody = JSON.stringify({ items: [], page: 1, pageSize: 50, total: 0 });
-    const { kv } = fakeKv({ "catalog:v12:/cards?set=nope": cachedBody });
+    const { kv } = fakeKv({ "catalog:v13:/cards?set=nope": cachedBody });
     // The explicit default page drops out of the key, as does a param the schema does not know.
     const res = await app.request("/cards?page=1&bust=7&set=nope", {}, envWith(kv));
     expect(res.status).toBe(200);
@@ -126,7 +126,7 @@ describe("catalog KV cache middleware", () => {
   it("normalizes repeated params into one key — reordered repeats share it", async () => {
     const cachedBody = JSON.stringify({ items: [], page: 1, pageSize: 50, total: 0 });
     const { kv } = fakeKv({
-      "catalog:v12:/cards?rarity=Common&type=Fire&type=Water": cachedBody,
+      "catalog:v13:/cards?rarity=Common&type=Fire&type=Water": cachedBody,
     });
     const res = await app.request("/cards?type=Water&type=Fire&rarity=Common", {}, envWith(kv));
     expect(res.status).toBe(200);
@@ -144,7 +144,7 @@ describe("catalog KV cache middleware", () => {
       regulationMarks: ["H"],
       suffixes: ["ex"],
     };
-    const { kv } = fakeKv({ "catalog:v12:/facets": JSON.stringify(facets) });
+    const { kv } = fakeKv({ "catalog:v13:/facets": JSON.stringify(facets) });
     const res = await app.request("/facets", {}, envWith(kv));
     expect(res.status).toBe(200);
     expect(res.headers.get("x-colorless-cache")).toBe("hit");
@@ -157,17 +157,17 @@ describe("catalog browser cache", () => {
   const origin = "http://localhost:5175";
 
   it("stamps a public Cache-Control and an ETag on a 200", async () => {
-    const { kv } = fakeKv({ "catalog:v12:/cards?set=sv01": body });
+    const { kv } = fakeKv({ "catalog:v13:/cards?set=sv01": body });
     const res = await app.request("/cards?set=sv01", {}, envWith(kv));
     expect(res.status).toBe(200);
     expect(res.headers.get("cache-control")).toBe(
       "public, max-age=300, stale-while-revalidate=3600",
     );
-    expect(res.headers.get("etag")).toBe(await catalogETag("catalog:v12:/cards?set=sv01"));
+    expect(res.headers.get("etag")).toBe(await catalogETag("catalog:v13:/cards?set=sv01"));
   });
 
   it("answers a matching If-None-Match with a 304 that keeps its CORS headers", async () => {
-    const { kv } = fakeKv({ "catalog:v12:/cards?set=sv01": body });
+    const { kv } = fakeKv({ "catalog:v13:/cards?set=sv01": body });
     const first = await app.request(
       "/cards?set=sv01",
       { headers: { Origin: origin } },
@@ -188,7 +188,7 @@ describe("catalog browser cache", () => {
   });
 
   it("serves the full body when the ETag no longer matches", async () => {
-    const { kv } = fakeKv({ "catalog:v12:/cards?set=sv01": body });
+    const { kv } = fakeKv({ "catalog:v13:/cards?set=sv01": body });
     const res = await app.request(
       "/cards?set=sv01",
       { headers: { "If-None-Match": '"stale"' } },

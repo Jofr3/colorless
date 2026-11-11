@@ -30,6 +30,8 @@ export const STATIC_STEPS: readonly string[] = [
   "bun scripts/docs-writes.ts",
   "bun scripts/comment-guard.ts",
   "bun scripts/registry-aliases.ts --check",
+  "bun scripts/catalog-manifest.ts --check",
+  "bun scripts/census-corpus.ts --check",
   "bun scripts/worker-bundle.ts --check",
   "bun scripts/worker-types.ts",
   "bun scripts/decision-index.ts --check",

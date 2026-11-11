@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import cardPokemonAttacks from "@colorless/schema/tcgdex-fixtures/card-pokemon-swsh3-136.json";
 import {
   type CatalogSource,
@@ -298,6 +298,21 @@ describe("request failures", () => {
     ]);
     const miss = await failureOf(createSdkSource({ client: missing, delayMs: 0 }).getSerie("sv"));
     expect(miss.retryable).toBe(false);
+  });
+
+  it("sdk: a request that settles in time stops its deadline's clock", async () => {
+    vi.useFakeTimers();
+    try {
+      const answered = createSdkSource({ client: stubClient({ id: "sv01" }).client, delayMs: 0 });
+      await answered.getSet("sv01");
+      const throwing = {
+        fetch: async () => Promise.reject(new Error("HTTP 502")),
+      } as TcgdexRawClient;
+      await failureOf(createSdkSource({ client: throwing, delayMs: 0 }).getSet("sv01"));
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

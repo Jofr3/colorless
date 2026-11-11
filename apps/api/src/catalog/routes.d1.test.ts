@@ -99,6 +99,17 @@ describe("GET /facets", () => {
   });
 });
 
+describe("GET /sets", () => {
+  it("serves no set art and no single-set route", async () => {
+    const res = await app.request("/sets", {}, d1().env());
+    expect(res.status).toBe(200);
+    const sets = (await res.json()) as { logo: unknown; symbol: unknown }[];
+    expect(sets.length).toBeGreaterThan(0);
+    expect(sets.every((set) => set.logo === null && set.symbol === null)).toBe(true);
+    expect((await app.request("/sets/sv01", {}, d1().env())).status).toBe(404);
+  });
+});
+
 describe("the per-IP limit on catalog reads that miss KV", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -217,7 +228,7 @@ describe("the per-IP limit on catalog reads that miss KV", () => {
   it("leaves id hydration, exact names and cheap catalog reads uncounted", async () => {
     const limiter = fakeLimiter(0);
     const env = d1().env({ CATALOG_SEARCH_LIMIT: limiter.binding });
-    for (const path of ["/sets", "/sets?serie=sv", "/sets/sv01", "/series", "/cards/sv01-004"]) {
+    for (const path of ["/sets", "/sets?serie=sv", "/series", "/cards/sv01-004"]) {
       expect((await app.request(path, from("203.0.113.9"), env)).status).toBe(200);
     }
     expect(

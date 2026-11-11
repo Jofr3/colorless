@@ -75,12 +75,10 @@ describe("catalog KV cache over D1", () => {
 
   it("works against Miniflare's KV", async () => {
     const env = d1().env();
-    expect((await app.request("/sets/sv01", {}, env)).headers.get("x-colorless-cache")).toBe(
-      "miss",
-    );
-    const hit = await app.request("/sets/sv01", {}, env);
+    expect((await app.request("/series", {}, env)).headers.get("x-colorless-cache")).toBe("miss");
+    const hit = await app.request("/series", {}, env);
     expect(hit.headers.get("x-colorless-cache")).toBe("hit");
-    expect(((await hit.json()) as { cards: { name: string }[] }).cards[0]?.name).toBe("Charmander");
+    expect(((await hit.json()) as { sets: { id: string }[] }[])[0]?.sets[0]?.id).toBe("sv01");
   });
 
   it("stops serving entries cached before a new epoch once the isolate rereads it", async () => {
@@ -250,25 +248,15 @@ describe("which catalog shapes spend a KV write", () => {
     expect(putKeys(calls)).toEqual([keyOf("/cards", "category=Pokemon")]);
   });
 
-  it("ignores the query on /facets, /series and /sets/:id", async () => {
+  it("ignores the query on /facets and /series", async () => {
     const { kv, calls } = recordingKv();
     const env = d1().env({ CACHE: kv });
-    for (const path of ["/facets", "/series", "/sets/sv01"]) {
+    for (const path of ["/facets", "/series"]) {
       for (const search of ["", "?bust=1", "?bust=2&name=x"]) {
         expect((await app.request(`${path}${search}`, {}, env)).status).toBe(200);
       }
     }
-    expect(putKeys(calls)).toEqual([keyOf("/facets"), keyOf("/series"), keyOf("/sets/sv01")]);
-  });
-
-  it("keys /sets/:id by the decoded id, so an encoded spelling shares its entry", async () => {
-    const { kv, calls } = recordingKv();
-    const env = d1().env({ CACHE: kv });
-    expect((await app.request("/sets/sv01", {}, env)).status).toBe(200);
-    expect((await app.request("/sets/sv%301", {}, env)).headers.get("x-colorless-cache")).toBe(
-      "hit",
-    );
-    expect(putKeys(calls)).toEqual([keyOf("/sets/sv01")]);
+    expect(putKeys(calls)).toEqual([keyOf("/facets"), keyOf("/series")]);
   });
 
   it("keys /sets by its serie filter only", async () => {
@@ -378,16 +366,14 @@ describe("catalog KV failure logs", () => {
 
   it("logs a failed get and a failed epoch read", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const failingGet = recordingKv({}, { get: [keyOf("/sets/sv01")] });
-    expect((await app.request("/sets/sv01", {}, d1().env({ CACHE: failingGet.kv }))).status).toBe(
-      200,
-    );
+    const failingGet = recordingKv({}, { get: [keyOf("/series")] });
+    expect((await app.request("/series", {}, d1().env({ CACHE: failingGet.kv }))).status).toBe(200);
     const failingEpoch = recordingKv({}, { get: [CATALOG_EPOCH_KEY] });
     expect((await app.request("/facets", {}, d1().env({ CACHE: failingEpoch.kv }))).status).toBe(
       200,
     );
     expect(kvLines(warn)).toEqual([
-      { evt: "kv", kind: "get_failed", route: "/sets/:id", error: "Error", quota: false },
+      { evt: "kv", kind: "get_failed", route: "/series", error: "Error", quota: false },
       { evt: "kv", kind: "epoch_failed", route: "/facets", error: "Error", quota: false },
     ]);
   });

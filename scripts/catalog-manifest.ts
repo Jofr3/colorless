@@ -6,18 +6,26 @@
 //
 // The local D1 is dev state absent on a fresh clone and in CI, so tests check against this snapshot
 // instead; re-run the script to re-measure. The manifest records the sqlite's size and mtime.
+// Without a local D1, `--check` skips and says so, and a rewrite fails.
 
 import { Database } from "bun:sqlite";
 import { statSync, writeFileSync } from "node:fs";
 import { FIXTURE_POOL } from "@colorless/engine/testing";
-import { D1_DIR, findLocalD1, shownD1Path } from "./lib/localD1";
+import { D1_DIR, D1_ENV, findLocalD1, shownD1Path } from "./lib/localD1";
 import { biomeFormatted, committedText, withoutStamps } from "./lib/generated";
 import { repoPath } from "./lib/repo";
 
-const DB_PATH = findLocalD1();
-if (DB_PATH === undefined)
-  throw new Error(`no local D1 at ${D1_DIR}; run the catalog ingest first`);
 const OUT = "packages/engine/src/catalogManifest.ts";
+const DB_PATH = findLocalD1();
+if (DB_PATH === undefined) {
+  const where = `no local D1 sqlite under ${D1_DIR} (set ${D1_ENV} to read another)`;
+  if (process.argv.includes("--check")) {
+    console.log(`${OUT}: freshness check SKIPPED — ${where}.`);
+    process.exit(0);
+  }
+  console.error(`${OUT}: cannot generate — ${where}; run the catalog ingest first.`);
+  process.exit(1);
+}
 
 /**
  * A fixture id naming a real printing (not a synthetic `fix-*` body). An unknown id shape fails the

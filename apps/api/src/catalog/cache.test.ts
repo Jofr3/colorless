@@ -17,14 +17,14 @@ describe("catalogCacheKey", () => {
   it("keys by path and query under the versioned catalog prefix", () => {
     // The version segment guards cached SHAPES: bumping it orphans every older entry
     // instead of serving it.
-    expect(catalogCacheKey("/cards")).toBe("catalog:v12:/cards");
-    expect(catalogCacheKey("/cards", "page=2&set=sv01")).toBe("catalog:v12:/cards?page=2&set=sv01");
+    expect(catalogCacheKey("/cards")).toBe("catalog:v13:/cards");
+    expect(catalogCacheKey("/cards", "page=2&set=sv01")).toBe("catalog:v13:/cards?page=2&set=sv01");
   });
 
   it("scopes keys by the stamped catalog epoch", () => {
-    expect(catalogCacheKey("/cards", "set=sv01", "m3k1")).toBe("catalog:v12:m3k1:/cards?set=sv01");
+    expect(catalogCacheKey("/cards", "set=sv01", "m3k1")).toBe("catalog:v13:m3k1:/cards?set=sv01");
     expect(catalogCacheKey("/cards", "", "m3k1")).not.toBe(catalogCacheKey("/cards", "", "m3k2"));
-    expect(catalogCacheKey("/cards", "set=sv01", null)).toBe("catalog:v12:/cards?set=sv01");
+    expect(catalogCacheKey("/cards", "set=sv01", null)).toBe("catalog:v13:/cards?set=sv01");
   });
 });
 

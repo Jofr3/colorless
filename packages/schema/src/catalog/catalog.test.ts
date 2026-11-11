@@ -3,7 +3,7 @@ import { cardBriefSchema, cardSchema } from "./card";
 import { catalogFacetsSchema } from "./facets";
 import { paginatedSchema } from "./page";
 import { serieSchema } from "./serie";
-import { setWithCardsSchema } from "./set";
+import { setBriefSchema } from "./set";
 
 const joltikCard = {
   id: "sv06.5-001",
@@ -53,38 +53,18 @@ describe("catalog set/serie schemas", () => {
     id: "sv06.5",
     serieId: "sv",
     name: "Shrouded Fable",
-    logo: "/assets/sets/sv06.5",
-    symbol: "/assets/sets/sv06.5",
+    logo: null,
+    symbol: null,
     releaseDate: "2024-08-02",
     cardCount: { total: 99, official: 64 },
     abbreviation: "SFA",
   };
 
-  it("parses a full set with its card briefs", () => {
-    const set = setWithCardsSchema.parse({
-      ...setBrief,
-      legal: { standard: true, expanded: true },
-      tcgOnline: null,
-      cards: [
-        {
-          id: "sv06.5-001",
-          name: "Joltik",
-          category: "Pokemon",
-          rarity: "Common",
-          image: "/assets/cards/sv06.5-001",
-          setId: "sv06.5",
-          localId: "001",
-          types: ["Grass"],
-          hp: 40,
-          regulationMark: "H",
-          stage: "Basic",
-          trainerType: null,
-          energyType: null,
-          legal: { standard: true, expanded: true },
-        },
-      ],
-    });
-    expect(set.cards).toHaveLength(1);
+  it("serves no set art: logo and symbol are null", () => {
+    expect(setBriefSchema.parse(setBrief)).toEqual(setBrief);
+    expect(setBriefSchema.safeParse({ ...setBrief, logo: "/assets/sets/sv06.5" }).success).toBe(
+      false,
+    );
   });
 
   it("rejects a releaseDate that is not a plain date", () => {
