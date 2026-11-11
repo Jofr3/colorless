@@ -558,7 +558,9 @@ After:
    - `pin`: writes HEAD to `tmp/release.json`, so the rest of the release can
      require that commit. It refuses while another commit's release holds a pin
      younger than 15 minutes. A pin of the same commit is an earlier, failed
-     run of this release, and it is taken over.
+     run of this release, and it is taken over. It also refuses while `tmp/`
+     still holds `releases.log` or `d1-bookmarks.log`, and prints the `mv`
+     that moves the file to `.local/`.
    - `clean-tree`: no uncommitted changes, and HEAD is the remote's main, read
      with `git ls-remote` (a Dependabot merge on GitHub leaves the local
      `origin/main` behind).
@@ -631,7 +633,7 @@ host page served in its place; a missing build file otherwise answers 404
 
 `release:finish` does four things:
 
-1. Appends a line to `tmp/releases.log`: the time, the tag, the commit, each
+1. Appends a line to `.local/releases.log`: the time, the tag, the commit, each
    Worker's version before and after, the bookmark, and the balatro-source
    commit from `dist/love/asset-manifest.json`.
 2. Prints the release notes, which are the commit subjects since the previous
@@ -642,11 +644,18 @@ host page served in its place; a missing build file otherwise answers 404
 
 All the gates only read production.
 
+**The records.** `.local/releases.log` (the release history) and
+`.local/d1-bookmarks.log` (§3.7.3) are created on demand in the main
+checkout's `.local/`, which is gitignored; a release or ingest run from a
+worktree writes there too. `tmp/` is scratch: anything in it can be deleted,
+except `tmp/release.json` while a release runs and a backup export (§3.7.3)
+still needed.
+
 **Which commit is live.** `curl -s
 https://colorless-api.jofrescari.workers.dev/health` gives `version.tag` (the
 API's commit). The page source's `<meta name="build">` gives the web's commit.
 `bunx wrangler deployments list` shows each version's tag and message. `git tag
---list 'release-*'` and `tmp/releases.log` hold the release history. There is no
+--list 'release-*'` and `.local/releases.log` hold the release history. There is no
 CHANGELOG: a release's notes are `git log --format=%s <previous tag>..<tag>`.
 
 **Cloudflare tokens (build audit DEP3, BLD-P5).** Two account-owned tokens, each
@@ -692,7 +701,7 @@ the 2026-10-28 run passed on Firefox 157 (`tmp/rel/qa2/`).
 **When a release step fails.** Every step is safe to repeat, so `bun run
 release` again is always a valid recovery once the cause is fixed; it records a
 new bookmark each time, and a restore wants the first one of the release (the
-earliest line for it in `tmp/d1-bookmarks.log`). From `apps/api` unless noted:
+earliest line for it in `.local/d1-bookmarks.log`). From `apps/api` unless noted:
 
 | Failed step | What production is running | Recovery |
 | --- | --- | --- |
@@ -701,7 +710,7 @@ earliest line for it in `tmp/d1-bookmarks.log`). From `apps/api` unless noted:
 | `api:deploy` | New schema, old Worker. | Release again, or `bun run api:deploy`, then `bun run release:health`, then `bun run deploy:web` from the repo root (`web-dist` refuses a `dist/` built at another commit: then `bun run deploy`). |
 | `release:health` | New Worker, which cannot read D1, sees another migration count or fails a route; or the new version never answered `/health`. | The tag never matched: `bunx wrangler deployments list` shows whether the deploy took; rerun `bun run release:health` once it has. A D1 error: `evt = "d1", kind = "health_failed"` in Workers Logs (§3.7.4) carries the error and cause names and `quota`. `quota: true` is a spent daily quota (wait for 00:00 UTC); otherwise it is a binding or schema problem (`bunx wrangler d1 migrations list colorless --remote`): fix it, rerun `bun run release:health`. Bad code (a failed `/sets` or `/auth/me` probe, or D1 errors from the code): from `apps/api`, `bun scripts/with-deploy-token.ts bunx wrangler rollback <version id> -m "<why>"` to the version before the release (the `versions` line it printed; after a retry, see below), and check `HEALTH_TAG='*' bun run release:health` again. The schema stays: the old Worker reads it (expand, then contract). |
 | `deploy:web` (`web-dist`, the deploy, `web-health`) | New API, and the old web app, or a new one `web-health` found broken. The old web app is fine when the API change kept the old client working, as an API-first release should. | Release again. By hand instead: `bun run deploy` from the repo root, then tag the commit yourself, since `abort` dropped the pin and `release:finish` refuses without one: `git tag -a release-<UTC YYYYMMDD-HHMM> -m "Release <short sha>" <sha> && git push origin refs/tags/release-<UTC YYYYMMDD-HHMM>` (the log line is then missing, as in the next row). A bad web build: `bunx wrangler deployments list` and `bun apps/api/scripts/with-deploy-token.ts bunx wrangler rollback <version id>` from the repo root (Worker `colorless`). |
-| `release:finish` | Both new. Only the record is missing: the log line, the tag, or its push. | It prints the `git tag -a … && git push origin refs/tags/…` to run. A missing log line can be rebuilt from `bunx wrangler deployments list` (both Workers) and `tmp/d1-bookmarks.log`. |
+| `release:finish` | Both new. Only the record is missing: the log line, the tag, or its push. | It prints the `git tag -a … && git push origin refs/tags/…` to run. A missing log line can be rebuilt from `bunx wrangler deployments list` (both Workers) and `.local/d1-bookmarks.log`. |
 
 When an earlier attempt of the same release got past `api:deploy`, the retry's
 `versions` line records that attempt's version as the one "before" it. To roll back after a retry, pick the newest version
@@ -753,7 +762,7 @@ to before the deletion brings it back.
 **Time Travel** is always on: the database can be restored to any minute in
 the last 7 days on the Free plan (30 on paid). `release` and a remote
 ingest record the bookmark taken just before they write, with
-the reason, in `tmp/d1-bookmarks.log` (gitignored) and print the restore
+the reason, in `.local/d1-bookmarks.log` (gitignored) and print the restore
 command. A restore rewinds the WHOLE database, catalog and user data
 together, so every deck edit, registration and login after that point is lost.
 Prefer a targeted repair (re-ingest the catalog, or re-import rows from an
