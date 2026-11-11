@@ -10,7 +10,7 @@ const UGLY = "export const a = {b:1,   c:2}\n";
 
 describe(".claude/settings.json", () => {
   const ignored = (path: string) =>
-    spawnSync("git", ["check-ignore", "-q", path], { cwd: REPO_ROOT }).status === 0;
+    spawnSync("git", ["check-ignore", "-q", "--no-index", path], { cwd: REPO_ROOT }).status === 0;
 
   it("is tracked and runs this hook, while the rest of .claude/ stays ignored", () => {
     expect(ignored(".claude/settings.json")).toBe(false);
