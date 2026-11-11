@@ -525,7 +525,7 @@ Every production write goes through `bun run release` or the deploy-token wrappe
 
 Prerequisites:
 - the deploy token file (§3.7.2, "Cloudflare tokens");
-- Balatro's source at `../balatro-source` or `BALATRO_SOURCE`, and a Lua 5.1 for `check:lua`;
+- Balatro's source beside the main checkout or at `BALATRO_SOURCE`, and a Lua 5.1 for `check:lua`;
 - push access to `origin`, and network to Cloudflare, GitHub and the npm registry; `gh` is
   optional (the `ci` step only prints);
 - a local catalog ingested from the same series as production (§3.4.1), or `print-keys` refuses.
@@ -581,7 +581,7 @@ After:
      `print_key`, because the engine's `PROGRAM_ALIAS` table is generated from
      the local one.
 3. `build`: the web bundle, before anything remote changes. `build:lua` needs
-   Balatro's source at `../balatro-source` or `BALATRO_SOURCE`. Vite writes `dist/build-info.json` (commit, dirty tree,
+   Balatro's source beside the main checkout or at `BALATRO_SOURCE`. Vite writes `dist/build-info.json` (commit, dirty tree,
    origins, strict `/love/` versions) and puts the commit in the page as
    `<meta name="build">`.
 4. `db:migrate:remote`.
@@ -684,7 +684,7 @@ over. To release another commit sooner, run `bun
 apps/api/scripts/release-gate.ts unlock`, but only when no release is running.
 
 **Before releasing, run `bun run e2e`** (`scripts/e2e.ts`; needs `CHROMIUM`, or
-chromium on PATH, and `BALATRO_SOURCE`; about 70 s). It is the one check of the
+chromium on PATH, and Balatro's source; about 70 s). It is the one check of the
 real love.js page against a real local API and LobbyDO: boot, a sandbox game, a
 crash and its reload, the builder's last save as the page is hidden, navigated
 away and closed (a keepalive PATCH), a stalled boot, and an online match through

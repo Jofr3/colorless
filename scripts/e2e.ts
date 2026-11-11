@@ -15,8 +15,8 @@
  * own `COLORLESS:` lines, never by canvas coordinates. Every process it starts is stopped on the
  * way out, failing or not.
  *
- *   CHROMIUM=<binary> BALATRO_SOURCE=<dir> bun run e2e [--gpu] [--keep]
- *   FIREFOX=<binary> BALATRO_SOURCE=<dir> bun run e2e --firefox [--gpu] [--keep]
+ *   CHROMIUM=<binary> bun run e2e [--gpu] [--keep]
+ *   FIREFOX=<binary> bun run e2e --firefox [--gpu] [--keep]
  *
  * CHROMIUM defaults to the first of chromium, chromium-browser, google-chrome on PATH, FIREFOX to
  * firefox. Headless Firefox makes no WebGL context, so --firefox runs it on a private Xvfb (XVFB,

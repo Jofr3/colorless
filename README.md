@@ -19,8 +19,8 @@ Prerequisites:
 
 - bun at the version in `.bun-version`, and Node 22 (`.node-version`): the build
   and test tools run under Node.
-- Balatro's source tree at `../balatro-source`, or wherever `BALATRO_SOURCE`
-  points. It holds the game's own files (the Lua build copies shaders, textures,
+- Balatro's source tree at `balatro-source` beside the main checkout (git
+  worktrees find it too), or wherever `BALATRO_SOURCE` points. It holds the game's own files (the Lua build copies shaders, textures,
   the font, sounds and music from its `resources/`, and some checks compare
   against its Lua source) and love.js installed in it with
   `npm install love.js@11.4.1`. `scripts/love-inputs.ts` checks that copy by hash.

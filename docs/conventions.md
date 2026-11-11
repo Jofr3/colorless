@@ -342,7 +342,7 @@ something else.
   per action and gains less from them.
 - **`bun run e2e`** (`scripts/e2e.ts`) is the browser smoke of the real page, opt-in and the
   recommended step before `bun run release` (`docs/workstreams/backend-data.md` §3.7.2). It needs
-  `CHROMIUM` (or chromium on PATH) and `BALATRO_SOURCE`, builds the site against its own
+  `CHROMIUM` (or chromium on PATH) and Balatro's source (found as the Lua build finds it), builds the site against its own
   `wrangler dev` on free ports with a fresh migrated D1 in a temporary directory, seeded with
   `@colorless/api/testing/fixtureCatalog` (a deck of committed tcgdex payloads), and makes its
   accounts and decks through the API. It reads the mailboxes by `WIRE_ROWS` and drives Lua through
