@@ -1,119 +1,53 @@
-# Next Phase — Backend + Real Card Data
+# Backend and data (as built)
 
-> **Status:** Working spec, all major decisions made. This is a prompt/brief for
-> the next build phase; refine as implementation reveals detail.
-
-## Decisions
-
-| # | Decision | Choice |
-|---|---|---|
-| D1 | Backend data strategy | **Own DB** — ingest tcgdex → Cloudflare **D1**, serve our own API |
-| D2 | Accounts & persistence | **Full accounts + auth**; users own their decks |
-| D2a | Auth methods | **Email + password** *and* **social OAuth (Google)** |
-| D3 | Catalog scope | **Full-history-capable schema, ingest SV-era first** |
-| D4 | Card images | **Mirror into R2**, serve from our domain |
-| D5 | Card type | **Unify** — one canonical `Card`, with builder/playmat view projections |
-| D6 | Online lobby server | **In scope** — real **Durable Object** (WebSocket) lobby server |
+The API Worker and its stores, the catalog ingest, accounts, the lobby Durable Object, releasing
+and production operations, and the API reference (§6). The founding decisions D1-D6 are in
+`docs/decisions.md`. The July plan this file started as (its §1-2 and §7-9) and the 2026-08
+deploy runbook are in `docs/archive/backend-data-plan.md`.
 
 ---
 
-## 1. Where the project is today
-
-`colorless` is currently a **frontend-only skeleton**: the design language,
-the main pages, and simple interactions exist, but there is **no backend and no
-persistence** beyond `localStorage`.
-
-- **Stack:** React 19 + Vite 8 (Rolldown) + Tailwind 4, PixiJS 8 + GSAP for the
-  animated card layer. Bun 1.3 as the package manager/runtime.
-- **Card catalog** is a hand-authored, ~90-card fixture:
-  - `src/features/builder/cardPool.ts` — the browsable pool.
-  - `src/features/builder/cards.ts` — the `BuilderCard` type, energy types,
-    subtypes, rarities, formats, and pure helpers.
-  - Scoped to the **Scarlet & Violet era** only; each entry carries a Scrydex
-    `cardId` (`{setCode}-{number}`).
-- **Card art** is hotlinked from `https://images.scrydex.com/pokemon/{id}/{size}`
-  (`cardImageUrl` in `cards.ts`). The production CSP in `vite.config.ts`
-  allowlists **only** that host for `img-src`/`connect-src`.
-- **Decks** are seed fixtures + folders (`src/features/decks/data.ts`),
-  persisted best-effort to `localStorage` via `src/lib/persistedState.ts`.
-- **Playmat** uses its own `CardModel` (`src/features/playmat/types.ts`).
-- **Online lobby** (`src/features/online/net/*`) is host-authoritative over a
-  `BroadcastChannel`, **deliberately written to swap for a real server** with no
-  UI changes: `net/types.ts` (LobbySnapshot / LobbyMessage / LobbyIntent),
-  `net/lobbyReducer.ts` (the authoritative reducer), `net/channel.ts` (the
-  transport seam).
-
-**The gap:** everything is fixtures. This phase makes it real.
-
----
-
-## 2. Goal of this phase
-
-1. **Stand up the backend** — a Bun + Hono API on Cloudflare Workers.
-2. **Import real card data** from [tcgdex.dev](https://tcgdex.dev/) into our own
-   **D1** database; define **Zod schemas for every tcgdex model** we read.
-3. **Mirror card images into R2**, served from our own domain.
-4. **Serve the catalog** to the frontend, replacing the hand-written fixtures.
-5. **Add accounts + auth** (email/password + Google OAuth); persist
-   users' **decks** server-side.
-6. **Promote the online lobby to a real server** — a Durable Object over
-   WebSocket, reusing the existing lobby reducer + message types.
-
-Out of scope: the real-time **match engine** (playing an actual game of cards).
-This phase gets players into a real shared lobby; the match itself stays a
-placeholder.
-
----
-
-## 3. Proposed architecture
+## 3. Architecture
 
 ```text
-                 ┌───────────────────────────── Cloudflare ─────────────────────────────┐
-tcgdex.dev ──▶   │  ingest job ──▶ D1 (cards/sets/series)     Hono Worker ──▶ web app    │
-(REST/SDK)       │      └──────▶ R2 (mirrored images)   ▲          │  │                   │
-                 │                                      └─ D1 (users/sessions/decks)      │
-                 │   Lobby Durable Object ◀── WS ───────────────────┘  KV (cache/limits)  │
-                 └───────────────────────────────────────────────────────────────────────┘
+browser ──▶ colorless        static web Worker: dist/ (the love.js page), src/notFoundWorker.ts
+   │                         the page runs the engine itself for local play (src/game)
+   └──HTTPS + WebSocket──▶ colorless-api   Hono Worker, apps/api
+                              ├── D1 `colorless`: catalog and user data (§5.3)
+                              ├── KV `CACHE`: catalog responses (§6)
+                              ├── R2 `ASSETS`: card images, mirrored lazily from tcgdex (§3.4)
+                              ├── LobbyDO: one per lobby code; runs the engine, redacts per seat (§3.6)
+                              └── daily cron: the session and limiter sweep (§3.5)
+tcgdex.dev ──▶ apps/api/scripts/ingest.ts (local Bun script) ──▶ D1 catalog (§3.4)
 ```
 
-### 3.1 Repo layout — Bun-workspace monorepo
+The July plan's diagram is in the archive. README "Architecture" describes the page side.
 
-```text
-colorless/
-  apps/
-    web/            # the existing Vite app (relocated from repo root — can be deferred)
-    api/            # NEW — Bun + Hono Cloudflare Worker (+ Lobby Durable Object)
-  packages/
-    schema/         # NEW — shared Zod schemas + TS types (tcgdex, domain, lobby)
-  package.json      # workspaces: ["apps/*", "packages/*"]
-```
+### 3.1 Repo layout
 
-> The web app can stay at the repo root initially; start `apps/api` +
-> `packages/schema` first, relocate `web` in a follow-up commit.
->
-> **Move the lobby vocabulary** (`net/types.ts` — LobbySnapshot / LobbyMessage /
-> LobbyIntent — and the pure `lobbyReducer.ts`) into `packages/schema` so both
-> the web client and the Durable Object import the same source of truth.
+`apps/api` (the API Worker and `LobbyDO`), `packages/schema` (the shared Zod schemas and types:
+tcgdex, catalog, decks, auth, lobby, match), `packages/engine` (the game, run by the DO and by
+the page) and the web app at the root (`src/`, `frontend/lua/`). README "Project structure" has
+the tree.
 
-### 3.2 Backend — Bun + Hono on Cloudflare Workers
+### 3.2 Backend
 
-- **Hono** app deployed as a **Cloudflare Worker** (`wrangler`), config in
-  `wrangler.jsonc`; local dev via `wrangler dev`.
-- **Validation** with **Zod** from `packages/schema`; typed routes via
-  `@hono/zod-validator`.
-- **DB access:** D1 via **Drizzle** (typed migrations + queries) — *≈ assumption,
-  revisit if we'd rather hand-write SQL*.
+Hono on Cloudflare Workers, configured in `apps/api/wrangler.jsonc`. Bodies and queries are
+parsed with the `packages/schema` schemas through `validate` (`apps/api/src/http/validation.ts`).
+D1 is read through Drizzle (`apps/api/src/db/`); migrations are generated into
+`apps/api/drizzle/`. Locally, `bun run api:dev` runs `wrangler dev` after applying the local
+migrations.
 
 ### 3.3 Storage & compute bindings (Cloudflare)
 
-- **D1** (SQLite), two logical schemas in one DB:
-  1. **Catalog:** `series`, `sets`, `cards` (§5.3).
-  2. **User data:** `users`, `oauth_identities`, `sessions`, `folders`, `decks`,
-     `deck_cards`.
-- **R2** — mirrored card images + set logos/symbols, served via our domain.
-- **KV** — response cache for hot catalog reads + rate-limit counters.
-- **Durable Objects** — one instance **per lobby** (keyed by the join code);
-  holds the authoritative `LobbySnapshot` and fans out over WebSocket.
+- **D1** `DB`, two logical schemas in one database: the catalog and user data (§5.3).
+- **R2** `ASSETS`: mirrored card images and set logos and symbols, served through `/assets/*`.
+- **KV** `CACHE`: the catalog response cache and its `catalog:epoch` (§6). No rate limit lives
+  in KV.
+- **Durable Objects** `LOBBY`: one `LobbyDO` per lobby code (§3.6).
+- **Rate limiting** bindings (`ratelimits`, §3.7.4), the sign-in counters in D1
+  (`auth_rate_limits`, §3.5), the daily Cron Trigger (`triggers.crons`) and
+  `CF_VERSION_METADATA`, which `/health` reports.
 
 ### 3.4 Ingest & asset pipeline (D9: local data ingest, lazy image mirror)
 
@@ -451,58 +385,103 @@ data loss rather than a validation failure.
 
   For local dev put the same names in `apps/api/.dev.vars` (gitignored).
 
-### 3.6 Lobby Durable Object (D6) — as built (P1 milestone 8, `apps/api/src/lobby/`)
+### 3.6 Lobby and match lifecycle (as built, `apps/api/src/lobby/`)
 
-- **One `LobbyDO` per lobby code** (`idFromName(code)`), exported from the
-  Worker entry; binding `LOBBY`, migration `v1 new_sqlite_classes`. It is the
-  server-side replacement for the BroadcastChannel model's authoritative
-  "host peer": it owns the one true `LobbySnapshot` in DO storage, applies
-  every change through the **shared, unchanged `lobbyReducer`**
-  (`packages/schema/src/lobby/`), and broadcasts `{kind:"state"}` to every
-  socket. Both players — host included — are now plain clients that send
-  intents; policies the old host hook enforced in `useLobby.ts` moved verbatim
-  into pure helpers (`lobby/logic.ts`: hello/seat-takeover rule, countdown
-  stamping, connectivity-drops-ready) with the DO a thin shell around them.
-- **Wire protocol** (`packages/schema/src/lobby/wire.ts`): hand-written Zod
-  schemas mirroring `types.ts`, with exported compile-time proofs that each
-  schema infers to EXACTLY the shared type. Client → server is
-  `LobbyClientMessage` = hello | intent | kick | bye — the kick being the same
-  `reject …"kicked"` frame the old host posted at its guest, narrowed so a
-  client can't fabricate "full". Server → client is `LobbyServerMessage` =
-  state | reject. **Every inbound frame is Zod-validated; junk and forged
-  `from` ids (socket attachment ≠ claimed id) are dropped.** Zod-free protocol
-  constants (`COUNTDOWN_MS`, ping/pong strings) live in `lobby/protocol.ts` so
-  the web bundle doesn't pull Zod in.
-- **Hibernation:** sockets accepted via `state.acceptWebSocket`
-  (hibernatable); per-socket player identity survives eviction in the socket
-  attachment (`ws.serializeAttachment`, `lobby/attachment.ts`); keepalive is a
-  raw `"ping"`/`"pong"` pair answered by `setWebSocketAutoResponse` without
-  waking the instance — an idle lobby burns no duration.
-- **Lifecycle (one alarm, three duties — earliest deadline wins):**
-  1. *Disconnect grace* — a socket dropping without a `bye` only marks its
-     seat disconnected after 5 s (the old model's `PRESENCE_TIMEOUT_MS`)
-     without a reconnect, so refreshes and the probe→room socket handoff never
-     flicker the opponent to "disconnected". Same session id always re-seats
-     with deck/ready intact (host id is pinned for the lobby's lifetime; a
-     *different* id may take over only an abandoned guest seat, pre-match —
-     the old host's exact rule).
-  2. *Countdown* — the DO stamps `countdownStartedAt` on entering the phase
-     and its alarm flips countdown → in-game after `COUNTDOWN_MS`, demoting
-     instead any seat whose player has no live socket (the old host's
-     liveness check). A guest `bye` frees the seat immediately; a host `bye`
-     just marks the seat disconnected (lobby survives, host can return).
-  3. *Empty-lobby expiry* — 10 min after the last socket goes (also arms at
-     create), `storage.deleteAll()` wipes the lobby and frees the code; a socket
-     upgrade for a never-created/expired code is accepted and closed at once
-     with 4004 (`LOBBY_WS_NOT_FOUND`), which the client shows as "not found".
-     A lobby nobody has said hello in derives its expiry from `created`
-     instead of storing `cleanupAt` (security LB3), so a create writes 2 keys and an alarm and its wipe deletes 2 keys: 5 rows
-     written, down from 8.
-  4. *Inactivity ceiling* — a lobby with sockets but no commit or accepted
-     action or seated hello for an hour (`INACTIVE_LOBBY_MS`, judged from an `activeAt` stamp
-     written at most every 5 min, else `created`) is closed: every socket gets
-     close code `LOBBY_WS_CLOSED` (4000), which the client takes as "not found"
-     and does not reconnect after, and the lobby is wiped (security LB2).
+One `LobbyDO` per lobby code (`idFromName(code)`, binding `LOBBY`, DO migration
+`v1 new_sqlite_classes`). `POST /lobby` mints a code and claims it in its DO; `GET
+/lobby/:code/ws` forwards the upgrade, with its `session` cookie, to that DO (§6). The wire
+types in `packages/schema/src/lobby/` (`types.ts`, `wire.ts`, `serverWire.ts`, `protocol.ts`)
+are authoritative.
+
+| Module | Owns |
+| --- | --- |
+| `lobbyDO.ts` | storage, sockets, the alarm, frame dispatch, the match handoff and broadcasts |
+| `snapshot.ts` | the pure seat and phase transitions (`seatGuest`, `applyIntent`, `recomputePhase`, `removeGuest`) |
+| `logic.ts` | the pure policies and their constants: hello decisions, seat binding, forfeit deadlines, frame budgets, `endMatch`, `rematch`, `applyBye` |
+| `match.ts` | the engine handoff (`beginMatch`), `applyMatchAction`, each viewer's redacted frame (`matchFrameFor`), `MATCH_RECORD_VERSION`, the log cap |
+| `matchStore.ts` | the stored match: a head, the card tables once, and the log in 64-row chunks |
+| `deckLoad.ts`, `sessionCheck.ts` | the D1 reads: a player's deck at the handoff, and the sessions a rematch re-checks |
+| `attachment.ts` | what a socket keeps across hibernation: its seat, account, `logDeltas`, spectating |
+
+- **Phases.** `waiting` (the host alone) → `selecting` (both seated, choosing decks) →
+  `countdown` (both ready, `COUNTDOWN_MS`) → `in-game`. There is no finished phase: a finished
+  match is an `in-game` lobby whose stored game is over.
+  - A seat change re-derives the phase (`recomputePhase`) among the three pre-match phases.
+    Ready needs a chosen deck, and a seat that loses its socket loses its ready.
+  - The alarm ends the countdown. With a live socket on both seats, the handoff reads both decks
+    (owner-scoped to the seat's account, and only while that socket's session lives) and the card
+    pool from D1, and `beginMatch` starts the game, refusing a deck illegal in its format. The
+    match is stored before the lobby flips to `in-game`, then each socket gets its `match` frame.
+    A deck that will not resolve or is refused puts both seats back in `selecting`, un-readied,
+    with a `match-error`. A seat with no live socket is marked away instead.
+  - The engine ends the game (prizes, no Pokémon, deck out, a card effect, a tie), or a seat
+    concedes: the Concede button (an `action`), a `bye` mid-match (`left`), or the forfeit clock
+    (`abandoned`). The lobby stays `in-game` on the result.
+  - `rematch`, only on a finished game and after the session re-check below, drops the match,
+    returns to `selecting` and readies the asker; the other seat's `rematch` or ready accepts. The
+    last game's loser chooses who goes first (`nextChooser`); a tie goes to the coin.
+  - The host's kick (`reject` `kicked`) removes the guest and returns to `waiting`, dropping a
+    running match. Outside a match a guest's `bye` frees its seat; the host's only marks it away.
+- **Seats and accounts.** The browser mints a seat secret per lobby (`src/online/session.ts`,
+  in sessionStorage). A hello presents it; the DO keeps only its hash, the public seat id that
+  snapshots and frames name (`packages/schema/src/lobby/seatId.ts`). The first hello claims the
+  host seat, and the host's id always re-seats as host. Another id takes the guest seat when it is
+  free, or before a match when its holder is gone. A socket keeps the account its cookie resolved
+  to at the upgrade. The first signed-in hello binds its seat to that account (`seatUsers`, never
+  broadcast): from then on only that account may hold it, and other sockets on it are closed
+  (1008). A seat without an account can sit but not play, since the handoff reads only a
+  signed-in player's saved deck. A socket with no seat watches a running match: it is answered
+  `reject` `full` and sent the snapshot and the spectators' board.
+- **Frames.** JSON. Every client frame spends from its socket's budget, then is Zod-validated;
+  an invalid one, or one whose `from` is not the socket's own seat, is dropped.
+
+  | Frame | Direction | Purpose |
+  | --- | --- | --- |
+  | `hello` | client → DO | claim or reclaim a seat: the seat secret, a name, `logDeltas` |
+  | `intent` | client → DO | `select-deck` (the deck id stays in the DO) or `set-ready` |
+  | `action` | client → DO | a game action, run for the socket's own seat |
+  | `reject` `kicked` | host → DO → guest | the host's kick |
+  | `bye` | client → DO | leaving; concedes a running match |
+  | `rematch` | client → DO | play again after a finished game |
+  | `state` | DO → every socket | the lobby snapshot after each change |
+  | `match` | DO → each socket | that viewer's redacted game and the seat log; with `logFrom`, only the rows from that index |
+  | `reject` `full` | DO → one socket | no seat for this hello |
+  | `reject-action` | DO → the actor | a refused action, with the engine's reason |
+  | `match-error` | DO → every socket | the match could not start, or a stored one was retired |
+
+  The keepalive is a raw `"ping"`/`"pong"` pair answered by `setWebSocketAutoResponse` without
+  waking the DO; `heartbeat` exists only in the client's channel union, made from those pongs.
+  Close codes: 1001 keepalive lost; 1008 frame rate, an ended session, or a seat an account
+  claimed; 1009 a frame over 16K characters; 1011 the session lookup failed; 1013 lobby full;
+  4000 closed for good (`LOBBY_WS_CLOSED`); 4004 no such lobby (`LOBBY_WS_NOT_FOUND`). The
+  client stops reconnecting on 4000 and 4004 only.
+- **Hibernation.** Sockets are accepted hibernatable (`state.acceptWebSocket`), and a socket's
+  seat and account survive eviction in its attachment, so a lobby can sleep between alarm passes
+  (a two-seat lobby's `SEATED_LIVENESS_SWEEP_MS` keeps it in memory).
+- **The alarm.** One alarm, set for the earliest deadline (`scheduleMaintenance`), covers:
+  1. liveness sweeps: a socket silent past `SOCKET_SILENCE_MS` is closed, checked every
+     `LIVENESS_SWEEP_MS`, or `SEATED_LIVENESS_SWEEP_MS` while both seats are held;
+  2. disconnect graces: a seat whose last socket dropped shows away after `DISCONNECT_GRACE_MS`;
+  3. the countdown and its handoff;
+  4. match forfeits: a seat away from a running match forfeits after `ABANDON_GRACE_MS`, stored
+     as the seat's `forfeitAt`, so the opponent's countdown and the alarm read one number;
+  5. empty-lobby expiry: `EMPTY_LOBBY_TTL_MS` after the last socket (after `created` for a lobby
+     nobody said hello in), `storage.deleteAll()` frees the code.
+
+  The same pass closes a lobby with no commit, accepted action or seated hello for
+  `INACTIVE_LOBBY_MS`: every socket gets 4000 and the lobby is wiped. A failed pass logs
+  `alarm_failed` and re-arms. Constants: `apps/api/src/lobby/logic.ts` and
+  `packages/schema/src/lobby/protocol.ts`.
+- **Reconnect and the log.** The client reconnects with backoff (400 ms doubling to 8 s), queues
+  up to 32 frames while down, repeats its hello until it is answered, and replaces a socket
+  silent for 10 s (`src/online/channel.ts`, `src/online/lobbyClient.ts`). A hello with the seat's
+  secret re-seats it with its deck and ready kept and clears any forfeit; in a match it also gets
+  the whole match frame. A socket whose hello set `logDeltas` gets only the new log rows
+  (`logFrom`) after an accepted action or a forfeit. The handoff, a reconnect, a repeated hello,
+  spectating and a trimmed log send the whole log, and the client answers a gap with a hello. A
+  stored match from an older build is migrated on read (`match_migrated`), or retired when
+  unreadable: the lobby leaves `in-game` and both seats get `match-error`. A rollback across a
+  `MATCH_RECORD_VERSION` change retires the newer matches (§3.7.2).
 - **Abuse limits (security Phase 3, `lobby/logic.ts`):** every frame spends
   from a per-socket token bucket before it is parsed (burst 40, which covers a
   reconnect's 32 queued frames plus its hello; refill 5 a second); a frame past
@@ -534,81 +513,40 @@ data loss rather than a validation failure.
   signed-in socket. The `set-name` intent is gone from the wire (security
   AU8); a frame carrying it fails validation and is dropped, after spending
   from the socket's budget like any frame.
-- **Anonymity:** lobbies stay account-less this phase, matching the client
-  model — players are lobby-scoped session ids minted by the browser
-  (`net/session.ts`), no auth cookie or user row involved.
-- **Frontend swap (done):** `net/channel.ts` is now a WebSocket transport with
-  the same `LobbyChannel` interface — reconnect with capped backoff (400 ms
-  doubling to 8 s), posts queued while down, server pongs surfaced as
-  heartbeat frames so the hook's presence math still works. `useLobby.ts` runs
-  one unified client path for both roles (the host seeds a local snapshot only
-  as first paint); `OnlineHub` creates via `POST /lobby` instead of minting a
-  code locally. `LobbyRoom.tsx` and all components are untouched.
 
 ### 3.7 Deployment
 
-- API + DO: `wrangler deploy`; secrets via `wrangler secret`.
-- Web: Cloudflare Pages / Workers static assets, calling the API over HTTPS.
-- Images: R2 bound to a custom domain / Worker route.
+Two Workers on one `workers.dev` site: `colorless-api` (`apps/api/wrangler.jsonc`) and the static
+web Worker `colorless` (root `wrangler.jsonc`), which calls the API over HTTPS. Images come
+through the API's `/assets/*` routes; there is no custom domain and no staging environment.
+Every production write goes through `bun run release` or the deploy-token wrapper (§3.7.2).
 
-#### 3.7.1 The deploy runbook — RUN IN THIS ORDER (D203)
+#### 3.7.1 Releasing
 
-Four slices (D188, D194, D197, D198) each ended with a piece of this owed, and
-each left it in a commit message. It is written down once, here, because the
-first step is a **PREREQUISITE**: skipping it does not degrade the API, it
-**500s an endpoint outright**.
+Prerequisites:
+- the deploy token file (§3.7.2, "Cloudflare tokens");
+- Balatro's source at `../balatro-source` or `BALATRO_SOURCE`, and a Lua 5.1 for `check:lua`;
+- push access to `origin`, and network to Cloudflare, GitHub and the npm registry; `gh` is
+  optional (the `ci` step only prints);
+- a local catalog ingested from the same series as production (§3.4.1), or `print-keys` refuses.
 
-Verified against production D1 (`735f0fb5-…`) on **2026-08-04**: the applied
-migration list is `0000, 0001, 0002, 0003` — so **three migrations are pending,
-not one**. `0004` (`decks.cover_card_id`), `0005` (`users.favourite_deck_id`)
-and `0006` (`cards.suffix`) have all NEVER been applied remotely, and the code
-on `main` reads all three columns. `wrangler d1 migrations apply` applies them
-in order, so this is still one command — but "only 0006 is missing" is wrong,
-and the blast radius is `/decks`, `/auth/me` **and** `/facets`, not `/facets`
-alone.
+Before:
+1. Merge into main and push. `clean-tree` refuses a dirty tree or a HEAD that is not the
+   remote's main.
+2. Run `bun run e2e` (and `--firefox`) when the change touches page lifecycle, fetch or
+   WebSocket code (§3.7.2).
+3. Put a new required secret first, through the wrapper; the `secrets` step prints the command.
+4. Ship a Durable Object migration in a release of its own (§3.7.2).
 
-```sh
-# 1. PREREQUISITE — apply pending migrations to the REMOTE database.
-#    Must precede the deploy: `/facets` selects `cards.suffix` inside the same
-#    db.batch() as the other seven vocabularies, so an unmigrated database
-#    fails the WHOLE endpoint, not just the new field. Likewise `/decks`
-#    (0004) and `GET /auth/me` (0005). `wrangler deploy` does NOT run this.
-cd apps/api && bun run db:migrate:remote
+Run `bun run release` from the repo root. It runs `bun install --frozen-lockfile`, `check`,
+`release:gate`, `build`, `db:migrate:remote`, `api:deploy`, `release:health`, `deploy:web` and
+`release:finish`, and drops its pin when a step fails; §3.7.2 has each step and the recovery
+table. `bun run api:deploy` and `bun run deploy` alone are partial deploys: no bookmark, health
+check or tag.
 
-# 2. Deploy the Worker.
-cd apps/api && bun run deploy          # or, from the repo root: bun run api:deploy
-
-# 3. Backfill the catalog (needs network access to api.tcgdex.net — see below).
-#    Populates `cards.suffix` (NULL on all 3,786 rows today) and rewrites the
-#    "None" sentinels in D1 itself: 34 `mfb` rows in `rarity`, 2 of them also in
-#    `regulation_mark` (36 values / 34 rows). Until it runs, `/facets` serves
-#    `"suffixes": []` and the builder's rail hides the section — the filter is
-#    unreachable rather than broken (§5.3.3) — and the read-side normaliser in
-#    `apps/api/src/sentinel.ts` hides the sentinels from the API while leaving
-#    them in the rows.
-cd apps/api && bun scripts/with-deploy-token.ts bun scripts/ingest.ts --serie sv --remote
-
-# 4. Step 3 ends by stamping a new `catalog:epoch` in the CACHE KV namespace,
-#    which is part of every catalog cache key (apps/api/src/catalog/cache.ts), so
-#    the pre-ingest KV entries stop being served within about six minutes; a
-#    browser may show its own cached body for up to an hour more. A data-only
-#    change does not bump `CACHE_VERSION`.
-```
-
-**Command check (against `package.json` and `apps/api/package.json`):**
-
-| Command | Exists? |
-| --- | --- |
-| `bun run db:migrate:remote` **from the repo root** | ❌ **NO** — the root `package.json` has no such script. It is defined only in `apps/api/package.json`, so it must be run as `cd apps/api && bun run db:migrate:remote` (or `bun run --cwd apps/api db:migrate:remote`). Commit messages that quote the bare form are wrong. |
-| `cd apps/api && bun run db:migrate:remote` | ✅ `with-deploy-token.ts wrangler d1 migrations apply colorless --remote` |
-| `cd apps/api && bun scripts/with-deploy-token.ts bun scripts/ingest.ts --remote` | ✅ the script exists; `--remote` and `--serie` are real flags (`apps/api/scripts/ingest.ts`). Note it is `bun scripts/ingest.ts`, **not** `bun run` — there is no npm script wrapping it. |
-| `bun run api:deploy` (repo root) | ✅ `bun run --cwd apps/api deploy` → `release-gate.ts migrations clean-tree ci -- wrangler deploy --minify`, which deploys with the commit's tag and message (§3.7.2) |
-| `cd apps/api && bun run db:migrate:local` | ✅ the local twin, used for the pre-flight |
-
-**Why step 3 has never run here.** `api.tcgdex.net` is refused by this
-environment's network policy — the same wall D188, D194, D197 and D198 hit. The
-ingest is the only step that needs the public internet; steps 1, 2 and 4 do not,
-and step 1 is therefore unblocked TODAY and should not wait for the backfill.
+After:
+1. Read the Workers Issues page (`colorless-api` → Observability → Issues, §3.7.4).
+2. After about an hour of use, `bun run --cwd apps/api prod:report --release` (read-only).
 
 #### 3.7.2 Release gates (2026-10-27; identity and checks 2026-11-10, BLD-P1)
 
@@ -656,7 +594,7 @@ exits 1.
 The API `deploy` script is `release-gate.ts migrations clean-tree ci --
 wrangler deploy --minify`. It fails unless every file in `drizzle/` is applied
 remotely, so a bare `api:deploy` cannot ship a Worker ahead of its migrations
-(the D203 incident above). Then it re-checks the tree, prints CI's line, and
+(the D203 incident of 2026-08). Then it re-checks the tree, prints CI's line, and
 runs `wrangler deploy --minify --tag <short sha> --message <commit subject>`.
 
 `deploy:web` is `release-gate.ts clean-tree web-dist ci -- wrangler deploy`,
@@ -708,7 +646,8 @@ All the gates only read production.
 https://colorless-api.jofrescari.workers.dev/health` gives `version.tag` (the
 API's commit). The page source's `<meta name="build">` gives the web's commit.
 `bunx wrangler deployments list` shows each version's tag and message. `git tag
---list 'release-*'` and `tmp/releases.log` hold the release history.
+--list 'release-*'` and `tmp/releases.log` hold the release history. There is no
+CHANGELOG: a release's notes are `git log --format=%s <previous tag>..<tag>`.
 
 **Cloudflare tokens (build audit DEP3, BLD-P5).** Two account-owned tokens, each
 restricted to this account. `colorless-agents-read` is the ambient
@@ -760,9 +699,13 @@ earliest line for it in `tmp/d1-bookmarks.log`). From `apps/api` unless noted:
 | `check`, `release:gate`, `build` | Nothing changed. | Fix what it printed and release again. |
 | `db:migrate:remote` | The files before the failing one are applied; the failing one rolled back (one transaction per file). The old Worker reads the expanded schema fine. | A transient error: release again. A SQL error: fix the file (it is not applied remotely), commit, push, release again. |
 | `api:deploy` | New schema, old Worker. | Release again, or `bun run api:deploy`, then `bun run release:health`, then `bun run deploy:web` from the repo root (`web-dist` refuses a `dist/` built at another commit: then `bun run deploy`). |
-| `release:health` | New Worker, which cannot read D1, sees another migration count or fails a route; or the new version never answered `/health`. | The tag never matched: `bunx wrangler deployments list` shows whether the deploy took; rerun `bun run release:health` once it has. A D1 error: `evt = "d1", kind = "health_failed"` in Workers Logs (§3.7.4) carries the error and cause names and `quota`. `quota: true` is a spent daily quota (wait for 00:00 UTC); otherwise it is a binding or schema problem (`bunx wrangler d1 migrations list colorless --remote`): fix it, rerun `bun run release:health`. Bad code (a failed `/sets` or `/auth/me` probe, or D1 errors from the code): from `apps/api`, `bun scripts/with-deploy-token.ts bunx wrangler rollback <version id> -m "<why>"` to the version before the release (the `versions` line it printed), and check `HEALTH_TAG='*' bun run release:health` again. The schema stays: the old Worker reads it (expand, then contract). |
-| `deploy:web` (`web-dist`, the deploy, `web-health`) | New API, and the old web app, or a new one `web-health` found broken. The old web app is fine when the API change kept the old client working, as an API-first release should. | `bun run deploy` from the repo root, then `bun run --cwd apps/api release:finish` if the pin is still there (`abort` dropped it otherwise, and the release goes untagged; tag it by hand as below). A bad web build: `bunx wrangler deployments list` and `bun apps/api/scripts/with-deploy-token.ts bunx wrangler rollback <version id>` from the repo root (Worker `colorless`). |
+| `release:health` | New Worker, which cannot read D1, sees another migration count or fails a route; or the new version never answered `/health`. | The tag never matched: `bunx wrangler deployments list` shows whether the deploy took; rerun `bun run release:health` once it has. A D1 error: `evt = "d1", kind = "health_failed"` in Workers Logs (§3.7.4) carries the error and cause names and `quota`. `quota: true` is a spent daily quota (wait for 00:00 UTC); otherwise it is a binding or schema problem (`bunx wrangler d1 migrations list colorless --remote`): fix it, rerun `bun run release:health`. Bad code (a failed `/sets` or `/auth/me` probe, or D1 errors from the code): from `apps/api`, `bun scripts/with-deploy-token.ts bunx wrangler rollback <version id> -m "<why>"` to the version before the release (the `versions` line it printed; after a retry, see below), and check `HEALTH_TAG='*' bun run release:health` again. The schema stays: the old Worker reads it (expand, then contract). |
+| `deploy:web` (`web-dist`, the deploy, `web-health`) | New API, and the old web app, or a new one `web-health` found broken. The old web app is fine when the API change kept the old client working, as an API-first release should. | Release again. By hand instead: `bun run deploy` from the repo root, then tag the commit yourself, since `abort` dropped the pin and `release:finish` refuses without one: `git tag -a release-<UTC YYYYMMDD-HHMM> -m "Release <short sha>" <sha> && git push origin refs/tags/release-<UTC YYYYMMDD-HHMM>` (the log line is then missing, as in the next row). A bad web build: `bunx wrangler deployments list` and `bun apps/api/scripts/with-deploy-token.ts bunx wrangler rollback <version id>` from the repo root (Worker `colorless`). |
 | `release:finish` | Both new. Only the record is missing: the log line, the tag, or its push. | It prints the `git tag -a … && git push origin refs/tags/…` to run. A missing log line can be rebuilt from `bunx wrangler deployments list` (both Workers) and `tmp/d1-bookmarks.log`. |
+
+When an earlier attempt of the same release got past `api:deploy`, the retry's
+`versions` line records that attempt's version as the one "before" it. To roll back after a retry, pick the newest version
+in `bunx wrangler deployments list` whose tag is not this release's short sha.
 
 Never revert or edit a migration file that is applied remotely: undo it with a
 new migration. A rollback of the API across a change of
@@ -774,19 +717,6 @@ adds, renames or deletes a class) blocks a rollback to any API version
 before it: Cloudflare refuses a rollback across a DO class change. Ship such a
 migration in a release with no other API change, so the version before it is
 not one a rollback would need (build audit DEP2).
-
-**Secrets before the first Phase 5 release (security audit 2026-10-27).** Generate
-`PASSWORD_PEPPER` and `LOG_TAG_KEY` (`openssl rand -base64 32` each), save both in
-the password manager, then from `apps/api/` run
-`bun scripts/with-deploy-token.ts bunx wrangler secret put PASSWORD_PEPPER` and
-`bun scripts/with-deploy-token.ts bunx wrangler secret put LOG_TAG_KEY`, and only
-then `bun run release`. A secret put applies to the running Worker at once and the old code
-ignores both, so the order is safe; the gate refuses the release until both exist.
-Nobody is logged out: existing hashes are re-peppered at each account's next
-sign-in. Google sign-ins in flight at the deploy fail once (PKCE changed the state
-cookie). `check:static` adds `migration-guard.ts` (no unreviewed table rebuild,
-drop or rename) and `drizzle-drift.ts` (schema.ts matches the migrations); see
-docs/conventions.md "Database migrations".
 
 The daily sweep's Cron Trigger and the lobby's rate-limit bindings live in
 `apps/api/wrangler.jsonc` and take effect with `api:deploy`; there is no
@@ -803,16 +733,22 @@ those are only reported. Run it after every remote ingest.
 
 #### 3.7.3 Backup and recovery
 
-What can be lost, and how it comes back:
+What each store holds about a player, how long, and how it comes back:
 
-| Store | Recovery |
-| --- | --- |
-| D1 user tables (`users`, `sessions`, `oauth_identities`, `folders`, `decks`, `deck_cards`) | Time Travel, or an export taken before a risky change. Nothing else can recreate them. |
-| D1 `auth_rate_limits` | Disposable: at worst a caller gets a fresh sign-in budget. |
-| D1 catalog (`series`, `sets`, `cards`) | Re-run the ingest (§3.4.1); Time Travel only when user rows reference cards an ingest removed. |
-| KV `CACHE` | Disposable: stamp a new `catalog:epoch`. |
-| R2 `ASSETS` | Disposable: refilled from tcgdex on demand. |
-| LobbyDO storage | Ephemeral by design; matches in progress are lost. |
+| Store | Personal data | Kept for | Recovery |
+| --- | --- | --- | --- |
+| D1 user tables (`users`, `sessions`, `oauth_identities`, `folders`, `decks`, `deck_cards`) | email, display name, password hash, the Google account id, the deck library; sessions by the SHA-256 of their token | until the account is deleted (`DELETE /auth/me`; the rest cascades), with no purge of unverified accounts; a session 30 days, then the daily sweep | Time Travel, or an export taken before a risky change. Nothing else can recreate them. |
+| D1 `auth_rate_limits` | SHA-256 keys of the IP (an IPv6 /64) or email per scope, with counts | until its window ends (15 minutes to an hour), then the daily sweep | Disposable: at worst a caller gets a fresh sign-in budget. |
+| D1 catalog (`series`, `sets`, `cards`) | none | until an ingest changes it | Re-run the ingest (§3.4.1); Time Travel only when user rows reference cards an ingest removed. |
+| KV `CACHE` | none (public catalog responses) | a day, or until the next `catalog:epoch` | Disposable: stamp a new `catalog:epoch`. |
+| R2 `ASSETS` | none (card images) | indefinitely | Disposable: refilled from tcgdex on demand. |
+| LobbyDO storage | seat names, chosen deck names and ids, each seat's account id (`seatUsers`), the match and its log | until the lobby is wiped: 10 minutes after its last socket, or after an hour without play | Ephemeral by design; matches in progress are lost. |
+| Workers Logs | the app's lines: keyed tags, never an email, IP or id (§3.7.4); Cloudflare's invocation event: the IP, city, postal code, coordinates and headers, the URL without its query | 3 days | Not backed up. |
+| The browser | localStorage: preferences, a sandbox game, the online name; sessionStorage: each lobby's seat secret; IndexedDB: card art; the http-only `session` cookie | until the player clears them; sessionStorage until the tab closes; the cookie 30 days | Nothing to recover. |
+| `tmp/backup/` exports (below) | all of D1, emails and password hashes included | until deleted by hand, once no longer needed | They are the backup. |
+
+A deleted account stays in D1's Time Travel history for its 7 days (30 on paid), so a restore
+to before the deletion brings it back.
 
 **Time Travel** is always on: the database can be restored to any minute in
 the last 7 days on the Free plan (30 on paid). `release` and a remote
@@ -1000,7 +936,39 @@ bunx wrangler d1 delete colorless-drill
 cd ../.. && rm -rf tmp/drill
 ```
 
-Record the restore's duration and anything that differed here.
+**Standing it up from zero** (a new account, or new resource names). It was done once, in
+5b4125d3c (2026-10-22), as a rename that copied the D1 data from the old database; the order
+below is derived from the config and has not been run end to end. Every Cloudflare write goes
+through the deploy token.
+
+1. Make the two tokens of §3.7.2, "Cloudflare tokens": the read one as `CLOUDFLARE_API_TOKEN`,
+   the deploy one in its file.
+2. Create the stores, from `apps/api/` (`CI=true` stops `d1 create` prompting):
+
+   ```sh
+   CI=true bun scripts/with-deploy-token.ts bunx wrangler d1 create colorless
+   bun scripts/with-deploy-token.ts bunx wrangler kv namespace create colorless-cache
+   bun scripts/with-deploy-token.ts bunx wrangler r2 bucket create colorless-assets
+   ```
+
+   Paste the printed `database_id` and KV `id` into `apps/api/wrangler.jsonc`. Keep the names:
+   `colorless` and `colorless-api` are also in `apps/api/package.json`,
+   `apps/api/scripts/{d1,release-gate,prod-report}.ts` and `scripts/e2e.ts`. The Free plan
+   allows 10 D1 databases per account.
+3. Check that no other Worker on the account uses the `ratelimits` `namespace_id`s.
+4. Set the origins together: the web Worker's `https://colorless.<subdomain>.workers.dev` as
+   `APP_ORIGIN` (`apps/api/wrangler.jsonc` `vars`) and `VITE_SITE_ORIGIN`, the API's as
+   `VITE_API_ORIGIN` (`.env.production`, which also builds the CSP). `web-dist` refuses a build
+   whose site origin is not `APP_ORIGIN`. Both must stay on one site (§3.5).
+5. Register the new callback `https://<API origin>/auth/oauth/google/callback` on the Google
+   client (README "Google login").
+6. Commit and push, then `bun run db:migrate:remote` and `bun run api:deploy`, so the Worker
+   exists. Put the four secrets `release:gate`'s `secrets` step lists (README "API secrets"),
+   each with `bun scripts/with-deploy-token.ts bunx wrangler secret put <NAME>`. Then
+   `bun run deploy` from the repo root, so the web Worker exists too (`release:gate`'s
+   `versions` step reads both; unverified on a never-deployed one).
+7. Ingest the full catalog locally and with `--remote` (§3.4.1), then `bun run release`.
+8. Update the URLs written into README and this file.
 
 #### 3.7.4 Monitoring
 
@@ -1340,78 +1308,42 @@ fixtures in `__fixtures__/`; live sweep via `packages/schema/scripts/validate-li
 
 ### 5.2 Canonical domain `Card` (D5 = unify)
 
-Define **one** canonical `Card` in `packages/schema`, mapped from the tcgdex
-model, and derive the two existing view shapes from it:
-- **`BuilderCard`** view (`src/features/builder/cards.ts`) — browse/filter/deck
-  math. Preserve the existing energy-type/subtype/rarity/format vocabulary.
-- **`CardModel`** view (`src/features/playmat/types.ts`) — in-play card.
-
-> **Status (M5):** the canonical domain now exists in
-> `packages/schema/src/catalog/` — unprefixed `Card`/`CardBrief`,
-> `Set`/`SetBrief`/`SetWithCards`, `Serie`/`SerieBrief` and the
-> `paginatedSchema` envelope. One flat object per card (nullability mirrors
-> the §5.3 columns; consumers narrow on `category`), and `image`/`logo`/
-> `symbol` are OUR asset **base paths** (`/assets/cards/{id}`,
-> `/assets/sets/{id}` — clients append `/{quality}.{ext}` / `/logo.{ext}` /
-> `/symbol.{ext}`), null when the row has no origin URL. The
-> `BuilderCard`/`CardModel` view projections remain future work
-> (M9 frontend swap / P2).
-
-Keep the existing `Deck` / `Folder` shapes (`src/features/decks/data.ts`) as the
-API's deck representation, extended with a card list.
-
-> **Status (M7):** the deck/folder domain schemas now live in
-> `packages/schema/src/decks/` — `Folder`, `Deck` (+ `cards: [{cardId, count}]`),
-> `DeckSummary` (the summed `cardCount`, with `cards` only on complete decks), and the
-> create/patch request schemas for both resources.
+One flat `Card` per print, in `packages/schema/src/catalog/` with `CardBrief`,
+`Set`/`SetBrief`/`SetWithCards`, `Serie`/`SerieBrief` and the `paginatedSchema` envelope. Its
+nullability follows the §5.3 columns rather than tcgdex's optionality; consumers narrow on
+`category`. `image`, `logo` and `symbol` are this API's asset base paths (`/assets/cards/{id}`,
+`/assets/sets/{id}`; the client appends `/high.webp`, `/logo.webp` or `/symbol.webp`), null when
+the row has no origin URL. The deck library's schemas are in `packages/schema/src/decks/`:
+`Deck` (with `cards: [{cardId, count}]`), `DeckSummary` and the request bodies.
 
 ### 5.3 D1 relational schema
 
-Full-history-capable; SV-era rows only, for now. Implemented with Drizzle in
-`apps/api/src/db/` (`catalog.ts` / `users.ts`); migrations in `apps/api/drizzle/`.
+One database, two logical schemas. `apps/api/src/db/catalog.ts` and `users.ts` are authoritative
+for columns and indexes (`schema.ts` exports both); the migrations are in `apps/api/drizzle/`
+(docs/conventions.md "Database migrations"). Catalog dates are ISO text verbatim from tcgdex;
+user-data timestamps are integer epoch ms.
 
-```sql
--- Catalog (ingested; read-only to the app)
-series(id PK, name, release_date, logo_url)
-sets(id PK, serie_id FK, name, logo_url, symbol_url,
-     release_date, count_total, count_official, legal_standard, legal_expanded,
-     tcg_online, abbreviation)              -- abbreviation: tcgdex abbreviation.official
-cards(id PK, set_id FK, local_id, name, category,        -- Pokemon|Trainer|Energy
-      illustrator, rarity, regulation_mark,
-      hp, stage, suffix, evolve_from, types_json, retreat, -- Pokémon fields (nullable)
-      abilities_json, attacks_json, weaknesses_json, resistances_json,
-      trainer_type, energy_type, effect,                 -- Trainer/Energy fields
-      legal_standard, legal_expanded,                    -- tcgdex, per print
-      print_key, legal_standard_effective, legal_expanded_effective,
-        -- the reprint rule: print_key = the card's functional identity (ingest
-        -- map.ts printKey); *_effective = legality OR'd across prints sharing
-        -- it (ingest post-pass reprintLegalitySql). Readers coalesce onto the
-        -- per-print flags. The engine's PROGRAM_ALIAS table
-        -- (scripts/registry-aliases.ts) is generated from print_key, so one
-        -- registry row programs every print in the group.
-      variants_json, image_url, updated)
+| Table | Holds | Key, unique | Foreign keys (ON DELETE) | Written by |
+| --- | --- | --- | --- | --- |
+| `series` | tcgdex series | `id` | none | ingest |
+| `sets` | sets: counts, legality, origin logo and symbol URLs | `id` | `serie_id` → series (no action) | ingest |
+| `cards` | one row per print: the Pokémon, Trainer and Energy fields (lists as JSON), `suffix`, per-print and effective legality, `print_key`, the origin `image_url` | `id`; unique (`set_id`, `local_id`) | `set_id` → sets (no action) | ingest and its reprint pass |
+| `users` | email, display name, password hash (null for OAuth-only), `email_verified`, `name_prompt`, the retired `favourite_deck_id` | `id`; unique `email` | `favourite_deck_id` → decks (SET NULL) | register, the OAuth callback, `PATCH /auth/me` |
+| `oauth_identities` | a provider account linked to a user | (`provider`, `provider_id`) | `user_id` → users (CASCADE) | the OAuth callback |
+| `sessions` | SHA-256 of the cookie token, expiry | `id` | `user_id` → users (CASCADE) | register, login, the OAuth callback; the sweep |
+| `folders` | retired with its routes; kept | `id` | `user_id` → users (CASCADE), `parent_id` → folders (CASCADE) | nothing |
+| `decks` | name, format, tint, `cover_card_id`, `position`, `version`, `updated` | `id` (a UUID) | `user_id` → users (CASCADE), `folder_id` → folders (SET NULL), `cover_card_id` → cards (no action) | the deck routes |
+| `deck_cards` | each card's count in a deck | (`deck_id`, `card_id`) | `deck_id` → decks (CASCADE), `card_id` → cards (no action) | the deck routes |
+| `auth_rate_limits` | sign-in counters: a hashed key, its count and `reset_at` | `key` | none | the D1 limiter (§3.5); the sweep |
 
--- User data (read-write)
-users(id PK, email UNIQUE, display_name, password_hash?, email_verified, name_prompt, created_at)
-  -- display_name: typed, or a generated "Trainer-XXXX" handle (AU3); name_prompt: ask once to
-  -- choose a public name (accounts from before handles; PATCH /auth/me clears it)
-oauth_identities(provider, provider_id, user_id FK, PRIMARY KEY(provider, provider_id))
-sessions(id PK, user_id FK, expires_at, created_at)
-folders(id PK, user_id FK, parent_id FK?, name)
-decks(id PK, user_id FK, folder_id FK?, name, format, tint, updated)
-deck_cards(deck_id FK, card_id FK, count, PRIMARY KEY(deck_id, card_id))
-```
-
-Deltas from the first draft, per the live tcgdex shapes: `series.release_date`
-added; `sets.updated` dropped (tcgdex sets carry no `updated`);
-`cards.abilities_json` added. Per D9 (§3.4), the asset columns are the tcgdex
-**origin** base URLs — extensionless, per §4.4 — not R2 URLs: the original
-`*_r2_url` columns were replaced by `cards.image_url`, `sets.logo_url`/
-`symbol_url`, `series.logo_url` (migrations 0001/0002). tcgdex
-`variants_detailed` (per-physical-print foil/stamp data), `pricing` and
-`boosters` are deliberately **not** persisted — rationale in
-`apps/api/src/db/catalog.ts`. Catalog dates/timestamps are ISO text verbatim
-from tcgdex; user-data timestamps are integer epoch ms.
+"No action" refuses deleting a row another row still points at, so an ingest cannot orphan a
+deck. Deleting a user removes its sessions, identities, folders, decks and deck cards in one
+statement (§3.5); conventions.md "Database migrations" warns what that cascade does to a table
+rebuild. The reprint rule: `print_key` is a card's functional identity (ingest `map.ts`
+`printKey`), and `legal_*_effective` is legality OR'd across every print sharing it (the ingest
+post-pass `reprintLegalitySql`); readers fall back to the per-print flags, and the engine's
+`PROGRAM_ALIAS` table (`scripts/registry-aliases.ts`) is generated from it. tcgdex
+`variants_detailed`, `pricing` and `boosters` are not stored.
 
 #### 5.3.1 "No value" sentinels — the `mfb` set (D194)
 
@@ -1444,17 +1376,8 @@ columns, not the one first reported, and `rarity` is the larger leak.
 without a re-ingest). The KV cache prefix went `v3`→`v4` so the stale facet
 body can't outlive the deploy by up to a TTL.
 
-The write-side guard only takes effect on the next ingest of `mfb`; the rows
-in D1 still hold `"None"` until then. To discharge it at the source:
-
-```sh
-cd apps/api && bun scripts/with-deploy-token.ts bun scripts/ingest.ts --sets mfb --remote
-```
-
-(Idempotent — every statement is an `ON CONFLICT DO UPDATE` upsert, and
-mapping now emits NULL for those two columns.) It could not be run in the
-session that landed the fix: `api.tcgdex.net` is blocked by the network
-policy there.
+The ingest has written NULL there since. The 2026-08 note on the then-pending re-ingest
+is in `docs/archive/backend-data-plan.md`.
 
 #### 5.3.2 Catalog query census (D197) — three measurements, one migration
 
@@ -1512,40 +1435,9 @@ claims hundreds). The column is added, `mapCard` writes it (sentinel-normalised
 like the other facet vocabularies — see §5.3.1), and `CARDS_COLUMNS` emits it,
 so the next ingest populates it.
 
-⚠️ **Unproven until a re-ingest: the column has no values.** Discharge with:
-
-```sh
-cd apps/api && bun scripts/with-deploy-token.ts bun scripts/ingest.ts --remote     # then re-check the census below
-```
-
-```sql
-SELECT suffix, COUNT(*) FROM cards WHERE suffix IS NOT NULL GROUP BY suffix;
-```
-
-`api.tcgdex.net` is blocked by the network policy in this session too (as it
-was for D188, D194 and D197), so the ingest half remains outstanding.
-
-⚠️ **AND THE COLUMN IS NOT IN PRODUCTION AT ALL.** D197 recorded it as "NULL on
-all 3,786 rows"; it is stronger than that — migration `0006` was generated and
-proven against a fresh LOCAL D1, but **never applied to the remote database**
-(`PRAGMA table_info(cards)` on production has no `suffix`; `wrangler d1
-migrations apply` is a manual step and `deploy` does not run it). That is a
-deploy ORDERING constraint for D198, not a code problem, and it is sharp: the
-`/facets` handler now selects `cards.suffix` inside the same `db.batch()` as
-the other seven vocabularies, so deploying the Worker against an unmigrated
-database fails the WHOLE endpoint, not just the new field. **Apply the
-migration first:**
-
-```sh
-cd apps/api && bun run db:migrate:remote        # 0006 — before deploying D198
-```
-
-⚠️ **AND IT IS NOT ONLY `0006` (D203).** Production's `d1_migrations` table lists
-`0000`–`0003` only, checked 2026-08-04: `0004` (`decks.cover_card_id`) and `0005`
-(`users.favourite_deck_id`) are pending too, and `/decks` and `GET /auth/me`
-already read those columns. The command above is unchanged — it applies all
-three in order — but the ordering constraint is wider than this section said.
-**Full runbook: §3.7.1.**
+The 2026-08 notes that the column was still empty and its migration unapplied in
+production are in `docs/archive/backend-data-plan.md`; `release` now applies every
+migration before it deploys (§3.7.2).
 
 ### 5.3.3 `?suffix=` and `CatalogFacets.suffixes` (D198)
 
@@ -1696,15 +1588,18 @@ POST   /auth/logout              # deletes the session row, clears the cookie �
 POST   /auth/logout-all          # session cookie → deletes every session of the account, clears
                                  #   the cookie → 204; 401 without a live session
 GET    /auth/me                  # session cookie → user, else 401 (expiry enforced here)
+PATCH  /auth/me                  # {displayName} → 200 user, and clears namePrompt; 400 blank or
+                                 #   over 64 characters once cleaned; 401 checked before the body;
+                                 #   a retired favouriteDeckId is ignored
 DELETE /auth/me                  # {password?, confirmEmail?} → 204, deletes the account (cascades),
                                  #   clears the cookie; 401 wrong/missing password; 403 OAuth-only
                                  #   account without its typed email; 429 rate-limited
 GET    /auth/oauth/:provider     # google — 302 to provider with a PKCE S256 challenge; 503
-                                 #   until secrets installed
+                                 #   until secrets installed; 404 {"error":"unknown provider"}
 GET    /auth/oauth/:provider/callback  # state-checked code exchange (PKCE verifier) → session, 302
                                  #   to APP_ORIGIN; failures 302 back with ?authError= state |
                                  #   exchange | profile | no-email | email-in-use | email-unverified |
-                                 #   unavailable (D1 failed)
+                                 #   unavailable (D1 failed); 404 for an unknown provider
 POST   /auth/verify-email  ·  POST /auth/reset-password
                                  # both 501 — blocked on choosing an email provider (§3.5)
 
@@ -1725,7 +1620,8 @@ POST   /auth/verify-email  ·  POST /auth/reset-password
 # limited to 60 a minute per account and 180 per IP (Workers Rate Limiting,
 # §3.7.4) → 429 `{"error":"too many requests"}` + Retry-After: 60.
 GET    /decks            # DeckSummary[]: {id, name, format, tint, folderId,
-                         #   updated, version, cardCount, coverCardId, cards?}
+                         #   position, updated, version, cardCount, coverCardId,
+                         #   cards?}, ordered by position
                          #   — cardCount = summed copy counts (0 when empty);
                          #   `cards` (as GET /decks/:id orders them) only on a
                          #   deck of exactly DECK_SIZE, so the sandbox/online
@@ -1733,8 +1629,10 @@ GET    /decks            # DeckSummary[]: {id, name, format, tint, folderId,
                          #   per-deck GET, and each row stays ≤60 entries.
                          #   Optional on the wire: a client falls back to
                          #   GET /decks/:id when it is absent (an older api)
-GET    /decks/:id        # full Deck: summary shape minus cardCount, plus
-                         #   cards: [{cardId, count}]
+GET    /decks/:id        # full Deck: {id, name, format, tint, folderId, position,
+                         #   updated, version, cards: [{cardId, count}],
+                         #   chosenCoverCardId} — the owner's cover pick, null for
+                         #   automatic (the summary's coverCardId is the face drawn)
 POST   /decks            # {name, tint 0–360, format?, folderId? (null), cards?}
                          #   → 201 Deck (server-minted UUID id, version 0);
                          #   409 {"error":"deck limit reached","limit":500} once
@@ -1743,8 +1641,12 @@ POST   /decks            # {name, tint 0–360, format?, folderId? (null), cards
                          #   (INSERT … SELECT … WHERE count < cap) and the cards
                          #   insert is guarded by EXISTS on the deck row, so
                          #   racing creates never pass the cap (security DK2)
-PATCH  /decks/:id        # any of {name, tint, format?, folderId? (null)} (null clears
-                         #   the nullable ones) AND/OR wholesale `cards`
+PATCH  /decks/:id        # any of {name, tint, format?, folderId? (null),
+                         #   chosenCoverCardId?} (null clears the nullable ones;
+                         #   a cover must be a card the deck holds after the patch,
+                         #   else 400 {"error":"cover card not in deck"}, and a
+                         #   `cards` replacement drops a pin whose card left)
+                         #   AND/OR wholesale `cards`
                          #   replacement (only the differing rows, in one
                          #   db.batch); writes only the named fields; refreshes
                          #   `updated` and bumps `version`; an empty patch (or
@@ -1765,7 +1667,8 @@ PATCH  /decks/:id        # any of {name, tint, format?, folderId? (null)} (null 
 DELETE /decks/:id        # 204 (deck_cards cascade away)
 
 # Lobby (Durable Object) — implemented (P1 m8, apps/api/src/lobby/; §3.6
-# as-built). Account-less: neither route reads the session cookie. Both are
+# as-built). Neither route needs a session; the upgrade forwards the `session`
+# cookie to the DO, which binds a signed-in seat to its account. Both are
 # limited per IP (Workers Rate Limiting) → 429 + Retry-After: 60.
 POST   /lobby                    # mint an unused code (draw + claim via the DO,
                                  #   retry on 409 collision) → 201 {code}; 503
@@ -1784,77 +1687,18 @@ GET    /lobby/:code/ws           # strict code check (404) → upgrade check (42
                                  #   response's headers are immutable
 ```
 
----
-
-## 7. Frontend changes
-
-- Typed **API client** (shared or `apps/web/src/lib/api.ts`) replacing fixture
-  imports.
-- Swap `CARD_POOL` for a fetched, paginated, server-filtered card search.
-- Point deck + folder persistence at the API (behind the `persistedState` seam);
-  add **auth UI** (login/register, Google buttons, session state).
-- ✅ **Lobby transport swapped** (P1 m8): `net/channel.ts` is a WebSocket
-  channel against the DO; lobby types/reducer/codes come from
-  `packages/schema`. The api origin is read ONCE, in `src/lib/apiOrigin.ts`,
-  from **`VITE_API_ORIGIN`** (default `http://localhost:8787`; ws(s):// is
-  derived from it) — the M9 API client should reuse that module.
-- ✅ **CSP updated** (M9): `vite.config.ts` derives it from `VITE_API_ORIGIN`
-  via `loadEnv` (img-src + connect-src get the api origin, connect-src also
-  its ws(s) twin; scrydex removed). NOTE: the config re-derives the origin —
-  it can't import `apiOrigin.ts` (`import.meta.env`); a shared env-free
-  module is on the M9 review backlog (deck-builder.md).
-
----
-
-## 8. Work plan (milestones)
-
-1. ✅ **Scaffold** `apps/api` (Hono + wrangler) + `packages/schema` (+ stub
-   `packages/engine`); Bun workspaces; `/health` deployed green at
-   `https://colorless-api.jofrescari.workers.dev/health`.
-2. ✅ **Schemas** — tcgdex Zod schemas (`packages/schema/src/tcgdex/`, fixtures
-   + 19 tests + live sweep via `bun packages/schema/scripts/validate-live.ts`,
-   370 requests / 0 failures); lobby types/reducer moved to
-   `packages/schema/src/lobby/`, web importers now use `@colorless/schema`.
-3. ✅ **D1 migrations** — catalog + user tables via Drizzle
-   (`apps/api/src/db/`, migration `apps/api/drizzle/0000_tired_sentry.sql`,
-   scripts `db:generate` / `db:migrate:local` / `db:migrate:remote`). Applied
-   locally and remotely.
-4. ✅ **Ingest + R2 mirror** — local CLI `apps/api/scripts/ingest.ts` (validated
-   upserts, idempotent, `--dry-run`) + lazy cache-aside `/assets/*` mirror (D9,
-   §3.4). *Remote migrations 0001/0002 + full `--serie sv --remote` run pending
-   user approval.*
-5. ✅ **Catalog read API** — cards/sets/series with filtering/pagination + KV
-   cache (`apps/api/src/catalog/`); canonical domain `Card` in
-   `packages/schema/src/catalog/` (§5.2, §6).
-6. ✅ **Auth** — email/password + sessions + Google OAuth
-   (`apps/api/src/auth/`, §3.5 as-built; email flows 501 pending provider;
-   OAuth 503 until the user sets the two Google `wrangler secret`s).
-7. ✅ **Deck persistence API** — decks/folders CRUD tied to the session user
-   (`apps/api/src/decks/`, §6 as-built; domain schemas in
-   `packages/schema/src/decks/`; session gate extracted to
-   `apps/api/src/auth/requireUser.ts`, now also backing `GET /auth/me`).
-8. ✅ **Lobby Durable Object** — `LobbyDO` WS server running the shared
-   reducer (hibernation + alarms, `apps/api/src/lobby/`, §3.6 as-built); wire
-   schemas + `lobbyCode` moved into `packages/schema/src/lobby/`; client
-   transport swapped to WebSocket (`net/channel.ts`, `VITE_API_ORIGIN`).
-9. ✅ **Frontend swap (M9, 2026-07-13)** — typed zod-free client
-   `src/lib/api.ts`; builder on the server catalog (adapter
-   `src/features/builder/catalog.ts`, `useCardSearch`, `cardStore` deck
-   hydration; api gained repeatable type/rarity + sort + extended CardBrief —
-   D10, cache keys `catalog:v2:`); auth UI (`src/features/auth/`,
-   AuthProvider/AuthPage/AccountButton); decks & folders + deck contents on
-   the API (optimistic updates; localStorage deck store retired); CSP from
-   `VITE_API_ORIGIN`. Deferred items → deck-builder.md "M9 review backlog".
-10. **(stretch)** Cron Trigger to refresh new sets; widen ingest scope.
-
----
-
-## 9. Assumptions locked unless overridden
-
-- Bun-workspace monorepo; API + Lobby DO on Cloudflare **Workers** via `wrangler`.
-- **Hono** + **Zod**; **Drizzle** over D1; official `@tcgdex/sdk` for ingest.
-- Server **sessions** (http-only cookie), not stateless JWT.
-- Ingest filters to SV-era but writes the full-history schema.
-- English (`en`) first; schema leaves room for i18n later.
-- Match engine (actual gameplay) stays a placeholder this phase.
-```
+**Adding an API route.**
+1. Write the handler in its area's `routes.ts` (`apps/api/src/<area>/`). Validate a body or
+   query with `validate("json" | "query", schema)` (`apps/api/src/http/validation.ts`), behind
+   `requireUser` when it needs a session, so a signed-out caller gets 401 before validation.
+2. Put the request and response schemas in `packages/schema/src/<area>/` and export them from
+   the package index; the web client (`src/lib/api.ts`) imports only their types.
+3. Mount a new area in `apps/api/src/index.ts` with `app.route`, after the CORS, cross-site and
+   body-limit middleware (only the lobby WebSocket mounts before them).
+4. Classify the route in `ACCESS` (`apps/api/src/routeAccess.d1.test.ts`) as `public`,
+   `requireUser` or `owner`; the sweep fails on a route missing there.
+5. Name any new log `evt` and `kind` in §3.7.4 (`scripts/log-guard.ts` fails otherwise). A new
+   rate limit is a `ratelimits` entry in `apps/api/wrangler.jsonc` with an unused
+   `namespace_id`, and a row in §3.7.4's binding table.
+6. Add the route's line above, and its tests beside it (`useTestD1` from
+   `apps/api/src/testing/d1.ts` for one that needs D1).
