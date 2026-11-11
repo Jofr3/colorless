@@ -1539,6 +1539,18 @@ failed query's bound values). A request body over 64 KB answers 413 `{error:
 behind a session check it before validating the body, so an anonymous caller
 gets 401 without the API validating anything.
 
+To add a route:
+1. Write it in its area's `routes.ts` (`apps/api/src/<area>/`), behind `requireUser` if it
+   needs a session; a new area is mounted with `app.route` in `apps/api/src/index.ts`.
+2. Put its request and response schemas in `packages/schema` and parse with them.
+3. Classify it in `ACCESS` (`apps/api/src/routeAccess.d1.test.ts`), which fails on a route it
+   does not list, and test it on a real D1 (`*.d1.test.ts`, `useTestD1`).
+4. A client call goes in `src/lib/api.ts`, with a case in `src/seam/api.test.ts` against the
+   real route.
+5. A catalog route the KV cache stores has its shape pinned per `CACHE_VERSION`
+   (`catalog/cache.ts`, `cacheShape.d1.test.ts`); a change to a cached shape bumps it.
+6. List it below.
+
 ```
 GET    /health
 GET    /health/db        # one D1 read: {ok:true, migrations:<applied count>} or 503
