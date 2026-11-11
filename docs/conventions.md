@@ -69,8 +69,9 @@ something else.
   line numbers (`line N`, `file.ts:N`, a bare `:N`) on comments; name the function,
   constant or sentence instead. A comment line that names Balatro may cite a line
   of its source, which does not move. Strings are data: a test title may name the
-  decision whose sections it pins. Tests must not read source or doc text, and
-  must not pin `engineVersion`.
+  decision whose sections it pins. A title states the test's current claim:
+  comment-guard fails one that keeps struck-through `~~` text. Tests must not read
+  source or doc text, and must not pin `engineVersion`.
 - **Biome** for lint/format; **Vitest** for tests. Run **`bun run check`** before
   calling work done. It is `check:static` (`STATIC_STEPS` in `scripts/check.ts`:
   guards, generators' `--check`, `tsc -b`, `biome ci`, the mutant `precheck`), `check:lua` (the headless Lua tests,
@@ -92,7 +93,8 @@ something else.
   whose header pins the gitleaks version and sha256. Apart from CI,
   `prod-watch.yml` ("Production watch") probes production every 6 hours with
   `scripts/prod-watch.ts`: Bun only, no install and no secret, so keep that
-  script's imports to Node built-ins and the files it reads now. Its failure
+  script's imports to Node built-ins and the files it reads now (`import-graph.ts --check`
+  walks them). Its failure
   email is the outage alert. Edits are formatted on write: a PostToolUse hook in
   the tracked `.claude/settings.json` runs `biome format --write` on each file a
   Claude Code Edit or Write touches (format only, no lint fixes), in the main
@@ -188,8 +190,9 @@ something else.
   is the only reader of these rows (the builder's title comes from `LuaBuilder.name`). Readers index
   by name (`f[W.header.matchId]`, `r[W.card.zone]`) and tests by `wireColumn`, never by number. To
   add, drop or reorder a field, edit `WIRE_ROWS`, rerun the generator and the fixtures; the web
-  deploy is atomic and content-hashed, so no slot is kept for an older client. The command and
-  text-input records Lua sends back are still positional.
+  deploy is atomic and content-hashed, so no slot is kept for an older client. The text-input
+  records Lua reads back are `WIRE_ROWS.input` (`text`, `auth`), read by name through
+  `ui/text_record.lua`; the command records Lua sends are still positional.
 - **Deck construction rules live once, in the engine** (`deckRules.ts`): `FORMATS`/`formatById`
   (a null or unknown format plays Standard), the `isAceSpec`/`isRadiantPokemon`/`isPrismStar`
   classes, `isLegalInFormat` (the card's `legal` flags, no printed-mark fallback), and
@@ -203,7 +206,8 @@ something else.
   sources read prompts and the effect phase (`unit`, `counterTransfer`, `invokedBy`,
   `abilityName`) and the log rows' `cues` (`cuesFromEvents`), never `pendingOp` or the rendered
   log text. Grow that wire with optional fields: the API deploys before the web client, so a new
-  enum literal needs the client deployed first.
+  enum literal needs the client deployed first (backend-data.md §3.7.1, which
+  `wireShape.test.ts` enforces).
 - **Persisted state is versioned and migrated in the engine** (`persist.ts`). The lobby's
   `MATCH_RECORD_VERSION` is `GAME_STATE_VERSION`, so the wire carries one number; `match.ts`
   keeps only the record envelope and `loadMatchRecord`, and calls `migrateGameState` for the
@@ -291,6 +295,10 @@ something else.
   D1, which CI cannot see, so `bun run release` runs `release-gate.ts print-keys`
   (apps/api), which fails when the local and remote `print_key` columns differ; then
   re-ingest locally, re-run `bun scripts/registry-aliases.ts`, and commit.
+- **`bun run gen`** (`scripts/gen.ts`) brings every committed generated file up to date: the Lua
+  constants, the three catalog files, the decision index and the Worker types. Resolve a
+  conflict in a generated file by taking either side, then `bun run gen`; after a Lua wire
+  change, also `bunx vitest run src/lua/wireFixtures.test.ts -u`.
 - `scripts/residue-census*.ts` and `scripts/opaque-anatomy*.ts` were deleted
   (2026-10-23) after measuring zero residue; the archived lessons that describe
   them (`archive/conventions-lessons.md`) are history.
@@ -312,10 +320,13 @@ something else.
   `src/host/` (`router.ts` owns routes and history, `shell.ts` takes Lua's
   `COLORLESS:<channel>:` prints, which Lua sends only through `ui/bridge.lua` with every
   payload field percent-encoded, so no data can break a line and forge a command;
-  `scripts/lua-bridge-guard.ts` fails on any other stdout write; `textProxy.ts` drives the native inputs with the shared
-  `[revision, field, value, selectionStart, selectionEnd, action]` record), wired by
+  `scripts/lua-bridge-guard.ts` fails on any other stdout write and on a literal channel that
+  `SHELL_PRINT_CHANNELS` or `HOST_PRINT_CHANNELS` (`src/host/mailboxes.ts`) does not name;
+  `textProxy.ts` drives the native inputs and writes the `WIRE_ROWS.input` records, which Lua
+  reads by name through `ui/text_record.lua`), wired by
   `src/lua/bridge.ts`, which registers the screen adapters in one table. The host script has
-  no imports, so it receives data (mailbox names, the artwork cache) through `connect`. Lua
+  no imports, so it receives data (mailbox names, the artwork cache and its art slot count)
+  through `connect`. Lua
   reads mailboxes by name through `ui/host_constants.lua`, which `scripts/lua-constants.ts`
   generates from `src/host/mailboxes.ts`: add a mailbox there, not as a string in Lua. Lua owns
   the preferences record; the page stores it as Lua writes it. Adapters guard async replies
@@ -990,6 +1001,8 @@ So: **if you write a mutant tally, the mutants go in `scripts/mutation/mutants.t
 - **`killedByCommand`** names a non-vitest killer as an argv array (no shell) for
   guards that are scripts rather than suites — D212's lint-coverage guard, whose
   mutants are on `biome.json`. `--full` is ignored for such a row.
+- `bun scripts/mutation/opcoverage.ts` (about a second) counts, for each `EffectOp` kind, the rows
+  that quote its producer and its implementation. It is a survey, not a gate: nothing runs it.
 
 ⚠️ **WHAT THE HARNESS DOES NOT PROVE.** It is not coverage, and a green table is
 not *"the suite is good"*: it says these specific defects on these specific lines
