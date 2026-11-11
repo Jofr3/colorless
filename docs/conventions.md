@@ -88,14 +88,16 @@ something else.
   `prod-watch.yml` ("Production watch") probes production every 6 hours with
   `scripts/prod-watch.ts`: Bun only, no install and no secret, so keep that
   script's imports to Node built-ins and the files it reads now. Its failure
-  email is the outage alert. Run
-  `bun run format` before committing. `bun run release` runs check, the release
-  gates (with the production advisory audit, and CI's result for HEAD printed,
-  not waited for), the web build, the remote D1 migrations, the API deploy, the
-  health check of the new version, the web deploy and its check, then tags the
-  release `release-YYYYMMDD-HHMM`, re-checking before each deploy that the tree
-  is clean at the remote's main and at the commit the release pinned
-  (`docs/workstreams/backend-data.md` §3.7.2 has the recovery per step).
+  email is the outage alert. Before committing, format the files you changed
+  with `bunx biome format --write <paths>`; `bun run format` rewrites the whole
+  tree even when given a path, so use it only in a tree you own. `bun run
+  release` runs check, the release gates (with the production advisory audit,
+  and CI's result for HEAD printed, not waited for), the web build, the remote
+  D1 migrations, the API deploy, the health check of the new version, the web
+  deploy and its check, then tags the release `release-YYYYMMDD-HHMM`,
+  re-checking before each deploy that the tree is clean at the remote's main and
+  at the commit the release pinned (`docs/workstreams/backend-data.md` §3.7.2
+  has the recovery per step).
 - `tsc -b` checks the engine and the schema once: both are composite projects
   that emit declarations into their ignored `dist/`, and the app, the api and
   the scripts read them through project references, so an error in engine source
@@ -345,9 +347,8 @@ something else.
   `XVFB`/`MESA` name them; it is opt-in too, about 80 s.
 - **Never inherit a suite figure from prose — six were stale in one session**
   (D206 found the recorded baseline of 233 files / 4367 tests was really
-  234 / 4373). Measure with `bunx vitest run --pool=forks --maxWorkers=2`;
-  `bun run test:run` SIGKILLs its worker in this container and `bun test` is the
-  wrong harness entirely (`check` uses vitest).
+  234 / 4373). Measure with `bun run test:run` (the same `vitest run` as
+  `check:test`); `bun test` is the wrong harness entirely.
 
 ## A guard must be able to go RED (D200 → D214)
 
@@ -974,12 +975,10 @@ And ⚠️ **it says nothing at all about a row reported `SKIPPED-DIRTY`** — a
 a busy checkout answers for a *subset* of the corpus, and names which.
 
 ### Where dev scripts sit
-`scripts/**`, `apps/api/scripts/ingest.ts` and `packages/schema/scripts/
-validate-live.ts` are all **outside `tsc -b`'s project references and outside
-vitest's `include` globs**, deliberately: a dev tool has no business in the app's
-build graph, and a harness meant to check the suite has no business inside it.
-Bun runs the TypeScript directly. **Biome lints every one of them** — including
-the repo-root `scripts/**` and `vite.config.ts`, as of D212.
+`scripts/**`, `apps/api/scripts/**` and `packages/schema/scripts/**` are
+typechecked by `tsconfig.scripts.json`, one of `tsc -b`'s references, and the
+tests under `scripts/` run in vitest's `app` projects. Bun runs the TypeScript
+directly. Biome lints every one of them, and `vite.config.ts`.
 
 ### Lint coverage is CHECKED, not asserted (D212)
 Until D212 the sentence above was **false at the repo root and nothing noticed**.

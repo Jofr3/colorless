@@ -60,8 +60,8 @@ protocol, the Lua tests).
 |---|---|
 | First run on a new machine | README.md, "Getting started" |
 | Load or refresh the local card catalog | `workstreams/backend-data.md` §3.4.1 |
-| Run one test file | `bunx vitest run <path>`; the full gate is `bun run check` |
-| Run the Lua tests | `bun run test:lua`, or one file with `lua frontend/lua/tests/<name>.lua` (`frontend/lua/README.md`) |
+| Run one test file | `bunx vitest run <path> [-t <name>]`; one project with `--project engine\|app\|app-isolated`; the tests that import an app source with `bunx vitest related <src> --run` (for an engine file, nearly the whole suite); the full gate is `bun run check` |
+| Run the Lua tests | `bun run test:lua`, or one file with `bun run test:lua <name>.lua` (`frontend/lua/README.md`) |
 | Author or fix a card program | `workstreams/simulator.md` |
 | Add an API route | `workstreams/backend-data.md` §6 |
 | Add a migration | `conventions.md`, "Database migrations" |

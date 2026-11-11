@@ -10,7 +10,7 @@ From the repository root (the API runs separately with `bun run api:dev`, or use
 bun run dev
 ```
 
-This builds the Lua app and serves it at <http://127.0.0.1:5175/>. To build and run the frontend and API over Tailscale HTTPS:
+This builds the Lua app and serves it at <http://127.0.0.1:5175/> (<http://localhost:5175/> works too and is the one for Google sign-in). To build and run the frontend and API over Tailscale HTTPS:
 
 ```sh
 bun run dev:tailnet
@@ -210,16 +210,12 @@ LuaJIT also run them, but accept syntax 5.1 rejects, such as `goto`). CI runs
 the whole suite under `lua5.1`, and so does `bun run test:lua`: it takes
 `lua5.1` from PATH, else, where `nix` is, builds nixpkgs#lua5_1 once and keeps
 it under `node_modules/.cache/lua5.1`, else falls back to `lua` and says so
-(`LUA=<binary>` overrides it):
+(`LUA=<binary>` overrides it). Name files, or their paths, to run only those.
+Run a test this README names as `lua frontend/lua/tests/<name>.lua` the same way:
 
 ```sh
-lua frontend/lua/tests/motion.lua
-lua frontend/lua/tests/card_render.lua
-lua frontend/lua/tests/room.lua
-lua frontend/lua/tests/screen.lua
-lua frontend/lua/tests/settings.lua
-lua frontend/lua/tests/account.lua
-lua frontend/lua/tests/auth.lua
+bun run test:lua motion.lua card_render.lua room.lua screen.lua
+bun run test:lua settings.lua account.lua auth.lua
 ```
 
 The motion check executes the local Balatro `engine/moveable.lua` as the reference and compares 9,602 values across hover, juice, dragging, return-to-slot and 30/60/120/144 FPS plus long frames. `BALATRO_SOURCE` selects a different reference source directory. The render check covers centre/corner cursor positions at four screen scales, matching base/edition geometry, un-tilted shadows, hover hysteresis, and reduced motion.

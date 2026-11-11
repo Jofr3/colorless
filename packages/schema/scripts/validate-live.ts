@@ -2,8 +2,8 @@
 //
 //   bun packages/schema/scripts/validate-live.ts
 //
-// Deliberately OUTSIDE tsconfig's `include` (bun executes it directly; Biome
-// still lints it). Sequentially, with a small delay and a hard request cap:
+// Bun runs it directly; tsconfig.scripts.json typechecks it. Sequentially, with
+// a small delay and a hard request cap:
 //   1. validates every /series brief,
 //   2. validates the full `sv` serie,
 //   3. validates every one of its sets (full),

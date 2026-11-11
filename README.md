@@ -37,9 +37,12 @@ First run:
 ```bash
 bun install
 git config core.hooksPath .githooks              # once per clone: the opt-in pre-push hook (docs/conventions.md)
-cp apps/api/.dev.vars.example apps/api/.dev.vars # Google values are optional locally
+cp apps/api/.dev.vars.example apps/api/.dev.vars # optional: only for Google sign-in or a local pepper
 bun run dev:all                                  # web on :5175, API on :8787
 ```
+
+Without `PASSWORD_PEPPER`, the local API logs a `pepper_missing` error when someone
+registers or signs in. That is expected locally.
 
 `api:dev` migrates the local D1, but the card catalog starts empty: load it with
 the ingest in `docs/workstreams/backend-data.md` §3.4.1 (needs network access to
@@ -74,7 +77,7 @@ it.
 ## Scripts
 
 ```bash
-bun run dev         # build the Lua app, serve it at http://127.0.0.1:5175/, rebuild on Lua edits
+bun run dev         # build the Lua app, serve it on :5175 (127.0.0.1 or localhost), rebuild on Lua edits
 bun run dev:all     # frontend (5175) + API (8787); Ctrl+C stops both
 bun run dev:tailnet # both servers over Tailnet HTTPS; selects available ports
 bun run build:lua   # rebuild the Lua app into public/love/ (refresh the page)
@@ -84,7 +87,7 @@ bun run api:deploy  # API Worker only (partial; see Deployment)
 bun run preview
 bun run typecheck
 bun run lint        # biome
-bun run format      # biome --write
+bun run format      # biome --write over the whole tree; for your files only: bunx biome format --write <paths>
 bun run test:run    # vitest (src, apps, packages)
 bun run check       # check:static + check:lua + check:test (the full gate, as in CI)
 bun run release     # the normal deploy: check, gates, remote D1 migrations, API, web, tag
@@ -103,8 +106,8 @@ to `frontend/lua/{main.lua,conf.lua,ui,assets,web}`. Refresh the page once
 watch goes on. Edits under `tests/` and `tools/` are not packed and rebuild
 nothing.
 
-One Lua unit check runs from the repository root with
-`lua frontend/lua/tests/<name>.lua` (see `frontend/lua/README.md`).
+One Lua test file runs under Lua 5.1 with `bun run test:lua <name>.lua` (a path
+works too; see `frontend/lua/README.md`).
 
 The API dev command supplies the system CA bundle to Wrangler/workerd through
 `NODE_EXTRA_CA_CERTS`, including on NixOS. An existing `NODE_EXTRA_CA_CERTS`
@@ -185,8 +188,10 @@ Google requires the redirect URI to [match the registered URI exactly](https://d
 
 For local development, copy `apps/api/.dev.vars.example` to `apps/api/.dev.vars`,
 fill in the client ID and secret, and run `bun run dev:all`.
-Open the app at `http://localhost:5175`. Local CORS also accepts `http://127.0.0.1:5175`;
-`APP_ORIGIN` determines where the API sends you after Google login.
+Open the app at `http://localhost:5175` for Google sign-in: the registered callback is on
+`localhost`, and `APP_ORIGIN` sends you back to `localhost:5175` after it. Everything else
+also works from `http://127.0.0.1:5175`, the URL Vite prints, since a dev page calls the API on
+its own loopback name.
 If the Google consent screen is in testing mode, add your sign-in account as a test user.
 
 For the deployed API, run these from `apps/api/`:

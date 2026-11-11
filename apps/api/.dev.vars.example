@@ -2,8 +2,7 @@
 # Authorized redirect URI: http://localhost:8787/auth/oauth/google/callback
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
-APP_ORIGIN=http://localhost:5175
-# Password pepper and log-tag key (security audit AU9, AU10). Any random string works locally,
+# Password pepper and log-tag key. Any random string works locally,
 # e.g. `openssl rand -base64 32`. Left empty, passwords are hashed unpeppered and auth log lines
 # read "untagged". Changing PASSWORD_PEPPER locks out local accounts registered under the old one
 # until they sign in with PASSWORD_PEPPER_PREVIOUS set to it.
