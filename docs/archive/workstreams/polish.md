@@ -1,5 +1,8 @@
 # Workstream: Polish (Phase 5)
 
+> **History:** the React-era plan and notes, to 2026-10-22; moved from `docs/workstreams/` on 2026-11-11. Its paths name deleted files.
+> Current code: `frontend/lua/README.md` and `src/{decks,game}`. Still open from it: uploaded avatars (`docs/status.md`); the favourite deck was retired (`decisions.md`, 2026-10-27 "Database additive changes").
+
 Refinements unlocked once real **user** and **card** data exist. Threads through
 P2–P4; tracked here so nothing is forgotten.
 

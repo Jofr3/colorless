@@ -1,5 +1,7 @@
 # Simulator coverage — the STANDARD-LEGAL census (D219 re-measurement, 2026-08-04)
 
+> **Finished program.** The coverage program this file tracked finished in October 2026 (`decisions.md` D580 for `sv`, D646 for `me`); this file is its history. The live list is `simulationGaps(card)` in the engine and the "Deferred" list in `card-revision.md`.
+
 > 🆕 **D581 (2026-10-07):** this page is the `sv` serie's census, and that pool is unchanged and whole. The Mega Evolution
 > serie was ingested at D581; the Standard pool is now `sv` + `me` — see `coverage-backlog-mega.md`.
 
