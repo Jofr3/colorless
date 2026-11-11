@@ -179,7 +179,7 @@ describe("§2 — the reader: three printed predicates, ONE parameterised compar
   });
 
   it("reads the CURLY apostrophe too, like every status anchor in this file", () => {
-    // `DEFENDER_NOW` has spelled `['’]` since M3 and this anchor reuses the habit
+    // `DEFENDER_NOW` spells `['’]` and this anchor reuses the habit
     // rather than inventing a narrower one. The catalog prints ASCII today; a
     // swsh-era reprint that does not is admitted by construction.
     expect(deriveAttackCoinFlip(EITHER_HEADS.replace("opponent's", "opponent’s"))).toEqual(

@@ -3,14 +3,13 @@
 // with the flags of the apps/api `deploy` script, so it measures what ships. Prints its size and
 // the zod locales it carries. `--check` fails when the `deploy` script does not minify or
 // apps/api/wrangler.jsonc does not upload source maps (which Workers Logs needs to resolve a
-// minified stack trace to source; dependency audit USE1), and when the bundle passes `BUDGET_KIB`
-// or carries a zod locale other than English: a single `import { z } from "zod"`
-// keeps every locale, where `import * as z from "zod"` lets the bundler drop the unused ones. It
-// also fails when the bundle carries a test-only module (`TEST_ONLY`), or a package that is not a
-// production dependency of the api, engine or schema workspace (`SHIPPED`): a dev dependency such
-// as @tcgdex/sdk is one value import away (dependency audit USE5); a shipped package's own
-// dependencies must be declared too, so each one is a reviewed choice. Byte counts only, never
-// timings; a step of `check:static`.
+// minified stack trace to source), and when the bundle passes `BUDGET_KIB` or carries a zod locale
+// other than English: a single `import { z } from "zod"` keeps every locale, where `import * as z
+// from "zod"` lets the bundler drop the unused ones. It also fails when the bundle carries a
+// test-only module (`TEST_ONLY`), or a package that is not a production dependency of the api,
+// engine or schema workspace (`SHIPPED`): a dev dependency such as @tcgdex/sdk is one value import
+// away; a shipped package's own dependencies must be declared too, so each one is a reviewed
+// choice. Byte counts only, never timings; a step of `check:static`.
 //
 //   bun scripts/worker-bundle.ts [--check]
 
@@ -89,8 +88,8 @@ function observabilityBlock(config: string): string {
 }
 
 /** What `--check` refuses in the API's `observability` settings: logs off, query strings kept in
-    the invocation log (observability audit decision 1a), or Workers Issues off (decision 2a). A
-    deploy without `issues` turns Issues off, so the config is the only place it lives. */
+    the invocation log, or Workers Issues off. A deploy without `issues` turns Issues off, so the
+    config is the only place it lives. */
 export function observabilityProblems(config: string): string[] {
   const block = observabilityBlock(config);
   const issues = /"issues"\s*:\s*\{([^{}]*)\}/.exec(block);

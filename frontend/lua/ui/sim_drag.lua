@@ -1,6 +1,6 @@
 local D=require('ui.card_dimensions')
--- Dragging on the table (audit SM14), mixed into ui/simulator.lua's Simulator: reordering the
--- held card within its own hand or Bench row, and the drop zone under the pointer.
+-- Dragging on the table, mixed into ui/simulator.lua's Simulator: reordering the held card
+-- within its own hand or Bench row, and the drop zone under the pointer.
 local Layout=require('ui.sim_layout')
 local Simulator={}
 local prefix=Layout.prefix

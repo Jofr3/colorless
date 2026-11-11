@@ -682,7 +682,7 @@ describe("D571 §4 — Destructo-Press: reveal 5, 70× each Future card, discard
     );
     expect(result.kind).toBe("done");
     expect(record.discarded).toEqual([]);
-    // an empty deck: nothing shuffled, but the (empty) reveal is announced — card revision B55, §4b
+    // an empty deck: nothing shuffled, but the (empty) reveal is announced — §4b
     expect(events).toEqual([
       { type: "DECK_TOP_REVEALED", seat: "p1", dest: "deck", uids: [], reveal: true },
     ]);

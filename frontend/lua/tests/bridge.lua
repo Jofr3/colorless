@@ -1,4 +1,4 @@
--- Every Lua message to the page is one stdout line, whatever data it carries (security audit WC1).
+-- Every Lua message to the page is one stdout line, whatever data it carries.
 package.path='frontend/lua/?.lua;'..package.path
 local font={getWidth=function(_,s) return #tostring(s)*8 end,getHeight=function() return 20 end,
   getWrap=function(_,s) return #s*8,{s} end}

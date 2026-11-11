@@ -462,15 +462,15 @@ export interface UsedAttack {
 
 /** An in-play Pokémon is a stack of physical cards, not one card (§1.2):
     the top uid defines its identity (name, HP, retreat cost, …); damage,
-    energy and tools persist through evolution (M4). */
+    energy and tools persist through evolution. */
 export interface InPlayPokemon {
   /** Card uids, bottom → top. */
   stack: string[];
   /** Attached Energy uids. */
   energy: string[];
-  /** Attached Pokémon Tool uids (the attach flow lands with trainers, M4). */
+  /** Attached Pokémon Tool uids. */
   tools: string[];
-  /** HP of damage taken (counters × 10). Placed by attacks from M2 on. */
+  /** HP of damage taken (counters × 10). */
   damage: number;
   conditions: SpecialConditions;
   /**
@@ -572,9 +572,9 @@ export interface InPlayPokemon {
    * `boostedAttackDamage` and `boostedAttackBase`.
    */
   boostedAttack: BoostedAttack | null;
-  /** Effect markers ("can't attack next turn", …) — M3+. */
+  /** Effect markers ("can't attack next turn", …). */
   markers: string[];
-  /** Turn it entered play; 0 = during setup. M2's evolution timing ("not the
+  /** Turn it entered play; 0 = during setup. The evolution timing ("not the
       turn it came into play", §10) reads this — the separate "no evolving on
       your own first turn" rule is a turn/firstPlayer check, not this field. */
   turnPlayed: number;
@@ -1096,8 +1096,8 @@ export function freshHandPlayLocks(): Record<Seat, Record<StampedPlayLockKey, nu
 }
 
 export interface GameState {
-  /** The generator's state — every shuffle/flip advances it. A ChaCha20 state in every game
-      started since the MI1 fix, a legacy mulberry32 int32 in older saves and numeric-seed
+  /** The generator's state — every shuffle/flip advances it. A ChaCha20 state in every new
+      game, a legacy mulberry32 int32 in older saves and numeric-seed
       fixtures (rng.ts). Secret: redaction never copies it. */
   rngState: RngState;
   /** 1-based turn counter; 0 while in setup. Odd turns belong to firstPlayer. */
@@ -1298,7 +1298,7 @@ export function stackUids(pokemon: InPlayPokemon): string[] {
 }
 
 /** The one "cards leave play for the discard pile" move — §11 retreat costs,
-    §8.1 KO cleanup and M4's DiscardEnergy op all funnel through here rather
+    §8.1 KO cleanup and the DiscardEnergy op all funnel through here rather
     than hand-rolling the same zone transfer. Strips `uids` ("all" = the whole
     stack: evolution cards bottom→top, then energy, then tools — §2 keeps the
     pile ordered) off the Pokémon and appends them to the side's discard.

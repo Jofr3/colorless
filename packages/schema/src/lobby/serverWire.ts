@@ -67,9 +67,9 @@ export const lobbyMessageSchemaMatchesType: Equals<
 
 /** What the lobby server sends a client: authoritative snapshots after every
     change, rejections ("full" to a refused hello, "kicked" to a removed guest),
-    each socket's redacted in-game match view (P4), a transient `reject-action`
+    each socket's redacted in-game match view, a transient `reject-action`
     to the actor when a game action is refused, and a `match-error` to both when
-    a match couldn't start (a deck wouldn't resolve, increment 3). Keepalive pongs
+    a match couldn't start (a deck wouldn't resolve). Keepalive pongs
     are raw strings, not frames — see LOBBY_WS_PONG. */
 export const lobbyServerMessageSchema = z.discriminatedUnion("kind", [
   stateMessageSchema,

@@ -1,6 +1,6 @@
-// P5-3 — which card is a deck's face in the library grid (polish.md "Deck covers
-// / art"). Until now every deck rendered the same blue card back under a
-// generated tint; the catalog has had real scans since P2.
+// Which card is a deck's face in the library grid (docs/archive/workstreams/polish.md,
+// "Deck covers / art"): a real scan from the catalog, rather than the same blue card back on every
+// deck under a generated tint.
 //
 // The whole RULE lives in this pure function rather than in SQL, so it can be
 // argued with and tested. The query half hands it every card in a deck with the

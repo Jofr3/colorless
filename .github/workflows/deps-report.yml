@@ -3,7 +3,7 @@ name: Dependency report
 # A weekly look at the whole dependency tree, report only: it never fails.
 # CI's gate audits only what the Workers ship (`audit --prod`), and GitHub's
 # dependency graph does not read bun.lock, so Dependabot raises no alerts for
-# transitive or dev packages (dependency audit PRC5). This job puts the full
+# transitive or dev packages. This job puts the full
 # `bun audit` and `bun outdated` in the run summary for the monthly upgrade
 # routine (docs/conventions.md, "Dependencies"); `bun run deps:check` is the
 # local version of the same report.

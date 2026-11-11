@@ -151,7 +151,7 @@ do
   end
   l:layout(1280,800); l:sync(snapshot(7100,3)); l:layout(1280,800)
   -- Keyboard: Tab reaches the second deck's Manage button, which reads its deck's name. The ring
-  -- starts past Back, the first control (audit PG14), so it takes one press fewer than its index.
+  -- starts past Back, the first control, so it takes one press fewer than its index.
   local target=find('manage',2)
   for _=1,target-1 do l:keypressed('tab') end
   assert(l.focus==target and spoken[#spoken]=='Manage Deck 2')

@@ -1,9 +1,9 @@
--- The real main.lua and the real online lobby under Settings' Interface Size (UI-FU2). The lobby
--- is its own layer: it lays out in the canvas divided by the factor its step reaches
--- (Online:minimum) and draws that much larger about the canvas centre, so a control is drawn
--- where the pointer finds it (press, release, hover and the wheel), and the code and search
--- fields' text proxy box lands over the field. A step change moves it to its own factor at once.
--- 100% and portrait draw and answer where they always did.
+-- The real main.lua and the real online lobby under Settings' Interface Size. The lobby is its
+-- own layer: it lays out in the canvas divided by the factor its step reaches (Online:minimum)
+-- and draws that much larger about the canvas centre, so a control is drawn where the pointer
+-- finds it (press, release, hover and the wheel), and the code and search fields' text proxy box
+-- lands over the field. A step change moves it to its own factor at once. 100% and portrait draw
+-- and answer unscaled.
 package.path='frontend/lua/?.lua;'..package.path
 local noop=function() end
 local function check(ok,message) if not ok then error(message,2) end end

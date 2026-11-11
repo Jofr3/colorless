@@ -11,8 +11,8 @@ local function publish(ids)
   end
   files['__art.txt']=table.concat(rows,'\n')
 end
--- The host downloads the eight scans after ready (audit BT9): until the first arrives there is
--- no artwork at all, and the wipe shows the card back.
+-- The host downloads the eight scans after ready: until the first arrives there is no artwork
+-- at all, and the wipe shows the card back.
 assert(Art.pick()==nil and Art.fallback()==nil,'No artwork before the scans arrive')
 -- The fallback lists only the scans written so far.
 local scans={'sv01-030','sv01-033','sv01-036','sv01-038','sv01-042','sv01-046','sv01-047','sv01-052'}

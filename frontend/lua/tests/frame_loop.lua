@@ -1,8 +1,8 @@
--- The real main.lua's love.run (audit LC1): events are pumped on every animation frame, update
--- and draw run at most 60 a second (144 with Max Frame Rate), and the redraw gate skips draw and
--- present only where the frame would repeat the last one: home and its Settings under reduced
--- motion, with nothing moving. Input, a mailbox change, a resize, a notice, a slider drag or a
--- page change draws again; the animated vortex keeps drawing at the cap.
+-- The real main.lua's love.run: events are pumped on every animation frame, update and draw run
+-- at most 60 a second (144 with Max Frame Rate), and the redraw gate skips draw and present only
+-- where the frame would repeat the last one: home and its Settings under reduced motion, with
+-- nothing moving. Input, a mailbox change, a resize, a notice, a slider drag or a page change
+-- draws again; the animated vortex keeps drawing at the cap.
 package.path='frontend/lua/?.lua;frontend/lua/tests/?.lua;'..package.path
 local Stub=require('support.draw_stub').install()
 local files=require('ui.host_constants').mailboxes

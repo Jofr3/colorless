@@ -1,7 +1,7 @@
--- The hot-seat history row's tooltips (audit SM12): after about 400 ms of hover or keyboard focus
--- on an icon (Undo turn, Undo action, New game, Redo action, Redo turn) its spoken label shows in
--- a card-popup frame beside it: never over the icon, inside the board in landscape, portrait and
--- a short landscape phone, grown in with motion and whole under reduced motion, gone once the
+-- The hot-seat history row's tooltips: after about 400 ms of hover or keyboard focus on an icon
+-- (Undo turn, Undo action, New game, Redo action, Redo turn) its spoken label shows in a
+-- card-popup frame beside it: never over the icon, inside the board in landscape, portrait and a
+-- short landscape phone, grown in with motion and whole under reduced motion, gone once the
 -- pointer or focus leaves, never on a touch screen's tap, and never taking a click.
 package.path='frontend/lua/?.lua;frontend/lua/tests/?.lua;'..package.path
 local Stub=require('support.draw_stub')
@@ -90,11 +90,11 @@ for _,view in ipairs(layouts) do
     check(box.x>=0 and box.y>=0 and box.x+box.w<=sim.boardW and box.y+box.h+4<=sim.boardH,view.name..': '..b.label..' tooltip stays on the board')
     check(clear(box,b),view.name..': '..b.label..' tooltip does not cover its icon')
     -- Nor any control without a tooltip: in landscape End turn sits right above the row and Log
-    -- below it (QA7 bug 1). A fellow icon may be covered; its own tooltip takes over on it.
+    -- below it. A fellow icon may be covered; its own tooltip takes over on it.
     for _,other in ipairs(sim.controls) do
       check(other.tooltip or clear(box,other),view.name..': '..b.label..' tooltip does not cover '..other.label)
     end
-    -- Nor a card: in portrait the hand fans right above the row (FU5).
+    -- Nor a card: in portrait the hand fans right above the row.
     for _,c in ipairs(sim.cards) do
       local hw,hh=c:halfExtents()
       check(clear(box,{x=c.x-hw,y=c.y-hh+2,w=2*hw,h=2*hh-5}),view.name..': '..b.label..' tooltip does not cover the card '..c.item.name)

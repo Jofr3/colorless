@@ -30,7 +30,7 @@ import { createLobbyChannel, type LobbyChannel } from "./channel";
     word that the code names no lobby; "unreachable" is a first connection that
     never got an answer (a later one still takes the client back). "full" means
     both seats are held; if a MATCH is running the server also starts feeding us
-    the seatless board, and we become "spectating" (P4 3c-vii-b) — the same
+    the seatless board, and we become "spectating" — the same
     connection, no seat. */
 export type LobbyStatus =
   | "connecting"
@@ -43,7 +43,7 @@ export type LobbyStatus =
 
 export type DeckChoice = { id: string; name: string };
 
-/** A rejected game action, surfaced as a transient pill (P4). `nonce` bumps per
+/** A rejected game action, surfaced as a transient pill. `nonce` bumps per
     rejection so an identical repeat re-announces (the local GameError pattern). */
 export type ActionError = { reason: string; nonce: number };
 
@@ -70,7 +70,7 @@ export type LobbyClientState = {
   actionError: ActionError | null;
   /** Why the last match failed to START; cleared by the next lobby state. */
   matchError: string | null;
-  /** The saved deck this client picked. The server keeps every seat's deck id to itself (LB5) and
+  /** The saved deck this client picked. The server keeps every seat's deck id to itself and
       says only whether one is picked, so this is the client's own memory of its pick: null once
       the server says none is, and unknown (null) after a reload, which keeps the deck's name. */
   deckId: string | null;

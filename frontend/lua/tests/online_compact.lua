@@ -1,11 +1,11 @@
--- The online lobby under Settings' Interface Size (UI-FU2). Each step names the smallest canvas
--- its compact arrangement fits (ui/lobby_size.lua), so main.lua grows the lobby as far as the step
--- allows: the menu (Create and Join), the waiting lobby, joining and the info steps reach 150%;
--- versus, the countdown, the deck picker and the set match reach 125%, as Settings does, since your
--- seat's deck preview and the picker's two rows of piles need a 640 tall canvas. Laid out in the
--- shrunken canvas (1024x640 at 125%, 853x533 at 150%) every step's frame, controls, seats,
--- preview, piles, pager and text fit inside the canvas, and no two controls overlap; text keeps
--- clear of every control. Portrait and 1280x800 keep the arrangement they had.
+-- The online lobby under Settings' Interface Size. Each step names the smallest canvas its compact
+-- arrangement fits (ui/lobby_size.lua), so main.lua grows the lobby as far as the step allows: the
+-- menu (Create and Join), the waiting lobby, joining and the info steps reach 150%; versus, the
+-- countdown, the deck picker and the set match reach 125%, as Settings does, since your seat's deck
+-- preview and the picker's two rows of piles need a 640 tall canvas. Laid out in the shrunken
+-- canvas (1024x640 at 125%, 853x533 at 150%) every step's frame, controls, seats, preview, piles,
+-- pager and text fit inside the canvas, and no two controls overlap; text keeps clear of every
+-- control. Portrait and 1280x800 keep their full arrangement.
 package.path='frontend/lua/?.lua;'..package.path
 local function check(ok,message) if not ok then error(message,2) end end
 -- Fonts as wide as half their size per character and as tall as their size.

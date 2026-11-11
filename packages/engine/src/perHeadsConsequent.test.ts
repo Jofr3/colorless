@@ -82,7 +82,7 @@ const PER_HEADS_DECK = deckOf({
   "fix-energy": 22,
   // A SECOND, DIFFERENT Energy card — §9 needs the victim's Active to hold two that
   // are not interchangeable, because a park at a single class of candidate
-  // auto-resolves (the M1 doctrine) and would prove nothing about parking.
+  // auto-resolves (the no-choice rule) and would prove nothing about parking.
   "fix-water-energy": 4,
 });
 
@@ -708,7 +708,7 @@ describe("§9 — the last refused row, BUILT at D476, and its axis measured", (
       '{"op":"discardEnergy","from":"opponentActive","filter":{"kind":"anyEnergy"}}',
     );
     // The victim needs TWO DIFFERENT Energy for the pick to be a genuine choice —
-    // interchangeable candidates auto-resolve (the M1 doctrine), so a same-card board
+    // interchangeable candidates auto-resolve (the no-choice rule), so a same-card board
     // would prove nothing about parking.
     let armedBoard = attachFromDeck(board, "p2", "fix-energy", 1);
     armedBoard = attachFromDeck(armedBoard, "p2", "fix-water-energy", 1);

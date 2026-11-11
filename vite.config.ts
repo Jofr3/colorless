@@ -82,9 +82,9 @@ function loveVersionsPlugin(): Plugin & { strict: () => boolean } {
   };
 }
 
-// What a build is a build of, for the release (build audit DEP4): dist/build-info.json records the
-// commit, whether the tree had uncommitted changes, the origins baked in and whether the /love/
-// references were strictly versioned, and the page carries the commit as <meta name="build">
+// What a build is a build of, for the release: dist/build-info.json records the commit, whether the
+// tree had uncommitted changes, the origins baked in and whether the /love/ references were
+// strictly versioned, and the page carries the commit as <meta name="build">
 // (`-dirty` appended for a changed tree). It never fails the build: `bun run e2e` builds in
 // production mode against a local API. `deploy:web`'s `web-dist` gate (apps/api/scripts/
 // release-gate.ts) refuses a dist/ that is not a clean build of HEAD for production, and
@@ -136,8 +136,8 @@ function buildInfoPlugin(info: {
 
 // The npm packages the page's bundle may carry: the production dependencies of the page (the root)
 // and of the two packages it imports, the ones scripts/third-party-notices.ts prints licences for
-// (its WEB_WORKSPACES; dependency audit TRN4). A bundle with any other package, such as a dev
-// dependency one value import away, fails the build until it is declared, and so credited.
+// (its WEB_WORKSPACES). A bundle with any other package, such as a dev dependency one value import
+// away, fails the build until it is declared, and so credited.
 const NOTICED_WORKSPACES = [".", "packages/engine", "packages/schema"];
 const PACKAGE = /.*node_modules\/((?:@[^/]+\/)?[^/]+)\//;
 function noticedPackagesPlugin(): Plugin {
@@ -212,7 +212,7 @@ export default defineConfig(({ mode }) => {
       // only logs to the console), and the maps are not archived either: the bundles are
       // byte-identical across rebuilds, so to resolve a stack trace from production,
       // check out the release's tag (or the commit in the page's <meta name="build">)
-      // and rebuild (build audit ENV5).
+      // and rebuild.
       sourcemap: "hidden",
       // The rules engine loads as one lazy chunk with the game table (~620 kB,
       // ~150 kB gzipped); it splits no further, so the default 500 kB warning is noise.

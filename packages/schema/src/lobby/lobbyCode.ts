@@ -3,7 +3,7 @@
 // from an unambiguous alphabet — no characters that look alike when read aloud
 // or in a terminal font.
 //
-// Shared vocabulary (P1 milestone 8): the api Worker mints codes with
+// Shared vocabulary: the api Worker mints codes with
 // `generateLobbyCode` (each one names a lobby Durable Object) while the web
 // app validates and normalizes typed input with the same alphabet.
 

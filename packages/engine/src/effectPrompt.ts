@@ -279,7 +279,7 @@ export type EffectChoice =
       a legal decline. */
   | { kind: "attachCards"; assignments: { uid: string; to: PokemonRef }[] }
   /** The mayDraw answer — `draw: true` takes the cards, `false` is the printed
-      decline. A plain boolean (wire-checked to be one: a P4 client's truthy
+      decline. A plain boolean (wire-checked to be one: a remote client's truthy
       string must not read as consent), answered by the phase's `answerer`. */
   | { kind: "mayDraw"; draw: boolean }
   /**
@@ -298,7 +298,7 @@ export type EffectChoice =
   | { kind: "prize"; index: number }
   /** The `confirm` answer — `yes: true` splices the `optional` op's `ops` ahead
       of the rest of the program, `false` runs nothing. A plain boolean, and
-      wire-checked to be one for `mayDraw`'s exact reason: a P4 client's truthy
+      wire-checked to be one for `mayDraw`'s exact reason: a remote client's truthy
       string must not read as consent. Answered by the CONTROLLER. */
   | { kind: "confirm"; yes: boolean; target?: PokemonRef }
   /**

@@ -14,8 +14,8 @@ import {
 import { MIXED_DECK, drbgSeed, mustApply, mustCreate, walkGame } from "./testFixtures";
 import { present } from "./fixtures/values";
 
-// The match RNG (security audit MI1). Every real game draws from a ChaCha20 keystream under a fresh
-// 256-bit key; states recorded on the old mulberry32 generator keep replaying on it.
+// The match RNG. Every real game draws from a ChaCha20 keystream under a fresh 256-bit key;
+// states recorded on the old mulberry32 generator keep replaying on it.
 
 /** The Web Crypto global; the engine compiles without DOM types. */
 const webCrypto = (
@@ -132,7 +132,7 @@ describe("freshRngState", () => {
 
 describe("the legacy mulberry32 generator", () => {
   it("draws exactly what it drew before ChaCha20 was added, so old saves replay", () => {
-    // Pinned from the generator as shipped before MI1; a numeric state never touches ChaCha20.
+    // Pinned from the legacy generator's own output; a numeric state never touches ChaCha20.
     expect(words(1, 3)).toEqual([[2693262067, 11749833, 2265367787], 1199730144]);
     expect(shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], 1)).toEqual([
       [7, 8, 3, 2, 1, 5, 9, 4, 0, 6],

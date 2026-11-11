@@ -497,7 +497,9 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
     const body = must0(legacy.players.p1.active) as Omit<InPlayPokemon, "noWeaknessTurn"> & {
       noWeaknessTurn?: number;
     };
-    // The key must be genuinely ABSENT. `= undefined` leaves it PRESENT, which is the exact distinction D124's rule turns on and the one this case exists to drive.
+    // The key must be genuinely ABSENT: an absent key, not one set to undefined, is what an
+    // older record looks like. `= undefined` leaves it PRESENT, and that distinction is the one
+    // this case exists to drive.
     delete body.noWeaknessTurn;
     expect("noWeaknessTurn" in body).toBe(false);
 
@@ -525,7 +527,9 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
       InPlayPokemon,
       "noWeaknessTurn"
     > & { noWeaknessTurn?: number };
-    // The key must be genuinely ABSENT. `= undefined` leaves it PRESENT, which is the exact distinction D124's rule turns on and the one this case exists to drive.
+    // The key must be genuinely ABSENT: an absent key, not one set to undefined, is what an
+    // older record looks like. `= undefined` leaves it PRESENT, and that distinction is the one
+    // this case exists to drive.
     delete stripped.noWeaknessTurn;
     const a = mustApply(withKey, { type: "attack", seat: "p2", index: 0 });
     const b = mustApply(withoutKey, { type: "attack", seat: "p2", index: 0 });

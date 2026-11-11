@@ -39,9 +39,9 @@ beforeEach(() => {
   keys = 0;
   vi.useFakeTimers();
   vi.setSystemTime(1_700_000_000_000);
-  // A restart keys its game from the CSPRNG (MI1). A fixed stream of keys keeps the walks
-  // repeatable, as the fixed clock did for the old clock seed; the emit test's one shuffle is a
-  // mulligan in a restarted game, so the stream was searched for deals that reach one.
+  // A restart keys its game from the CSPRNG. A fixed stream of keys keeps the walks repeatable;
+  // the emit test's one shuffle is a mulligan in a restarted game, so the stream is one whose
+  // deals reach one.
   vi.spyOn(crypto, "getRandomValues").mockImplementation((array) => {
     if (array instanceof Uint8Array) {
       keys++;

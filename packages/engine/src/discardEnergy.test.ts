@@ -82,7 +82,7 @@ describe("M5 op-slice — discardEnergy", () => {
   });
 
   it("two copies of ONE print on one Pokémon are interchangeable — forced, not parked", () => {
-    // The M1 doctrine applied to card identity: either copy leaves the identical
+    // The no-choice rule applied to card identity: either copy leaves the identical
     // board and the identical discard pile, so there is nothing to ask. Contrast
     // the two-DISTINCT-print cases below, which do park.
     let state = board(20);

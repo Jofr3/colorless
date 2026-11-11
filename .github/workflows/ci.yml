@@ -7,7 +7,7 @@ on:
 
 # Cancel superseded PR runs so a fast follow-up push doesn't queue. Main pushes
 # all run: the mutant sample diffs each push against the one before it, so a
-# cancelled push's files would only be drawn at random (build audit CI7).
+# cancelled push's files would only be drawn at random.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -87,7 +87,7 @@ jobs:
           restore-keys: ${{ runner.os }}-binding-gate-${{ hashFiles('scripts/mutation/binding-gate.ts', 'bun.lock') }}-
 
       # Runs even when the audit above failed: a new advisory with no fix yet
-      # must not hide typecheck and lint results (build audit CIM1).
+      # must not hide typecheck and lint results.
       - name: Static checks
         if: ${{ !cancelled() }}
         run: bun run check:static
@@ -202,7 +202,7 @@ jobs:
 
       # Rows killed by a Lua suite run `bun scripts/test-lua.ts`, which needs the
       # interpreter: without it every such row reports "baseline is RED" and fails
-      # the job (main was red from 2026-10-29 to 2026-11-09; dependency audit PRC1).
+      # the job.
       - name: Setup
         id: setup
         uses: ./.github/actions/setup

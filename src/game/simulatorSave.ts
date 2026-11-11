@@ -132,8 +132,8 @@ function validState(state: GameState): boolean {
   if (
     !state ||
     !Number.isInteger(state.turn) ||
-    // A save from before MI1's fix carries a mulberry32 number and replays on it; a newer one
-    // carries a ChaCha20 state. Either replays only under the generator it was recorded with.
+    // A legacy save carries a mulberry32 number and replays on it; any other carries a
+    // ChaCha20 state. Either replays only under the generator it was recorded with.
     !isRngState(state.rngState) ||
     !state.phase ||
     !state.cardPool ||

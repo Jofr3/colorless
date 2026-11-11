@@ -1,7 +1,7 @@
--- Headless checks for the widgets the pages draw from one place (audit PG15): the option
--- cycle's centre and arrows (Settings, the lobby's deck filter, the builder's filters), the
--- pagers' arrows and face (the collection pages and the lobby's deck picker), the titled deck
--- pile (the sandbox chooser and the lobby) and the icon glyphs (the builder and the library).
+-- Headless checks for the widgets the pages draw from one place: the option cycle's centre
+-- and arrows (Settings, the lobby's deck filter, the builder's filters), the pagers' arrows
+-- and face (the collection pages and the lobby's deck picker), the titled deck pile (the
+-- sandbox chooser and the lobby) and the icon glyphs (the builder and the library).
 package.path='frontend/lua/?.lua;'..package.path
 local calls={}
 local g=setmetatable({},{__index=function(t,k)
@@ -160,8 +160,8 @@ reset()
 Button.icon({x=600,y=100,w=40,h=36},'other',false,1280)
 check(rects()==list,'Any other name draws the list')
 
--- The deck picker (audit PG16): a literal, case-blind name search with an optional filter,
--- paging that wraps round and is said, and the pile under the pointer or focus lifting.
+-- The deck picker: a literal, case-blind name search with an optional filter, paging that
+-- wraps round and is said, and the pile under the pointer or focus lifting.
 local decks={{name='Fire Deck',standard=true},{name='Water 100%',standard=false},{name='fire storm',standard=false}}
 local names=function(list) local out={};for _,d in ipairs(list) do out[#out+1]=d.name end;return table.concat(out,',') end
 check(names(DeckPicker.matches(decks,'  FIRE '))=='Fire Deck,fire storm','Trimmed and case-blind')
@@ -196,8 +196,8 @@ picker.cards={pileStub(),pileStub()};sounds={}
 DeckPicker.update(picker,controls,1/60,1,false,false)
 check(not picker.cards[2].active and #sounds==0,'Nothing lifts while the picker is busy')
 
--- The decklist text area (audit PG16): it wraps each paragraph once per value and width, and
--- draws the lines a new value wraps to.
+-- The decklist text area: it wraps each paragraph once per value and width, and draws the
+-- lines a new value wraps to.
 local TextArea=require('ui.text_area')
 local wraps=0
 font.getWrap=function(_,s,w)

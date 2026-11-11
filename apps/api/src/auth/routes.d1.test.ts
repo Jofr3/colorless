@@ -171,11 +171,11 @@ describe("POST /auth/register", () => {
       emailVerified: false,
       namePrompt: false,
     });
-    // A blank name gets a generated handle, never the email's local part (AU3).
+    // A blank name gets a generated handle, never the email's local part.
     expect(user.displayName).toMatch(/^Trainer-[A-Z2-9]{4}$/);
     const rows = await userRows();
     expect(rows).toHaveLength(1);
-    // Peppered with the env's PASSWORD_PEPPER (AU9).
+    // Peppered with the env's PASSWORD_PEPPER.
     expect(rows[0]?.passwordHash).toMatch(/^pbkdf2p\$[A-Za-z0-9_-]{8}\$100000\$/);
     expect(logged()).toEqual([{ evt: "auth", kind: "registered", account: UNTAGGED }]);
 
@@ -889,7 +889,7 @@ describe("GET /auth/oauth/google/callback find-or-create", () => {
     const session = await me(sessionCookieOf(res));
     const user = (await session.json()) as { id: string; displayName: string };
     expect(user.id).toBe(rows[0]?.id);
-    // A generated handle, not the Google real name (AU3), and so no prompt to choose one.
+    // A generated handle, not the Google real name, and so no prompt to choose one.
     expect(user).toMatchObject({ namePrompt: false });
     expect(user.displayName).toMatch(/^Trainer-[A-Z2-9]{4}$/);
   });
@@ -949,7 +949,7 @@ describe("GET /auth/oauth/google/callback find-or-create", () => {
     expect(await userRows()).toEqual([]);
   });
 
-  // Addresses Google can verify that z.email() refuses (audit AUTH1).
+  // Addresses Google can verify that z.email() refuses.
   it.each(["ivan@example.xn--p1ai", "a&b@example.com"])(
     "keeps a Google account with the email %s usable",
     async (email) => {

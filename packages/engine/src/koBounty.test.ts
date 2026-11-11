@@ -644,7 +644,7 @@ describe("§11 — the v33 bytes round-trip, and a v32-shaped body THROWS at its
   it("v32-SHAPED body (the key genuinely ABSENT): the Knock Out THROWS", () => {
     const revived = roundTrip(inWindow(installed().state));
     const target = body(revived.players.p2.active) as Partial<InPlayPokemon>;
-    // The key must be genuinely ABSENT, which is what a v32 record looks like (D124).
+    // The key must be genuinely ABSENT, not set to undefined: that is what a v32 record looks like.
     delete target.koBounty;
     expect("koBounty" in target).toBe(false);
     expect(() => applyAction(revived, { type: "attack", seat: "p1", index: STRIKE })).toThrow(

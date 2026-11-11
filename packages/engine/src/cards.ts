@@ -537,11 +537,11 @@ export function benchMatches(card: Card | undefined, filter: CardFilter): boolea
 }
 
 export interface ParsedDamage {
-  /** The numeric part — what M2 applies. */
+  /** The numeric part — the printed base damage. */
   base: number;
   /** The printed marker ("+", "×", "?") when the number is not the whole
-      story; the rest of that story is an M4 effect op (simulator.md: the
-      damage field encodes an op). Null = the number IS the whole story. */
+      story; the rest of that story is an effect op (simulator.md, "Where a
+      card's behaviour comes from"). Null = the number IS the whole story. */
   modifier: string | null;
 }
 

@@ -1,8 +1,7 @@
-// Re-checks the sessions seated lobby sockets authenticated with at their upgrade (security audit
-// MI4, user decision 13). A socket keeps the account its cookie resolved to for as long as it stays
-// open, so a logout, a revoked session or a deleted account would otherwise keep its seat playing.
-// The DO asks once per rematch, never per frame; the match handoff re-checks each deck's session in
-// its own read (deckLoad.ts).
+// Re-checks the sessions seated lobby sockets authenticated with at their upgrade. A socket keeps
+// the account its cookie resolved to for as long as it stays open, so a logout, a revoked session
+// or a deleted account would otherwise keep its seat playing. The DO asks once per rematch, never
+// per frame; the match handoff re-checks each deck's session in its own read (deckLoad.ts).
 
 import { and, gt, inArray } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";

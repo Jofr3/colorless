@@ -15,8 +15,8 @@ const cardsKeyQuery = (search: string) => {
 
 describe("catalogCacheKey", () => {
   it("keys by path and query under the versioned catalog prefix", () => {
-    // The version segment guards cached SHAPES: bumping it (v2→v3 with the P2
-    // CardBrief `legal` field) orphans every older entry instead of serving it.
+    // The version segment guards cached SHAPES: bumping it orphans every older entry
+    // instead of serving it.
     expect(catalogCacheKey("/cards")).toBe("catalog:v12:/cards");
     expect(catalogCacheKey("/cards", "page=2&set=sv01")).toBe("catalog:v12:/cards?page=2&set=sv01");
   });

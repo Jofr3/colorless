@@ -239,7 +239,7 @@ describe("D323 §1 — the two registry rows", () => {
         byThisPokemonsAttack: true,
       });
     }
-    // The reprints are the SAME program object, not copies — D190b's exact-map rule.
+    // The reprints are the SAME program object, not copies.
     expect(programFor(HYDREIGON)).toBe(programFor(HYDREIGON_R1));
     expect(programFor(HYDREIGON)).toBe(programFor(HYDREIGON_R2));
     // No flip, no cap, no spot clause — each one a printed absence, and each one

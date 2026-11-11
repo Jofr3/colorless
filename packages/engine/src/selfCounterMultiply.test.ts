@@ -22,8 +22,7 @@ import {
   findEvent,
 } from "./testFixtures";
 
-/** The two printed sentences, byte-for-byte off the local D1 rows (2026-08-03,
-    978 rows / 6 sets). */
+/** The two printed sentences, byte-for-byte off the local D1 rows. */
 const BALLOON_BLAST = "This attack does 30 damage for each damage counter on this Pokémon.";
 const RAGING_SWING = "This attack does 50 damage for each damage counter on this Pokémon.";
 const RAGING_HORNS = "This attack does 10 more damage for each damage counter on this Pokémon.";

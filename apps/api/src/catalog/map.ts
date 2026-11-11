@@ -23,8 +23,8 @@ export type SerieRow = typeof series.$inferSelect;
 /** The card columns a CardBrief needs — pass to `db.select(...)` so list
     queries never drag the BIG JSON blobs (attacks/abilities/…) off disk.
     `types_json` rides along: it's a few quoted words, and the builder's
-    tiles and kind filters need it (M9). The two legality flags joined for
-    P2 — the deck validator reads `legal` off hydrated lists. */
+    tiles and kind filters need it. The two legality flags ride along too:
+    the deck validator reads `legal` off hydrated lists. */
 export const cardBriefColumns = {
   id: cards.id,
   name: cards.name,

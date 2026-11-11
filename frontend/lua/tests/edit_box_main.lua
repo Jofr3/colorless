@@ -1,8 +1,8 @@
--- The real main.lua tells the page where the field a text proxy edits is drawn (audit BR6): a
--- command that opens an edit (a screen's input, Settings' account and sign-in edit) carries the
--- field's box after its own fields, and a 'field-box' print follows when the box moves. The box
--- is in whole CSS pixels from the canvas's top-left: love.draw's offset and scale, the
--- collections' 0.9 desktop inset and entrance slide, divided by the device pixel ratio.
+-- The real main.lua tells the page where the field a text proxy edits is drawn: a command that
+-- opens an edit (a screen's input, Settings' account and sign-in edit) carries the field's box
+-- after its own fields, and a 'field-box' print follows when the box moves. The box is in whole
+-- CSS pixels from the canvas's top-left: love.draw's offset and scale, the collections' 0.9
+-- desktop inset and entrance slide, divided by the device pixel ratio.
 package.path='frontend/lua/?.lua;'..package.path
 local noop=function()end
 -- 700 x 400 CSS pixels at a device pixel ratio of 2: layout scale 1, offset 60 across.
@@ -107,7 +107,7 @@ popup.callbacks.auth('submit');popup.callbacks.account('save\tAsh')
 expect(sent('auth'),'submit','Submit carries no box')
 popup.box=nil;popup.callbacks.auth('edit\tpassword')
 expect(sent('auth'),'edit\tpassword','A field Settings does not draw carries no box')
--- On the account tab a failed submit is said each time, the same refusal again too (audit PG9).
+-- On the account tab a failed submit is said each time, the same refusal again too.
 popup.tab=4
 files['__account.txt']='1\tanonymous\t0\tEnter%20your%20password.\t\t\t\t0\t0\tpassword\t1';frame()
 expect(sent('announce'),'Enter%20your%20password.','A failed submit is announced')
@@ -123,9 +123,9 @@ files['__viewport.txt']='480 850 0 480 850'
 for _=1,20 do frame() end
 expect(sent('field-box'),'60\t300\t360\t40','A resize moves the box')
 
--- Interface Size 125% (audit LQX2) at 1280 x 800 CSS pixels and a ratio of 1. Settings lays out in
--- a 1024 x 640 canvas drawn 1.25 times larger about the middle: (100,200) is drawn at
--- (640+(100-512)*1.25, 400+(200-320)*1.25) = (125,250), 450 x 50 large.
+-- Interface Size 125% at 1280 x 800 CSS pixels and a ratio of 1. Settings lays out in a 1024 x 640
+-- canvas drawn 1.25 times larger about the middle: (100,200) is drawn at (640+(100-512)*1.25,
+-- 400+(200-320)*1.25) = (125,250), 450 x 50 large.
 files['__viewport.txt']='1280 800 0 1280 800'
 for _=1,20 do frame() end
 preferences.interfaceSize=1;popup.callbacks.changed();frame();printed={}

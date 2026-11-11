@@ -2,7 +2,7 @@
 # package.json: the bun ecosystem at / reads the root's `workspaces`) and for
 # the SHA-pinned GitHub Actions. Updates arrive grouped so coupled bumps move
 # together; the monthly routine in docs/conventions.md ("Dependencies") says
-# how each group is gated and merged (dependency audit PRC2, DEP-P1).
+# how each group is gated and merged.
 version: 2
 updates:
   - package-ecosystem: bun
@@ -22,23 +22,22 @@ updates:
         - drizzle-orm
         - "@hono/zod-validator"
         - "@noble/ciphers"
-    # Majors that need a go/no-go branch of their own (dependency audit §5).
+    # Majors that need a go/no-go branch of their own.
     ignore:
-      # A typescript major (8) gets its own go/no-go branch, as 7 did (DEP-P5).
-      # The mutation scripts parse with @typescript/typescript6 until TS 7.1's
-      # compiler API is stable.
+      # A typescript major gets its own go/no-go branch. The mutation scripts
+      # parse with @typescript/typescript6 until TS 7.1's compiler API is stable.
       - dependency-name: typescript
         update-types: ["version-update:semver-major"]
-      # Decision 8: @types/node follows the pinned Node line (.node-version,
-      # 22 LTS), not the newest Node; the move to 24 is planned for Q1 2027.
+      # @types/node follows the pinned Node line (.node-version, 22 LTS), not
+      # the newest Node; it moves when .node-version does.
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
-      # A Biome major (3) gets its own go/no-go branch, as 2 did (DEP-P7):
+      # A Biome major gets its own go/no-go branch:
       # `biome migrate --write`, then biome ci --error-on-warnings,
       # lint-coverage, the generators' --check and a mutant sample.
       - dependency-name: "@biomejs/biome"
         update-types: ["version-update:semver-major"]
-      # A vitest major (6) gets its own go/no-go branch, as 5 did (DEP-P6):
+      # A vitest major gets its own go/no-go branch:
       # check its cache paths (ci.yml) and that a seeded mutant sample matches.
       - dependency-name: vitest
         update-types: ["version-update:semver-major"]

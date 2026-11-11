@@ -11,7 +11,7 @@
  * A call must name its `evt` and `kind` as string literals, except the forwarders in FORWARDERS,
  * whose callers are read instead. It reads source text, so a key built outside the call (a
  * variable, a helper not typed `LogFields`) or a log function under another name goes unseen; the
- * `LogFields` type and the lobby's LB8 test cover part of that at run time.
+ * `LogFields` type and the lobby abuse test's audit-trail cases cover part of that at run time.
  */
 
 import { readdirSync, readFileSync } from "node:fs";

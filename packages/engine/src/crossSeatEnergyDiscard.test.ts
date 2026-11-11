@@ -229,7 +229,7 @@ describe("D361 §2 — the SPECIAL arm on a board: their ACTIVE, one Energy, and
 
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
     // One Special on the Active is a FORCED pick, so it resolves without a prompt
-    // (the M1 no-choice rule) — and the benched Special is untouched.
+    // (the no-choice rule) — and the benched Special is untouched.
     expect(done.phase.kind).not.toBe("effect:choose");
     expect(findAll(events, "ENERGY_DISCARDED")).toHaveLength(1);
     expect(energyIds(done, "p2")).toEqual([]);

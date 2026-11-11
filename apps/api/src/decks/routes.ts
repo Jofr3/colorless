@@ -1,8 +1,8 @@
 // Authenticated deck routes. User data is never KV-cached. Each :id lookup is scoped to the user,
 // so another user's deck returns the same 404 as a missing one.
 //
-// Writes (POST, PATCH, DELETE) are limited by two Workers Rate Limiting bindings (security audit
-// DK1): 60 a minute per account and 180 a minute per address, so fresh accounts from one address
+// Writes (POST, PATCH, DELETE) are limited by two Workers Rate Limiting bindings: 60 a minute
+// per account and 180 a minute per address, so fresh accounts from one address
 // do not multiply the budget. The builder's saver (src/decks/deckSaver.ts) waits 600 ms after the
 // last edit, keeps one save in flight, and starts saves at least a second apart, so even nonstop
 // editing in one tab stays within 60 PATCHes a minute (two tabs on one account share it); creates
@@ -99,9 +99,9 @@ function deckCountQuery(db: Db, userId: string) {
 }
 
 /** A new deck's insert, which writes only while the account holds fewer than MAX_DECKS_PER_USER
-    decks: the count is taken in the statement itself, so concurrent creates cannot pass the cap
-    (security audit DK2). The deck takes one below the account's lowest `position`, so new decks
-    land first in the position-ordered list. The select's columns follow the table's. */
+    decks: the count is taken in the statement itself, so concurrent creates cannot pass the cap.
+    The deck takes one below the account's lowest `position`, so new decks land first in the
+    position-ordered list. The select's columns follow the table's. */
 function guardedDeckInsert(db: Db, row: Omit<DeckRow, "position">) {
   const theirs = sql`(select count(*) from ${decks} where ${decks.userId} = ${row.userId})`;
   const position = sql`(select coalesce(min(${decks.position}), 1) - 1 from ${decks}
@@ -251,7 +251,7 @@ deckRoutes.get("/", privateRevalidate, requireUser, async (c) => {
           row,
           candidates,
           // The owner's pin wins over the derived default, but only while it is
-          // still a drawable card in the deck (P5-6) — resolved against the
+          // still a drawable card in the deck — resolved against the
           // candidates already in hand, so honouring a choice costs no query.
           effectiveCoverCardId(row.coverCardId, candidates),
         );

@@ -92,7 +92,7 @@ function mapUserRow(row: UserRow): User {
     email: row.email,
     displayName: row.displayName,
     emailVerified: row.emailVerified,
-    // Derived, never stored (P5-2): the same token the lobby broadcasts for
+    // Derived, never stored: the same token the lobby broadcasts for
     // this account, so a player's profile draws the face opponents see.
     avatarSeed: avatarSeedOf(row.id),
     hasPassword: row.passwordHash !== null,
@@ -106,7 +106,7 @@ function mapUserRow(row: UserRow): User {
     anything about the lookup.
 
     The AUTH_LIMIT binding comes first, per scope and address: 10 a minute, which no person
-    signing in reaches, refuses a flood before the D1 limiter spends a write counting it (AUX1).
+    signing in reaches, refuses a flood before the D1 limiter spends a write counting it.
     It fails open (http/bindingLimit.ts); the D1 limiter behind it fails closed. */
 async function afterRateLimit<T, E extends { Bindings: Env }>(
   c: Context<E>,
@@ -180,7 +180,7 @@ function insertSessionWhilePasswordHolds(db: Db, row: SessionRow, passwordHash: 
 
 /** A fresh users row: a new id, no favourite deck, created now. Its name is one the user typed or
     a generated handle, never taken from the email or a provider profile, so it is never asked to
-    choose a public name (`namePrompt`, security audit AU3). */
+    choose a public name (`namePrompt`). */
 function newUserRow(
   fields: Pick<UserRow, "email" | "displayName" | "passwordHash" | "emailVerified">,
 ): UserRow {
@@ -200,9 +200,9 @@ function isUniqueViolation(error: unknown): boolean {
   return chainMentions(error, /UNIQUE constraint failed/);
 }
 
-/** The Worker's password peppers. Without PASSWORD_PEPPER, new hashes are made unpeppered (as
-    before AU9) rather than refusing sign-ups and logins over a missing secret, and a throttled
-    error line says so; the release gate refuses to release without it. */
+/** The Worker's password peppers. Without PASSWORD_PEPPER, new hashes are made unpeppered
+    rather than refusing sign-ups and logins over a missing secret, and a throttled error line
+    says so; the release gate refuses to release without it. */
 async function passwordPeppers(env: Env): Promise<Peppers> {
   const peppers = await peppersOf(env);
   if (peppers.current === null) logErrorThrottled("auth", "pepper_missing");
@@ -235,7 +235,7 @@ authRoutes.post("/register", validate("json", registerRequestSchema), async (c) 
   const row = newUserRow({
     email: body.email,
     // Left blank, a generated handle: opponents see this name, and the email's local part would
-    // publish the address (security audit AU3). The user can rename any time.
+    // publish the address. The user can rename any time.
     displayName: body.displayName ?? generateHandle(),
     passwordHash: await hashPassword(
       body.password,
@@ -350,7 +350,7 @@ async function refuseLogin(
 // ETagged `private, no-cache` (../httpCache.ts): the boot probe revalidates
 // to a 304 while the profile is unchanged.
 // The session check re-sends the cookie with its current attributes and remaining lifetime, so a
-// cookie set before the move to SameSite=Lax (2026-10-27) is replaced on the next page load
+// cookie set with older attributes (before SameSite=Lax) is replaced on the next page load
 // instead of living out its 30 days.
 authRoutes.get("/me", privateRevalidate, requireUser, (c) => {
   const token = readCookie(c.req.header("Cookie"), SESSION_COOKIE);
@@ -359,11 +359,10 @@ authRoutes.get("/me", privateRevalidate, requireUser, (c) => {
   return c.json(userSchema.parse(mapUserRow(c.get("user"))));
 });
 
-// Editing your own account (P5-5 — polish.md "Profiles"). The name P5-1 made
-// authoritative was, until now, whatever register chose: the lobby broadcasts
-// it to the opponent and to spectators, so being unable to change it is a real
-// gap, not a nicety. requireUser runs BEFORE validation deliberately — a
-// signed-out caller should hear "unauthorized", not a critique of their body.
+// Editing your own account (docs/archive/workstreams/polish.md "Profiles"). The lobby broadcasts the account's name to
+// the opponent and to spectators, so being able to change it is a need, not a nicety.
+// requireUser runs BEFORE validation deliberately — a signed-out caller should hear
+// "unauthorized", not a critique of their body.
 authRoutes.patch("/me", requireUser, validate("json", updateProfileRequestSchema), async (c) => {
   const row = c.get("user");
   // A `favouriteDeckId` from an older client is stripped by the schema: the field is retired and
@@ -384,7 +383,7 @@ authRoutes.patch("/me", requireUser, validate("json", updateProfileRequestSchema
   return c.json(userSchema.parse(mapUserRow({ ...row, displayName, namePrompt: false })));
 });
 
-// Deleting your own account (database audit OP6). One statement: every table holding the user's
+// Deleting your own account. One statement: every table holding the user's
 // data references users ON DELETE CASCADE (sessions, oauth_identities, folders, decks and through
 // them deck_cards), so the delete takes this session and every other with it. Rate-limit rows are
 // hashed and age out on their own; a lobby seat bound to the id only ever compares it, and a deck
@@ -474,7 +473,7 @@ authRoutes.post("/logout", async (c) => {
   return c.body(null, 204);
 });
 
-// Sign out everywhere (security audit AU7): every session of the caller's account ends, this one
+// Sign out everywhere: every session of the caller's account ends, this one
 // included, so a session left signed in on another device stops working. A lobby socket opened
 // earlier keeps its seat until it closes, but no new match starts for it without a session.
 authRoutes.post("/logout-all", requireUser, async (c) => {
@@ -751,8 +750,8 @@ async function linkOrCreateOAuthUser(
     }
     // Link, and promote emailVerified — the provider just attested it. An
     // unverified account's password, sessions and other identities could
-    // belong to whoever registered the address first, so they go (AU4): the
-    // owner signs in through this identity from now on.
+    // belong to whoever registered the address first, so they go: the
+    // owner signs in through this identity from then on.
     if (existing.emailVerified) {
       await db.insert(oauthIdentities).values({ ...identity, userId: existing.id });
       return { user: existing, outcome: { kind: "linked", claimed: false } };
@@ -777,12 +776,12 @@ async function linkOrCreateOAuthUser(
     };
   }
   if (!profile.emailVerified) {
-    // A provider that has not verified the address cannot vouch for it (AU4).
+    // A provider that has not verified the address cannot vouch for it.
     return "email-unverified";
   }
   const row = newUserRow({
     email: profile.email,
-    // Never the Google profile's real name: opponents see this name (security audit AU3).
+    // Never the Google profile's real name: opponents see this name.
     displayName: generateHandle(),
     passwordHash: null,
     emailVerified: profile.emailVerified,

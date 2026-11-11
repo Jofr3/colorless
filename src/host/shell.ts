@@ -200,7 +200,7 @@ export class HostShell {
   /** The builder's decklist, where Enter types a newline. */
   private readonly builderText: TextProxy;
   private readonly auth: AuthProxy;
-  /** The last failed submit's message, which describes the fields it refused (audit PG9). */
+  /** The last failed submit's message, which describes the fields it refused. */
   private readonly authProblem: HTMLElement;
   /** Failed submits the account snapshots have counted. */
   private authFailures = 0;
@@ -285,9 +285,9 @@ export class HostShell {
     });
 
     const authInputs = {} as Record<AuthField, HTMLInputElement>;
-    // A form groups the sign-in fields for a password manager (audit BR7). It never submits: Lua
-    // sends the sign-in. With display: contents it has no box, so the proxies keep their place and
-    // their order in the page, and only the field being edited is shown, as before.
+    // A form groups the sign-in fields for a password manager. It never submits: Lua sends the
+    // sign-in. With display: contents it has no box, so the proxies keep their place and their
+    // order in the page, and only the field being edited is shown.
     const authForm = doc.createElement("form");
     authForm.style.display = "contents";
     authForm.addEventListener("submit", (event) => event.preventDefault());
@@ -368,7 +368,7 @@ export class HostShell {
         ["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code) ||
         ((this.settingsOpen || this.view.page !== "home") &&
           ["Tab", "Home", "End", "Escape", "PageUp", "PageDown"].includes(event.code)) ||
-        // The builder's '/' opens its card search, not the browser's quick find (audit PG14).
+        // The builder's '/' opens its card search, not the browser's quick find.
         (this.view.page === "builder" && event.key === "/")
       )
         event.preventDefault();

@@ -510,7 +510,7 @@ describe("§4 the counter window — EXACTLY six, and the two near-misses", () =
     expect(types(events)).not.toContain("DAMAGE_DEALT");
     expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2", uid: victim });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    // One candidate, so no prompt: the M1 rule again, one op over.
+    // One candidate, so no prompt: the no-choice rule again, one op over.
     expect(state.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
   });
 
@@ -600,7 +600,7 @@ describe("§4 the counter window — EXACTLY six, and the two near-misses", () =
 
   it("refuses a wire answer that names a body OUTSIDE the offered set", () => {
     // `validateChoice`'s `choosePokemon` arm reads the PROMPT and nothing else,
-    // which is what a P4 client is checked by — and it is why the §11 filter at the
+    // which is what a remote client is checked by — and it is why the §11 filter at the
     // funnel is sufficient and no second ask is needed on the resolve path.
     const before = counterBoard(4, 60, [
       { id: "fix-koc-basic", damage: 60 },

@@ -69,7 +69,7 @@ export function readFieldBox(fields: readonly string[], start: number): FieldBox
   return width > 0 && height > 0 ? { x, y, width, height } : null;
 }
 
-/** Puts a proxy over its field (audit BR6), so the IME window and a phone keyboard's pan anchor
+/** Puts a proxy over its field, so the IME window and a phone keyboard's pan anchor
  * at the field the canvas draws, not at its corner. host.css keeps it clipped, fixed and out of
  * the pointer's way. Without a box it goes back to where the page's flow leaves it. */
 export function placeProxy(element: HTMLElement, box: FieldBox | null, canvas: Element) {

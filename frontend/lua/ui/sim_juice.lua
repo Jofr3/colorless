@@ -1,7 +1,7 @@
 local D=require('ui.card_dimensions')
--- The table's juice (audit SM14), mixed into ui/simulator.lua's Simulator: the Knock Out
--- presentation's hooks (ui/sim_ko.lua plays it), what a new snapshot changed turned into pops,
--- sounds and the background, and the game-over panel.
+-- The table's juice, mixed into ui/simulator.lua's Simulator: the Knock Out presentation's
+-- hooks (ui/sim_ko.lua plays it), what a new snapshot changed turned into pops, sounds and the
+-- background, and the game-over panel.
 local T=require('ui.theme')
 local Overlay=require('ui.sim_overlay')
 local Simulator={}

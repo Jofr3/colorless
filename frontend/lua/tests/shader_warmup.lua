@@ -1,7 +1,7 @@
--- Boot compiles only what home's first frame needs (audit LC8): splash and CRT in love.load. The
--- table and card shaders (background, dissolve, played) compile one per update once the host has
--- been told ready, and at once when a page or a wipe needs them first: a deep link to a table or
--- the decks page, or a wipe started before the warm-up got to them. No draw meets a missing one.
+-- Boot compiles only what home's first frame needs: splash and CRT in love.load. The table and
+-- card shaders (background, dissolve, played) compile one per update once the host has been told
+-- ready, and at once when a page or a wipe needs them first: a deep link to a table or the decks
+-- page, or a wipe started before the warm-up got to them. No draw meets a missing one.
 package.path='frontend/lua/?.lua;'..package.path
 local noop=function() end
 local function check(ok,message) if not ok then error(message,2) end end

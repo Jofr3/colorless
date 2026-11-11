@@ -1,7 +1,7 @@
--- The CRT pass (ui/screen.lua, audit LC7): an idle frame refills the screen's tables in place,
--- making no garbage, and sends the CRT shader only its time and mouse position; the other ten
--- uniforms go once per Screen (each layout makes one) and again when CRT, bloom or reduced motion
--- change. Every value sent is still Screen.values', which screen.lua checks against Balatro.
+-- The CRT pass (ui/screen.lua): an idle frame refills the screen's tables in place, making no
+-- garbage, and sends the CRT shader only its time and mouse position; the other ten uniforms go
+-- once per Screen (each layout makes one) and again when CRT, bloom or reduced motion change.
+-- Every value sent is still Screen.values', which screen.lua checks against Balatro.
 package.path='frontend/lua/?.lua;'..package.path
 local sent={}
 love={graphics=setmetatable({},{__index=function() return function() end end})}

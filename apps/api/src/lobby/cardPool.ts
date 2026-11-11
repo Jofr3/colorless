@@ -1,4 +1,4 @@
-// P4 — resolve catalog ids to full domain Cards for the engine's `cardPool`
+// Resolves catalog ids to full domain Cards for the engine's `cardPool`
 // (online.md). The lobby → engine handoff needs every card in both decks as a
 // `@colorless/schema` Card; the DO reads them out of D1 here, then hands the pool
 // to `startMatch` (match.ts, which stays pure of D1).

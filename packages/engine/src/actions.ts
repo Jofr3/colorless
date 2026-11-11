@@ -86,7 +86,7 @@ export interface RareCandyAction {
   evolutionUid: string;
 }
 
-/** Give up the game (P4 3c-ii). Not a §14 rules condition — a player's own
+/** Give up the game. Not a §14 rules condition — a player's own
     choice, or the server acting for one who abandoned an online match — so unlike
     every other action it is legal in ANY phase but `gameOver`: you can concede on
     your opponent's turn, mid-effect, or while a KO interrupt is parked. That
@@ -217,7 +217,7 @@ export type GameAction =
 export type ErrorCode =
   | "GAME_OVER"
   /** The action's `type` or `seat` is not one the engine knows. Unreachable
-      through the typed API; the P4 server decodes actions off the wire. */
+      through the typed API; the online server decodes actions off the wire. */
   | "UNKNOWN_ACTION"
   | "UNKNOWN_SEAT"
   | "BAD_PHASE"
@@ -268,7 +268,7 @@ export type ErrorCode =
   | "FIRST_TURN_ATTACK"
   | "BAD_ATTACK_INDEX"
   | "ATTACK_COST_UNMET"
-  // — M4 Trainer / Ability plays (§7/§9). —
+  // — Trainer / Ability plays (§7/§9). —
   /** playTrainer on a non-Trainer card. */
   | "NOT_A_TRAINER"
   /** attachTool on a card that is not a Pokémon Tool (§7.4). */
@@ -370,7 +370,7 @@ export type ErrorCode =
       together); a crafted or corrupted snapshot (attack.ts). */
   | "PHASE_DESYNC"
   // createGame rejections. They live in the SAME union as the action codes so
-  // a host (the P4 Worker above all) has one `switch (error.code)` to write,
+  // a host (the lobby Worker above all) has one `switch (error.code)` to write,
   // not two disjoint ones over two identical-looking envelopes.
   | "BAD_DECK_SIZE"
   | "UNKNOWN_CARD_ID"
@@ -382,7 +382,7 @@ export interface EngineError {
 }
 
 /** Illegal actions NEVER throw and NEVER mutate — they come back as
-    ok:false with a stable code (the authoritative P4 server keys off it). */
+    ok:false with a stable code (the authoritative online server keys off it). */
 export type ApplyResult =
   | { ok: true; state: GameState; events: GameEvent[] }
   | { ok: false; error: EngineError };

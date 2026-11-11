@@ -9,7 +9,7 @@
 // (frontend/lua/tests/support/balatro_source.lua), or skip only those checks
 // and say so (`PARTIAL`); --require-source makes either a failure instead,
 // and refuses any interpreter but 5.1: it is the release's only source-comparing
-// run, so it must not pass under a dialect the game cannot run (build audit ENV4).
+// run, so it must not pass under a dialect the game cannot run.
 // Files run concurrently, one per core; a failure's output is printed whole,
 // in file order. Naming test files runs only those (a mutant row's killer).
 //

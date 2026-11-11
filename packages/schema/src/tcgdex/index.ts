@@ -1,4 +1,4 @@
-// tcgdex.dev REST API models (P1 milestone 2) — Zod schemas + inferred types
+// tcgdex.dev REST API models — Zod schemas + inferred types
 // for everything we read from https://api.tcgdex.net/v2/en/. Authored against
 // live responses (committed in ./__fixtures__, unit-tested in tcgdex.test.ts)
 // and swept against the live API by ../../scripts/validate-live.ts.

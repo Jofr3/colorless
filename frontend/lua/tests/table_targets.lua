@@ -1,10 +1,10 @@
--- The table on small screens (audit LC4 (b), QA11), with every button's face unchanged (the
--- user's rule). Sideways on a phone (under 0.7 CSS px per board px) the HUD's small buttons and a
--- card's attached buttons answer over an invisible area of about 44 CSS px; upright on a phone,
--- 24 CSS px. A hit area never reaches a card or another control. A touch screen held sideways
--- under 0.6 is told to turn upright, in the HUD's empty top band. Upright, the prompt keeps a
--- scale of 0.24 at least and spills its note into a two-line strip over the table's top band,
--- and the HUD's small text is at least 11 CSS px, a turn's long hint wrapping under the buttons.
+-- The table on small screens, with every button's face unchanged (the user's rule). Sideways on a
+-- phone (under 0.7 CSS px per board px) the HUD's small buttons and a card's attached buttons
+-- answer over an invisible area of about 44 CSS px; upright on a phone, 24 CSS px. A hit area
+-- never reaches a card or another control. A touch screen held sideways under 0.6 is told to turn
+-- upright, in the HUD's empty top band. Upright, the prompt keeps a scale of 0.24 at least and
+-- spills its note into a two-line strip over the table's top band, and the HUD's small text is at
+-- least 11 CSS px, a turn's long hint wrapping under the buttons.
 package.path='frontend/lua/?.lua;'..package.path
 local D=require('ui.card_dimensions')
 local function font()
@@ -192,7 +192,7 @@ hud:drawPrompt({luaTargeting={title='Choose a Pokémon',note=long}},DL,30,200,26
 for _,t in ipairs(drawn) do check(t.y<354,'Desktop prompts stay in their box') end
 
 -- The HUD's small text on the narrowest phones: at least 11 CSS px as drawn, the turn's long hint
--- too (QA6: fitted into one 230 px line it came out at 4-5 CSS px), and inside the HUD.
+-- too (fitted into one 230 px line it would draw at 4-5 CSS px), and inside the HUD.
 local HINT='Attach Energy, play Trainers and Pokémon, then attack or end your turn.'
 open(480,850,{scale=0.75,portrait=true,coarse=true})
 sim.hud.hint=HINT

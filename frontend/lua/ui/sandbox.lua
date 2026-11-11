@@ -31,7 +31,7 @@ function Sandbox:open(reduced)
   self:command('open')
 end
 function Sandbox:offset() return self.motion and self.motion.VT.y*60 or 0 end
--- The search's box while a text proxy edits it, for main.lua to hand the page (audit BR6).
+-- The search's box while a text proxy edits it, for main.lua to hand the page.
 function Sandbox:editBox()
   if not self.editing then return end
   for _,b in ipairs(self.controls) do if b.input then return b.x,b.y,b.w,b.h end end
@@ -116,7 +116,7 @@ function Sandbox:sync(raw)
   if #say>0 then self.callbacks.announce(table.concat(say,' ')) end
 end
 -- Why the chooser has no decks when the user has some: how many it leaves out, and what a game
--- needs from a deck (audit PG11). Nil when the user has none.
+-- needs from a deck. Nil when the user has none.
 function Sandbox:emptyNote()
   local n=self.hidden or 0
   if n<1 then return nil end

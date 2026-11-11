@@ -1,6 +1,6 @@
 // GET /cards/index: every card as one compact row (@colorless/schema `CardIndexPayload`), which
 // the builder downloads once and searches in the browser, so a typed name or rules-text search
-// costs no D1 rows (security audit CA1). The response depends on the catalog alone, so it is one
+// costs no D1 rows. The response depends on the catalog alone, so it is one
 // KV entry per catalog epoch: a D1 read of the whole table only after an ingest or a KV miss.
 //
 // SQLite builds the JSON, one aggregate per set, and the Worker only joins those strings: parsing

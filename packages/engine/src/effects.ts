@@ -6363,7 +6363,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
         },
         // "Shuffle the other cards back into your deck" — the trailing op, off
         // the printed text, running on the whiff and the decline alike (the Nest
-        // Ball pattern this op has followed since M5).
+        // Ball pattern).
         { op: "shuffleDeck" },
       ];
     }

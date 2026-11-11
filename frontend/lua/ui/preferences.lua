@@ -3,7 +3,7 @@ Preferences.__index=Preferences
 -- The record is positional (serialize), so a new key is only ever appended.
 Preferences.keys={'screenshake','reducedMotion','crt','bloom','volume','musicVolume','effectsVolume','muted','highFrameRate','interfaceSize'}
 -- highFrameRate: 0 caps update and draw at 60 per second, 1 allows 144 (main.lua frameCap).
--- interfaceSize: 0, 1 or 2 for 100%, 125% or 150% (ui/interface_size.lua, audit LQX2).
+-- interfaceSize: 0, 1 or 2 for 100%, 125% or 150% (ui/interface_size.lua).
 Preferences.defaults={screenshake=50,reducedMotion=-1,crt=70,bloom=0,volume=50,musicVolume=100,effectsVolume=100,muted=0,highFrameRate=0,interfaceSize=0}
 local ranges={reducedMotion={-1,1},bloom={0,1},muted={0,1},highFrameRate={0,1},interfaceSize={0,2}}
 -- How many values a record had before highFrameRate and interfaceSize were appended: such a

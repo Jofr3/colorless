@@ -19,7 +19,7 @@ describe("deckSchema / deckSummarySchema", () => {
     folderId: null,
     position: -2,
     updated: "2026-07-09T00:00:00.000Z",
-    // Required on the full deck (P5-6) and ignored by the summary, so the
+    // Required on the full deck and ignored by the summary, so the
     // rejection cases below still fail for the reason they name.
     chosenCoverCardId: null,
   };

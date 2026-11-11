@@ -1,5 +1,5 @@
 // A bounded, seeded fuzz of `applyAction` with hostile wire actions, on states reached by seeded
-// walks over the fixture decks (security audit, Phase 0; MI3). Each action takes the lobby's path:
+// walks over the fixture decks. Each action takes the lobby's path:
 // a JSON round trip, `wireActionSchema` (as the DO's frame parse), then the actor's own seat
 // spread over the claimed one (`applyMatchAction`). The engine is total: it must answer every one
 // without throwing or mutating its input, and an accepted action must leave a state the lobby can
@@ -8,8 +8,7 @@
 // The audit's full sweep (145M actions over every fixture deck) found exactly one throw: a turn-1
 // `attack` whose index names an array member. This keeps a deterministic slice of it in CI (about
 // 68k actions per generator); raise DECK_COUNT and MAX_STEPS locally for a wider sweep. Each deck
-// is walked twice, on the legacy mulberry32 generator and on ChaCha20, which every real game uses
-// (MI1).
+// is walked twice, on the legacy mulberry32 generator and on ChaCha20, which every real game uses.
 
 import { wireActionSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";

@@ -65,9 +65,9 @@ for _,viewport in ipairs({{1280,800,60},{390,844,48.75},{1600,900,67.5}}) do
   end
 end
 
--- A canvas at the device pixel ratio (audit BT6): Balatro's CRT.fs, patched at load, measures its
--- fringe and centre distance in CSS pixels, so at density d every corner, every pointer mapping
--- and the scanline count are density 1's scaled by d.
+-- A canvas at the device pixel ratio: Balatro's CRT.fs, patched at load, measures its fringe and
+-- centre distance in CSS pixels, so at density d every corner, every pointer mapping and the
+-- scanline count are density 1's scaled by d.
 local shaderFile=assert(io.open(source..'/resources/shaders/CRT.fs','rb'))
 local code=shaderFile:read('*a'); shaderFile:close()
 local patched=Screen.source(code)

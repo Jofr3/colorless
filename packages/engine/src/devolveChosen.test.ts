@@ -379,7 +379,7 @@ describe("§2 — anchor × string, all four cells", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// §3 — THE FORCED PATH: one candidate is not a decision (the M1 rule).
+// §3 — THE FORCED PATH: one candidate is not a decision (the no-choice rule).
 // ─────────────────────────────────────────────────────────────────────────────
 describe("§3 — a lone evolved body is FORCED, with no prompt at all", () => {
   it("the Active devolves with no `effect:choose` phase and no prompt", () => {

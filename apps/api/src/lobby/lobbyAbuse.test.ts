@@ -1,8 +1,6 @@
 import { drbgSeed } from "@colorless/engine/testing";
-// The lobby abuse harness (security audit, Phase 0). Each case measures what one abusive client
-// costs the lobby, in storage writes, alarms, sockets and frames, and asserts the number. The
-// Phase 0 baselines were changed on purpose by the fix their finding id names (LB1, LB2, LB3, MI2
-// and MIX2 in Phase 3), and each such case says what the number was.
+// The lobby abuse harness. Each case measures what one abusive client can do to the lobby, in
+// storage writes, alarms, sockets and frames, and pins the limit with the measured number.
 
 import {
   LOBBY_WS_CLOSED,
@@ -190,8 +188,7 @@ describe("lobby abuse — frames (LB1, MI2)", () => {
       await h.send(ws, intent("attacker", pick(i)));
       if (h.storage.data.get("snapshot") !== before) processed++;
     }
-    // Was: 200 snapshot puts and 200 alarms (2 rows a frame), and the socket never closed. Now the
-    // hello spent one token of the burst, the next 39 frames are written (39ms refill less than
+    // The hello spent one token of the burst, the next 39 frames are written (39ms refill less than
     // one more), and the frame after them closes the socket. The alarm the hello armed is due
     // first, so no frame re-sets it.
     expect(processed).toBe(FRAME_BURST - 1);
@@ -205,7 +202,7 @@ describe("lobby abuse — frames (LB1, MI2)", () => {
         deadline: h.world.now - (frames - FRAME_BURST) + DISCONNECT_GRACE_MS,
       },
     ]);
-    // One line for the socket, never one per frame (LB8): the hello and the 39 frames it paid
+    // One line for the socket, never one per frame: the hello and the 39 frames it paid
     // for, then the one that closed it, 40ms after the upgrade.
     expect(logged("socket_closed")).toEqual([
       {
@@ -231,7 +228,7 @@ describe("lobby abuse — frames (LB1, MI2)", () => {
       h.world.now += 1000;
       await h.send(ws, intent("host", pick(i)));
     }
-    // Was one alarm per commit. Each commit pushes the liveness deadline 30s on, and the armed
+    // Each commit pushes the liveness deadline 30s on, and the armed
     // alarm, due sooner, is kept until it is due: a minute of commits sets it twice.
     expect(writes).toEqual({ puts: 60, keys: 60, deletes: 0, alarms: 2 });
     expect(ws.closed).toBeNull();
@@ -342,7 +339,7 @@ describe("lobby abuse — crafted actions (MI3)", () => {
       { kind: "reject-action", reason: "That move isn't available here." },
       { kind: "reject-action", reason: "That move isn't available here." },
     ]);
-    // The engine is meant to be total, so a throw is a code defect (OBS-P2).
+    // The engine is meant to be total, so a throw is a code defect.
     expect(logged("action_threw", "error")).toEqual([
       {
         evt: "lobby",
@@ -392,7 +389,6 @@ describe("lobby abuse — sockets and lifetime (LB2, LB3)", () => {
     const host = await h.connect("ana");
     await h.send(host, hello("h"));
     const { accepted, refused } = await connectMany(100);
-    // Was: every one of 100 accepted, and every lurker sent every state frame.
     expect(h.state.getWebSockets()).toHaveLength(LOBBY_SOCKET_CAP + OVERFLOW_SOCKETS_MAX);
     expect(refused).toBe(100 - (LOBBY_SOCKET_CAP - 1) - OVERFLOW_SOCKETS_MAX);
     const members = accepted.slice(0, LOBBY_SOCKET_CAP - 1);
@@ -452,8 +448,8 @@ describe("lobby abuse — sockets and lifetime (LB2, LB3)", () => {
     }
     const spectators = watchers.filter((ws) => ws.framesOf("match").length > 0);
     const turnedAway = watchers.filter((ws) => ws.closed !== null);
-    // Was: all 20 watched. Now the two seats and ten spectators fill the cap, and the rest are
-    // answered "full" and closed.
+    // The two seats and ten spectators fill the cap, and the rest are answered "full" and
+    // closed.
     expect(spectators).toHaveLength(LOBBY_SOCKET_CAP - 2);
     expect(turnedAway).toHaveLength(20 - spectators.length);
     expect(turnedAway.every((ws) => ws.last("reject")?.reason === "full")).toBe(true);
@@ -466,8 +462,8 @@ describe("lobby abuse — sockets and lifetime (LB2, LB3)", () => {
     await h.send(actorSocket, { kind: "action", action: { type: "reorderBench", uid, index: 1 } });
     const sent = sockets.map((ws, i) => ws.framesOf("match").length - (before[i] ?? 0));
     expect(sent).toEqual(sockets.map(() => 1));
-    // Was one redaction and encoding per socket (12 here). Now one per distinct frame: each seat's
-    // delta and the spectators' shared one, plus the harness encoding the action it sends.
+    // One redaction and encoding per distinct frame, not per socket: each seat's delta and the
+    // spectators' shared one, plus the harness encoding the action it sends.
     expect(stringify).toHaveBeenCalledTimes(1 + 3);
     stringify.mockRestore();
   });
@@ -482,8 +478,8 @@ describe("lobby abuse — sockets and lifetime (LB2, LB3)", () => {
       await h.fireAlarm();
       wakes++;
     }
-    // Was: never closed or wiped, one alarm write every 30s. Now the sweep that finds an hour
-    // without a commit closes the socket for good and wipes the lobby, freeing the code.
+    // The sweep that finds an hour without a commit closes the socket for good and wipes the
+    // lobby, freeing the code.
     expect(ws.closed).toEqual({
       code: LOBBY_WS_CLOSED,
       reason: "lobby closed after an hour without play",
@@ -538,9 +534,8 @@ describe("lobby abuse — sockets and lifetime (LB2, LB3)", () => {
     await h.create();
     const atCreate = { ...writes };
     await h.fireAlarm();
-    // Was: create also wrote `cleanupAt` (3 keys and an alarm), and the wipe deleted 3 keys and
-    // cleared the alarm: 8 rows. Now the expiry is derived from `created` and the spent alarm is
-    // not cleared: 5 rows.
+    // The expiry is derived from `created`, so create writes no `cleanupAt`, and the spent alarm
+    // is not cleared: 5 rows.
     expect(atCreate).toEqual({ puts: 1, keys: 2, deletes: 0, alarms: 1 });
     expect(writes).toEqual({ puts: 1, keys: 2, deletes: 2, alarms: 1 });
     expect(h.storage.data.size).toBe(0);
@@ -592,7 +587,7 @@ describe("lobby abuse — the match log (MIX2)", () => {
 
 describe("lobby abuse — a socket left on a seat that is then bound (LBX1)", () => {
   /** The guest joins signed out as `vic-id`, a second anonymous socket presents that seat's
-      secret too (a copy of the tab's storage: since LB6 a snapshot no longer hands it out), and
+      secret too (a copy of the tab's storage: a snapshot does not hand it out), and
       the guest then signs in, which binds the seat to their account. */
   async function shadowedGuest() {
     await h.create();
@@ -791,7 +786,7 @@ describe("lobby abuse — what a snapshot gives away (LB5, LB6)", () => {
     await h.send(guest, { kind: "action", action: { type: "concede" } });
     await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
 
-    // Was: every state frame carried both seats' deck ids, and the public id a hello claims with.
+    // No frame carries a seat's deck id, or the secret a hello claims the seat with.
     const hidden = ["deck-ana", "deck-bo", seatSecret("h"), seatSecret("g")];
     for (const ws of [host, guest, spectator, lurker]) {
       expect(ws.sent.length).toBeGreaterThan(0);
@@ -822,8 +817,8 @@ describe("lobby abuse — what a snapshot gives away (LB5, LB6)", () => {
     const hostId = seen.host.id;
     const guestId = seen.guest.id;
 
-    // Was: a signed-in intruder's hello with the guest's id took the seat and bound it to the
-    // intruder's account (LB-hijack), and one with the host's id re-seated it (LB-anon-host).
+    // A signed-in intruder's hello with either seat's public id neither takes the seat nor binds
+    // it to the intruder's account.
     const intruder = await h.connect("eve");
     for (const id of [hostId, guestId]) {
       await h.send(intruder, { kind: "hello", from: id, name: "Evil" });
@@ -931,7 +926,7 @@ describe("lobby abuse — the audit trail (LB8)", () => {
     const calls = [...warn.mock.calls, ...info.mock.calls, ...errors.mock.calls];
     const lines = calls.map(([line]) => String(line));
     expect(lines.length).toBeGreaterThanOrEqual(3);
-    // The match's own lines are among them (MET3).
+    // The match's own lines are among them.
     expect(logged("match_started", "info")).toHaveLength(1);
     expect(logged("match_ended", "info")).toMatchObject([{ cause: "conceded" }]);
     const secrets = ["ana", "bo", sessionIdOf("ana"), sessionIdOf("bo"), "deck-ana", "deck-bo"];

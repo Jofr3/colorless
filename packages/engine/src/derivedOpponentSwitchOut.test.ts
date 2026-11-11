@@ -348,7 +348,7 @@ describe("end to end — the OPPONENT answers, and that is the whole op", () => 
     const wasBenched = state.players.p2.bench[0]?.stack[0];
     deepFreeze(state);
     const { state: done } = mustApply(state, { type: "attack", seat: "p1", index: KICK_AWAY });
-    // One benched body → forced, no question to ask (the M1 no-choice rule holds
+    // One benched body → forced, no question to ask (the no-choice rule holds
     // for a cross-seat park exactly as for an own-seat one).
     expect(done.phase.kind).not.toBe("effect:choose");
     expect(activeUid(done, "p2")).toBe(wasBenched);

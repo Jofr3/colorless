@@ -66,7 +66,7 @@ function formProblem(issue: FormIssue | undefined, mode: "login" | "register", n
 }
 
 /** Every field the schema refused, in the form's order, each with what to tell the user about it
- * (its first issue): all of them at once, not one per submit (audit PG9). */
+ * (its first issue): all of them at once, not one per submit. */
 function formProblems(issues: readonly FormIssue[], mode: "login" | "register", name = "") {
   const byField = new Map<AuthField, string>();
   for (const issue of issues) {
@@ -253,7 +253,7 @@ export class LuaAccount {
     }
   }
 
-  /** Signs this browser out, or with `everywhere` every session of the account (AU7). A 401 means
+  /** Signs this browser out, or with `everywhere` every session of the account. A 401 means
    * this session is gone already: signed out here, though for `everywhere` the others may live on,
    * which the message says. */
   async signOut(everywhere = false) {

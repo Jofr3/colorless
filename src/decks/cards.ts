@@ -38,11 +38,10 @@ export const CATEGORY_BY_SUPERTYPE: Record<Supertype, CardCategory> = {
   Energy: "Energy",
 };
 
-// NOTE (P2 task 10): the printed-subtype and rarity vocabularies used to be
-// hardcoded tuples here (POKEMON_STAGES, TRAINER_SUBTYPES, RARITIES, …). They
-// now come from the live catalog — GET /facets, loaded by the builder — so a
-// card's `subtype` and `rarity` stay plain strings and the rail's chips
-// reflect what is actually ingested.
+// The printed-subtype and rarity vocabularies come from the live catalog
+// (GET /facets, loaded by the builder), not hardcoded tuples, so a card's
+// `subtype` and `rarity` stay plain strings and the builder's filters reflect
+// what is actually ingested.
 
 /**
  * A single browsable card, the builder's view of a catalog card. `cardId` is the tcgdex id

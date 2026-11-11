@@ -1,5 +1,5 @@
--- The table's keyboard focus (audit SM14), mixed into ui/simulator.lua's Simulator: the ring's
--- stops and their keys, focus kept across a rebuild, and what the screen reader says for a stop.
+-- The table's keyboard focus, mixed into ui/simulator.lua's Simulator: the ring's stops and
+-- their keys, focus kept across a rebuild, and what the screen reader says for a stop.
 local Speech=require('ui.sim_speech')
 local Simulator={}
 local cardKey=require('ui.sim_shared').cardKey

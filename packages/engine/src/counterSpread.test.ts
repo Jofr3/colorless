@@ -17,7 +17,7 @@ import {
 } from "./testFixtures";
 
 /** The three Standard-legal sentences, verbatim off remote D1 `colorless`
-    (`735f0fb5-…`, 2026-08-15) through `json_each(attacks_json)`. */
+    (`735f0fb5-…`) through `json_each(attacks_json)`. */
 const HEX_HURL = "Put 2 damage counters on your opponent's Benched Pokémon in any way you like.";
 const PHANTOM_DIVE =
   "Put 6 damage counters on your opponent's Benched Pokémon in any way you like.";

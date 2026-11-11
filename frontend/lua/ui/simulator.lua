@@ -228,8 +228,8 @@ function Simulator:update(dt,time,mx,my,reduced)
   self:updateKoPresentation(dt,time,reduced)
 end
 function Simulator:backgroundColours() return self.fx:colours() end
--- The table's parts (audit SM14): each is a set of methods copied onto Simulator, so a part
--- calls the others through `self` and every part reads the same fields.
+-- The table's parts: each is a set of methods copied onto Simulator, so a part calls the
+-- others through `self` and every part reads the same fields.
 for _,part in ipairs({
   require('ui.sim_draw'),
   require('ui.sim_drag'),

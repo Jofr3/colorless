@@ -255,8 +255,8 @@ export function searchMove(
   const side = state.players[ctx.seat];
   // Bench-bound cards clamp to the remaining bench space HERE, before anything
   // leaves the deck — so the set removed from the deck is EXACTLY the set that
-  // lands (a slice-after-remove would strand the excess in neither zone, the
-  // card-destruction shape the M1 review called out). Hand has no cap.
+  // lands (a slice-after-remove would strand the excess in neither zone,
+  // destroying cards). Hand has no cap.
   const inDeck = uids.filter((uid) => side.deck.includes(uid));
   const moved = dest === "bench" ? inDeck.slice(0, benchSpace(state, ctx.seat)) : inDeck;
   if (moved.length === 0) return { state, moved };

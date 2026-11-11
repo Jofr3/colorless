@@ -9,7 +9,7 @@
 // same quarter hour. An attempt refused by the account key does not count against the address,
 // so one locked-out account does not use up its neighbours' budget.
 //
-// Register gets 5 an hour per address (security audit AUX1): each allowed register writes about
+// Register gets 5 an hour per address: each allowed register writes about
 // 10 rows and leaves a user behind, so the login budget let one address spend half the day's
 // write quota. Nobody makes more than a few accounts an hour; a class signing up together behind
 // one address waits for the window, which the 429's Retry-After says.
@@ -19,7 +19,7 @@
 // undercount. An attempt already over budget writes nothing, so hammering a refused key spends
 // none of the Free plan's 100,000 D1 rows written a day, which deck saves and sessions share.
 //
-// Login also has a soft cap per email, whatever the address (security audit AU6, decision 9):
+// Login also has a soft cap per email, whatever the address:
 // after 50 failed logins for one email in an hour, further FAILURES answer 429 instead of 401
 // until the hour ends. Only failures count, after the password was checked, so the right password
 // still signs in: the cap cannot lock the owner out, and 429 says nothing 401 did not (both mean

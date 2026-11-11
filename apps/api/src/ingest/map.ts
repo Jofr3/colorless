@@ -185,7 +185,7 @@ function mapCardFields(card: TcgdexCard): CardRow {
     Weakness that is not Dragon-type (Dragon is the one type printed without one).
     The ingest writes them anyway and exits non-zero naming them, so a new set
     whose tcgdex payload drops the field is seen the day it lands rather than in
-    a match (card revision B39). */
+    a match. */
 export function weaklessLegalPokemon(rows: readonly CardRow[]): string[] {
   return rows
     .filter(

@@ -393,8 +393,8 @@ describe("§4 the placement — the picks land on TOP and the deck never changes
 
   it("each picked uid appears EXACTLY ONCE in the deck afterwards", () => {
     // The placement prepends and the removal filters; a version that forgot the
-    // filter would duplicate a uid, which is the card-duplication shape the M1
-    // review called out on the mirror-image bench clamp.
+    // filter would duplicate a uid, the same card-duplication shape the mirror-image
+    // bench clamp has to guard against.
     const { parked, prompt } = playCipher(supporterBoard(11));
     const picks = prompt.candidates.slice(4, 6);
     const { state } = pick(parked, picks);

@@ -268,7 +268,7 @@ describe("end to end — genuine §8.5 damage, on the promoted body", () => {
   });
 
   it("forces at one candidate and deals in the same action", () => {
-    // The M1 no-choice ending, which is also the simplest board this op has.
+    // The no-choice ending, which is also the simplest board this op has.
     const state = ready(12, ["fix-basic-1"]);
     const target = state.players.p2.bench[0]?.stack[0];
     deepFreeze(state);

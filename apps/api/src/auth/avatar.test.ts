@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { avatarSeedFrom, avatarSeedOf } from "./avatar";
 
-// The generated avatar's token (P5-2). What matters is that the SAME account
+// The generated avatar's token. What matters is that the SAME account
 // always draws the same face, that different accounts usually don't, and that
 // the account id itself never crosses the wire.
 

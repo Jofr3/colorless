@@ -1,4 +1,4 @@
-/** Offering a password sign-in to the browser's password manager (audit BR7). The auth fields are
+/** Offering a password sign-in to the browser's password manager. The auth fields are
  * hidden proxies and the sign-in is a fetch, not a form navigation, so a browser's own heuristics
  * may never offer to save; the Credential Management API asks it directly. Chromium has it;
  * Firefox and Safari have no PasswordCredential and are left to their heuristics. */

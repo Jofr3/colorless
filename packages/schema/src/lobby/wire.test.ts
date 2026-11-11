@@ -163,7 +163,7 @@ describe("lobbyClientMessageSchema (what the DO accepts)", () => {
     expect(
       lobbyClientMessageSchema.safeParse({ kind: "bye", from: "g1", slot: "guest" }).success,
     ).toBe(true);
-    // A rematch is a client → server LIFECYCLE frame (3c-vi): the server decides
+    // A rematch is a client → server LIFECYCLE frame: the server decides
     // whether the match it holds has actually finished.
     expect(lobbyClientMessageSchema.safeParse({ kind: "rematch", from: "g1" }).success).toBe(true);
     expect(
@@ -246,12 +246,12 @@ describe("lobbyServerMessageSchema (what clients receive)", () => {
     expect(
       lobbyServerMessageSchema.safeParse({ kind: "reject", to: "g1", reason: "full" }).success,
     ).toBe(true);
-    // The transient action-rejection pill (P4) is a server frame.
+    // The transient action-rejection pill is a server frame.
     expect(
       lobbyServerMessageSchema.safeParse({ kind: "reject-action", reason: "Illegal move." })
         .success,
     ).toBe(true);
-    // The match-start failure (P4 increment 3) is a server frame.
+    // The match-start failure is a server frame.
     expect(
       lobbyServerMessageSchema.safeParse({ kind: "match-error", reason: "Ana: deck not found." })
         .success,

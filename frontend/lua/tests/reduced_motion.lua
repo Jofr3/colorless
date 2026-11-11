@@ -1,7 +1,7 @@
--- Reduced motion lives in the primitives (audit LC6): Button.chosen's marker,
--- DynaText's pop-in and pop-out, and the attention text's backdrop stop moving
--- when asked, and every page's frame under reduced motion repeats at any time.
--- With motion on each primitive draws exactly what its formula drew before.
+-- Reduced motion lives in the primitives: Button.chosen's marker, DynaText's
+-- pop-in and pop-out, and the attention text's backdrop stop moving when
+-- asked, and every page's frame under reduced motion repeats at any time. With
+-- motion on, each primitive draws exactly what its formula gives.
 package.path='frontend/lua/?.lua;frontend/lua/tests/?.lua;'..package.path
 local Stub=require('support.draw_stub').install()
 local g=Stub.graphics

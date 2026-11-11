@@ -6,8 +6,8 @@ local Art={}
 local bundled={'sv01-030','sv01-033','sv01-036','sv01-038','sv01-042','sv01-046','sv01-047','sv01-052'}
 local shown,last={},nil
 
--- The scans download after ready, outside game.data (web/host.js, audit BT9): only those
--- already written take part, and before the first arrives there is no artwork at all.
+-- The scans download after ready, outside game.data (web/host.js): only those already
+-- written take part, and before the first arrives there is no artwork at all.
 local function fallbackPool()
   local pool={}
   for _,id in ipairs(bundled) do

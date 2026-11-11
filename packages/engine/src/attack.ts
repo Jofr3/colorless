@@ -2500,8 +2500,7 @@ function interruptGate<K extends KoPhase["kind"]>(
 // popping it. A mismatch is unreachable through the engine's own transitions
 // (advance always writes both together): it means a crafted or corrupted
 // snapshot, and resolving it would act out the WRONG stage (e.g. take
-// phase.count prizes while popping a different-count stage). M3 may collapse
-// the two encodings into one.
+// phase.count prizes while popping a different-count stage).
 
 /**
  * The ko:takePrizes decision (§8.1): the KOing player picks which prize slots to take. Indices
@@ -2551,7 +2550,7 @@ export function promote(state: GameState, action: PromoteAction): ApplyResult {
   // `advance`'s (flow.ts), which SKIPS the stage on its auto-resolve path;
   // here the action names a decision that does not exist, so it is rejected
   // (resolving anyway would overwrite the occupant's whole stack, with no
-  // event). Unreachable in M2: nothing refills the spot while parked.
+  // event). Unreachable: nothing refills the spot while parked.
   if (state.players[action.seat].active !== null) {
     return err("ACTIVE_ALREADY_PLACED", "the Active spot is already occupied");
   }

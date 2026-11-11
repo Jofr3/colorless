@@ -1,10 +1,10 @@
--- The real main.lua at every device pixel ratio (audit BT6): the host sends the canvas's CSS size
--- and its device-pixel size, and Lua renders at the device size while everything that must look
--- the same keeps its CSS size: the layout, the CRT's scanline count and fringe, the notice's
--- smallest text. A pointer anywhere lands on the same control, and a table drag reaches the
--- simulator at the same board point, at 1, 1.25, 1.5, 2 and 3. One device pixel per CSS pixel
--- keeps SDL's own resizing, as before. Over 2560x1600 device pixels the canvas renders at the
--- highest ratio within that, never under one per CSS pixel.
+-- The real main.lua at every device pixel ratio: the host sends the canvas's CSS size and its
+-- device-pixel size, and Lua renders at the device size while everything that must look the same
+-- keeps its CSS size: the layout, the CRT's scanline count and fringe, the notice's smallest
+-- text. A pointer anywhere lands on the same control, and a table drag reaches the simulator at
+-- the same board point, at 1, 1.25, 1.5, 2 and 3. One device pixel per CSS pixel keeps SDL's own
+-- resizing. Over 2560x1600 device pixels the canvas renders at the highest ratio within that,
+-- never under one per CSS pixel.
 package.path='frontend/lua/?.lua;'..package.path
 local noop=function() end
 local function check(ok,message) if not ok then error(message,2) end end
@@ -115,7 +115,7 @@ for _,size in ipairs(cases) do
     check(mode.w==pw and mode.h==ph,('DPR %s renders at %dx%d, got %dx%d'):format(density,pw,ph,mode.w,mode.h))
     check(mode.flags.resizable==false,'A denser canvas is sized only by Lua: SDL would size a resizable one to its CSS size')
     check(canvases[#canvases][1]==pw and canvases[#canvases][2]==ph,'The scene canvas is the device size')
-    -- On a layout drawn under 0.6 CSS px per layout px (844x390) they follow the layout (LC4).
+    -- On a layout drawn under 0.6 CSS px per layout px (844x390) they follow the layout.
     local layout=w/h<0.9 and math.min(w/480,h/850) or math.min(w/1280,h/800)
     local lines=h*0.75/(layout<0.6 and layout or 1)
     check(math.abs(sent.scanlines-lines)<1e-6,('Scanlines come from the CSS height at DPR %s (%s)'):format(density,tostring(sent.scanlines)))

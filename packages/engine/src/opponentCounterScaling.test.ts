@@ -24,14 +24,13 @@ import {
   findEvent,
 } from "./testFixtures";
 
-/** The two printed sentences, byte-for-byte off the local D1 rows (2026-08-03,
-    978 rows / 6 sets). The possessive is ASCII U+0027 and the é in `Pokémon` is
-    U+00E9 — hex-verified on the rows, not eyeballed. */
+/** The two printed sentences, byte-for-byte off the local D1 rows. The possessive is ASCII
+    U+0027 and the é in `Pokémon` is U+00E9 — hex-verified on the rows, not eyeballed. */
 const SECOND_BITE =
   "This attack does 10 more damage for each damage counter on your opponent's Active Pokémon.";
 const MAD_BITE =
   "This attack does 30 more damage for each damage counter on your opponent's Active Pokémon.";
-/** The SELF-side twin, printed on seven catalog rows and read since M2 — the
+/** The SELF-side twin, printed on seven catalog rows and already read — the
     sentence whose only difference from `SECOND_BITE` is the body it counts, and
     which must keep landing on the OTHER count member. */
 const RAGING_HORNS = "This attack does 10 more damage for each damage counter on this Pokémon.";

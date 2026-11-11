@@ -325,7 +325,7 @@ describe("B21 §3 — Wafting Heal discards only if it healed any damage", () =>
     }
   });
 
-  /** P1's Active B21 Grassy ({G}{G}, 40 damage); P1 evolves its Benched Cottonee into `id`. */
+  /** P1's Active `GRASSY` ({G}{G}, 40 damage); P1 evolves its Benched Cottonee into `id`. */
   function evolve(id: string, lifeLocked: boolean): GameState {
     const state = table(
       { active: { id: GRASSY, energy: [G, G], damage: 40 }, bench: [{ id: COTTONEE }], hand: [id] },

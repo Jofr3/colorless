@@ -16,7 +16,7 @@ import {
   setBenchDamage,
 } from "./testFixtures";
 
-/** The printed sentence, verbatim off the remote D1 (2026-08-04). */
+/** The printed sentence, verbatim off the remote D1. */
 const CLAUSE =
   "Move all damage counters from 1 of your Benched Pokémon to 1 of your opponent's Pokémon.";
 

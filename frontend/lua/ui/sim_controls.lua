@@ -1,7 +1,7 @@
 local D=require('ui.card_dimensions')
--- The table's controls (audit SM14), mixed into ui/simulator.lua's Simulator: the HUD and action
--- cluster buttons, pile clicks, targeting footers and the highlighted card's attached popup,
--- rebuilt from the snapshot, with their phone hit areas and pointer hit tests.
+-- The table's controls, mixed into ui/simulator.lua's Simulator: the HUD and action cluster
+-- buttons, pile clicks, targeting footers and the highlighted card's attached popup, rebuilt
+-- from the snapshot, with their phone hit areas and pointer hit tests.
 local T=require('ui.theme')
 local Button=require('ui.button')
 local Motion=require('ui.motion')
@@ -68,7 +68,7 @@ function Simulator:build(quiet)
     if not cl.horizontal then y=y+44+gap end
     for i,entry in ipairs(historyRow) do
       local action=history[entry[1]]
-      -- Icons only: the spoken label shows as a tooltip after a pause on one (audit SM12).
+      -- Icons only: the spoken label shows as a tooltip after a pause on one.
       self:add(action.label,x+(i-1)*(size+gap),y,size,size,'invoke',entry[2]=='restart' and T.gold or T.red,
         {token=action.token,disabled=action.disabled,icon=entry[2],tooltip=true})
     end
@@ -156,9 +156,9 @@ function Simulator:build(quiet)
   self:restoreFocus(quiet)
 end
 -- On a phone the table's small buttons answer over a larger invisible area around their unchanged
--- faces (audit LC4 (b), QA11): about 44 CSS px where the table draws under 0.7 CSS px per board
--- px (a phone held sideways), 24 CSS px on a phone held upright. The HUD's buttons stay in the HUD
--- column; no area reaches a card or another control.
+-- faces: about 44 CSS px where the table draws under 0.7 CSS px per board px (a phone held
+-- sideways), 24 CSS px on a phone held upright. The HUD's buttons stay in the HUD column; no area
+-- reaches a card or another control.
 function Simulator:inflateTargets()
   local zoom=Display.scale*self.zoom
   if zoom>=1 then return end
@@ -235,9 +235,9 @@ function Simulator:buildAttached(card)
     if b.disabled then added.colour=T.grey end -- not the panel black
   end
 end
--- The control whose tooltip may show (audit SM12): one under a fine pointer, disabled ones too,
--- else the keyboard's while the pointer rests on nothing. A touch screen's pointer shows none, so
--- a tap or a resting finger never raises one.
+-- The control whose tooltip may show: one under a fine pointer, disabled ones too, else the
+-- keyboard's while the pointer rests on nothing. A touch screen's pointer shows none, so a tap or
+-- a resting finger never raises one.
 function Simulator:tooltipTarget(blocked,pointed,mx,my)
   if blocked or self.drag then return nil end
   if not Display.coarse then

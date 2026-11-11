@@ -1,8 +1,8 @@
 local D=require('ui.card_dimensions')
--- Reconciling a snapshot onto the table (audit SM14), mixed into ui/simulator.lua's Simulator:
--- reading the host's mailbox snapshot, copying it onto the table, laying out every card so cards
--- keep their motion across snapshots (with ghosts for the ones that left), the piles, and the
--- host's menus as overlays or HUD instructions.
+-- Reconciling a snapshot onto the table, mixed into ui/simulator.lua's Simulator: reading the
+-- host's mailbox snapshot, copying it onto the table, laying out every card so cards keep their
+-- motion across snapshots (with ghosts for the ones that left), the piles, and the host's menus
+-- as overlays or HUD instructions.
 local T=require('ui.theme')
 local Card=require('ui.card')
 local Pile=require('ui.deck_pile')

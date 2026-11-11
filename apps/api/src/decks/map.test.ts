@@ -44,7 +44,7 @@ describe("mapDeckRow", () => {
 
   it("carries the owner's cover pick — the stored choice, not the face drawn", () => {
     // The summary's `coverCardId` is what the grid draws; this is what the
-    // editor's picker is set to (P5-6), and it is null for almost every deck.
+    // editor's picker is set to, and it is null for almost every deck.
     const deck = mapDeckRow({ ...deckRow, coverCardId: "sv01-001" }, []);
     expect(deck.chosenCoverCardId).toBe("sv01-001");
     expect(deckSchema.parse(deck)).toEqual(deck);

@@ -319,7 +319,7 @@ describe("D307 §2 — the printed attack on a real board", () => {
   });
 
   it("a SINGLE candidate still PARKS — the printed decline is not a no-choice", () => {
-    // `searchDeck`'s doctrine, inherited deliberately: the M1 "a choice with no
+    // `searchDeck`'s doctrine, inherited deliberately: the "a choice with no
     // choice in it is not a choice" rule does not reach an "up to", because
     // taking the card and taking nothing are two different states.
     let single = board(16);

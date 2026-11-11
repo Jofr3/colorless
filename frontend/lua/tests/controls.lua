@@ -14,8 +14,8 @@ local focus,found=Controls.cycle(2,1,3,function() return true end)
 assert(focus==2 and not found)
 
 shift=false
--- Tab's ring (audit PG14): with nothing focused, Tab lands on `first`, the page's primary
--- region, and Shift+Tab on the control before it (the last when first is 1).
+-- Tab's ring: with nothing focused, Tab lands on `first`, the page's primary region, and
+-- Shift+Tab on the control before it (the last when first is 1).
 local none=function() return false end
 assert(Controls.ring(0,1,4,none)==1 and Controls.ring(0,-1,4,none)==4,'From nothing: the first control, or Shift+Tab the last')
 assert(Controls.ring(0,1,4,none,2)==2 and Controls.ring(0,-1,4,none,2)==1,'A Back listed first is reached last')

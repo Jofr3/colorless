@@ -46,7 +46,7 @@ export type TestD1 = {
 
 export async function createTestD1(): Promise<TestD1> {
   // Miniflare 5 takes a `workers` array; the shim keeps the v4 single-worker shape. The exact
-  // miniflare pin equals wrangler's own (dependency audit VER1).
+  // miniflare pin equals wrangler's own.
   const mf = new Miniflare(
     convertV4MiniflareOptions({
       modules: true,

@@ -3519,7 +3519,7 @@ const ENERGY_UNBUILT_CANDIDATES: readonly (readonly [string, string, string])[] 
 
 /** `GROUP BY category, legal_standard` over the 8, the three-column key, and the
     `category = 'Energy' AND legal_standard = 1` split by `energy_type` — all from
-    the same 2026-08-09 statements. */
+    the same statements. */
 const ENERGY_D1_SHAPE = { printings: 11, distinctNames: 10 } as const;
 const ENERGY_D1_COLUMNS = { abilitiesJson: 0, attacksJson: 0, effect: 11 } as const;
 const ENERGY_D1_CANDIDATES = {
@@ -5455,7 +5455,7 @@ describe("D598 — WP32's KO / damage-taken Abilities, and the Standard pool the
   });
 
   it("each printing's ONE attack is reader-built and its ONE Ability is keyed here (so all 13 are fully built: 857 → 870)", () => {
-    // LOCAL D1, 2026-10-08: each of the 13 rows prints exactly one Ability and one attack.
+    // LOCAL D1: each of the 13 rows prints exactly one Ability and one attack.
     for (const text of [
       "Move an Energy from this Pokémon to 1 of your Benched Pokémon.", // Void Gale, Mega Gengar ex ×5
       "If a Stadium is in play, this attack does 140 more damage. Then, discard that Stadium.", // Somersault Dive ×3
@@ -5669,7 +5669,7 @@ describe("D602 — WP20b's activated Abilities, and the Standard pool they build
   });
 
   it("each printing's printed attack text is already built (so all 9 are fully built: 886 → 895)", () => {
-    // LOCAL D1, 2026-10-08: each of the 9 rows prints exactly one Ability and one attack.
+    // LOCAL D1: each of the 9 rows prints exactly one Ability and one attack.
     for (const text of [
       "Discard an Energy from this Pokémon.", // Air Slash, Silvally ×2
       "Flip a coin. If heads, your opponent's Active Pokémon is now Paralyzed.", // Bind, Erika's Tangela ×2
@@ -6266,7 +6266,7 @@ describe("D610 — WP37a's on-move / as-often / HP passives, and the Standard po
   });
 
   it("BUILT over the `me` pool: abilities 160 / 234; the D610 headline: abilities 536 / 610 (988 `me` printings fully built)", () => {
-    // LOCAL D1, 2026-10-08: the attack each of the 16 prints (Team Rocket's Dugtrio's Mud Shot prints none).
+    // LOCAL D1: the attack each of the 16 prints (Team Rocket's Dugtrio's Mud Shot prints none).
     for (const text of [
       "Heal 30 damage from this Pokémon.", // Jungle Dump, Mega Venusaur ex ×4
       "This attack does 40 more damage for each {P} Energy attached to this Pokémon.", // Energized Balloon
@@ -6322,7 +6322,7 @@ describe("D611 — WP21's activated Abilities, and the Standard pool they build,
   });
 
   it("BUILT over the `me` pool: abilities 177 / 234; the D611 headline: abilities 553 / 610 (1005 `me` printings fully built)", () => {
-    // LOCAL D1, 2026-10-08: the attack each of the 17 prints that carries an effect (Gentle Slap, Bite,
+    // LOCAL D1: the attack each of the 17 prints that carries an effect (Gentle Slap, Bite,
     // Fire Wing, Mumble and Tail Snap print none).
     for (const text of [
       "Your opponent's Active Pokémon is now Confused and Poisoned.", // Poison Sound Wave, Crobat ×3
@@ -6914,7 +6914,8 @@ describe("D619 — WP12's passive half and WP15, and the Standard pool they buil
       expect([text, me.get(text)]).toEqual([text, 1]);
       expect([text, meArm(text)]).toEqual([text, "reader"]);
     }
-    // LOCAL D1, 2026-10-09: the other attack texts the 10 cards print (Hippowdon's Heavy Impact prints none).
+    // LOCAL D1: the other attack texts the 10 cards print (Hippowdon's Heavy Impact prints
+    // none).
     for (const text of [
       "Flip 4 coins. This attack does 30 damage for each heads.", // Kangaskhan ex "Comet Punch"
       "Flip 2 coins. This attack does 70 damage for each heads.", // Dewgong "Slam"
@@ -7765,8 +7766,8 @@ describe("D632 — D1, Damp, and the Standard pool it builds, measured", () => {
   });
 
   it("BUILT over the `me` pool: abilities 215 / 234; the D632 headline: abilities 591 / 610 (1193 `me` printings fully built), on CARRIED bases (210, 1188) plus the 5 keys", () => {
-    // LOCAL D1, 2026-10-10: Golduck's "Hydro Pump" is the one attack effect the 5 print (Ram and Collision are
-    // damage only).
+    // LOCAL D1: Golduck's "Hydro Pump" is the one attack effect the 5 print (Ram and
+    // Collision are damage only).
     expect(
       meArm("This attack does 20 more damage for each {W} Energy attached to this Pokémon."),
       "Hydro Pump",
@@ -8364,7 +8365,7 @@ describe("D646 — Backtrack Badge, and the Standard pool it builds, measured", 
   });
 });
 
-/** The 3 `30th` Item ids card revision B04 keys. */
+/** The 3 text-less `30th` Item ids keyed below. */
 const CENSUS_ME_TRAINER_B04: readonly string[] = ["30th-126", "30th-127", "30th-128"];
 
 describe("card revision B04 — the text-less `30th` Items are keyed, and no column moves", () => {

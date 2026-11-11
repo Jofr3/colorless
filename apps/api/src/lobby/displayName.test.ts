@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { lobbyDisplayName } from "./displayName";
 
-// The lobby's name resolution (P5). The query half needs D1, so what is pinned
+// The lobby's name resolution. The query half needs D1, so what is pinned
 // here is the rule that decides what a player's OPPONENT sees.
 
 describe("lobbyDisplayName", () => {

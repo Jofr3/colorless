@@ -3,11 +3,11 @@
 local Screen = {}
 Screen.__index = Screen
 
--- The canvas renders at the device pixel ratio (audit BT6), and CRT.fs measures two things in
--- drawable pixels that must stay the same size in CSS pixels: the RGB fringe's offset (0.8 px)
--- and the vertex pass's distance from the screen centre. Both are divided by pixel_density,
--- which is 1 at one device pixel per CSS pixel, where they compute exactly Balatro's values.
--- A source without them comes back unchanged, and Screen then sends no pixel_density.
+-- The canvas renders at the device pixel ratio, and CRT.fs measures two things in drawable
+-- pixels that must stay the same size in CSS pixels: the RGB fringe's offset (0.8 px) and the
+-- vertex pass's distance from the screen centre. Both are divided by pixel_density, which is 1
+-- at one device pixel per CSS pixel, where they compute exactly Balatro's values. A source
+-- without them comes back unchanged, and Screen then sends no pixel_density.
 local FRINGE='1600./love_ScreenSize.x'
 local CENTRE='vertex_position.xy/screen_scale - 0.5*love_ScreenSize.xy)'
 local DECLARE='extern MY_HIGHP_OR_MEDIUMP number scanlines;'
@@ -25,7 +25,7 @@ end
 -- This is the game's viewport scale, independent of our responsive UI layout.
 function Screen.unit(w,h) return math.min(w/22,h/12.9) end
 
--- Below this many CSS pixels per layout pixel the scanlines follow the layout (audit LC4).
+-- Below this many CSS pixels per layout pixel the scanlines follow the layout.
 Screen.SMALL_LAYOUT=0.6
 -- Writes the CRT uniforms into `values`, reusing its tables; returns it. `density`: device pixels
 -- per CSS pixel; the scanline count follows the CSS height. `layoutScale`: CSS pixels per layout
@@ -64,7 +64,7 @@ function Screen.new(shader,w,h,unit,density,layoutScale)
   return self
 end
 
--- Refills values and projected in place: an idle frame makes no garbage (audit LC7).
+-- Refills values and projected in place: an idle frame makes no garbage.
 function Screen:update(time,mx,my,reduced,preferences)
   local values=Screen.fill(self.values,self.h,self.unit,time,mx,my,reduced,preferences,self.density,self.layoutScale)
   -- Everything but time and the mouse follows CRT, bloom and reduced motion (and this Screen's

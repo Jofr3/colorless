@@ -668,7 +668,7 @@ describe("a failed deck query", () => {
 
 // failingD1 refuses a batch before it runs. These tests fail a statement while the batch runs,
 // after earlier statements have written, with a trigger that raises ABORT: D1 must roll back the
-// whole batch (API audit DECK7).
+// whole batch.
 describe("a deck write that fails partway through its batch", () => {
   async function withAbortTrigger(timing: string, run: () => Promise<void>) {
     await d1().db.exec(`CREATE TRIGGER abort_write ${timing} BEGIN SELECT RAISE(ABORT, 'x'); END`);

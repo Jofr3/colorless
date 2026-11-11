@@ -89,7 +89,7 @@ export function tokenRequest(
 }
 
 // ---------------------------------------------------------------------------
-// PKCE (RFC 7636, security audit AU12): the start request mints a secret verifier, sends only its
+// PKCE (RFC 7636): the start request mints a secret verifier, sends only its
 // SHA-256 to the provider, and keeps the verifier in the state cookie; the token exchange must
 // present it. A code that leaks between the provider's redirect and the callback (a log, a
 // Referer, a hostile extension) is useless without the browser's cookie.
@@ -215,7 +215,7 @@ export type OAuthProfile = {
 };
 
 // Google OIDC userinfo (openid email scopes). No profile claim is asked for or read: a new
-// account gets a generated handle rather than the user's real name (security audit AU3).
+// account gets a generated handle rather than the user's real name.
 const googleUserinfoSchema = z.object({
   sub: z.string().min(1),
   // At most the length userSchema returns.

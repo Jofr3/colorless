@@ -1,4 +1,4 @@
-// D1 row → deck-library domain mapping (P1 milestone 7, §5.2/§6) — the
+// D1 row → deck-library domain mapping (§5.2/§6) — the
 // catalog/map.ts pattern: pure functions from Drizzle rows to the shapes in
 // @colorless/schema/decks, so routes.ts owns queries and these unit-test flat.
 // `user_id` never crosses the boundary — ownership is a WHERE clause, not a
@@ -25,7 +25,7 @@ function mapDeckBase(row: DeckRow) {
 }
 
 /** Full deck: the row plus its (already user-scoped) deck_cards entries.
-    `chosenCoverCardId` is the STORED pin (P5-6) — the editor's state, null for
+    `chosenCoverCardId` is the STORED pin — the editor's state, null for
     automatic — not the face being drawn, which is the summary's business. */
 export function mapDeckRow(row: DeckRow, cards: readonly DeckCard[]): Deck {
   return {
@@ -37,7 +37,7 @@ export function mapDeckRow(row: DeckRow, cards: readonly DeckCard[]): Deck {
 
 /** List row: `cardCount` is the sum of the deck's copy counts, `cards` its entries only when that
     sum is DECK_SIZE (the decks a picker or the legality check reads), and `coverCardId` the deck's
-    face (P5-3 — `pickCoverCardId`, null for a deck with nothing to show). */
+    face (`pickCoverCardId`, null for a deck with nothing to show). */
 export function mapDeckSummaryRow(
   row: DeckRow,
   cards: readonly DeckCard[],

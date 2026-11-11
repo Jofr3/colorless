@@ -87,7 +87,7 @@ export function attachConnectedAt(ws: AttachmentCarrier, connectedAt: number): v
   update(ws, { connectedAt });
 }
 
-/** Mark a socket a SPECTATOR of the running match (P4 3c-vii-b) — refused a seat
+/** Mark a socket a SPECTATOR of the running match — refused a seat
     while both are held, and watching instead. Keeps any resolved account (they
     may still be signed in) and never grants a playerId, which is what stops a
     spectator's frames from acting on a seat: every handler that matters gates on

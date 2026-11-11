@@ -45,8 +45,8 @@ function Wipe:layout(w,h,unit,viewportWidth,viewportHeight)
       self.art=TransitionArt.fallback()
       face=decode(self.art)
     end
-    -- A first visit's wipe can come before the host has written any scan (audit BT9): with no
-    -- artwork the card burns face down rather than waiting or failing.
+    -- A first visit's wipe can come before the host has written any scan: with no artwork the
+    -- card burns face down rather than waiting or failing.
     if not face then self.art=nil end
     -- Decode once and retain the GPU image and border through the wipe. A
     -- scene change can evict the original cache file before the card flips

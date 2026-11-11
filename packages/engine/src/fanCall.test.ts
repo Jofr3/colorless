@@ -493,7 +493,7 @@ describe("MATCH_RECORD_VERSION stays 14", () => {
 
   it("a v14 GAMESTATE is missing nothing — the gate reads fields v14 already had", () => {
     // The direction a new `GameState` field would have broken. `turn` and
-    // `firstPlayer` have been on the record since M1, so a v14 snapshot answers
+    // `firstPlayer` are on every persisted version, so a v14 snapshot answers
     // the new condition with no migration, no default and no `?? 0`.
     const state = board(SEEDS[0], "p1", "p1");
     const legacy = roundTrip(state);

@@ -283,7 +283,7 @@ window.colorlessHost = {
   },
 };
 const motion = matchMedia("(prefers-reduced-motion: reduce)");
-// A touch screen as the primary pointer: Lua suggests turning a phone held sideways (audit LC4).
+// A touch screen as the primary pointer: Lua suggests turning a phone held sideways.
 const coarsePointer = matchMedia("(pointer: coarse)");
 
 // Boot timings for devtools and scripts/bench-boot.ts.
@@ -299,8 +299,8 @@ function markBoot(name) {
 function syncViewport() {
   if (!bridge) return;
   // The canvas fills the viewport. Lua renders at its CSS size times the full device pixel
-  // ratio (audit BT6), so text and art are drawn at the screen's own resolution, and lays out
-  // from the CSS size, so the page looks the same at every ratio.
+  // ratio, so text and art are drawn at the screen's own resolution, and lays out from the
+  // CSS size, so the page looks the same at every ratio.
   const width = Math.max(1, Math.round(innerWidth));
   const height = Math.max(1, Math.round(innerHeight));
   const ratio = devicePixelRatio > 0 ? devicePixelRatio : 1;
@@ -576,10 +576,10 @@ addEventListener(
 );
 
 // ---- the menu music ----
-// Lua asks for the music only when the player would hear it (main.lua askForMusic, audit BT8), so
-// a muted player or one whose volume is at zero never downloads its 2.9 MB. Lua's 'start' ask
-// downloads after ready, and not at all under Save-Data; a 'change' is the player unmuting or
-// turning a volume up, which downloads at once whatever the connection.
+// Lua asks for the music only when the player would hear it (main.lua askForMusic), so a muted
+// player or one whose volume is at zero never downloads its 2.9 MB. Lua's 'start' ask downloads
+// after ready, and not at all under Save-Data; a 'change' is the player unmuting or turning a
+// volume up, which downloads at once whatever the connection.
 let musicAsked = false;
 /** @type {"idle" | "loading" | "done"} */
 let music = "idle";
@@ -607,10 +607,10 @@ async function loadMusic() {
 }
 
 // ---- the transition scans ----
-// The screen wipe's eight fallback scans download after ready instead of inside game.data
-// (audit BT9), each under its content hash like music1.ogg. Lua's fallback lists only the scans
-// written so far (ui/transition_art.lua), and a wipe before the first arrives burns the card
-// face down, so a slow first visit never waits for them.
+// The screen wipe's eight fallback scans download after ready instead of inside game.data, each
+// under its content hash like music1.ogg. Lua's fallback lists only the scans written so far
+// (ui/transition_art.lua), and a wipe before the first arrives burns the card face down, so a
+// slow first visit never waits for them.
 const TRANSITION_CARDS = "transition_cards";
 async function loadTransitionCards() {
   const running = runtime;

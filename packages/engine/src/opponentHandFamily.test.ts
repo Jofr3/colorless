@@ -100,7 +100,7 @@ const REVEAL_COPY_BUILT_AT_D580 =
 const SEE_THROUGH = 25; // the bare reveal
 const KNOCK_OFF = 26; // the random discard
 const ASTONISH = 27; // the random shuffle-back
-const THIEVING_SWIPE = 28; // the unfiltered reveal-and-bottom, on an M5 op
+const THIEVING_SWIPE = 28; // the unfiltered reveal-and-bottom, on an existing op
 
 const SEED = 20260806;
 
@@ -244,7 +244,7 @@ describe("D232 — deriveAttackEffect over the three printed sentences", () => {
   for (const [sentence, why, n] of DEFERRED) {
     it(`leaves ${n} printing(s) of ${JSON.stringify(sentence.slice(0, 36))}… — ${why.slice(0, 36)}…`, () => {
       // Every one lands on the loud ATTACK_EFFECT_SKIPPED path rather than
-      // deriving half of what it prints (D190b's exact-map-or-flag rule).
+      // deriving half of what it prints (a sentence maps exactly or is flagged).
       expect(deriveAttackEffect(sentence)).toBeNull();
     });
   }

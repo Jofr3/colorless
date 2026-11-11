@@ -6,9 +6,9 @@ import { readPersisted, writePersisted } from "../lib/persistedState";
 //   • your identity in a *specific* lobby (seat secret + role) lives in sessionStorage,
 //     so a page refresh keeps you in your seat, but a brand-new tab that pastes
 //     the same code joins as a fresh guest rather than impersonating the host.
-// The seat secret is what claims the seat (LB6): it is sent only in the hello and never shown;
-// the lobby names the seat by its public id (`publicSeatId`). An identity saved by a client from
-// before the secret (a `playerId`) is not one, so such a tab joins afresh.
+// The seat secret is what claims the seat: it is sent only in the hello and never shown; the
+// lobby names the seat by its public id (`publicSeatId`). An identity saved without a secret (a
+// `playerId`) is not one, so such a tab joins afresh.
 
 export type LobbyIdentity = { secret: string; role: LobbySlot; name: string };
 

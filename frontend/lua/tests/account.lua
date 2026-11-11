@@ -27,8 +27,8 @@ assert(a.draftName=='' and not a.editing)
 assert(a:sync(snapshot({6,'authenticated',0,'','user-1','Ash','zoe@example.com',1})) and a.hasPassword)
 assert(a:sync(snapshot({7,'authenticated',0,'','user-2','Brock','brock@example.com',0})) and not a.hasPassword)
 print('PASS: account mailbox, unicode, draft preservation, edit, saved-message timeout, session reset and password flag')
--- A failed sign-in (audit PG9): the refused fields are marked anew on each failure, and its
--- message is to be said again even when it repeats the last one.
+-- A failed sign-in: the refused fields are marked anew on each failure, and its message is
+-- to be said again even when it repeats the last one.
 do
   local b=Account.new()
   local function failed(revision,message,invalid,failures)

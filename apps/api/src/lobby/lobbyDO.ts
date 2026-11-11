@@ -143,7 +143,7 @@ const CREATED_KEY = "created";
 const CODE_KEY = "code";
 const SNAPSHOT_KEY = "snapshot";
 // When the empty lobby is wiped, written when its last socket leaves. A lobby no socket has said
-// hello in has none: its expiry is derived from `created` (LB3), so a create writes two keys.
+// hello in has none: its expiry is derived from `created`, so a create writes two keys.
 const CLEANUP_AT_KEY = "cleanupAt";
 // The last commit or accepted action, epoch ms, written at most every ACTIVITY_STAMP_MS; absent
 // reads as `created`. The inactivity ceiling (INACTIVE_LOBBY_MS) is judged from it.
@@ -152,13 +152,13 @@ const PENDING_KEY = "pendingDisconnects";
 // The public seat id of who lost the last game in this lobby: they choose the rematch's
 // play order (`settleFirstPlayer`). Consumed by the next successful handoff.
 const CHOOSER_KEY = "nextChooser";
-// Public seat id → the account it's bound to (P4 3a-sec). Written the first time an
+// Public seat id → the account it's bound to. Written the first time an
 // authenticated socket claims a seat; a later hello for that seat must present the SAME account
 // (seatClaimAllowed) as well as the seat's secret, or it's refused. DO-only, never broadcast.
 // Cleared with the rest of storage when the lobby empties.
 // Every id the DO keeps (here, the snapshot, the pending disconnects, the chooser and each
 // socket's attachment) is a PUBLIC seat id. The secret a hello presents is hashed to one at once
-// and never stored (LB6).
+// and never stored.
 const SEAT_USERS_KEY = "seatUsers";
 
 /** One validated client frame of the given kind. */
@@ -180,8 +180,8 @@ function noSuchLobby(): Response {
   return new Response(null, { status: 101, webSocket: pair[0] });
 }
 
-/** Whether the match handoff started a real game, or why it couldn't (P4
-    increment 3) — a failed deck resolution surfaces `reason` to the players
+/** Whether the match handoff started a real game, or why it couldn't — a
+    failed deck resolution surfaces `reason` to the players
     instead of wedging the lobby in-game with no match. `superseded`: the lobby
     changed while the handoff awaited D1, so it wrote nothing and the alarm
     starts its pass over. */
@@ -205,7 +205,7 @@ type ReadDecks = (host: DeckRequest, guest: DeckRequest) => Promise<HandoffDecks
 const HANDOFF_ATTEMPTS = 3;
 
 /** How long the alarm waits after a pass that threw. A deadline already past would otherwise
-    re-arm it to fire at once, and a throw that repeats would run back to back (LOB1). */
+    re-arm it to fire at once, and a throw that repeats would run back to back. */
 export const ALARM_RETRY_MS = 5_000;
 
 /** What both players are told when the handoff could not reach D1. */
@@ -214,10 +214,10 @@ const DECK_LOAD_FAILED_REASON = "Couldn't load the decks. Ready up to try again.
 /** What both players are told when starting the match threw. */
 const MATCH_START_FAILED_REASON = "This match couldn't start. Ready up to try again.";
 
-/** What a rematch's requester is told when their own session has ended (MI4). */
+/** What a rematch's requester is told when their own session has ended. */
 const REMATCH_SIGNED_OUT_REASON = "You're signed out. Sign in again to play another game.";
 
-/** What a rematch's requester is told when their opponent's session has ended (MI4). */
+/** What a rematch's requester is told when their opponent's session has ended. */
 const REMATCH_OPPONENT_SIGNED_OUT_REASON = "Your opponent is signed out, so there's no rematch.";
 
 /** What both players are told when a match is retired because this deploy can't
@@ -231,7 +231,7 @@ const STALE_MATCH_REASON =
     seed and deck pre-shuffle, and the D1 lookups. */
 export interface LobbyDeps {
   now(): number;
-  /** A new match's RNG: a ChaCha20 state, never a numeric seed (security audit MI1). */
+  /** A new match's RNG: a ChaCha20 state, never a numeric seed. */
   randomSeed(): MatchRng;
   /** A deck list in an order that says nothing about the list, before the engine mints a uid per
       position in it (`cryptoShuffle`). */
@@ -278,11 +278,11 @@ export class LobbyDO {
   /** In-memory mirror of the activity stamp (ACTIVE_AT_KEY, else CREATED_KEY); undefined = not
       read since the last wake. */
   private activeAt: number | undefined;
-  /** Each socket's frame budget (LB1). In memory only: a socket sending enough to matter keeps the
+  /** Each socket's frame budget. In memory only: a socket sending enough to matter keeps the
       instance awake, and a hibernation that resets it costs nothing. */
   private readonly frameBudgets = new WeakMap<WebSocket, FrameBudget>();
-  /** How many frames each socket has sent since this instance woke, for the abuse close's log line
-      (LB8). In memory only, like the budget. */
+  /** How many frames each socket has sent since this instance woke, for the abuse close's log
+      line. In memory only, like the budget. */
   private readonly frameCounts = new WeakMap<WebSocket, number>();
   /** Sockets this instance closed, whose frames still in flight are dropped unread. */
   private readonly closing = new WeakSet<WebSocket>();
@@ -331,14 +331,14 @@ export class LobbyDO {
       ) {
         return noSuchLobby();
       }
-      // The flood guard, before the D1 session read: past it even a seated player is refused
-      // (LB2). Only a seat-holding account's sockets get past LOBBY_SOCKET_CAP to reach it.
+      // The flood guard, before the D1 session read: past it even a seated player is refused.
+      // Only a seat-holding account's sockets get past LOBBY_SOCKET_CAP to reach it.
       if (this.members().length >= LOBBY_SOCKET_HARD_CAP) return await this.refuseUpgrade();
       const pair = new WebSocketPair();
       this.state.acceptWebSocket(pair[1]);
       attachConnectedAt(pair[1], this.deps.now());
-      // Authenticate the connection from the forwarded `session` cookie (P4
-      // increment 3): the resolved account rides on the socket so the match
+      // Authenticate the connection from the forwarded `session` cookie: the
+      // resolved account rides on the socket so the match
       // handoff can owner-scope this player's deck read. Anonymous (no/expired
       // cookie) leaves it null — the lobby still works, but that socket can't
       // start a match with a saved deck. Only the DO ever reads it. The account's name is read in
@@ -379,14 +379,14 @@ export class LobbyDO {
   }
 
   async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): Promise<void> {
-    // Every frame, valid or not, spends from the socket's budget before it is parsed (LB1, MI2).
+    // Every frame, valid or not, spends from the socket's budget before it is parsed.
     if (!(await this.withinBudget(ws, message))) return;
     if (typeof message !== "string") return;
     const frame = parseClientMessage(message);
     if (frame === null) return; // §3.6: anything that doesn't validate is dropped
     // A throw here (a storage write refused: the day's quota spent, a value too large) escapes to
     // the runtime, whose exception event names no lobby. One line under the lobby's code first,
-    // then the same error, so the invocation still fails as it would have (ERR3).
+    // then the same error, so the invocation still fails as it would have.
     try {
       if (isOverflow(ws)) return await this.turnAway(ws, frame);
       await this.dispatch(ws, frame, await this.loadSnapshot());
@@ -435,7 +435,7 @@ export class LobbyDO {
     snapshot: LobbyState | null,
   ): Promise<void> {
     attachLogDeltas(ws, frame.logDeltas === true);
-    // The hello's secret names the seat through its hash (LB6): a public id read off a snapshot is
+    // The hello's secret names the seat through its hash: a public id read off a snapshot is
     // not a secret, and the secret of the seat it names is known only to that seat's client. A
     // `from` that is no secret at all comes from a client older than the split, which is told the
     // lobby is full: it cannot hold a seat here, and a reload brings the current client.
@@ -451,7 +451,7 @@ export class LobbyDO {
     const seatId = publicSeatId(frame.from);
     const decision = helloDecision(snapshot, seatId);
     if (decision === "reject-full") return await this.refuseSeat(ws, seatId, "full");
-    // Seat authentication (3a-sec): once a seat is claimed by an account, only that account may
+    // Seat authentication: once a seat is claimed by an account, only that account may
     // re-adopt it, even with the seat's secret. An unbound (anonymous) seat is unaffected.
     const seatUsers = await this.seatUsers();
     const boundUserId = seatUsers[seatId] ?? null;
@@ -461,7 +461,7 @@ export class LobbyDO {
     // announced name. Both are cleaned as the wire cleans names, as every stored name is: an
     // opponent's client prints it.
     const name = clipText(attachedDisplayName(ws) ?? frame.name, LOBBY_NAME_MAX);
-    // …and the face, from the same account (P5-2). Derived, not stored and
+    // …and the face, from the same account. Derived, not stored and
     // not read: it costs nothing beyond the userId the socket already holds.
     const avatarSeed = avatarSeedFrom(userId);
     const next = await this.seatedSnapshot(decision, snapshot, seatId, name, avatarSeed);
@@ -536,7 +536,7 @@ export class LobbyDO {
     frame: ClientFrame<"action">,
     snapshot: LobbyState | null,
   ): Promise<void> {
-    // A game action for the running match (P4). Authority is the socket's
+    // A game action for the running match. Authority is the socket's
     // OWN bound seat — never the client-claimed action.seat — so a client
     // can never act for its opponent. Only a seated player in an in-game
     // lobby with a persisted match may act.
@@ -618,7 +618,7 @@ export class LobbyDO {
     if (snapshot === null || !(await this.ownsSeat(ws, frame.from))) return;
     const slot = slotOf(snapshot, frame.from);
     if (slot === null) return;
-    // Walking out of a RUNNING match FORFEITS it (P4 3c-iv) instead of
+    // Walking out of a RUNNING match FORFEITS it instead of
     // voiding it: the opponent gets a real result — the same one the Concede
     // button and the 90s abandonment timer produce — down the same
     // applyMatchAction → persist → broadcastMatch path. A no-op once the game
@@ -641,9 +641,9 @@ export class LobbyDO {
     frame: ClientFrame<"rematch">,
     snapshot: LobbyState | null,
   ): Promise<void> {
-    // Play again in this same lobby (P4 3c-vi) — the exit 3c-iv deliberately
-    // left out, since an in-game lobby otherwise has no route back except the
-    // host's kick. Legality is the SERVER's to judge, which is why this is a
+    // Play again in this same lobby — since a `bye` mid-match forfeits but keeps
+    // the seat, an in-game lobby otherwise has no route back except the host's
+    // kick. Legality is the SERVER's to judge, which is why this is a
     // frame and not a seat `intent`: only the DO can see whether the match it
     // holds has finished, and a rematch mid-game must be refused (conceding is
     // how you leave a live one).
@@ -733,13 +733,13 @@ export class LobbyDO {
 
   /** One alarm pass; true when it wiped the lobby, which leaves nothing to schedule. */
   private async maintain(now: number): Promise<boolean> {
-    // 0) Sockets that stopped answering keepalives (P4 3c-viii). FIRST, so a
+    // 0) Sockets that stopped answering keepalives. FIRST, so a
     //    connection dropped here is judged by everything below on this same pass
     //    rather than waiting another sweep.
     await this.sweepSilentSockets(now);
     await this.graceOrphanedSeats(now);
 
-    // A lobby nobody has changed for INACTIVE_LOBBY_MS is closed for good (LB2): every socket is
+    // A lobby nobody has changed for INACTIVE_LOBBY_MS is closed for good: every socket is
     // told so, and the lobby is wiped, since a client would otherwise reconnect into it at once.
     const sockets = this.liveSockets();
     if (sockets.length > 0 && now - (await this.lastActivity()) >= INACTIVE_LOBBY_MS) {
@@ -805,7 +805,7 @@ export class LobbyDO {
   }
 
   /**
-   * Wipe a lobby stored before the seat secret split (LB6), true when it did. Its seats are named
+   * Wipe a lobby stored before the seat secret split, true when it did. Its seats are named
    * by ids every snapshot broadcast, and no client holds a secret that hashes to them, so nobody
    * could reclaim them: it is closed like an inactive lobby, and the clients, reloaded onto this
    * deploy's web build, start a new one. Checked once per wake, before the snapshot is first read;
@@ -832,8 +832,8 @@ export class LobbyDO {
 
   /**
    * When an empty lobby is wiped: the stored expiry, set when its last socket left, or for a lobby
-   * nobody has said hello in, `created` plus the TTL, derived so a create writes no expiry key
-   * (LB3). Undefined for a lobby already wiped.
+   * nobody has said hello in, `created` plus the TTL, derived so a create writes no expiry key.
+   * Undefined for a lobby already wiped.
    */
   private async emptyLobbyExpiry(): Promise<number | undefined> {
     const stored = await this.read(CLEANUP_AT_KEY, storedCleanupAtSchema);
@@ -883,9 +883,9 @@ export class LobbyDO {
     }
     let next = snapshot;
     // A seat whose grace ran out drops to disconnected — and, if a MATCH is
-    // running, starts its much longer forfeit clock in the SAME write (P4
-    // 3c-ii, on the snapshot since 3c-v). Arming it here rather than at
-    // socket-close is deliberate: this is the first moment we know they did not
+    // running, starts its much longer forfeit clock, on the snapshot, in the SAME
+    // write. Arming it here rather than at socket-close is deliberate: this is
+    // the first moment we know they did not
     // come straight back, and the 5s grace has already absorbed the blips.
     // `recomputePhase` never leaves in-game, so the phase read before the call
     // is the phase after it.
@@ -907,11 +907,11 @@ export class LobbyDO {
       const hostLive = hasSocket(next.host.id);
       const guestLive = next.guest !== null && hasSocket(next.guest.id);
       if (hostLive && guestLive) {
-        // P4: instantiate the authoritative engine game BEFORE flipping to
+        // Instantiate the authoritative engine game BEFORE flipping to
         // in-game, so a client that sees "in-game" can rely on the match
-        // existing (increment 1c reads + redacts it) — and only flip if it
+        // existing (the match frame reads + redacts it) — and only flip if it
         // actually started. A chosen deck that won't resolve (not signed in /
-        // not the player's / malformed, increment 3) must NOT wedge the lobby
+        // not the player's / malformed) must NOT wedge the lobby
         // in-game with no match: drop both back to selecting and surface why.
         const inGame: LobbyState = { ...next, phase: "in-game" };
         const handoff = await this.handoffToMatch(inGame, snapshot, readDecks);
@@ -1024,7 +1024,7 @@ export class LobbyDO {
         await this.closeSocket(ws, 1001, "keepalive lost");
       }
     }
-    // One line per sweep, however many it let go (LB8).
+    // One line per sweep, however many it let go.
     if (unanswered > 0) {
       await this.log(
         "overflow_closed",
@@ -1073,7 +1073,7 @@ export class LobbyDO {
   }
 
   /**
-   * Spend one frame from the socket's budget and check its size (LB1, MI2). False when the frame
+   * Spend one frame from the socket's budget and check its size. False when the frame
    * is to be dropped: the socket is already closing, or it is closed here for sending too much
    * (1008) or too large a frame (1009). A closed client reconnects through the per-IP upgrade
    * limit.
@@ -1089,7 +1089,7 @@ export class LobbyDO {
       this.frameBudgets.set(ws, budget);
       return true;
     }
-    // One line per closed socket, never one per frame (LB8): throttled, since the client
+    // One line per closed socket, never one per frame: throttled, since the client
     // reconnects and a script can repeat the close.
     const rate = budget === null;
     const connectedAt = attachedConnectedAt(ws);
@@ -1130,7 +1130,7 @@ export class LobbyDO {
   }
 
   /**
-   * Whether a just-accepted socket may stay (LB2). Under LOBBY_SOCKET_CAP it joins; past it, a
+   * Whether a just-accepted socket may stay. Under LOBBY_SOCKET_CAP it joins; past it, a
    * socket whose account holds a seat here still joins (the hard cap, checked before the session
    * read, bounds those), and any other is marked to be turned away, while fewer than
    * OVERFLOW_SOCKETS_MAX are. False refuses the upgrade.
@@ -1163,7 +1163,7 @@ export class LobbyDO {
     return Response.json({ error: "lobby full" }, { status: 503 });
   }
 
-  /** P4 handoff (online.md): the countdown just flipped this lobby to in-game,
+  /** The match handoff (online.md): the countdown just flipped this lobby to in-game,
       so mint the authoritative engine game once and persist it. The DO owns the
       RNG seed + all hidden info here on out. Idempotent — a re-fired alarm never
       restarts a live match. `snapshot` is the in-game lobby to start, derived from
@@ -1221,7 +1221,7 @@ export class LobbyDO {
     const chooser = chooserId === undefined ? null : matchSeatOf(snapshot, chooserId);
     // Storage enforces no construction rules, so `beginMatch` is the validator.
     // D1 lists a deck by card id and the engine mints uids in list order, so each list is shuffled
-    // first or a uid would place its card in the sorted decklist (MIX1).
+    // first or a uid would place its card in the sorted decklist.
     let begun: BeginMatchResult;
     try {
       begun = beginMatch({
@@ -1235,7 +1235,7 @@ export class LobbyDO {
         now: this.deps.now(),
       });
     } catch (error) {
-      // The engine is meant to be total, as in `applyMatchAction` (MI3). A throw would repeat on
+      // The engine is meant to be total, as in `applyMatchAction`. A throw would repeat on
       // every pass with the countdown frozen, so the players are told and un-readied instead.
       return await this.failedStart(
         "match_refused",
@@ -1247,7 +1247,7 @@ export class LobbyDO {
     if (!begun.ok) return await this.failedStart("match_refused", begun.reason);
     await this.match.put(begun.record);
     await this.state.storage.delete(CHOOSER_KEY);
-    // One line per match begun (MET3). A rematch is another under the same lobby code.
+    // One line per match begun. A rematch is another under the same lobby code.
     await this.info("match_started");
     return { kind: "started" };
   }
@@ -1297,8 +1297,8 @@ export class LobbyDO {
   }
 
   /**
-   * Before a rematch, re-check the session each seat's sockets authenticated with at the upgrade
-   * (security audit MI4, user decision 13): true when every one still lives. A socket keeps its
+   * Before a rematch, re-check the session each seat's sockets authenticated with at the upgrade:
+   * true when every one still lives. A socket keeps its
    * account for as long as it stays open, so a logout, a revoked session or a deleted account
    * would otherwise go on to another game. A socket whose session has ended is closed (1008); its
    * reconnect, with no live cookie, is refused the account-bound seat and watches instead. The
@@ -1355,7 +1355,7 @@ export class LobbyDO {
     return seated.every((id) => sockets.some((socket) => attachedPlayer(socket) === id));
   }
 
-  /** playerId → the account bound to it (3a-sec). Empty until an authenticated
+  /** playerId → the account bound to it. Empty until an authenticated
       socket claims a seat. */
   private async seatUsers(): Promise<Record<string, string>> {
     this.seatUsersMirror ??= (await this.read(SEAT_USERS_KEY, storedSeatUsersSchema)) ?? {};
@@ -1385,9 +1385,9 @@ export class LobbyDO {
     if (previous !== null && sameSnapshot(previous, stamped)) return;
     // A persisted match outlives EXACTLY the match it describes: when this commit
     // takes the lobby out of in-game (the host's kick, or `endMatch` retiring an
-    // unreadable record — a mid-match `bye` no longer does, 3c-iv), drop the stale
+    // unreadable record; a mid-match `bye` keeps the seat), drop the stale
     // GameState so a rematch in this same lobby mints a fresh one instead of
-    // handoffToMatch's guard reusing the old (P4, online.md).
+    // handoffToMatch's guard reusing the old (online.md).
     const abandoned = abandonsMatch(previous, stamped);
     // Stored before it is mirrored, so a failed put leaves memory agreeing with storage.
     await this.state.storage.put(SNAPSHOT_KEY, stamped);
@@ -1407,7 +1407,7 @@ export class LobbyDO {
     if (countdownEnd !== null) deadlines.push(countdownEnd);
 
     for (const entry of await this.pendingDisconnects()) deadlines.push(entry.deadline);
-    // The match forfeit clock (3c-ii; read off the snapshot's seats since 3c-v).
+    // The match forfeit clock, read off the snapshot's seats.
     // Load-bearing, not bookkeeping: the alarm that ARMS a forfeit is the
     // disconnect grace, and it consumes its own pending entry — so if this
     // deadline were not scheduled here, nothing would wake the DO again and the
@@ -1419,7 +1419,7 @@ export class LobbyDO {
     }
 
     // While anyone is connected, keep a poll running: it is the ONLY thing that can notice a
-    // socket whose keepalives stopped (3c-viii), because the auto-response deliberately never
+    // socket whose keepalives stopped, because the auto-response deliberately never
     // wakes us. It runs faster while both seats are held (`livenessSweepMs`). With nobody
     // connected there is nothing to check — the empty-lobby expiry below owns that case.
     if (sockets.length > 0) deadlines.push(this.deps.now() + livenessSweepMs(snapshot));
@@ -1439,7 +1439,7 @@ export class LobbyDO {
 
     // Setting the alarm counts as a storage write. An alarm already due at or before the earliest
     // deadline is kept, since `alarm()` re-derives every deadline when it fires and schedules the
-    // rest: so the liveness deadline each commit pushes 30s on writes nothing (LB1).
+    // rest: so the liveness deadline each commit pushes 30s on writes nothing.
     const now = this.deps.now();
     let at = deadlines.length === 0 ? null : Math.min(...deadlines);
     // After a pass that threw, a deadline already past waits out the retry delay.
@@ -1455,7 +1455,7 @@ export class LobbyDO {
   }
 
   /** The stored snapshot, read through `readSnapshot` so a lobby persisted by an
-      OLDER deploy comes back complete (3c-v added `PlayerState.forfeitAt`). The
+      OLDER deploy comes back complete (e.g. without `PlayerState.forfeitAt`). The
       alternative — a version gate like `MatchRecord`'s — would evict live lobbies
       on every deploy that adds a field, and unlike a match record there is no
       embedded engine state a default could quietly get wrong. */
@@ -1529,7 +1529,7 @@ export class LobbyDO {
   ): Promise<void> {
     const seatUsers = await this.seatUsers();
     // Every spectator, and every socket of one seat, gets the same frame: each distinct one is
-    // redacted and encoded once per broadcast (LB2).
+    // redacted and encoded once per broadcast.
     const frames = new Map<string, string>();
     for (const ws of only === undefined ? this.liveSockets() : [only]) {
       const viewer = viewerOf(ws, snapshot, seatUsers);
@@ -1563,7 +1563,7 @@ export class LobbyDO {
    * spectator with the seatless board. Spectators have no playerId, so they cannot act, and anyone
    * with the lobby code can watch.
    *
-   * `cause` says why (LB8): both seats are held by others (`full`), or the seat is bound to an
+   * `cause` says why: both seats are held by others (`full`), or the seat is bound to an
    * account this socket is not signed in as (`bound`). A `full` that only makes a spectator is how
    * watching works, so it is not logged.
    */
@@ -1660,7 +1660,7 @@ export class LobbyDO {
   }
 
   /**
-   * The `match_ended` line when `after` finished the game `before` was still playing (MET3), with
+   * The `match_ended` line when `after` finished the game `before` was still playing, with
    * how it ended: the engine's reason for a win (`prizesTaken`, `noPokemon`, `deckOut`,
    * `cardEffect`, `conceded`), `tie`, or the forfeit's `left` or `abandoned`; the turn it ended on,
    * and how long the match ran. No name, seat or account.
@@ -1709,7 +1709,7 @@ export class LobbyDO {
 
   /** `fields` for a line about a failure that may be storage's own: the code is read from memory
       first, and a storage read that fails as well leaves it null rather than throwing over the
-      failure being logged (ERR3). */
+      failure being logged. */
   private async failureFields(fields: LogFields): Promise<LogFields> {
     let lobby: string | null = null;
     try {

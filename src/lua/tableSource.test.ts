@@ -79,7 +79,7 @@ describe("LocalTableSource", () => {
     expect(src.restart()).toBeNull();
     expect(heard).toHaveLength(5);
     expect(src.matchId()).not.toBe("100");
-    // The new game is keyed from the CSPRNG, not the clock (MI1), even from a legacy-seeded one.
+    // The new game is keyed from the CSPRNG, not the clock, even from a legacy-seeded one.
     expect(typeof state.rngState).toBe("number");
     expect(src.host.game.rngState).toMatchObject({ alg: "chacha20" });
     expect(isRngState(src.host.game.rngState)).toBe(true);

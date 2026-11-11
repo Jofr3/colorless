@@ -1025,7 +1025,7 @@ describe("LobbyDO — failures", () => {
         error: "Error: D1_ERROR: Network connection lost.",
       },
     ]);
-    // A D1 outage is a degradation the handoff handles, not a defect (OBS-P2).
+    // A D1 outage is a degradation the handoff handles, not a defect.
     expect(logged("handoff_failed", "error")).toEqual([]);
   });
 
@@ -1045,7 +1045,7 @@ describe("LobbyDO — failures", () => {
     expect(snapshot.phase).toBe("selecting");
     expect([snapshot.host.ready, snapshot.guest?.ready]).toEqual([false, false]);
     expect(matchKeys()).toEqual([]);
-    // The engine is meant to be total, so its throw is a code defect: error level (OBS-P2).
+    // The engine is meant to be total, so its throw is a code defect: error level.
     expect(logged("handoff_failed", "error")).toEqual([
       {
         evt: "lobby",
@@ -1113,7 +1113,7 @@ describe("LobbyDO — failures", () => {
     };
     const ready = intent("h", { type: "set-ready", ready: true });
     await expect(h.send(host, ready)).rejects.toThrow("SQLITE_TOOBIG");
-    // The frame's failure is a line under the lobby's code before the error goes on (ERR3).
+    // The frame's failure is a line under the lobby's code before the error goes on.
     expect(logged("frame_failed", "error")).toEqual([
       {
         evt: "lobby",

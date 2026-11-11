@@ -16,7 +16,7 @@ export interface SimulatorGameOptions {
   onOpen?: (src: LocalTableSource) => void;
   onMove?: (src: LocalTableSource, move: GameAction, moves: number) => void;
   /** Deal on ChaCha20 (`drbgSeed(seed)`), as every new game does, instead of the legacy
-      generator every save made before MI1's fix carries. */
+      generator a legacy save carries. */
   chacha?: boolean;
 }
 

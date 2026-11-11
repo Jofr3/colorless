@@ -1,6 +1,6 @@
--- The host downloads the menu music only when Lua asks for it (audit BT8): once the stored
--- preferences say it would be heard ('start'), and when the player unmutes or turns a volume up
--- ('change'). A muted player, or one whose volume or music volume is zero, never asks.
+-- The host downloads the menu music only when Lua asks for it: once the stored preferences say
+-- it would be heard ('start'), and when the player unmutes or turns a volume up ('change'). A
+-- muted player, or one whose volume or music volume is zero, never asks.
 package.path='frontend/lua/?.lua;'..package.path
 local noop=function()end
 local image={release=noop,setFilter=noop,getDimensions=function()return 1850,800 end,getWidth=function()return 245 end,getHeight=function()return 337 end}

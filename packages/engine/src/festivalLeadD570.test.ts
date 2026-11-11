@@ -573,7 +573,7 @@ describe("D570 §6 — R-FL2: the second declaration re-reads the licence", () =
   it("the licence was LOST: p2 PROMOTES a Flutter Mane after the KO — the window is open but the locked Seaking may not use it [ D570 third review: and NO `ATTACK_AGAIN_OFFERED` row claims it may]", () => {
     const first = swing(table({ oppActive: SOFT, oppBench: [FLUTTER] }));
     const prized = run(first.state, { type: "takePrizes", seat: "p1", prizeIndices: [0] });
-    // A Bench of one auto-promotes (the M1 no-choice doctrine).
+    // A Bench of one auto-promotes (the no-choice rule).
     expect(prized.state.phase).toEqual({ kind: "turn:action", seat: "p1" });
     expect(prized.state.allowances.attackAgainUid).toBe(topOf(prized.state, "p1"));
     expect(all(prized.events, "ATTACK_AGAIN_OFFERED")).toEqual([]);

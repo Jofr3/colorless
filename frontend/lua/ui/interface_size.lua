@@ -1,9 +1,9 @@
--- Settings' Interface Size (audit LQX2): 100%, 125% or 150%. A layer grows by shrinking the
--- virtual canvas it lays out in (main.lua): at factor f it lays out in the canvas divided by f and
--- is drawn f times larger, over the same part of the screen. Every page is hand-placed for its
--- canvas, so each layer names the smallest canvas its content still fits, and takes the largest
--- step up to the chosen one whose shrunken canvas is at least that big; a layer as big as the
--- canvas stays at 100%.
+-- Settings' Interface Size: 100%, 125% or 150%. A layer grows by shrinking the virtual canvas it
+-- lays out in (main.lua): at factor f it lays out in the canvas divided by f and is drawn f times
+-- larger, over the same part of the screen. Every page is hand-placed for its canvas, so each
+-- layer names the smallest canvas its content still fits, and takes the largest step up to the
+-- chosen one whose shrunken canvas is at least that big; a layer as big as the canvas stays at
+-- 100%.
 local Size={}
 Size.steps={1,1.25,1.5}
 Size.labels={'100%','125%','150%'}
@@ -17,8 +17,8 @@ function Size.factor(choice,w,h,minW,minH)
   end
   return best
 end
--- The table's text overlays (audit FU1) grow by the chosen step where it fits: the largest scale
--- from `factor` down by STEP for which `fits(scale)` holds, else 1 (100%, never smaller).
+-- The table's text overlays grow by the chosen step where it fits: the largest scale from
+-- `factor` down by STEP for which `fits(scale)` holds, else 1 (100%, never smaller).
 Size.STEP=0.05
 function Size.grow(factor,fits)
   local scale=factor or 1

@@ -26,11 +26,11 @@ local g=love.graphics
 local Online={}
 Online.__index=Online
 local heights={menu=540,joining=420,waiting=540,starting=420}
--- Under Settings' Interface Size (UI-FU2) main.lua lays the lobby out in a canvas smaller than
--- 1280x800 and draws it larger. Laid out there in landscape it takes its compact arrangement:
--- the menu and waiting cards 40 shorter, the versus card's padding 12, your seat's deck preview
--- as large as the seat's free height allows, and the picker's tray and pager closer together.
--- The controls, their sizes and their order are the same.
+-- Under Settings' Interface Size main.lua lays the lobby out in a canvas smaller than 1280x800
+-- and draws it larger. Laid out there in landscape it takes its compact arrangement: the menu
+-- and waiting cards 40 shorter, the versus card's padding 12, your seat's deck preview as large
+-- as the seat's free height allows, and the picker's tray and pager closer together. The
+-- controls, their sizes and their order are the same.
 local compactHeights={menu=500,waiting=500}
 local info={
   invalid={'Invalid lobby code',"That code doesn't look right. Head back and try again."},
@@ -69,7 +69,7 @@ function Online:command(...)
 end
 function Online:offset() return self.motion.VT.y*60 end
 -- The box the field a text proxy edits is drawn in, the lobby's slide included, for main.lua to
--- hand the page (audit BR6); nothing while none edits.
+-- hand the page; nothing while none edits.
 function Online:editBox()
   for _,item in ipairs(self.editing and self.items or {}) do
     if item.kind=='field' and item.field==self.editing then return item.x,item.y+self:offset(),item.w,item.h end

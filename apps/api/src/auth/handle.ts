@@ -1,4 +1,4 @@
-// A new account's default public name (security audit AU3). Opponents and spectators see it, so
+// A new account's default public name. Opponents and spectators see it, so
 // it is generated rather than taken from the email's local part or the Google account's real
 // name: "Trainer-" and four characters from the lobby code's alphabet, which has no 0/O or 1/I
 // to misread. Names need not be unique, so collisions are harmless; the user can rename any time.

@@ -1,4 +1,4 @@
-// A seeded fuzz over REAL cards (reliability audit EN1, EN2). `actionFuzz.test.ts` walks synthetic
+// A seeded fuzz over REAL cards. `actionFuzz.test.ts` walks synthetic
 // fixture decks; this walks the bench's four real-card archetype decks (`benchPool.json`) against
 // each other, on the legacy mulberry32 generator and on ChaCha20, which every real game uses.
 //

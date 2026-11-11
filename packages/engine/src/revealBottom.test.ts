@@ -386,7 +386,7 @@ describe("Ortega — the reveal, the pick, and where the card lands", () => {
 
   it("never parks the may when the draw could not move a card — the op contract's own guard", () => {
     // Unreachable through Ortega (above: the gate's own bottomed card feeds
-    // the deck), so the M1 no-question guard is pinned at the op level, the
+    // the deck), so the no-choice guard is pinned at the op level, the
     // contract the first non-bottoming consumer will lean on.
     let state = ortegaBoard(["fix-item"]);
     state = withDeckSize(state, "p2", 0);

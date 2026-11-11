@@ -1,8 +1,8 @@
 -- The viewport mailbox (host.js syncViewport): the canvas's CSS width and height, the system
 -- reduced-motion flag, then its device-pixel width and height, the CSS size times the device
--- pixel ratio (audit BT6), then 1 when the primary pointer is coarse (a touch screen: a phone or
--- tablet that can be turned, audit LC4). A host that sends no device size means one device pixel
--- per CSS pixel; one that sends no pointer flag, a fine pointer.
+-- pixel ratio, then 1 when the primary pointer is coarse (a touch screen: a phone or tablet that
+-- can be turned). A host that sends no device size means one device pixel per CSS pixel; one
+-- that sends no pointer flag, a fine pointer.
 local Viewport={}
 -- The most device pixels drawn a frame (a 2560x1600 laptop). Past about 4 MP an integrated GPU
 -- (Intel HD 630) drops to 31-37 fps, so a denser screen renders at the highest pixel ratio within

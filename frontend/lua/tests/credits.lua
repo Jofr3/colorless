@@ -1,6 +1,6 @@
--- Settings' Credits (dependency audit TRN4): a button on the Game tab, under Interface Size and
--- above Back, that asks the page to open the third-party notices in a new tab. A press, a release
--- on it or Enter while it has focus asks once; a release elsewhere cancels; Settings stays open.
+-- Settings' Credits: a button on the Game tab, under Interface Size and above Back, that asks the
+-- page to open the third-party notices in a new tab. A press, a release on it or Enter while it
+-- has focus asks once; a release elsewhere cancels; Settings stays open.
 package.path='frontend/lua/?.lua;frontend/lua/tests/?.lua;'..package.path
 require('support.draw_stub').install()
 local T=require('ui.theme')

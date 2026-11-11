@@ -49,7 +49,7 @@ export async function prepareSandbox(decks: readonly [Deck, Deck]): Promise<Loca
   const startedAt = Date.now();
   const created = createGame({
     // A fresh ChaCha20 key, never the clock: a guessable seed would let a player read the deck
-    // order off the opening hand (security audit MI1).
+    // order off the opening hand.
     seed: freshRngState(),
     decks: { p1: cardIdsByPlayer[0], p2: cardIdsByPlayer[1] },
     cardPool: pool,

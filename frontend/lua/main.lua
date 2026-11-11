@@ -26,9 +26,9 @@ local g = love.graphics
 -- Game:main_menu starts REAL at 12 when skipping the introductory splash.
 local state = {time=12,focused=0,hovered=0,muted=false,reduced=false,poll=0,ready=false,parked=false,lastInput='pointer',focusEdge='none'}
 local shaders, sounds, controls = {}, {}, {}
--- Shaders home's first frame does not need (audit LC8): love.load compiles only splash and CRT,
--- and these compile one per update after ready, or at once for a page or wipe that draws with
--- them first. Reading one that has not compiled yet compiles it, so no draw meets a missing one.
+-- Shaders home's first frame does not need: love.load compiles only splash and CRT, and these
+-- compile one per update after ready, or at once for a page or wipe that draws with them first.
+-- Reading one that has not compiled yet compiles it, so no draw meets a missing one.
 local LATER_SHADERS={'background','dissolve','played'}
 local function ensureShader(name)
   local shader=rawget(shaders,name)
@@ -68,19 +68,19 @@ local wipe,pendingPage
 -- pendingPage until the wipe is gone.
 local function covering() return wipe~=nil and not wipe.committed end
 local scene, width, height, layoutScale, offsetX, offsetY, virtualWidth, virtualHeight
--- Device pixels per CSS pixel: width and height are the canvas's device pixels (audit BT6).
+-- Device pixels per CSS pixel: width and height are the canvas's device pixels.
 local density=1
--- Settings' Interface Size (audit LQX2, ui/interface_size.lua). A layer at `scale` lays out in a
--- w x h canvas, the virtual canvas divided by its scale, and draws scaled up about the canvas
--- centre, so it covers the same part of the screen. Home grows in landscape (its compact
--- arrangement still fits 150%), Settings as far as its tallest form fits; the collection panel
--- drops its 0.9 inset; the online lobby grows per step (onlineLayer); the table and the wipe are
--- as large as the canvas.
+-- Settings' Interface Size (ui/interface_size.lua). A layer at `scale` lays out in a w x h
+-- canvas, the virtual canvas divided by its scale, and draws scaled up about the canvas centre,
+-- so it covers the same part of the screen. Home grows in landscape (its compact arrangement
+-- still fits 150%), Settings as far as its tallest form fits; the collection panel drops its 0.9
+-- inset; the online lobby grows per step (onlineLayer); the table and the wipe are as large as
+-- the canvas.
 local homeLayer,popupLayer,tableLayer={scale=1},{scale=1},{scale=1}
 -- The smallest canvas each growing layer fits: home's compact arrangement, and Settings' widest
 -- popup (780) and tallest form (620) with a margin.
 local HOME_MIN,POPUP_MIN={720,520},{812,640}
--- The online lobby is a layer of its own (UI-FU2): each step grows as far as its compact
+-- The online lobby is a layer of its own: each step grows as far as its compact
 -- arrangement fits (ui/lobby_size.lua), so a step change can move it to another size.
 local onlineLayer={scale=1}
 -- The collection panel's scale over the dimmed home: 0.9 in landscape at 100%.
@@ -96,10 +96,10 @@ local effects={'button','cardSlide1','highlight1','paper1','card1','cardSlide2',
 local unloadedEffects={}
 -- The host writes the menu music after the first frame; the menu starts without it.
 local MUSIC='assets/sounds/music1.ogg'
--- The host downloads the music only when Lua asks (audit BT8), so a player who muted it or turned
--- it down to nothing never pays for it: 'start' once the stored preferences are read and say it
--- is heard (the host waits for ready, and skips it under Save-Data), 'change' when the player
--- unmutes or turns a volume up (always downloaded).
+-- The host downloads the music only when Lua asks, so a player who muted it or turned it down to
+-- nothing never pays for it: 'start' once the stored preferences are read and say it is heard
+-- (the host waits for ready, and skips it under Save-Data), 'change' when the player unmutes or
+-- turns a volume up (always downloaded).
 local function musicLevel() return preferences.muted==1 and 0 or preferences.volume*preferences.musicVolume end
 local function askForMusic(reason)
   if not sounds.music1 and not love.filesystem.getInfo(MUSIC) then Bridge.emit('music','want',reason) end
@@ -176,7 +176,7 @@ local function layout(w,h,pixelDensity)
   arrangeLayers(portrait)
   state.interfaceSize=preferences.interfaceSize
   local css=layoutScale/density
-  -- The table stays at 100%; Interface Size grows its text overlays instead (audit FU1).
+  -- The table stays at 100%; Interface Size grows its text overlays instead.
   Display.set({scale=css,collection=css*collectionScale,popup=css*popupLayer.scale,tableText=interfaceStep(),portrait=portrait,coarse=state.coarse or false})
   -- Home lays out in its layer's canvas: in landscape smaller than 800 tall the menu rises, with
   -- the logo between it and the top edge, shrunk only when it does not fit.
@@ -232,10 +232,10 @@ local function libraryTransform()
   g.translate(virtualWidth/2,virtualHeight/2); g.scale(scale)
   g.translate(-virtualWidth/2,-virtualHeight/2+collection():offset())
 end
--- Where `screen` draws the field a text proxy edits, for the page to put the proxy over it (audit
--- BR6): the IME window and a phone keyboard's pan then anchor at the field. Whole CSS pixels from
--- the canvas's top-left, through love.draw's own transforms; the room's sway and the CRT's bend
--- are left out, a few pixels that would move the box every frame. Nil while it edits nothing.
+-- Where `screen` draws the field a text proxy edits, for the page to put the proxy over it: the
+-- IME window and a phone keyboard's pan then anchor at the field. Whole CSS pixels from the
+-- canvas's top-left, through love.draw's own transforms; the room's sway and the CRT's bend are
+-- left out, a few pixels that would move the box every frame. Nil while it edits nothing.
 local function editBox(screen)
   local x,y,w,h
   if screen then x,y,w,h=screen:editBox() end
@@ -708,13 +708,13 @@ local function still()
   if state.lastClicked and state.time-state.lastClicked.at<0.1 then return false end
   return not popup or popup:still()
 end
--- LÖVE 11.4's default love.run, changed in three ways (audit LC1). A pacer runs update and draw at
--- most frameCap() times a second however fast the display refreshes, while events are pumped on
--- every animation frame. The redraw gate skips draw and present while still() holds, after
--- drawing the first still frame (its update may have changed the picture) and then once every
+-- LÖVE 11.4's default love.run, changed in three ways. A pacer runs update and draw at most
+-- frameCap() times a second however fast the display refreshes, while events are pumped on every
+-- animation frame. The redraw gate skips draw and present while still() holds, after drawing the
+-- first still frame (its update may have changed the picture) and then once every
 -- BACKSTOP_SECONDS; WebGL keeps showing the last presented frame through an animation frame that
--- makes no GL calls. Any event asks for a redraw. And there is no love.timer.sleep(0.001):
--- love.js runs this function once per requestAnimationFrame, and its sleep busy-waits.
+-- makes no GL calls. Any event asks for a redraw. And there is no love.timer.sleep(0.001): love.js
+-- runs this function once per requestAnimationFrame, and its sleep busy-waits.
 function love.run()
   if love.load then love.load(love.arg and love.arg.parseGameArguments(arg),arg) end
   if love.timer then love.timer.step() end
@@ -799,7 +799,7 @@ function love.keypressed(key)
   if state.page=='online' then online:keypressed(key);return end
   if isCollection(state.page) then collection():keypressed(key); return end
   if key=='tab' or key=='right' or key=='down' or key=='left' or key=='up' then
-    -- Tab keeps the ring's order; arrows move by layout (audit PG14).
+    -- Tab keeps the ring's order; arrows move by layout.
     local ring={}
     for _,b in ipairs(menu) do ring[#ring+1]=b end
     for _,b in ipairs(controls) do ring[#ring+1]=b end

@@ -24,8 +24,7 @@ import {
   findEvent,
 } from "./testFixtures";
 
-/** The two printed sentences, byte-for-byte off the local D1 rows (2026-08-03,
-    978 rows / 6 sets). */
+/** The two printed sentences, byte-for-byte off the local D1 rows. */
 const ROCK_CHESTPLATE =
   "The {F} Pokémon this card is attached to takes 30 less damage from attacks from your opponent's Pokémon (after applying Weakness and Resistance).";
 const ARM_THRUST_PRACTICE =

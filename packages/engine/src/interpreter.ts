@@ -297,8 +297,8 @@ import {
 
 /** Run an op program from the top. Synchronous ops apply in order; the first
     op that needs a decision PARKS (returns the prompt + a continuation), and
-    an empty/forced decision auto-resolves without a prompt (the M1 doctrine:
-    a choice with no choice in it is not a choice). A coin-flip gate splices
+    an empty/forced decision auto-resolves without a prompt (a choice with no
+    choice in it is not a choice). A coin-flip gate splices
     its heads-branch into the work queue so parking works uniformly through
     a gate too (no representative program parks inside one — but the shape is
     correct if one ever does). */
@@ -1335,8 +1335,9 @@ function stepOp(
       if (op.budget <= 0) return { done: state };
       const source = op.source;
       if (source === undefined) {
-        // Q1 — the SOURCE and the COUNT, ALWAYS PARKED (*"You may"*: the decline is the ref-less
-        // answer). `upTo` is the LIVE budget, not a printed ceiling — nothing is printed.
+        // The first question — the SOURCE and the COUNT, ALWAYS PARKED (*"You may"*: the decline
+        // is the ref-less answer). `upTo` is the LIVE budget, not a printed ceiling — nothing is
+        // printed.
         const sources = anyWaySources(state, ctx, op.from);
         if (sources.length === 0) return { done: state };
         return {
@@ -2559,7 +2560,7 @@ function stepOp(
       // class (see the op's doc for why collapsing is sound here and not in
       // payFromHand). No match is the whiff (files [], Greavard into a
       // Supporter-less hand); one class is a forced pick and resolves inline
-      // (the M1 doctrine); anything else parks the second-ever mandatory
+      // (the no-choice rule); anything else parks the second-ever mandatory
       // chooseCards.
       const candidates = bottomFromOpponentHandOffer(state, ctx, op);
       if (candidates.length === 0) {
@@ -2829,7 +2830,7 @@ function stepOp(
       // Not §11-filtered here: the shield is asked after the complement is taken, so kept bodies
       // don't produce false refusal rows.
       const candidates = oppBenchRefs(state, ctx.seat);
-      // §8.6 "do as much as you can" with the M1 no-choice rule on top: at
+      // §8.6 "do as much as you can" with the no-choice rule on top: at
       // `candidates.length <= keep` the complement is EMPTY, so there is no effect to
       // ask about and a prompt here would be a question with one answer (`parkOrForce`
       // states both halves). Correct at bench 0/1/2 as well as at exactly `keep`.

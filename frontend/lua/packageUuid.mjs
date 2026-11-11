@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 // IndexedDB under the package's name and reuses that copy only while the stored uuid equals
 // game.js's; the file table (names, offsets) is always read from game.js. So a uuid derived from
 // game.data's bytes reuses the cache exactly when those bytes are unchanged, and the build is
-// reproducible (build audit BLD1).
+// reproducible.
 
 /** game.data's uuid: the first 128 bits of its sha256, spelled 8-4-4-4-12.
     @param {Uint8Array} gameData */

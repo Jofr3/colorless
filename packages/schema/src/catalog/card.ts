@@ -48,8 +48,8 @@ export type Variants = z.infer<typeof variantsSchema>;
 
 /** List/search projection of a card — what GET /cards and `set.cards` serve.
     Beyond identity + art it carries exactly the flat card-table columns the
-    deck builder's tiles and client-side "kind" filters read (M9), plus the
-    `legal` block the deck validator needs on hydrated lists (P2): energy
+    deck builder's tiles and client-side "kind" filters read, plus the
+    `legal` block the deck validator needs on hydrated lists: energy
     types, hp, regulation mark and the per-category subtype discriminators.
     No JSON blobs (attacks/abilities/…) and no set join — those stay on the
     full Card / future projections. */

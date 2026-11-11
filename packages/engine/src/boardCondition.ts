@@ -235,7 +235,7 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       return cond.counts.includes(state.players[seat].prizes.length);
     case "opponentHandAtMost":
       // The SIZE of their hand, never its contents — the line the union's
-      // public-state invariant draws, and the reason this survives P4 redaction
+      // public-state invariant draws, and the reason this survives online redaction
       // (the wire ships face-down backs with a real length).
       return state.players[otherSeat(seat)].hand.length <= cond.count;
     case "handSizesEqual":

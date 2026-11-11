@@ -1,6 +1,6 @@
 // GET /cards/index: every card as one compact row, so the builder searches names and rules text in
-// the browser instead of running a LIKE that scans the whole table per keystroke (security audit
-// CA1). `searchCardIndex` reproduces GET /cards' filters and orders over these rows (the API's
+// the browser instead of running a LIKE that scans the whole table per keystroke.
+// `searchCardIndex` reproduces GET /cards' filters and orders over these rows (the API's
 // catalog/query.ts), and catalog/cardIndex.d1.test.ts in the API holds the two to the same answers.
 
 import type { CardBrief } from "./card";

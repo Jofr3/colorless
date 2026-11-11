@@ -10,7 +10,7 @@ local Popup={}
 local FRAME={0.5+191/255*0.5,0.5+199/255*0.5,0.5+213/255*0.5,1} -- lighten(JOKER_GREY,0.5)
 local BODY={55/255*0.9,66/255*0.9,68/255*0.9,0.8}                -- darken(BLACK,0.1) at 0.8
 local WHITE_BOX={1,1,1,1}
--- Constant colours, made once rather than on every draw (audit LC7).
+-- Constant colours, made once rather than on every draw.
 local SECTION_SHADE={0.7,0.7,0.7,1}
 local FRAME_SHADE={FRAME[1]*0.7,FRAME[2]*0.7,FRAME[3]*0.7,1}
 local DISABLED_TEXT={0.55,0.59,0.6,1}

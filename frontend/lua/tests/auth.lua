@@ -116,8 +116,8 @@ assert(#sent==2,'Busy disables it')
 account.busy=false
 print('PASS: sign out everywhere button, layout in both orientations, busy guard')
 
--- A failed sign-in (audit PG9): focus moves to the first refused field, which opens for editing,
--- each refused field is outlined, typing in one clears its outline, and the message is 22 px.
+-- A failed sign-in: focus moves to the first refused field, which opens for editing, each
+-- refused field is outlined, typing in one clears its outline, and the message is 22 px.
 do
   -- Settings holds love.graphics from its load: the calls it makes are added to that table.
   setmetatable(love.graphics,{__index=function() return function() end end})
@@ -184,8 +184,8 @@ do
   assert(#lines==2 and lines[2].size==22,'The message is 22 px')
   local wraps=select(2,T.font(22):getWrap(lines[2].text,lines[2].w))
   assert(#wraps==1 and lines[2].y>=submit.y+submit.h and lines[2].y+22<=google.y,'One line fits between the buttons')
-  -- Portrait: two lines, a little smaller, between the buttons' faces with their shadow (QA7 bug
-  -- 4: two 22 px lines ran into Continue with Google). A face lifts 1.8 at rest and its panel
+  -- Portrait: two lines, a little smaller, between the buttons' faces with their shadow (two
+  -- 22 px lines would run into Continue with Google). A face lifts 1.8 at rest and its panel
   -- hangs 3 below its bounds; a line is its size tall, and the shadow 3 below it.
   local function between(d,size)
     local n=#select(2,T.font(size):getWrap(d.text,d.w))

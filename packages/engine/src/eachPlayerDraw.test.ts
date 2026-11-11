@@ -260,7 +260,7 @@ describe("D491 §2 — the 2⁴ lattice, and the one axis that decides it", () =
   });
 
   it("the COUNT axis is DEGENERATE, and that corrects the price", () => {
-    // The recorded price named SCOPE, MOOD and COUNT. `Draw 3 cards.` has built since M4,
+    // The recorded price named SCOPE, MOOD and COUNT. `Draw 3 cards.` already builds,
     // so substituting the count onto its nearest built spelling changes nothing on either
     // side of the split — it is not an axis of this sentence at all.
     expect(deriveAttackEffect("Draw 3 cards.")).toEqual([{ op: "drawCards", count: 3 }]);

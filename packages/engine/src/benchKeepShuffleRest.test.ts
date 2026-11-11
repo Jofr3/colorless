@@ -457,7 +457,7 @@ describe("D537 §3 — bench ≤ keep asks NOTHING, and the ABSENCE is pinned (D
 
   it("bench 3 is the BOUNDARY — `<=`, not `<`: a pick with exactly one legal answer is not asked", () => {
     // At bench === keep the complement is EMPTY, so there is nothing to ask about at
-    // all. `parkOrForce`'s M1 no-choice rule states both halves; this op states them
+    // all. `parkOrForce`'s no-choice rule states both halves; this op states them
     // in its own gate because its candidate set is not the set the effect lands on.
     const { state } = attack(board(SEED, [B1, B2, B3]));
     expect(state.phase.kind).not.toBe("effect:choose");

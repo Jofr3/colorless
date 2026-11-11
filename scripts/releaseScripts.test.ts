@@ -4,7 +4,7 @@ import { isRecord } from "./lib/cli";
 import { repoPath } from "./lib/repo";
 
 // The release's gates live in apps/api/scripts/release-gate.ts, but a gate is only a gate while the
-// package.json scripts run it (build audit BLD-P1): these pin the wiring.
+// package.json scripts run it: these pin the wiring.
 const scripts = (file: string): Record<string, string> => {
   const manifest: unknown = JSON.parse(readFileSync(repoPath(file), "utf8"));
   const found = isRecord(manifest) && isRecord(manifest.scripts) ? manifest.scripts : {};
