@@ -1,6 +1,7 @@
 // The verdicts scripts/release-gate.ts reaches about a release, as pure functions of what it read
 // (git, wrangler, gh, the deployed site), so vitest can test them; it sits here beside
 // requiredSecrets.ts for that reason, and the Worker imports neither.
+// scripts/prod-watch.ts runs it with no install, so it imports nothing (import-graph.ts checks).
 
 /** The commit a release names everywhere: wrangler's `--tag`, /health's `version.tag`, the log. */
 export const shortSha = (commit: string): string => commit.slice(0, 8);
