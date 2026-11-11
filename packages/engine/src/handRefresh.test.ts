@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { programFor } from "./index";
-import type { GameEvent, GameState, Seat } from "./index";
+import type { GameState, Seat } from "./index";
 import {
   HAND_REFRESH_DECK,
   deepFreeze,
@@ -10,14 +10,8 @@ import {
   mustApply,
   setPrizes,
   findEvent,
+  findEvents,
 } from "./testFixtures";
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
-
 /** Setup then open P1's turn 2 (P2 went first and passed) — P1's first
     unrestricted turn (so a Supporter is legal, §4). */
 function board(seed: number): GameState {
@@ -75,10 +69,10 @@ describe("M5 op-slice — handRefresh (the hand-refresh Supporter family)", () =
     // p2 is entirely untouched (self only).
     expect(after.players.p2).toEqual(state.players.p2);
 
-    const shuffled = findAll(events, "HAND_SHUFFLED_INTO_DECK");
+    const shuffled = findEvents(events, "HAND_SHUFFLED_INTO_DECK");
     expect(shuffled).toHaveLength(1);
     expect(shuffled[0]).toMatchObject({ seat: "p1", count: handBefore - 1 });
-    const drawn = findAll(events, "CARDS_DRAWN").filter((e) => e.reason === "effect");
+    const drawn = findEvents(events, "CARDS_DRAWN").filter((e) => e.reason === "effect");
     expect(drawn).toHaveLength(1);
     expect(drawn[0]).toMatchObject({ seat: "p1", uids: expect.any(Array) });
     expect(drawn[0]?.uids).toHaveLength(5);
@@ -113,7 +107,7 @@ describe("M5 op-slice — handRefresh (the hand-refresh Supporter family)", () =
     expect(seatUids(after, "p1")).toEqual(p1Before); // no card created/destroyed
     expect(seatUids(after, "p2")).toEqual(p2Before);
 
-    const shuffled = findAll(events, "HAND_SHUFFLED_INTO_DECK");
+    const shuffled = findEvents(events, "HAND_SHUFFLED_INTO_DECK");
     expect(shuffled.map((e) => e.seat)).toEqual(["p1", "p2"]); // controller first
     expect(shuffled[0]).toMatchObject({ seat: "p1", count: p1HandBefore - 1 });
     expect(shuffled[1]).toMatchObject({ seat: "p2", count: p2HandBefore });
@@ -121,7 +115,7 @@ describe("M5 op-slice — handRefresh (the hand-refresh Supporter family)", () =
     // from the controller — the first op to touch the opponent's hand/deck).
     for (const e of shuffled) expect("uids" in e).toBe(false);
 
-    const drawn = findAll(events, "CARDS_DRAWN").filter((e) => e.reason === "effect");
+    const drawn = findEvents(events, "CARDS_DRAWN").filter((e) => e.reason === "effect");
     expect(drawn.map((e) => e.seat)).toEqual(["p1", "p2"]);
     expect(drawn[0]?.uids).toHaveLength(4);
     expect(drawn[1]?.uids).toHaveLength(4);
@@ -140,7 +134,7 @@ describe("M5 op-slice — handRefresh (the hand-refresh Supporter family)", () =
     // → the hand returns to handBefore.
     expect(handCount(after, "p1")).toBe(handBefore);
     expect(findEvent(events, "HAND_SHUFFLED_INTO_DECK")).toMatchObject({ count: handBefore - 1 });
-    const drawn = findAll(events, "CARDS_DRAWN").filter((e) => e.reason === "effect");
+    const drawn = findEvents(events, "CARDS_DRAWN").filter((e) => e.reason === "effect");
     expect(drawn[0]?.uids).toHaveLength(handBefore);
   });
 
@@ -153,7 +147,7 @@ describe("M5 op-slice — handRefresh (the hand-refresh Supporter family)", () =
     const { state: after, events } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
 
     // The refresh drew 8 before the turn ended (the effect ran to completion).
-    const drawnByP1 = findAll(events, "CARDS_DRAWN").filter(
+    const drawnByP1 = findEvents(events, "CARDS_DRAWN").filter(
       (e) => e.reason === "effect" && e.seat === "p1",
     );
     expect(drawnByP1[0]?.uids).toHaveLength(8);
@@ -196,13 +190,13 @@ describe("M5 op-slice — handRefresh (the hand-refresh Supporter family)", () =
 
     // The placement event is the bottom one, controller first — never the
     // shuffle-into-deck one (a different, publicly different fact).
-    const bottomed = findAll(events, "HAND_TO_BOTTOM_OF_DECK");
+    const bottomed = findEvents(events, "HAND_TO_BOTTOM_OF_DECK");
     expect(bottomed.map((e) => e.seat)).toEqual(["p1", "p2"]);
     expect(bottomed[0]).toMatchObject({ count: p1Hand.length });
     expect(bottomed[1]).toMatchObject({ count: p2Hand.length });
     for (const e of bottomed) expect("uids" in e).toBe(false); // count-only
-    expect(findAll(events, "HAND_SHUFFLED_INTO_DECK")).toHaveLength(0);
-    expect(findAll(events, "SHUFFLE")).toHaveLength(0);
+    expect(findEvents(events, "HAND_SHUFFLED_INTO_DECK")).toHaveLength(0);
+    expect(findEvents(events, "SHUFFLE")).toHaveLength(0);
   });
 
   it("Iono draws each player their OWN remaining Prize count (the behind player draws more)", () => {
@@ -220,7 +214,7 @@ describe("M5 op-slice — handRefresh (the hand-refresh Supporter family)", () =
     expect(handCount(after, "p2")).toBe(5);
     expect(seatUids(after, "p1")).toEqual(p1Before); // card conservation, both sides
     expect(seatUids(after, "p2")).toEqual(p2Before);
-    const drawn = findAll(events, "CARDS_DRAWN").filter((e) => e.reason === "effect");
+    const drawn = findEvents(events, "CARDS_DRAWN").filter((e) => e.reason === "effect");
     expect(drawn.map((e) => e.seat)).toEqual(["p1", "p2"]);
     expect(drawn[0]?.uids).toHaveLength(2);
     expect(drawn[1]?.uids).toHaveLength(5);
@@ -237,7 +231,7 @@ describe("M5 op-slice — handRefresh (the hand-refresh Supporter family)", () =
 
     // "If either player put any cards on the bottom of their deck in this way" —
     // neither did, so the draw clause never happens for EITHER player.
-    expect(findAll(events, "CARDS_DRAWN").filter((e) => e.reason === "effect")).toHaveLength(0);
+    expect(findEvents(events, "CARDS_DRAWN").filter((e) => e.reason === "effect")).toHaveLength(0);
     expect(handCount(after, "p1")).toBe(0);
     expect(handCount(after, "p2")).toBe(0);
     expect(after.players.p1.deck).toEqual(state.players.p1.deck); // decks untouched
@@ -246,7 +240,7 @@ describe("M5 op-slice — handRefresh (the hand-refresh Supporter family)", () =
     // whole play is a true no-op (rng.ts shuffles a length ≤ 1 input for free).
     expect(after.rngState).toBe(state.rngState);
     // The placement still happened (0 cards) for both — an honest, non-leaky count.
-    expect(findAll(events, "HAND_TO_BOTTOM_OF_DECK").map((e) => e.count)).toEqual([0, 0]);
+    expect(findEvents(events, "HAND_TO_BOTTOM_OF_DECK").map((e) => e.count)).toEqual([0, 0]);
   });
 
   it("Iono's gate opens on EITHER player — an empty-handed controller still draws", () => {
@@ -258,7 +252,7 @@ describe("M5 op-slice — handRefresh (the hand-refresh Supporter family)", () =
 
     const { state: after, events } = mustApply(state, { type: "playTrainer", seat: "p1", uid });
 
-    const drawn = findAll(events, "CARDS_DRAWN").filter((e) => e.reason === "effect");
+    const drawn = findEvents(events, "CARDS_DRAWN").filter((e) => e.reason === "effect");
     expect(drawn.map((e) => e.seat)).toEqual(["p1", "p2"]);
     expect(handCount(after, "p1")).toBe(state.players.p1.prizes.length);
     expect(handCount(after, "p2")).toBe(p2Prizes);

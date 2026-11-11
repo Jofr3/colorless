@@ -17,14 +17,8 @@ import {
   toDeckTop,
   types,
   findEvent,
+  findEvents,
 } from "./testFixtures";
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 /** The uid of the deck card at `index` (0 = top). */
 function deckAt(state: GameState, seat: Seat, index: number): string {
@@ -174,7 +168,7 @@ describe("M5 op-slice — attachFromTop (Electric Generator / Hydreigon)", () =>
     // "shuffle the other cards back" is not this op's business.
     expect(types(events)).toContain("SHUFFLE");
     expect(findEvent(events, "DECK_TOP_DISCARDED")).toBeUndefined();
-    const attached = findAll(events, "ENERGY_ATTACHED");
+    const attached = findEvents(events, "ENERGY_ATTACHED");
     expect(attached).toHaveLength(2);
     expect(attached[0]).toMatchObject({
       seat: "p1",

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect } from "./effects";
 import { applyAction } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   ATTACK_DISCARD_DECK,
   attachFromDeck,
@@ -12,14 +12,8 @@ import {
   setActiveFromDeck,
   types,
   findEvent,
+  findEvents,
 } from "./testFixtures";
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 /** Setup, then open P1's turn 2 (P2 went first and passed) — P1's first
     unrestricted turn, so attacking is legal (§4). */
@@ -266,7 +260,7 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
       const { state: after, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
       const face = findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result as string;
       faces.set(face, {
-        discarded: findAll(events, "ENERGY_DISCARDED").length,
+        discarded: findEvents(events, "ENERGY_DISCARDED").length,
         energyLeft: activeEnergy(after, "p2").length,
       });
     }
@@ -329,7 +323,7 @@ describe("M5 op-slice — the discardEnergy attack arms", () => {
       seat: "p1",
       choice: { kind: "discardEnergy", uids: picks },
     });
-    const discarded = findAll(events, "ENERGY_DISCARDED");
+    const discarded = findEvents(events, "ENERGY_DISCARDED");
     expect(discarded).toHaveLength(1);
     expect(discarded[0]?.uids).toEqual(picks);
     expect(discarded[0]?.from).toEqual({ spot: "active" });

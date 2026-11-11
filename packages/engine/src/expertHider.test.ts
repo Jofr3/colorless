@@ -16,6 +16,7 @@ import {
   mustApply,
   setActiveFromDeck,
   findEvent,
+  findEvents,
 } from "./testFixtures";
 
 const crush = { type: "attack", seat: "p1", index: 0 } as const; // 200 flat
@@ -70,13 +71,6 @@ function benchIndexOf(state: GameState, cardId: string): number {
   const i = state.players.p2.bench.findIndex((p) => cardIdAt(state, p) === cardId);
   if (i < 0) throw new Error(`no benched ${cardId}`);
   return i;
-}
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
 function holderActive(holderId: string): GameState {
@@ -315,7 +309,7 @@ describe("read site 1/4 — attack.ts's main hit", () => {
   it("the no-Ability control takes the identical 200 and flips nothing", () => {
     const state = withRng(holderActive("fix-titan"), HEADS);
     const { state: done, events } = mustApply(state, crush);
-    expect(findAll(events, "ABILITY_COIN_FLIP")).toEqual([]);
+    expect(findEvents(events, "ABILITY_COIN_FLIP")).toEqual([]);
     expect(done.players.p2.active?.damage).toBe(200);
     expect(done.rngState).toBe(HEADS);
   });
@@ -331,7 +325,7 @@ describe("read site 1/4 — attack.ts's main hit", () => {
     expect(hit.state.players.p2.active?.damage).toBe(0);
 
     const through = mustApply(bare, crush);
-    expect(findAll(through.events, "ABILITY_COIN_FLIP")).toEqual([]);
+    expect(findEvents(through.events, "ABILITY_COIN_FLIP")).toEqual([]);
     expect(through.state.players.p2.active?.damage).toBe(200);
     expect(through.state.rngState).toBe(HEADS);
   });
@@ -361,7 +355,7 @@ describe("read site 1/4 — attack.ts's main hit", () => {
     state = attachFromDeck(state, "p1", "fix-energy", 1);
     state = withRng(state, HEADS);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    expect(findAll(events, "ABILITY_COIN_FLIP")).toEqual([]);
+    expect(findEvents(events, "ABILITY_COIN_FLIP")).toEqual([]);
     expect(done.players.p2.active?.damage).toBe(10);
     expect(done.rngState).toBe(HEADS);
   });
@@ -372,7 +366,7 @@ describe("read site 2/4 — the spread", () => {
   it("HEADS shields a benched holder from the splash", () => {
     const state = withRng(holderBenched("fix-experthider"), HEADS);
     const { state: done, events } = mustApply(state, bigSpread);
-    expect(findAll(events, "ABILITY_COIN_FLIP")).toHaveLength(1);
+    expect(findEvents(events, "ABILITY_COIN_FLIP")).toHaveLength(1);
     expect(onBench(done, "fix-experthider")?.damage).toBe(0);
     expect(onBench(done, "fix-titan")?.damage).toBe(200);
   });
@@ -394,7 +388,7 @@ describe("read site 2/4 — the spread", () => {
     state = withRng(state, stateForFaces(["heads", "tails", "heads"]));
 
     const { state: done, events } = mustApply(state, bigSpread);
-    expect(findAll(events, "ABILITY_COIN_FLIP").map((e) => e.result)).toEqual([
+    expect(findEvents(events, "ABILITY_COIN_FLIP").map((e) => e.result)).toEqual([
       "heads",
       "tails",
       "heads",
@@ -402,7 +396,7 @@ describe("read site 2/4 — the spread", () => {
     expect(done.players.p2.bench.map((p) => p.damage)).toEqual([0, 200, 0]);
     // …and the three rows name three DIFFERENT bodies, so a build that flipped once
     // and announced it three times cannot pass.
-    expect(new Set(findAll(events, "ABILITY_COIN_FLIP").map((e) => e.uid)).size).toBe(3);
+    expect(new Set(findEvents(events, "ABILITY_COIN_FLIP").map((e) => e.uid)).size).toBe(3);
   });
 });
 
@@ -442,7 +436,7 @@ describe("read sites 3/4 and 4/4 — the two snipe arms", () => {
     ] as const) {
       const state = withRng(board, HEADS);
       const { state: done, events } = snipeAt(state, SNEAK_BOULDER, read);
-      expect(findAll(events, "ABILITY_COIN_FLIP")).toEqual([]);
+      expect(findEvents(events, "ABILITY_COIN_FLIP")).toEqual([]);
       const body = read === "active" ? done.players.p2.active : onBench(done, read);
       expect(body?.damage).toBe(200);
       expect(done.rngState).toBe(HEADS);
@@ -473,7 +467,7 @@ describe("what this field deliberately does NOT reach", () => {
   it("an effect-only attack draws no SHIELD coin at all", () => {
     const state = withRng(holderActive("fix-experthider"), HEADS);
     const { events } = mustApply(state, yawn);
-    expect(findAll(events, "ABILITY_COIN_FLIP")).toEqual([]);
+    expect(findEvents(events, "ABILITY_COIN_FLIP")).toEqual([]);
   });
 });
 

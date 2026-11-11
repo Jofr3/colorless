@@ -22,6 +22,7 @@ import {
   setBenchDamage,
   setDamage,
   findEvent,
+  findEvents,
 } from "./testFixtures";
 
 /** The two printed sentences, byte-for-byte off the local D1 rows. */
@@ -31,13 +32,6 @@ const ARM_THRUST_PRACTICE =
   "All of your Pokémon take 10 less damage from attacks from your opponent's Pokémon (after applying Weakness and Resistance).";
 
 const SEED = 7;
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 const ATTACKERS = {
   "fix-attacker": {
@@ -101,7 +95,7 @@ function benchedIndex(state: GameState, seat: Seat, cardId: string): number {
 }
 
 function rowFor(events: GameEvent[], uid: string | undefined) {
-  return findAll(events, "DAMAGE_DEALT").find((e) => e.uid === uid);
+  return findEvents(events, "DAMAGE_DEALT").find((e) => e.uid === uid);
 }
 
 /** Answer a parked `opponentAny` snipe by naming one of P2's spots — the one move
@@ -384,7 +378,7 @@ describe("the four damage sites — each driven by its own printed attack", () =
     state = benchFromDeck(state, "p2", "sv02-113");
     state = benchFromDeck(state, "p2", "fix-titan");
     const { events } = swing(state, "fix-sniper");
-    const rows = findAll(events, "DAMAGE_DEALT");
+    const rows = findEvents(events, "DAMAGE_DEALT");
     // 30 to the Active − 10; 20 to each benched − 10, INCLUDING the source itself.
     expect(rows.map((r) => r.dealt)).toEqual([20, 10, 10]);
     for (const r of rows) expect(r.reduction).toBe(10);

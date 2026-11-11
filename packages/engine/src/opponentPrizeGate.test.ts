@@ -13,6 +13,7 @@ import {
   trainerCard,
   types,
   driveSetup,
+  findEvents,
 } from "./testFixtures";
 
 const LACEY_TEXT =
@@ -66,13 +67,6 @@ function withPrizes(seed: number, oppPrizes: number, ownPrizes: number): GameSta
 
 function handCount(state: GameState, seat: Seat): number {
   return state.players[seat].hand.length;
-}
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
 }
 
 /** Put `cardId` into P1's hand and play it. */
@@ -171,9 +165,9 @@ describe("D207 — Lacey (the printed 'instead' is a genuine if/ELSE)", () => {
       [5, 4],
     ] as const) {
       const played = play(withPrizes(25, oppPrizes, 6), "sv07-139");
-      expect(findAll(played.events, "HAND_SHUFFLED_INTO_DECK")).toHaveLength(1);
-      expect(findAll(played.events, "CARDS_DRAWN")).toHaveLength(1);
-      expect(findAll(played.events, "CARDS_DRAWN")[0]?.uids).toHaveLength(expected);
+      expect(findEvents(played.events, "HAND_SHUFFLED_INTO_DECK")).toHaveLength(1);
+      expect(findEvents(played.events, "CARDS_DRAWN")).toHaveLength(1);
+      expect(findEvents(played.events, "CARDS_DRAWN")[0]?.uids).toHaveLength(expected);
     }
   });
 
@@ -218,7 +212,7 @@ describe("D207 — Emcee's Hype ('2 MORE' is additive where Lacey's 'instead' re
     const played = play(state, "sv10-163");
     // +1 for the Hype put into hand, −1 for playing it, +2 drawn.
     expect(handCount(played.state, "p1")).toBe(before + 2);
-    expect(findAll(played.events, "CARDS_DRAWN")).toHaveLength(1);
+    expect(findEvents(played.events, "CARDS_DRAWN")).toHaveLength(1);
   });
 
   it("draws 2 MORE (4 total, as two separate draws) at 3 or fewer", () => {
@@ -227,14 +221,14 @@ describe("D207 — Emcee's Hype ('2 MORE' is additive where Lacey's 'instead' re
     const played = play(state, "sv10-163");
     expect(handCount(played.state, "p1")).toBe(before + 4);
     // Two ops, not one merged count of 4 — the log reads as the card does.
-    expect(findAll(played.events, "CARDS_DRAWN").map((d) => d.uids.length)).toEqual([2, 2]);
+    expect(findEvents(played.events, "CARDS_DRAWN").map((d) => d.uids.length)).toEqual([2, 2]);
   });
 
   it("never SHUFFLES — the two rows share a gate and nothing else", () => {
     const state = handFromDeck(withPrizes(32, 2, 6), "p1", "fix-energy", 3);
     const before = handCount(state, "p1");
     const played = play(state, "sv10-163");
-    expect(findAll(played.events, "HAND_SHUFFLED_INTO_DECK")).toHaveLength(0);
+    expect(findEvents(played.events, "HAND_SHUFFLED_INTO_DECK")).toHaveLength(0);
     expect(handCount(played.state, "p1")).toBe(before + 4);
   });
 

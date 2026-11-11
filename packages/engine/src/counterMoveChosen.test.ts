@@ -14,6 +14,7 @@ import {
   mustApply,
   setActiveFromDeck,
   setBenchDamage,
+  findEvents,
 } from "./testFixtures";
 
 /** The printed sentence, verbatim off the remote D1. */
@@ -101,13 +102,6 @@ function contOf(state: GameState) {
   if (state.phase.kind !== "effect:choose")
     throw new Error(`expected a park, got ${state.phase.kind}`);
   return state.phase.cont;
-}
-
-function findAll<T extends GameEvent["type"]>(
-  events: readonly GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e): e is Extract<GameEvent, { type: T }> => e.type === type);
 }
 
 describe("the census — re-derived, per surface, both scopes", () => {
@@ -238,8 +232,8 @@ describe("two questions, two parks — the seam", () => {
     expect(sourcePrompt.note).toContain("You will then choose where they go");
     // NOTHING HAS MOVED YET — the source answer buys an op, not a board change.
     expect(first.state.players.p1.bench[0]?.damage).toBe(PILE);
-    expect(findAll(first.events, "HEALED")).toHaveLength(0);
-    expect(findAll(first.events, "COUNTERS_PLACED")).toHaveLength(0);
+    expect(findEvents(first.events, "HEALED")).toHaveLength(0);
+    expect(findEvents(first.events, "COUNTERS_PLACED")).toHaveLength(0);
     // …and the parked op has NO answer on it yet.
     expect(contOf(first.state).pendingOp).toEqual(CHOSEN_OP);
 
@@ -284,8 +278,8 @@ describe("two questions, two parks — the seam", () => {
     const destUid = benchTopUid(state, "p2", 1);
     const parked = declare(state, CHOSEN_INDEX);
     const done = mustApply(parked.state, pick(P2_BENCH_1));
-    const healed = findAll(done.events, "HEALED");
-    const placed = findAll(done.events, "COUNTERS_PLACED");
+    const healed = findEvents(done.events, "HEALED");
+    const placed = findEvents(done.events, "COUNTERS_PLACED");
     expect(healed).toHaveLength(1);
     expect(placed).toHaveLength(1);
     // The equality IS the printed verb; two different numbers would be a heal and
@@ -321,7 +315,7 @@ describe("the four endings of two questions", () => {
     expect(done.state.phase.kind).not.toBe("effect:choose");
     expect(done.state.players.p2.active?.damage).toBe(PILE);
     expect(done.state.players.p1.bench[0]?.damage).toBe(0);
-    expect(findAll(done.events, "COUNTERS_PLACED")).toHaveLength(1);
+    expect(findEvents(done.events, "COUNTERS_PLACED")).toHaveLength(1);
   });
 
   it("a CHOSEN source and a FORCED destination park exactly ONCE", () => {
@@ -343,13 +337,13 @@ describe("the four endings of two questions", () => {
     const state = bench(board(), "p2", [{ id: "fix-bigbody" }]);
     const done = declare(state, CHOSEN_INDEX);
     expect(done.state.phase.kind).not.toBe("effect:choose");
-    expect(findAll(done.events, "COUNTERS_PLACED")).toHaveLength(0);
-    expect(findAll(done.events, "HEALED")).toHaveLength(0);
-    expect(findAll(done.events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
+    expect(findEvents(done.events, "COUNTERS_PLACED")).toHaveLength(0);
+    expect(findEvents(done.events, "HEALED")).toHaveLength(0);
+    expect(findEvents(done.events, "ATTACK_EFFECT_SKIPPED")).toHaveLength(0);
     // The control — an attack on this body CAN resolve visibly, so "nothing
     // happened" above is the sentence's doing and not a refused declaration.
     const ping = declare(bench(board(), "p2", [{ id: "fix-bigbody" }]), PING_INDEX);
-    expect(findAll(ping.events, "DAMAGE_DEALT")).toHaveLength(1);
+    expect(findEvents(ping.events, "DAMAGE_DEALT")).toHaveLength(1);
   });
 });
 
@@ -359,8 +353,8 @@ describe("the whiff — an undamaged source costs no second question", () => {
     state = bench(state, "p2", [{ id: "fix-bigbody" }, { id: "fix-bigbody" }]);
     const done = declare(state, CHOSEN_INDEX);
     expect(done.state.phase.kind).not.toBe("effect:choose");
-    expect(findAll(done.events, "HEALED")).toHaveLength(0);
-    expect(findAll(done.events, "COUNTERS_PLACED")).toHaveLength(0);
+    expect(findEvents(done.events, "HEALED")).toHaveLength(0);
+    expect(findEvents(done.events, "COUNTERS_PLACED")).toHaveLength(0);
   });
 
   it("a CHOSEN undamaged source still parks ONCE, then stops", () => {
@@ -373,7 +367,7 @@ describe("the whiff — an undamaged source costs no second question", () => {
     expect(promptOf(first.state)).toMatchObject({ candidates: [P1_BENCH_0, P1_BENCH_1] });
     const done = mustApply(first.state, pick(P1_BENCH_1));
     expect(done.state.phase.kind).not.toBe("effect:choose");
-    expect(findAll(done.events, "COUNTERS_PLACED")).toHaveLength(0);
+    expect(findEvents(done.events, "COUNTERS_PLACED")).toHaveLength(0);
   });
 });
 
@@ -407,8 +401,8 @@ describe("§11 — the block refuses an ACTIVE destination and has no business w
     const done = mustApply(first.state, pick(P2_ACTIVE));
     expect(done.state.players.p2.active?.damage).toBe(0);
     expect(done.state.players.p1.bench[0]?.damage).toBe(PILE);
-    expect(findAll(done.events, "HEALED")).toHaveLength(0);
-    expect(findAll(done.events, "ATTACK_EFFECT_PREVENTED")).toHaveLength(1);
+    expect(findEvents(done.events, "HEALED")).toHaveLength(0);
+    expect(findEvents(done.events, "ATTACK_EFFECT_PREVENTED")).toHaveLength(1);
   });
 
   it("LANDS on a BENCHED destination on the SAME board — the gate is not asked there", () => {
@@ -416,7 +410,7 @@ describe("§11 — the block refuses an ACTIVE destination and has no business w
     const done = mustApply(first.state, pick(P2_BENCH_0));
     expect(done.state.players.p2.bench[0]?.damage).toBe(PILE);
     expect(done.state.players.p1.bench[0]?.damage).toBe(0);
-    expect(findAll(done.events, "ATTACK_EFFECT_PREVENTED")).toHaveLength(0);
+    expect(findEvents(done.events, "ATTACK_EFFECT_PREVENTED")).toHaveLength(0);
   });
 });
 
@@ -430,7 +424,7 @@ describe("the epilogue still sweeps — a moved pile can KO a CHOSEN benched bod
     const prizesBefore = state.players.p1.prizes.length;
     const first = declare(state, CHOSEN_INDEX);
     const done = mustApply(first.state, pick(P2_BENCH_0));
-    expect(findAll(done.events, "KNOCKED_OUT").map((e) => e.uid)).toEqual([victimUid]);
+    expect(findEvents(done.events, "KNOCKED_OUT").map((e) => e.uid)).toEqual([victimUid]);
     expect(done.state.players.p2.bench).toHaveLength(0);
     // §8.1 — the prize is OWED, then taken by its own action. Driving it out is
     // what makes this a KO rather than a body that merely left the board.

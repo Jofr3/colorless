@@ -14,14 +14,8 @@ import {
   types,
   findEvent,
   roundTrip,
+  findEvents,
 } from "./testFixtures";
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
-
 /** Setup then open P1's turn 2 (P2 went first and passed) — P1's first
     unrestricted turn, so a Supporter is legal (§4). */
 function board(seed: number): GameState {
@@ -95,7 +89,7 @@ describe("Saguaro — healChosen's 'up to 2' park (§9.1 min: 0)", () => {
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [ACTIVE, BENCH_0] },
     });
-    const healed = findAll(events, "HEALED");
+    const healed = findEvents(events, "HEALED");
     expect(healed).toHaveLength(2);
     for (const h of healed) {
       expect(h.seat).toBe("p1");
@@ -118,7 +112,7 @@ describe("Saguaro — healChosen's 'up to 2' park (§9.1 min: 0)", () => {
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [BENCH_0] },
     });
-    expect(findAll(events, "HEALED")).toHaveLength(1);
+    expect(findEvents(events, "HEALED")).toHaveLength(1);
     expect(done.players.p1.bench[0]?.damage).toBe(10);
     expect(done.phase.kind).toBe("turn:action");
   });
@@ -134,7 +128,7 @@ describe("Saguaro — healChosen's 'up to 2' park (§9.1 min: 0)", () => {
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [] },
     });
-    expect(findAll(events, "HEALED")).toHaveLength(0);
+    expect(findEvents(events, "HEALED")).toHaveLength(0);
     expect(done.players.p1.bench[0]?.damage).toBe(50);
     expect(done.phase.kind).toBe("turn:action");
     // Taking none is a way to PLAY the card, not a way to unplay it: the §7.2
@@ -175,7 +169,7 @@ describe("Saguaro — healChosen's 'up to 2' park (§9.1 min: 0)", () => {
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [ACTIVE, BENCH_0] },
     });
-    const healed = findAll(events, "HEALED");
+    const healed = findEvents(events, "HEALED");
     // The Active's heal caps at its 30; the benched one takes the full 50.
     expect(healed.map((h) => h.amount).sort()).toEqual([30, 50]);
     expect(done.players.p1.active?.damage).toBe(0);
@@ -192,7 +186,7 @@ describe("Saguaro — healChosen's 'up to 2' park (§9.1 min: 0)", () => {
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: [BENCH_1, BENCH_0] },
     });
-    const healed = findAll(events, "HEALED");
+    const healed = findEvents(events, "HEALED");
     expect(healed).toHaveLength(1);
     expect(healed[0]?.amount).toBe(50);
     expect(done.players.p1.bench[0]?.damage).toBe(10);

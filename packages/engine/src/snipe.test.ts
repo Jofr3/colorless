@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction } from "./index";
-import type { GameEvent, GameState, PokemonRef } from "./index";
+import type { GameState, PokemonRef } from "./index";
 import {
   SNIPE_DECK,
   benchFromDeck,
@@ -17,14 +17,8 @@ import {
   setPrizes,
   types,
   findEvent,
+  findEvents,
 } from "./testFixtures";
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 function snipeBoard(seed: number): GameState {
   return driveSetup(
@@ -73,7 +67,7 @@ describe("Hawlucha's Flying Entry — the onPlayToBench multi-snipe (§9)", () =
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: pick },
     });
-    const counters = findAll(e2, "COUNTERS_PLACED");
+    const counters = findEvents(e2, "COUNTERS_PLACED");
     expect(counters).toHaveLength(2);
     for (const c of counters) {
       expect(c.amount).toBe(10);
@@ -109,7 +103,7 @@ describe("Hawlucha's Flying Entry — the onPlayToBench multi-snipe (§9)", () =
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: prompt.candidates },
     });
-    expect(findAll(e2, "COUNTERS_PLACED")).toHaveLength(2);
+    expect(findEvents(e2, "COUNTERS_PLACED")).toHaveLength(2);
     expect(done.phase.kind).toBe("turn:action");
     expect(done.players.p2.bench.every((p) => p.damage === 10)).toBe(true);
   });
@@ -133,7 +127,7 @@ describe("Hawlucha's Flying Entry — the onPlayToBench multi-snipe (§9)", () =
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: prompt.candidates },
     });
-    expect(findAll(events, "COUNTERS_PLACED")).toHaveLength(1);
+    expect(findEvents(events, "COUNTERS_PLACED")).toHaveLength(1);
     expect(done.players.p2.bench[0]?.damage).toBe(10);
   });
 
@@ -253,7 +247,7 @@ describe("Hawlucha's Flying Entry — the onPlayToBench multi-snipe (§9)", () =
       seat: "p1",
       choice: { kind: "pokemonMulti", refs: prompt.candidates.slice(0, 2) },
     });
-    expect(findAll(events, "COUNTERS_PLACED")).toHaveLength(2);
+    expect(findEvents(events, "COUNTERS_PLACED")).toHaveLength(2);
     expect(done.phase.kind).toBe("turn:action");
     expect(done.players.p2.bench.filter((p) => p.damage === 10)).toHaveLength(2);
   });

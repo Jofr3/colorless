@@ -29,6 +29,7 @@ import {
   setConditions,
   types,
   findEvent,
+  findEvents,
 } from "./testFixtures";
 
 const PRINTED =
@@ -44,13 +45,6 @@ const NAMED: StatusName[] = ["asleep", "confused", "paralyzed"];
 const UNNAMED: StatusName[] = ["burned", "poisoned"];
 
 const SEED = 7;
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 const ATTACKS = {
   hypnosis: { card: "fix-statuser", index: 0, energy: 0 }, // → Asleep
@@ -316,7 +310,7 @@ describe("passivesOf's THIRD SOURCE CLASS — an attached ENERGY", () => {
     expect(foldOf(state, "p2").statusRecovery).toHaveLength(6);
     // …and the behaviour is unchanged, which is the point of not de-duplicating.
     const { events } = swing(state, "hypnosis");
-    expect(findAll(events, "STATUS_PREVENTED")).toHaveLength(1);
+    expect(findEvents(events, "STATUS_PREVENTED")).toHaveLength(1);
   });
 
   it("STACKS the two source classes and keeps them DISTINGUISHABLE, in fold order", () => {
@@ -496,8 +490,8 @@ describe("THE IMMUNITY — the three NAMED conditions are refused", () => {
     expect(types(control.events)).not.toContain("STATUS_PREVENTED");
     // …and the Checkup really did run on the control and NOT on the immune board,
     // which is the same fact stated where it cannot be mistaken for a coincidence.
-    expect(findAll(control.events, "CHECKUP_COIN_FLIP")).toHaveLength(1);
-    expect(findAll(immune.events, "CHECKUP_COIN_FLIP")).toHaveLength(0);
+    expect(findEvents(control.events, "CHECKUP_COIN_FLIP")).toHaveLength(1);
+    expect(findEvents(immune.events, "CHECKUP_COIN_FLIP")).toHaveLength(0);
   });
 
   it("refuses CONFUSED, with a control on the identical declaration", () => {
@@ -529,7 +523,9 @@ describe("THE IMMUNITY — the three NAMED conditions are refused", () => {
   it("still takes BURNED — a condition this card does NOT name", () => {
     const { events } = swing(boardWithEnergy("hotBite", "fix-bigbody"), "hotBite");
     expect(findEvent(events, "STATUS_APPLIED")).toMatchObject({ status: "burned" });
-    expect(findAll(events, "COUNTERS_PLACED").filter((e) => e.source === "burn")).toHaveLength(1);
+    expect(findEvents(events, "COUNTERS_PLACED").filter((e) => e.source === "burn")).toHaveLength(
+      1,
+    );
     expect(types(events)).not.toContain("STATUS_PREVENTED");
   });
 
@@ -805,7 +801,7 @@ describe("the recovery's FOUR pre-D562 CALL SITES (the FIFTH, `playStadium`, is 
       target: { spot: "bench", index: 0 },
     });
     expect(types(done.events)).toContain("POKEMON_SWITCHED");
-    expect(findAll(done.events, "STATUS_CLEARED").map((e) => e.reason)).toEqual(["benched"]);
+    expect(findEvents(done.events, "STATUS_CLEARED").map((e) => e.reason)).toEqual(["benched"]);
     // THE UNREACHABILITY, asserted over the pool: no card carries both clauses.
     const bothClauses = Object.keys(FIXTURE_POOL).filter((id) => {
       const energy = programFor(id)?.energy;
@@ -887,13 +883,13 @@ describe("THE CHECKUP — D172's conclusion SURVIVES, its ARGUMENT NARROWS", () 
       target: { spot: "active" },
     }).state;
     const done = mustApply(next, { type: "endTurn", seat: "p2" });
-    expect(findAll(done.events, "CHECKUP_COIN_FLIP")).toHaveLength(0);
+    expect(findEvents(done.events, "CHECKUP_COIN_FLIP")).toHaveLength(0);
     expect(done.state.players.p2.active?.conditions.rotation).toBe("none");
     // The non-vacuous control: the same board WITHOUT the attach takes its wake-up
     // flip, so the case above is about the Energy and not about the seed.
     next = state;
     const control = mustApply(next, { type: "endTurn", seat: "p2" });
-    expect(findAll(control.events, "CHECKUP_COIN_FLIP")).toHaveLength(1);
+    expect(findEvents(control.events, "CHECKUP_COIN_FLIP")).toHaveLength(1);
   });
 
   it("keeps `applyStatus` the ONLY writer — this slice adds a CLEAR, never a write", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyAction, programFor } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   DISCARD_ENERGY_DECK,
   attachBenchFromDeck,
@@ -14,14 +14,8 @@ import {
   mustApply,
   types,
   findEvent,
+  findEvents,
 } from "./testFixtures";
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 /** Setup then open P1's turn 2 (P2 went first and passed) — P1's first
     unrestricted turn, so a Supporter (Giacomo) is legal. */
@@ -255,7 +249,7 @@ describe("M5 op-slice — discardEnergy", () => {
       const { state: after, events } = playFromHand(state, "sv01-168");
       const face = findEvent(events, "ATTACK_EFFECT_COIN_FLIP")?.result as string;
       faces.set(face, {
-        discarded: findAll(events, "ENERGY_DISCARDED").length,
+        discarded: findEvents(events, "ENERGY_DISCARDED").length,
         energyLeft: activeEnergy(after, "p2").length,
       });
     }
@@ -285,7 +279,7 @@ describe("M5 op-slice — discardEnergy", () => {
     expect(done.players.p2.discard).toEqual(expect.arrayContaining([onActive, onBench0]));
 
     // ONE event per affected Pokémon, in board order (Active, then bench index).
-    const rows = findAll(events, "ENERGY_DISCARDED");
+    const rows = findEvents(events, "ENERGY_DISCARDED");
     expect(rows).toHaveLength(2);
     expect(rows[0]).toMatchObject({ seat: "p2", uids: [onActive] });
     expect(rows[0]?.from).toEqual({ spot: "active" });
@@ -315,7 +309,7 @@ describe("M5 op-slice — discardEnergy", () => {
     expect(activeEnergy(done, "p2")).toEqual([onActive]); // the basic is not a match
     expect(benchEnergy(done, "p2", 0)).toEqual([]);
     expect(benchEnergy(done, "p2", 1)).toEqual([]);
-    const rows = findAll(events, "ENERGY_DISCARDED");
+    const rows = findEvents(events, "ENERGY_DISCARDED");
     expect(rows.map((r) => r.from)).toEqual([
       { spot: "bench", index: 0 },
       { spot: "bench", index: 1 },
@@ -525,7 +519,7 @@ describe("M5 op-slice — discardEnergy", () => {
 
     const { state: done, events } = mustApply(state, { type: "playBasicToBench", seat: "p1", uid });
     expect(types(events)).toContain("ABILITY_TRIGGERED");
-    expect(findAll(events, "ENERGY_DISCARDED")).toHaveLength(0);
+    expect(findEvents(events, "ENERGY_DISCARDED")).toHaveLength(0);
     expect(activeEnergy(done, "p2")).toHaveLength(2);
     expect(done.phase.kind).toBe("turn:action");
   });

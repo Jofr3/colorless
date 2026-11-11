@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { legalAttackCorpus } from "./censusAttackCorpus";
 import { applyAction, deriveAttackEffect } from "./index";
-import type { GameEvent, GameState, PokemonRef } from "./index";
+import type { GameState, PokemonRef } from "./index";
 import {
   ALSO_SNIPE_DECK,
   attachFromDeck,
@@ -13,14 +13,8 @@ import {
   setActiveFromDeck,
   types,
   findEvent,
+  findEvents,
 } from "./testFixtures";
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 /** Setup with BOTH Actives pinned to fix-bigbody (200 HP, empty Bench — so the
     Defender survives the main hit and the Bench holds only what a test places),
@@ -265,7 +259,7 @@ describe("the rider fires — main hit to the Defender, N to 1 chosen Benched", 
     const state = alsoSnipe(2, { attacker: "sv01-080", energy: 3, benched: ["fix-bigbody"] });
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("EFFECT_PENDING");
-    const dealt = findAll(events, "DAMAGE_DEALT");
+    const dealt = findEvents(events, "DAMAGE_DEALT");
     expect(dealt.map((d) => d.base).sort((a, b) => a - b)).toEqual([30, 90]);
     expect(done.players.p2.active?.damage).toBe(90);
     expect(done.players.p2.bench[0]?.damage).toBe(30);
@@ -275,7 +269,7 @@ describe("the rider fires — main hit to the Defender, N to 1 chosen Benched", 
   it("captures the amount, not a literal 30 — Tadbulb's rider is 10 (main 20)", () => {
     const state = alsoSnipe(3, { attacker: "sv03-076", energy: 2, benched: ["fix-bigbody"] });
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 0 });
-    const dealt = findAll(events, "DAMAGE_DEALT");
+    const dealt = findEvents(events, "DAMAGE_DEALT");
     expect(dealt.map((d) => d.base).sort((a, b) => a - b)).toEqual([10, 20]);
     expect(done.players.p2.bench[0]?.damage).toBe(10);
   });
@@ -285,7 +279,7 @@ describe("the rider fires — main hit to the Defender, N to 1 chosen Benched", 
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(findEvent(events, "DAMAGE_DEALT")).toMatchObject({ base: 90, dealt: 90 });
-    expect(findAll(events, "DAMAGE_DEALT")).toHaveLength(1); // main only, no rider
+    expect(findEvents(events, "DAMAGE_DEALT")).toHaveLength(1); // main only, no rider
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
 

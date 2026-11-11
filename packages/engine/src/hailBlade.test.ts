@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { deriveAttackEffect, programFor } from "./index";
-import type { GameEvent, GameState } from "./index";
+import type { GameState } from "./index";
 import {
   HAIL_BLADE_DECK,
   attachBenchFromDeck,
@@ -13,19 +13,13 @@ import {
   setDamage,
   types,
   findEvent,
+  findEvents,
 } from "./testFixtures";
 
 const HAIL_BLADE_TEXT =
   "You may discard any amount of {W} Energy from your Pokémon. This attack does 60 damage for each card you discarded in this way.";
 
 const attack = { type: "attack", seat: "p1", index: 0 } as const;
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 /** Setup then open P1's turn 2 (P2 went first and passed) — P1 goes second, so
     their first turn carries no §4 attack restriction. */
@@ -245,7 +239,7 @@ describe("Hail Blade — the whole own board is fuel", () => {
 
     // ENERGY_DISCARDED is emitted PER affected Pokémon, so a bench-only pick
     // names the bench spot and nothing else.
-    const discarded = findAll(events, "ENERGY_DISCARDED");
+    const discarded = findEvents(events, "ENERGY_DISCARDED");
     expect(discarded).toHaveLength(1);
     expect(discarded[0]).toMatchObject({ seat: "p1", actor: "p1", uids: benchWater });
     expect(discarded[0]?.from).toEqual({ spot: "bench", index: benchIndex });

@@ -8,7 +8,7 @@ import {
   splitAttackGateClause,
   splitAttackTrailingClause,
 } from "./effects";
-import type { EffectOp, GameEvent, GameState, PokemonRef, Seat } from "./index";
+import type { EffectOp, GameState, PokemonRef, Seat } from "./index";
 import {
   FILTERED_BENCH_SNIPE_DECK,
   attachFromDeck,
@@ -23,6 +23,7 @@ import {
   types,
   findEvent,
   roundTrip,
+  findEvents,
 } from "./testFixtures";
 import { present } from "./fixtures/values";
 
@@ -51,13 +52,6 @@ const IDLE = 2;
 const units = (rows: readonly (readonly [number, string])[]): number =>
   rows.reduce((sum, [n]) => sum + n, 0);
 const corpus = (): readonly (readonly [number, string])[] => legalAttackCorpus();
-
-function findAll<T extends GameEvent["type"]>(
-  events: GameEvent[],
-  type: T,
-): Extract<GameEvent, { type: T }>[] {
-  return events.filter((e) => e.type === type) as Extract<GameEvent, { type: T }>[];
-}
 
 const other = (seat: Seat): Seat => (seat === "p1" ? "p2" : "p1");
 
@@ -294,7 +288,7 @@ describe("§3 — THE EMPTY FILTERED SET, against the board that would have park
     expect(done.players.p2.active?.damage).toBe(30);
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(types(events)).not.toContain("COUNTERS_PLACED");
-    expect(findAll(events, "DAMAGE_DEALT")).toHaveLength(1);
+    expect(findEvents(events, "DAMAGE_DEALT")).toHaveLength(1);
     expect(benchDamage(done, "p2")).toEqual([0, 0, 0]);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
@@ -322,7 +316,7 @@ describe("§3 — THE EMPTY FILTERED SET, against the board that would have park
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: PICKY });
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
-    expect(findAll(events, "DAMAGE_DEALT")).toHaveLength(1);
+    expect(findEvents(events, "DAMAGE_DEALT")).toHaveLength(1);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
 });
@@ -344,7 +338,7 @@ describe("§4 — FORCED AT ONE, where the unfiltered board would have parked", 
     expect(types(events)).not.toContain("EFFECT_PENDING");
     expect(types(events)).not.toContain("ATTACK_EFFECT_SKIPPED");
     // Two rows in one action: the main 30 on the Active, the rider's 60 on the Bench.
-    const dealt = findAll(events, "DAMAGE_DEALT");
+    const dealt = findEvents(events, "DAMAGE_DEALT");
     expect(dealt).toHaveLength(2);
     expect(dealt[1]).toMatchObject({
       seat: "p2",
@@ -417,7 +411,7 @@ describe("§5 — TWO OR MORE PARKS, and the offer is exactly the printed set", 
       choice: { kind: "pokemonMulti", refs: [prompt.candidates[1] as PokemonRef] },
     });
     expect(types(e2)).not.toContain("COUNTERS_PLACED");
-    expect(findAll(e2, "DAMAGE_DEALT")).toHaveLength(1);
+    expect(findEvents(e2, "DAMAGE_DEALT")).toHaveLength(1);
     expect(benchDamage(done, "p2")).toEqual([20, 0, 90]);
     expect(done.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
@@ -467,8 +461,8 @@ describe("§6 — THE SHIELD IS ASKED AFTER THE NARROWING (D433)", () => {
     expect(types(events)).not.toContain("EFFECT_PENDING");
     const shieldUid = done.players.p2.bench[0]?.stack[0];
     expect(shieldUid).toBeDefined();
-    expect(findAll(events, "DAMAGE_DEALT").map((e) => e.uid)).not.toContain(shieldUid);
-    expect(findAll(events, "DAMAGE_DEALT")).toHaveLength(2);
+    expect(findEvents(events, "DAMAGE_DEALT").map((e) => e.uid)).not.toContain(shieldUid);
+    expect(findEvents(events, "DAMAGE_DEALT")).toHaveLength(2);
     expect(benchDamage(done, "p2")).toEqual([0, 70]);
   });
 
@@ -480,7 +474,7 @@ describe("§6 — THE SHIELD IS ASKED AFTER THE NARROWING (D433)", () => {
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: PICKY });
     expect(types(events)).not.toContain("EFFECT_PENDING");
     const shieldUid = done.players.p2.bench[0]?.stack[0];
-    const rows = findAll(events, "DAMAGE_DEALT").filter((e) => e.uid === shieldUid);
+    const rows = findEvents(events, "DAMAGE_DEALT").filter((e) => e.uid === shieldUid);
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ base: 60, dealt: 0, prevented: true });
     expect(benchDamage(done, "p2")).toEqual([10, 0]);
@@ -543,7 +537,7 @@ describe("§7 — Weakness is genuinely not applied, the far seat, and the loud 
     ]);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p2", index: PICKY });
     expect(types(events)).not.toContain("EFFECT_PENDING");
-    const dealt = findAll(events, "DAMAGE_DEALT");
+    const dealt = findEvents(events, "DAMAGE_DEALT");
     expect(dealt).toHaveLength(2);
     expect(dealt[1]).toMatchObject({ seat: "p1", by: "p2", base: 60, dealt: 60 });
     expect(benchDamage(done, "p1")).toEqual([0, 80]);
