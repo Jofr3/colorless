@@ -143,6 +143,8 @@ check(you.present and you.name=='Ash' and you.connected and not you.ready and yo
 check(opponent.present and opponent.name=='Misty' and opponent.ready and not opponent.hasDeck,'Opponent seat parsed')
 check(#online.decks==2 and online.decks[1].name=='Zap' and online.decks[1].online and online.decks[1].formatName=='Standard','Playable deck parsed')
 check(online.decks[2].expanded and not online.decks[2].standard and not online.decks[2].online,'Deck verdicts parsed')
+online:input(fixture('text_record.txt'))
+check(online.query=='Éclair' and online.editing=='search' and online.first==6 and online.last==6,'Online text record parsed')
 print('PASS: online snapshot')
 
 local Sandbox=require('ui.sandbox')

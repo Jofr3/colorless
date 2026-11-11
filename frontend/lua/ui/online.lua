@@ -11,6 +11,7 @@ local Button=require('ui.button')
 local Modal=require('ui.modal')
 local Motion=require('ui.motion')
 local Codec=require('ui.codec')
+local TextRecord=require('ui.text_record')
 local W=require('ui.wire_fields').online
 local Mailbox=require('ui.mailbox')
 local Input=require('ui.text_input')
@@ -350,19 +351,17 @@ function Online:summary()
   return 'Choose your deck. Loading decks.'
 end
 function Online:input(raw)
-  if not raw or raw==self.inputRaw then return end
-  self.inputRaw=raw
-  local f=Codec.fields(raw);if #f<6 then return end
-  local field,action=f[2],f[6]
-  self.first,self.last=tonumber(f[4]),tonumber(f[5])
+  local r=TextRecord.read(self,raw);if not r then return end
+  local field,action=r.field,r.action
+  self.first,self.last=r.selectionStart,r.selectionEnd
   if field=='code' then
     self.editing=action=='input' and 'code' or nil
-    self.joinCode=Online.normalize(f[3])
+    self.joinCode=Online.normalize(r.value)
     self:build()
     if action=='enter' and #self.joinCode==LobbyCode.length and self.step=='menu' and not self.busy then self:join() end
   elseif field=='search' then
     self.editing=action=='input' and 'search' or nil
-    if self.query~=f[3] then self.query=f[3];self.page=1;self:makeCards(true);self.focus=0;self.pressed=nil end
+    if self.query~=r.value then self.query=r.value;self.page=1;self:makeCards(true);self.focus=0;self.pressed=nil end
     self:build()
   end
 end
