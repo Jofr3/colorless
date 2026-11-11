@@ -53,7 +53,9 @@ migrations.
 
 **Card data** is ingested by a local Bun script — `apps/api/scripts/ingest.ts`
 (`bun scripts/ingest.ts [--serie sv | --sets sv01,sv02] [--remote] [--dry-run]
-[--refresh] [--transport=fetch|sdk] [--allow-legality-change]`, run from `apps/api/`) — not by the request Worker:
+[--refresh] [--transport=fetch|sdk] [--allow-legality-change]`, run from `apps/api/`; with neither
+`--serie` nor `--sets` it fetches the whole catalog, `CATALOG_SCOPE` in
+`apps/api/src/ingest/scope.ts`) — not by the request Worker:
 
 1. Traverse serie → sets → each card's full detail from the tcgdex REST API
    (four requests in flight, starts ~50ms apart), validating every payload with
@@ -103,17 +105,16 @@ The catalog in local D1 is rebuilt from scratch like this, from `apps/api/`
 bun run db:migrate:local                     # tables must exist first
 bun scripts/ingest.ts --sets sve --dry-run   # smallest set (24 cards): SQL only
 bun scripts/ingest.ts --sets sve             # …then really apply it
-bun scripts/ingest.ts --serie sv             # the whole Scarlet & Violet serie
+bun scripts/ingest.ts                        # the whole catalog
 ```
 
-The full catalog is three runs: `--serie sv`, `--serie me` (Mega Evolution,
-since D581) and `--sets swsh10.5` (Pokémon GO, for its reprints). For
-production, run each through the deploy token:
+The whole catalog is `CATALOG_SCOPE` (`apps/api/src/ingest/scope.ts`): the
+`sv` and `me` series (Mega Evolution since D581) and the set `swsh10.5`
+(Pokémon GO, for its reprints). A new serie or set joins it there. For
+production, run it through the deploy token:
 
 ```sh
-bun scripts/with-deploy-token.ts bun scripts/ingest.ts --serie sv --remote
-bun scripts/with-deploy-token.ts bun scripts/ingest.ts --serie me --remote
-bun scripts/with-deploy-token.ts bun scripts/ingest.ts --sets swsh10.5 --remote
+bun scripts/with-deploy-token.ts bun scripts/ingest.ts --remote
 ```
 
 `--dry-run` writes the SQL files under `apps/api/.wrangler/tmp/ingest-<stamp>/`
