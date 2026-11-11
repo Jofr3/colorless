@@ -346,8 +346,10 @@ const loveModule = {
   ],
   print: (message) => {
     if (!message.startsWith("COLORLESS:")) {
-      console.log(message);
-      if (/^Error:|stack traceback:/.test(message)) fail(ready ? CRASHED : BOOT_FAILED);
+      if (/^Error:|stack traceback:/.test(message)) {
+        console.error(message);
+        fail(ready ? CRASHED : BOOT_FAILED);
+      } else console.log(message);
       return;
     }
     if (message === "COLORLESS:ready") {
