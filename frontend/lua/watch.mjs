@@ -1,9 +1,10 @@
 // @ts-check
 // `bun run dev`'s Lua watcher: `node frontend/lua/watch.mjs <command…>` runs the command (the Vite
 // dev server), relays its exit and the stop signals, and reruns build.mjs 200 ms after the last
-// change to what it packs. Each rebuild is a whole build.mjs in its own process, so it keeps the
-// unlink, pause and re-add of love.js and love.wasm that a running Vite needs. A change during a
-// build queues one more; a failed build is reported and the watch goes on. The command comes last
+// change to what it packs. Each rebuild is a whole build.mjs in its own process, which swaps in
+// public/love's changed files and rewrites versions.json last, the dev server's cue to reload the
+// page. A change during a build queues one more; a failed build is reported and the watch goes on,
+// leaving public/love as the last good build. The command comes last
 // so that `bun run dev --port N` (dev-tailnet.ts) still reaches Vite.
 import { spawn } from "node:child_process";
 import { watch } from "node:fs";
