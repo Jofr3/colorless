@@ -385,58 +385,103 @@ data loss rather than a validation failure.
 
   For local dev put the same names in `apps/api/.dev.vars` (gitignored).
 
-### 3.6 Lobby Durable Object (D6) — as built (P1 milestone 8, `apps/api/src/lobby/`)
+### 3.6 Lobby and match lifecycle (as built, `apps/api/src/lobby/`)
 
-- **One `LobbyDO` per lobby code** (`idFromName(code)`), exported from the
-  Worker entry; binding `LOBBY`, migration `v1 new_sqlite_classes`. It is the
-  server-side replacement for the BroadcastChannel model's authoritative
-  "host peer": it owns the one true `LobbySnapshot` in DO storage, applies
-  every change through the **shared, unchanged `lobbyReducer`**
-  (`packages/schema/src/lobby/`), and broadcasts `{kind:"state"}` to every
-  socket. Both players — host included — are now plain clients that send
-  intents; policies the old host hook enforced in `useLobby.ts` moved verbatim
-  into pure helpers (`lobby/logic.ts`: hello/seat-takeover rule, countdown
-  stamping, connectivity-drops-ready) with the DO a thin shell around them.
-- **Wire protocol** (`packages/schema/src/lobby/wire.ts`): hand-written Zod
-  schemas mirroring `types.ts`, with exported compile-time proofs that each
-  schema infers to EXACTLY the shared type. Client → server is
-  `LobbyClientMessage` = hello | intent | kick | bye — the kick being the same
-  `reject …"kicked"` frame the old host posted at its guest, narrowed so a
-  client can't fabricate "full". Server → client is `LobbyServerMessage` =
-  state | reject. **Every inbound frame is Zod-validated; junk and forged
-  `from` ids (socket attachment ≠ claimed id) are dropped.** Zod-free protocol
-  constants (`COUNTDOWN_MS`, ping/pong strings) live in `lobby/protocol.ts` so
-  the web bundle doesn't pull Zod in.
-- **Hibernation:** sockets accepted via `state.acceptWebSocket`
-  (hibernatable); per-socket player identity survives eviction in the socket
-  attachment (`ws.serializeAttachment`, `lobby/attachment.ts`); keepalive is a
-  raw `"ping"`/`"pong"` pair answered by `setWebSocketAutoResponse` without
-  waking the instance — an idle lobby burns no duration.
-- **Lifecycle (one alarm, three duties — earliest deadline wins):**
-  1. *Disconnect grace* — a socket dropping without a `bye` only marks its
-     seat disconnected after 5 s (the old model's `PRESENCE_TIMEOUT_MS`)
-     without a reconnect, so refreshes and the probe→room socket handoff never
-     flicker the opponent to "disconnected". Same session id always re-seats
-     with deck/ready intact (host id is pinned for the lobby's lifetime; a
-     *different* id may take over only an abandoned guest seat, pre-match —
-     the old host's exact rule).
-  2. *Countdown* — the DO stamps `countdownStartedAt` on entering the phase
-     and its alarm flips countdown → in-game after `COUNTDOWN_MS`, demoting
-     instead any seat whose player has no live socket (the old host's
-     liveness check). A guest `bye` frees the seat immediately; a host `bye`
-     just marks the seat disconnected (lobby survives, host can return).
-  3. *Empty-lobby expiry* — 10 min after the last socket goes (also arms at
-     create), `storage.deleteAll()` wipes the lobby and frees the code; a socket
-     upgrade for a never-created/expired code is accepted and closed at once
-     with 4004 (`LOBBY_WS_NOT_FOUND`), which the client shows as "not found".
-     A lobby nobody has said hello in derives its expiry from `created`
-     instead of storing `cleanupAt` (security LB3), so a create writes 2 keys and an alarm and its wipe deletes 2 keys: 5 rows
-     written, down from 8.
-  4. *Inactivity ceiling* — a lobby with sockets but no commit or accepted
-     action or seated hello for an hour (`INACTIVE_LOBBY_MS`, judged from an `activeAt` stamp
-     written at most every 5 min, else `created`) is closed: every socket gets
-     close code `LOBBY_WS_CLOSED` (4000), which the client takes as "not found"
-     and does not reconnect after, and the lobby is wiped (security LB2).
+One `LobbyDO` per lobby code (`idFromName(code)`, binding `LOBBY`, DO migration
+`v1 new_sqlite_classes`). `POST /lobby` mints a code and claims it in its DO; `GET
+/lobby/:code/ws` forwards the upgrade, with its `session` cookie, to that DO (§6). The wire
+types in `packages/schema/src/lobby/` (`types.ts`, `wire.ts`, `serverWire.ts`, `protocol.ts`)
+are authoritative.
+
+| Module | Owns |
+| --- | --- |
+| `lobbyDO.ts` | storage, sockets, the alarm, frame dispatch, the match handoff and broadcasts |
+| `snapshot.ts` | the pure seat and phase transitions (`seatGuest`, `applyIntent`, `recomputePhase`, `removeGuest`) |
+| `logic.ts` | the pure policies and their constants: hello decisions, seat binding, forfeit deadlines, frame budgets, `endMatch`, `rematch`, `applyBye` |
+| `match.ts` | the engine handoff (`beginMatch`), `applyMatchAction`, each viewer's redacted frame (`matchFrameFor`), `MATCH_RECORD_VERSION`, the log cap |
+| `matchStore.ts` | the stored match: a head, the card tables once, and the log in 64-row chunks |
+| `deckLoad.ts`, `sessionCheck.ts` | the D1 reads: a player's deck at the handoff, and the sessions a rematch re-checks |
+| `attachment.ts` | what a socket keeps across hibernation: its seat, account, `logDeltas`, spectating |
+
+- **Phases.** `waiting` (the host alone) → `selecting` (both seated, choosing decks) →
+  `countdown` (both ready, `COUNTDOWN_MS`) → `in-game`. There is no finished phase: a finished
+  match is an `in-game` lobby whose stored game is over.
+  - A seat change re-derives the phase (`recomputePhase`) among the three pre-match phases.
+    Ready needs a chosen deck, and a seat that loses its socket loses its ready.
+  - The alarm ends the countdown. With a live socket on both seats, the handoff reads both decks
+    (owner-scoped to the seat's account, and only while that socket's session lives) and the card
+    pool from D1, and `beginMatch` starts the game, refusing a deck illegal in its format. The
+    match is stored before the lobby flips to `in-game`, then each socket gets its `match` frame.
+    A deck that will not resolve or is refused puts both seats back in `selecting`, un-readied,
+    with a `match-error`. A seat with no live socket is marked away instead.
+  - The engine ends the game (prizes, no Pokémon, deck out, a card effect, a tie), or a seat
+    concedes: the Concede button (an `action`), a `bye` mid-match (`left`), or the forfeit clock
+    (`abandoned`). The lobby stays `in-game` on the result.
+  - `rematch`, only on a finished game and after the session re-check below, drops the match,
+    returns to `selecting` and readies the asker; the other seat's `rematch` or ready accepts. The
+    last game's loser chooses who goes first (`nextChooser`); a tie goes to the coin.
+  - The host's kick (`reject` `kicked`) removes the guest and returns to `waiting`, dropping a
+    running match. Outside a match a guest's `bye` frees its seat; the host's only marks it away.
+- **Seats and accounts.** The browser mints a seat secret per lobby (`src/online/session.ts`,
+  in sessionStorage). A hello presents it; the DO keeps only its hash, the public seat id that
+  snapshots and frames name (`packages/schema/src/lobby/seatId.ts`). The first hello claims the
+  host seat, and the host's id always re-seats as host. Another id takes the guest seat when it is
+  free, or before a match when its holder is gone. A socket keeps the account its cookie resolved
+  to at the upgrade. The first signed-in hello binds its seat to that account (`seatUsers`, never
+  broadcast): from then on only that account may hold it, and other sockets on it are closed
+  (1008). A seat without an account can sit but not play, since the handoff reads only a
+  signed-in player's saved deck. A socket with no seat watches a running match: it is answered
+  `reject` `full` and sent the snapshot and the spectators' board.
+- **Frames.** JSON. Every client frame spends from its socket's budget, then is Zod-validated;
+  an invalid one, or one whose `from` is not the socket's own seat, is dropped.
+
+  | Frame | Direction | Purpose |
+  | --- | --- | --- |
+  | `hello` | client → DO | claim or reclaim a seat: the seat secret, a name, `logDeltas` |
+  | `intent` | client → DO | `select-deck` (the deck id stays in the DO) or `set-ready` |
+  | `action` | client → DO | a game action, run for the socket's own seat |
+  | `reject` `kicked` | host → DO → guest | the host's kick |
+  | `bye` | client → DO | leaving; concedes a running match |
+  | `rematch` | client → DO | play again after a finished game |
+  | `state` | DO → every socket | the lobby snapshot after each change |
+  | `match` | DO → each socket | that viewer's redacted game and the seat log; with `logFrom`, only the rows from that index |
+  | `reject` `full` | DO → one socket | no seat for this hello |
+  | `reject-action` | DO → the actor | a refused action, with the engine's reason |
+  | `match-error` | DO → every socket | the match could not start, or a stored one was retired |
+
+  The keepalive is a raw `"ping"`/`"pong"` pair answered by `setWebSocketAutoResponse` without
+  waking the DO; `heartbeat` exists only in the client's channel union, made from those pongs.
+  Close codes: 1001 keepalive lost; 1008 frame rate, an ended session, or a seat an account
+  claimed; 1009 a frame over 16K characters; 1011 the session lookup failed; 1013 lobby full;
+  4000 closed for good (`LOBBY_WS_CLOSED`); 4004 no such lobby (`LOBBY_WS_NOT_FOUND`). The
+  client stops reconnecting on 4000 and 4004 only.
+- **Hibernation.** Sockets are accepted hibernatable (`state.acceptWebSocket`), and a socket's
+  seat and account survive eviction in its attachment, so a lobby can sleep between alarm passes
+  (a two-seat lobby's `SEATED_LIVENESS_SWEEP_MS` keeps it in memory).
+- **The alarm.** One alarm, set for the earliest deadline (`scheduleMaintenance`), covers:
+  1. liveness sweeps: a socket silent past `SOCKET_SILENCE_MS` is closed, checked every
+     `LIVENESS_SWEEP_MS`, or `SEATED_LIVENESS_SWEEP_MS` while both seats are held;
+  2. disconnect graces: a seat whose last socket dropped shows away after `DISCONNECT_GRACE_MS`;
+  3. the countdown and its handoff;
+  4. match forfeits: a seat away from a running match forfeits after `ABANDON_GRACE_MS`, stored
+     as the seat's `forfeitAt`, so the opponent's countdown and the alarm read one number;
+  5. empty-lobby expiry: `EMPTY_LOBBY_TTL_MS` after the last socket (after `created` for a lobby
+     nobody said hello in), `storage.deleteAll()` frees the code.
+
+  The same pass closes a lobby with no commit, accepted action or seated hello for
+  `INACTIVE_LOBBY_MS`: every socket gets 4000 and the lobby is wiped. A failed pass logs
+  `alarm_failed` and re-arms. Constants: `apps/api/src/lobby/logic.ts` and
+  `packages/schema/src/lobby/protocol.ts`.
+- **Reconnect and the log.** The client reconnects with backoff (400 ms doubling to 8 s), queues
+  up to 32 frames while down, repeats its hello until it is answered, and replaces a socket
+  silent for 10 s (`src/online/channel.ts`, `src/online/lobbyClient.ts`). A hello with the seat's
+  secret re-seats it with its deck and ready kept and clears any forfeit; in a match it also gets
+  the whole match frame. A socket whose hello set `logDeltas` gets only the new log rows
+  (`logFrom`) after an accepted action or a forfeit. The handoff, a reconnect, a repeated hello,
+  spectating and a trimmed log send the whole log, and the client answers a gap with a hello. A
+  stored match from an older build is migrated on read (`match_migrated`), or retired when
+  unreadable: the lobby leaves `in-game` and both seats get `match-error`. A rollback across a
+  `MATCH_RECORD_VERSION` change retires the newer matches (§3.7.2).
 - **Abuse limits (security Phase 3, `lobby/logic.ts`):** every frame spends
   from a per-socket token bucket before it is parsed (burst 40, which covers a
   reconnect's 32 queued frames plus its hello; refill 5 a second); a frame past
@@ -468,16 +513,6 @@ data loss rather than a validation failure.
   signed-in socket. The `set-name` intent is gone from the wire (security
   AU8); a frame carrying it fails validation and is dropped, after spending
   from the socket's budget like any frame.
-- **Anonymity:** lobbies stay account-less this phase, matching the client
-  model — players are lobby-scoped session ids minted by the browser
-  (`net/session.ts`), no auth cookie or user row involved.
-- **Frontend swap (done):** `net/channel.ts` is now a WebSocket transport with
-  the same `LobbyChannel` interface — reconnect with capped backoff (400 ms
-  doubling to 8 s), posts queued while down, server pongs surfaced as
-  heartbeat frames so the hook's presence math still works. `useLobby.ts` runs
-  one unified client path for both roles (the host seeds a local snapshot only
-  as first paint); `OnlineHub` creates via `POST /lobby` instead of minting a
-  code locally. `LobbyRoom.tsx` and all components are untouched.
 
 ### 3.7 Deployment
 
