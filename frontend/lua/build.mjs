@@ -15,7 +15,8 @@ import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { brotliCompressSync, constants as zlibConstants, gzipSync } from "node:zlib";
-import { balatroSource, sourceProblem } from "./balatroSource.mjs";
+import { balatroSource, mainCheckout, sourceProblem } from "./balatroSource.mjs";
+import { findLuac, luacCandidates, luaSyntaxError } from "./luaSyntax.mjs";
 import { withPackageUuid } from "./packageUuid.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -106,6 +107,19 @@ try {
         );
       },
     });
+  const luac = findLuac(luacCandidates(root, mainCheckout(root)));
+  if (luac === undefined) console.log("(no Lua 5.1 luac found; Lua syntax check skipped)");
+  else {
+    const lua = readdirSync(stage, { recursive: true, encoding: "utf8" })
+      .filter((path) => path.endsWith(".lua"))
+      .sort();
+    const error = luaSyntaxError(luac, stage, lua);
+    if (error !== undefined) {
+      console.error(`Lua syntax error: frontend/lua/${error}`);
+      rmSync(stage, { recursive: true, force: true });
+      process.exit(1);
+    }
+  }
   /** @type {Record<string, string>} */
   const manifest = {};
   for (const name of [

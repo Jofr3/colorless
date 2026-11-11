@@ -11,6 +11,7 @@
     "vitest.config.ts",
     "frontend/lua/balatroSource.mjs",
     "frontend/lua/build.mjs",
+    "frontend/lua/luaSyntax.mjs",
     "frontend/lua/packageUuid.mjs",
     "frontend/lua/watch.mjs"
   ]
