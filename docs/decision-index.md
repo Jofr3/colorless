@@ -75,6 +75,7 @@ fails when it is stale, so rerun the script after adding a decision.
 | 2026-11-10 | Observability audit released | decisions.md:1488 |
 | 2026-11-11 | No email alert for a new Workers issue (amends decision 2a) | decisions.md:1501 |
 | 2026-11-11 | Documentation audit decisions and Phase 0: wrong facts fixed, and production writes only through the deploy t… | decisions.md:1506 |
+| 2026-11-11 | Documentation audit Phases 1-6: one way in, as-built references, history archived verbatim, and comments with… | decisions.md:1549 |
 
 ## Numbered decisions
 

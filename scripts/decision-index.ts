@@ -1,6 +1,7 @@
 // Generates `docs/decision-index.md`: where each numbered decision and each dated decision entry
-// is recorded. Numbered decisions are spread over the decisions.md table (D1-D100), its archived
-// rows (D101-D647), the archived simulator history and the archived progress session log.
+// is recorded. Numbered decisions are spread over the decisions.md table, its archived rows
+// (docs/archive/decisions-numbered.md), the archived simulator history and the archived progress
+// session log.
 //
 //   bun scripts/decision-index.ts            # rewrite
 //   bun scripts/decision-index.ts --check    # exit 1 if it would change

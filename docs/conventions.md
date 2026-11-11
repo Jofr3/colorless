@@ -63,7 +63,9 @@ something else.
   constraint, or why something is done an unexpected way. No decision ids, emoji
   markers, history ("was", "now", "corrected"), census counts, dates or line
   numbers in code or tests — that record belongs in `docs/decisions.md` and git.
-  Tests must not read source or doc text, and must not pin `engineVersion`.
+  `bun scripts/comment-guard.ts` (in `check:static`) enforces the id and date part
+  on comments. Strings are data: a test title may name the decision whose sections
+  it pins. Tests must not read source or doc text, and must not pin `engineVersion`.
 - **Biome** for lint/format; **Vitest** for tests. Run **`bun run check`** before
   calling work done. It is `check:static` (the steps `package.json` lists under
   that name: guards, generators' `--check`, `tsc -b`, `biome ci`, the mutant `precheck`), `check:lua` (the headless Lua tests,
