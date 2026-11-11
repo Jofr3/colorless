@@ -1,9 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { IDLE_FALLBACK_MS } from "../lib/idle";
 import {
   FIXED_MESSAGES,
   keptNameMessage,
+  LEAVE_LOCKOUT_MS,
   LuaBuilder,
   messageWidth,
+  SAVE_DELAY_MS,
+  SEARCH_BUSY_MS,
+  SEARCH_DEBOUNCE_MS,
   unresolvedMessage,
 } from "./builder";
 import { decodeFields, encodeFields } from "./wire";
@@ -90,8 +95,16 @@ const ABRA_INDEX = cardIndexPayload(
   [...ids(0, 40).map((id) => card(id, "Abra")), card("p", "Pikachu")],
   Object.fromEntries(ids(0, 40).map((id) => [id, '[{"name":"Teleport","effect":"Switch."}]'])),
 );
+/** Ends 50 ms past the latest of the builder's waits: an edit's save, a debounced search with its
+    busy delay and the card index's idle wait (no requestIdleCallback here), and the Back lockout. */
+const TICK_MS =
+  Math.max(
+    SAVE_DELAY_MS,
+    SEARCH_DEBOUNCE_MS + SEARCH_BUSY_MS + IDLE_FALLBACK_MS,
+    LEAVE_LOCKOUT_MS,
+  ) + 50;
 const tick = async () => {
-  await vi.advanceTimersByTimeAsync(650);
+  await vi.advanceTimersByTimeAsync(TICK_MS);
 };
 beforeEach(() => {
   vi.useFakeTimers();
