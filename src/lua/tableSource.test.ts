@@ -12,16 +12,12 @@ import {
 import { LuaSimulator } from "./simulator";
 import { LocalTableSource, type TableSource } from "./tableSource";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
+import { fullStorage, memoryStorage } from "../test/storageStub";
 
 const ANNOUNCE = wireColumn(WIRE_ROWS.sim.header, "announce");
 
 beforeEach(() => {
-  const storage = new Map<string, string>();
-  vi.stubGlobal("localStorage", {
-    getItem: (key: string) => storage.get(key) ?? null,
-    setItem: (key: string, value: string) => storage.set(key, value),
-    removeItem: (key: string) => storage.delete(key),
-  });
+  vi.stubGlobal("localStorage", memoryStorage());
 });
 afterEach(() => vi.unstubAllGlobals());
 const names = { p1: "One", p2: "Two" };
@@ -88,13 +84,7 @@ describe("LocalTableSource", () => {
     const state = driveSetup(7, undefined, { first: "p1" });
     const sim = new LuaSimulator(vi.fn(), vi.fn());
     sim.open({ state, events: [], names, startedAt: 100 });
-    vi.stubGlobal("localStorage", {
-      getItem: () => null,
-      setItem: () => {
-        throw new Error("full");
-      },
-      removeItem: () => {},
-    });
+    vi.stubGlobal("localStorage", fullStorage());
     sim.dispatch({ type: "endTurn", seat: "p1" });
     expect(sim.host?.game.turn).toBe(state.turn + 1);
     expect(sim.source?.lifecycle().error).toBeNull();

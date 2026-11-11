@@ -18,15 +18,7 @@ local function callbacks()
     feedback=noop,home=noop,jiggle=noop,signin=noop,refresh=noop,decks=noop,close=noop,changed=noop,
     reduced=function() return false end}
 end
-local function row(tag,spec,fields)
-  local out={}
-  local width=0
-  for _,column in pairs(spec) do width=math.max(width,column) end
-  for i=1,width do out[i]='' end
-  if tag then out[1]=tag end
-  for name,value in pairs(fields) do out[assert(spec[name],name)]=Codec.encode(value) end
-  return table.concat(out,'\t')
-end
+local row=require('tests.support.snapshots').row
 local function find(list,pred) for i,b in ipairs(list) do if pred(b) then return i,b end end end
 local function centre(b) return b.x+b.w/2,b.y+b.h/2 end
 -- Presses `key` on `screen` and returns the control it focused.

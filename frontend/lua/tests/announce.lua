@@ -21,15 +21,7 @@ local function heard(fn) local before=#said;fn();local out={};for i=before+1,#sa
 local function speakable(text) return type(text)=='string' and text:find('%a%a')~=nil end
 
 -- A row from field names, in the columns wire_fields.lua gives them.
-local function row(tag,spec,fields)
-  local out={}
-  local width=0
-  for _,column in pairs(spec) do width=math.max(width,column) end
-  for i=1,width do out[i]='' end
-  if tag then out[1]=tag end
-  for name,value in pairs(fields) do out[assert(spec[name],name)]=Codec.encode(value) end
-  return table.concat(out,'\t')
-end
+local row=require('tests.support.snapshots').row
 
 -- Tabs through every control twice and checks each stop: it says words, and
 -- every control Tab may reach is reached. Returns what the walk said.

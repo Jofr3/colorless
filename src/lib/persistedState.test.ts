@@ -1,37 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { readPersisted, removePersisted, writePersisted } from "./persistedState";
-
-function fakeStorage(initial: Record<string, string> = {}) {
-  const store = new Map(Object.entries(initial));
-  return {
-    getItem: (key: string) => store.get(key) ?? null,
-    setItem: (key: string, value: string) => {
-      store.set(key, value);
-    },
-    removeItem: (key: string) => {
-      store.delete(key);
-    },
-    clear: () => store.clear(),
-    key: () => null,
-    get length() {
-      return store.size;
-    },
-  } as Storage;
-}
-
-const throwingStorage = () =>
-  ({
-    getItem: () => {
-      throw new Error("storage blocked");
-    },
-    setItem: () => {
-      throw new Error("storage blocked");
-    },
-    removeItem: () => {},
-    clear: () => {},
-    key: () => null,
-    length: 0,
-  }) as Storage;
+import { memoryStorage, throwingStorage } from "../test/storageStub";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -39,17 +8,17 @@ afterEach(() => {
 
 describe("readPersisted", () => {
   it("returns the parsed value when the key is present and valid", () => {
-    vi.stubGlobal("localStorage", fakeStorage({ k: "1" }));
+    vi.stubGlobal("localStorage", memoryStorage({ k: "1" }));
     expect(readPersisted("k", (raw) => raw === "1", false)).toBe(true);
   });
 
   it("falls back when the key is absent", () => {
-    vi.stubGlobal("localStorage", fakeStorage());
+    vi.stubGlobal("localStorage", memoryStorage());
     expect(readPersisted("missing", (raw) => raw, "default")).toBe("default");
   });
 
   it("falls back when parse rejects the stored value (undefined)", () => {
-    vi.stubGlobal("localStorage", fakeStorage({ k: "bogus" }));
+    vi.stubGlobal("localStorage", memoryStorage({ k: "bogus" }));
     const parse = (raw: string) => (raw === "ok" ? raw : undefined);
     expect(readPersisted("k", parse, "default")).toBe("default");
   });
@@ -62,7 +31,7 @@ describe("readPersisted", () => {
 
 describe("writePersisted", () => {
   it("stores the value", () => {
-    const storage = fakeStorage();
+    const storage = memoryStorage();
     vi.stubGlobal("localStorage", storage);
     expect(writePersisted("k", "v")).toBe(true);
     expect(storage.getItem("k")).toBe("v");
@@ -76,7 +45,7 @@ describe("writePersisted", () => {
 
 describe("removePersisted", () => {
   it("removes the value", () => {
-    const storage = fakeStorage({ k: "v" });
+    const storage = memoryStorage({ k: "v" });
     vi.stubGlobal("localStorage", storage);
     removePersisted("k");
     expect(storage.getItem("k")).toBeNull();

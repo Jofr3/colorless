@@ -16,22 +16,14 @@ import { LuaOnline } from "./online";
 import { LuaOnlineMatch, onlineGate, promptGate } from "./onlineTable";
 import { LuaSimulator } from "./simulator";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
+import { memoryStorage } from "../test/storageStub";
 
 const CODE = "ABCD";
-const store = () => {
-  const values = new Map<string, string>();
-  return {
-    getItem: (key: string) => values.get(key) ?? null,
-    setItem: (key: string, value: string) => values.set(key, value),
-    removeItem: (key: string) => values.delete(key),
-    keys: () => [...values.keys()],
-  };
-};
-let local: ReturnType<typeof store>;
+let local: ReturnType<typeof memoryStorage>;
 beforeEach(() => {
   vi.useFakeTimers();
-  vi.stubGlobal("sessionStorage", store());
-  local = store();
+  vi.stubGlobal("sessionStorage", memoryStorage());
+  local = memoryStorage();
   vi.stubGlobal("localStorage", local);
   localStorage.setItem("online.playerName", "Ash");
 });
@@ -616,7 +608,7 @@ describe("LuaOnlineMatch", () => {
     if (!a || !b) throw new Error("Expected two hand cards");
     t.sim.command(`reorder\thand\t${b[1]}\t0`);
     expect(t.tagged("C").find((r) => r[1] === b[1])?.[18]).toBe("0");
-    expect(local.keys().filter((k) => k.startsWith("colorless:simulator"))).toEqual([]);
+    expect([...local.values.keys()].filter((k) => k.startsWith("colorless:simulator"))).toEqual([]);
   });
 });
 

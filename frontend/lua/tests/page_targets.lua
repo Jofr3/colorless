@@ -77,15 +77,7 @@ end
 print('PASS: library Manage hit areas')
 
 -- The builder.
-local function row(tag,spec,fields)
-  local out={}
-  local width=0
-  for _,column in pairs(spec) do width=math.max(width,column) end
-  for i=1,width do out[i]='' end
-  if tag then out[1]=tag end
-  for name,value in pairs(fields) do out[assert(spec[name],name)]=Codec.encode(value) end
-  return table.concat(out,'\t')
-end
+local row=require('tests.support.snapshots').row
 local revision=0
 local function builderSnapshot(o)
   revision=revision+1

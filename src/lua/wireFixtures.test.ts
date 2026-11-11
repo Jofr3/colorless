@@ -31,6 +31,7 @@ import { LuaOnline } from "./online";
 import { LuaSandbox } from "./sandbox";
 import { LuaSimulator } from "./simulator";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
+import { memoryStorage } from "../test/storageStub";
 
 const SIM = WIRE_ROWS.sim;
 const GAME_PHASE = wireColumn(SIM.header, "gamePhase");
@@ -44,14 +45,6 @@ const pin = (name: string, raw: string) =>
 
 const parse = (raw: string) => raw.split("\n").map((r) => r.split("\t").map(decodeURIComponent));
 
-const memoryStorage = () => {
-  const storage = new Map<string, string>();
-  return {
-    getItem: (key: string) => storage.get(key) ?? null,
-    setItem: (key: string, value: string) => storage.set(key, value),
-    removeItem: (key: string) => storage.delete(key),
-  };
-};
 beforeEach(() => {
   vi.stubGlobal("localStorage", memoryStorage());
   vi.stubGlobal("sessionStorage", memoryStorage());

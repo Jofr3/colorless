@@ -6,6 +6,7 @@ import { deckStore } from "../decks/deckStore";
 import { decodeFields, encodeFields } from "./wire";
 import { LuaLibrary } from "./library";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
+import { memoryStorage } from "../test/storageStub";
 
 const decks = [
   {
@@ -46,11 +47,7 @@ const setup = async () => {
   return { library, publish, open };
 };
 beforeEach(() => {
-  const values = new Map<string, string>();
-  vi.stubGlobal("localStorage", {
-    getItem: (key: string) => values.get(key) ?? null,
-    setItem: (key: string, value: string) => values.set(key, value),
-  });
+  vi.stubGlobal("localStorage", memoryStorage());
 });
 afterEach(() => {
   vi.unstubAllGlobals();
