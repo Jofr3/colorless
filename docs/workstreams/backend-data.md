@@ -516,68 +516,37 @@ are authoritative.
 
 ### 3.7 Deployment
 
-- API + DO: `wrangler deploy`; secrets via `wrangler secret`.
-- Web: Cloudflare Pages / Workers static assets, calling the API over HTTPS.
-- Images: R2 bound to a custom domain / Worker route.
+Two Workers on one `workers.dev` site: `colorless-api` (`apps/api/wrangler.jsonc`) and the static
+web Worker `colorless` (root `wrangler.jsonc`), which calls the API over HTTPS. Images come
+through the API's `/assets/*` routes; there is no custom domain and no staging environment.
+Every production write goes through `bun run release` or the deploy-token wrapper (§3.7.2).
 
-#### 3.7.1 The deploy runbook — RUN IN THIS ORDER (D203)
+#### 3.7.1 Releasing
 
-Four slices (D188, D194, D197, D198) each ended with a piece of this owed, and
-each left it in a commit message. It is written down once, here, because the
-first step is a **PREREQUISITE**: skipping it does not degrade the API, it
-**500s an endpoint outright**.
+Prerequisites:
+- the deploy token file (§3.7.2, "Cloudflare tokens");
+- Balatro's source at `../balatro-source` or `BALATRO_SOURCE`, and a Lua 5.1 for `check:lua`;
+- push access to `origin`, and network to Cloudflare, GitHub and the npm registry; `gh` is
+  optional (the `ci` step only prints);
+- a local catalog ingested from the same series as production (§3.4.1), or `print-keys` refuses.
 
-Verified against production D1 (`735f0fb5-…`) on **2026-08-04**: the applied
-migration list is `0000, 0001, 0002, 0003` — so **three migrations are pending,
-not one**. `0004` (`decks.cover_card_id`), `0005` (`users.favourite_deck_id`)
-and `0006` (`cards.suffix`) have all NEVER been applied remotely, and the code
-on `main` reads all three columns. `wrangler d1 migrations apply` applies them
-in order, so this is still one command — but "only 0006 is missing" is wrong,
-and the blast radius is `/decks`, `/auth/me` **and** `/facets`, not `/facets`
-alone.
+Before:
+1. Merge into main and push. `clean-tree` refuses a dirty tree or a HEAD that is not the
+   remote's main.
+2. Run `bun run e2e` (and `--firefox`) when the change touches page lifecycle, fetch or
+   WebSocket code (§3.7.2).
+3. Put a new required secret first, through the wrapper; the `secrets` step prints the command.
+4. Ship a Durable Object migration in a release of its own (§3.7.2).
 
-```sh
-# 1. PREREQUISITE — apply pending migrations to the REMOTE database.
-#    Must precede the deploy: `/facets` selects `cards.suffix` inside the same
-#    db.batch() as the other seven vocabularies, so an unmigrated database
-#    fails the WHOLE endpoint, not just the new field. Likewise `/decks`
-#    (0004) and `GET /auth/me` (0005). `wrangler deploy` does NOT run this.
-cd apps/api && bun run db:migrate:remote
+Run `bun run release` from the repo root. It runs `bun install --frozen-lockfile`, `check`,
+`release:gate`, `build`, `db:migrate:remote`, `api:deploy`, `release:health`, `deploy:web` and
+`release:finish`, and drops its pin when a step fails; §3.7.2 has each step and the recovery
+table. `bun run api:deploy` and `bun run deploy` alone are partial deploys: no bookmark, health
+check or tag.
 
-# 2. Deploy the Worker.
-cd apps/api && bun run deploy          # or, from the repo root: bun run api:deploy
-
-# 3. Backfill the catalog (needs network access to api.tcgdex.net — see below).
-#    Populates `cards.suffix` (NULL on all 3,786 rows today) and rewrites the
-#    "None" sentinels in D1 itself: 34 `mfb` rows in `rarity`, 2 of them also in
-#    `regulation_mark` (36 values / 34 rows). Until it runs, `/facets` serves
-#    `"suffixes": []` and the builder's rail hides the section — the filter is
-#    unreachable rather than broken (§5.3.3) — and the read-side normaliser in
-#    `apps/api/src/sentinel.ts` hides the sentinels from the API while leaving
-#    them in the rows.
-cd apps/api && bun scripts/with-deploy-token.ts bun scripts/ingest.ts --serie sv --remote
-
-# 4. Step 3 ends by stamping a new `catalog:epoch` in the CACHE KV namespace,
-#    which is part of every catalog cache key (apps/api/src/catalog/cache.ts), so
-#    the pre-ingest KV entries stop being served within about six minutes; a
-#    browser may show its own cached body for up to an hour more. A data-only
-#    change does not bump `CACHE_VERSION`.
-```
-
-**Command check (against `package.json` and `apps/api/package.json`):**
-
-| Command | Exists? |
-| --- | --- |
-| `bun run db:migrate:remote` **from the repo root** | ❌ **NO** — the root `package.json` has no such script. It is defined only in `apps/api/package.json`, so it must be run as `cd apps/api && bun run db:migrate:remote` (or `bun run --cwd apps/api db:migrate:remote`). Commit messages that quote the bare form are wrong. |
-| `cd apps/api && bun run db:migrate:remote` | ✅ `with-deploy-token.ts wrangler d1 migrations apply colorless --remote` |
-| `cd apps/api && bun scripts/with-deploy-token.ts bun scripts/ingest.ts --remote` | ✅ the script exists; `--remote` and `--serie` are real flags (`apps/api/scripts/ingest.ts`). Note it is `bun scripts/ingest.ts`, **not** `bun run` — there is no npm script wrapping it. |
-| `bun run api:deploy` (repo root) | ✅ `bun run --cwd apps/api deploy` → `release-gate.ts migrations clean-tree ci -- wrangler deploy --minify`, which deploys with the commit's tag and message (§3.7.2) |
-| `cd apps/api && bun run db:migrate:local` | ✅ the local twin, used for the pre-flight |
-
-**Why step 3 has never run here.** `api.tcgdex.net` is refused by this
-environment's network policy — the same wall D188, D194, D197 and D198 hit. The
-ingest is the only step that needs the public internet; steps 1, 2 and 4 do not,
-and step 1 is therefore unblocked TODAY and should not wait for the backfill.
+After:
+1. Read the Workers Issues page (`colorless-api` → Observability → Issues, §3.7.4).
+2. After about an hour of use, `bun run --cwd apps/api prod:report --release` (read-only).
 
 #### 3.7.2 Release gates (2026-10-27; identity and checks 2026-11-10, BLD-P1)
 
@@ -625,7 +594,7 @@ exits 1.
 The API `deploy` script is `release-gate.ts migrations clean-tree ci --
 wrangler deploy --minify`. It fails unless every file in `drizzle/` is applied
 remotely, so a bare `api:deploy` cannot ship a Worker ahead of its migrations
-(the D203 incident above). Then it re-checks the tree, prints CI's line, and
+(the D203 incident of 2026-08). Then it re-checks the tree, prints CI's line, and
 runs `wrangler deploy --minify --tag <short sha> --message <commit subject>`.
 
 `deploy:web` is `release-gate.ts clean-tree web-dist ci -- wrangler deploy`,
@@ -677,7 +646,8 @@ All the gates only read production.
 https://colorless-api.jofrescari.workers.dev/health` gives `version.tag` (the
 API's commit). The page source's `<meta name="build">` gives the web's commit.
 `bunx wrangler deployments list` shows each version's tag and message. `git tag
---list 'release-*'` and `tmp/releases.log` hold the release history.
+--list 'release-*'` and `tmp/releases.log` hold the release history. There is no
+CHANGELOG: a release's notes are `git log --format=%s <previous tag>..<tag>`.
 
 **Cloudflare tokens (build audit DEP3, BLD-P5).** Two account-owned tokens, each
 restricted to this account. `colorless-agents-read` is the ambient
@@ -729,9 +699,13 @@ earliest line for it in `tmp/d1-bookmarks.log`). From `apps/api` unless noted:
 | `check`, `release:gate`, `build` | Nothing changed. | Fix what it printed and release again. |
 | `db:migrate:remote` | The files before the failing one are applied; the failing one rolled back (one transaction per file). The old Worker reads the expanded schema fine. | A transient error: release again. A SQL error: fix the file (it is not applied remotely), commit, push, release again. |
 | `api:deploy` | New schema, old Worker. | Release again, or `bun run api:deploy`, then `bun run release:health`, then `bun run deploy:web` from the repo root (`web-dist` refuses a `dist/` built at another commit: then `bun run deploy`). |
-| `release:health` | New Worker, which cannot read D1, sees another migration count or fails a route; or the new version never answered `/health`. | The tag never matched: `bunx wrangler deployments list` shows whether the deploy took; rerun `bun run release:health` once it has. A D1 error: `evt = "d1", kind = "health_failed"` in Workers Logs (§3.7.4) carries the error and cause names and `quota`. `quota: true` is a spent daily quota (wait for 00:00 UTC); otherwise it is a binding or schema problem (`bunx wrangler d1 migrations list colorless --remote`): fix it, rerun `bun run release:health`. Bad code (a failed `/sets` or `/auth/me` probe, or D1 errors from the code): from `apps/api`, `bun scripts/with-deploy-token.ts bunx wrangler rollback <version id> -m "<why>"` to the version before the release (the `versions` line it printed), and check `HEALTH_TAG='*' bun run release:health` again. The schema stays: the old Worker reads it (expand, then contract). |
-| `deploy:web` (`web-dist`, the deploy, `web-health`) | New API, and the old web app, or a new one `web-health` found broken. The old web app is fine when the API change kept the old client working, as an API-first release should. | `bun run deploy` from the repo root, then `bun run --cwd apps/api release:finish` if the pin is still there (`abort` dropped it otherwise, and the release goes untagged; tag it by hand as below). A bad web build: `bunx wrangler deployments list` and `bun apps/api/scripts/with-deploy-token.ts bunx wrangler rollback <version id>` from the repo root (Worker `colorless`). |
+| `release:health` | New Worker, which cannot read D1, sees another migration count or fails a route; or the new version never answered `/health`. | The tag never matched: `bunx wrangler deployments list` shows whether the deploy took; rerun `bun run release:health` once it has. A D1 error: `evt = "d1", kind = "health_failed"` in Workers Logs (§3.7.4) carries the error and cause names and `quota`. `quota: true` is a spent daily quota (wait for 00:00 UTC); otherwise it is a binding or schema problem (`bunx wrangler d1 migrations list colorless --remote`): fix it, rerun `bun run release:health`. Bad code (a failed `/sets` or `/auth/me` probe, or D1 errors from the code): from `apps/api`, `bun scripts/with-deploy-token.ts bunx wrangler rollback <version id> -m "<why>"` to the version before the release (the `versions` line it printed; after a retry, see below), and check `HEALTH_TAG='*' bun run release:health` again. The schema stays: the old Worker reads it (expand, then contract). |
+| `deploy:web` (`web-dist`, the deploy, `web-health`) | New API, and the old web app, or a new one `web-health` found broken. The old web app is fine when the API change kept the old client working, as an API-first release should. | Release again. By hand instead: `bun run deploy` from the repo root, then tag the commit yourself, since `abort` dropped the pin and `release:finish` refuses without one: `git tag -a release-<UTC YYYYMMDD-HHMM> -m "Release <short sha>" <sha> && git push origin refs/tags/release-<UTC YYYYMMDD-HHMM>` (the log line is then missing, as in the next row). A bad web build: `bunx wrangler deployments list` and `bun apps/api/scripts/with-deploy-token.ts bunx wrangler rollback <version id>` from the repo root (Worker `colorless`). |
 | `release:finish` | Both new. Only the record is missing: the log line, the tag, or its push. | It prints the `git tag -a … && git push origin refs/tags/…` to run. A missing log line can be rebuilt from `bunx wrangler deployments list` (both Workers) and `tmp/d1-bookmarks.log`. |
+
+When an earlier attempt of the same release got past `api:deploy`, the retry's
+`versions` line records that attempt's version as the one "before" it. To roll back after a retry, pick the newest version
+in `bunx wrangler deployments list` whose tag is not this release's short sha.
 
 Never revert or edit a migration file that is applied remotely: undo it with a
 new migration. A rollback of the API across a change of
@@ -743,19 +717,6 @@ adds, renames or deletes a class) blocks a rollback to any API version
 before it: Cloudflare refuses a rollback across a DO class change. Ship such a
 migration in a release with no other API change, so the version before it is
 not one a rollback would need (build audit DEP2).
-
-**Secrets before the first Phase 5 release (security audit 2026-10-27).** Generate
-`PASSWORD_PEPPER` and `LOG_TAG_KEY` (`openssl rand -base64 32` each), save both in
-the password manager, then from `apps/api/` run
-`bun scripts/with-deploy-token.ts bunx wrangler secret put PASSWORD_PEPPER` and
-`bun scripts/with-deploy-token.ts bunx wrangler secret put LOG_TAG_KEY`, and only
-then `bun run release`. A secret put applies to the running Worker at once and the old code
-ignores both, so the order is safe; the gate refuses the release until both exist.
-Nobody is logged out: existing hashes are re-peppered at each account's next
-sign-in. Google sign-ins in flight at the deploy fail once (PKCE changed the state
-cookie). `check:static` adds `migration-guard.ts` (no unreviewed table rebuild,
-drop or rename) and `drizzle-drift.ts` (schema.ts matches the migrations); see
-docs/conventions.md "Database migrations".
 
 The daily sweep's Cron Trigger and the lobby's rate-limit bindings live in
 `apps/api/wrangler.jsonc` and take effect with `api:deploy`; there is no
@@ -772,16 +733,22 @@ those are only reported. Run it after every remote ingest.
 
 #### 3.7.3 Backup and recovery
 
-What can be lost, and how it comes back:
+What each store holds about a player, how long, and how it comes back:
 
-| Store | Recovery |
-| --- | --- |
-| D1 user tables (`users`, `sessions`, `oauth_identities`, `folders`, `decks`, `deck_cards`) | Time Travel, or an export taken before a risky change. Nothing else can recreate them. |
-| D1 `auth_rate_limits` | Disposable: at worst a caller gets a fresh sign-in budget. |
-| D1 catalog (`series`, `sets`, `cards`) | Re-run the ingest (§3.4.1); Time Travel only when user rows reference cards an ingest removed. |
-| KV `CACHE` | Disposable: stamp a new `catalog:epoch`. |
-| R2 `ASSETS` | Disposable: refilled from tcgdex on demand. |
-| LobbyDO storage | Ephemeral by design; matches in progress are lost. |
+| Store | Personal data | Kept for | Recovery |
+| --- | --- | --- | --- |
+| D1 user tables (`users`, `sessions`, `oauth_identities`, `folders`, `decks`, `deck_cards`) | email, display name, password hash, the Google account id, the deck library; sessions by the SHA-256 of their token | until the account is deleted (`DELETE /auth/me`; the rest cascades), with no purge of unverified accounts; a session 30 days, then the daily sweep | Time Travel, or an export taken before a risky change. Nothing else can recreate them. |
+| D1 `auth_rate_limits` | SHA-256 keys of the IP (an IPv6 /64) or email per scope, with counts | until its window ends (15 minutes to an hour), then the daily sweep | Disposable: at worst a caller gets a fresh sign-in budget. |
+| D1 catalog (`series`, `sets`, `cards`) | none | until an ingest changes it | Re-run the ingest (§3.4.1); Time Travel only when user rows reference cards an ingest removed. |
+| KV `CACHE` | none (public catalog responses) | a day, or until the next `catalog:epoch` | Disposable: stamp a new `catalog:epoch`. |
+| R2 `ASSETS` | none (card images) | indefinitely | Disposable: refilled from tcgdex on demand. |
+| LobbyDO storage | seat names, chosen deck names and ids, each seat's account id (`seatUsers`), the match and its log | until the lobby is wiped: 10 minutes after its last socket, or after an hour without play | Ephemeral by design; matches in progress are lost. |
+| Workers Logs | the app's lines: keyed tags, never an email, IP or id (§3.7.4); Cloudflare's invocation event: the IP, city, postal code, coordinates and headers, the URL without its query | 3 days | Not backed up. |
+| The browser | localStorage: preferences, a sandbox game, the online name; sessionStorage: each lobby's seat secret; IndexedDB: card art; the http-only `session` cookie | until the player clears them; sessionStorage until the tab closes; the cookie 30 days | Nothing to recover. |
+| `tmp/backup/` exports (below) | all of D1, emails and password hashes included | until deleted by hand, once no longer needed | They are the backup. |
+
+A deleted account stays in D1's Time Travel history for its 7 days (30 on paid), so a restore
+to before the deletion brings it back.
 
 **Time Travel** is always on: the database can be restored to any minute in
 the last 7 days on the Free plan (30 on paid). `release` and a remote
@@ -969,7 +936,39 @@ bunx wrangler d1 delete colorless-drill
 cd ../.. && rm -rf tmp/drill
 ```
 
-Record the restore's duration and anything that differed here.
+**Standing it up from zero** (a new account, or new resource names). It was done once, in
+5b4125d3c (2026-10-22), as a rename that copied the D1 data from the old database; the order
+below is derived from the config and has not been run end to end. Every Cloudflare write goes
+through the deploy token.
+
+1. Make the two tokens of §3.7.2, "Cloudflare tokens": the read one as `CLOUDFLARE_API_TOKEN`,
+   the deploy one in its file.
+2. Create the stores, from `apps/api/` (`CI=true` stops `d1 create` prompting):
+
+   ```sh
+   CI=true bun scripts/with-deploy-token.ts bunx wrangler d1 create colorless
+   bun scripts/with-deploy-token.ts bunx wrangler kv namespace create colorless-cache
+   bun scripts/with-deploy-token.ts bunx wrangler r2 bucket create colorless-assets
+   ```
+
+   Paste the printed `database_id` and KV `id` into `apps/api/wrangler.jsonc`. Keep the names:
+   `colorless` and `colorless-api` are also in `apps/api/package.json`,
+   `apps/api/scripts/{d1,release-gate,prod-report}.ts` and `scripts/e2e.ts`. The Free plan
+   allows 10 D1 databases per account.
+3. Check that no other Worker on the account uses the `ratelimits` `namespace_id`s.
+4. Set the origins together: the web Worker's `https://colorless.<subdomain>.workers.dev` as
+   `APP_ORIGIN` (`apps/api/wrangler.jsonc` `vars`) and `VITE_SITE_ORIGIN`, the API's as
+   `VITE_API_ORIGIN` (`.env.production`, which also builds the CSP). `web-dist` refuses a build
+   whose site origin is not `APP_ORIGIN`. Both must stay on one site (§3.5).
+5. Register the new callback `https://<API origin>/auth/oauth/google/callback` on the Google
+   client (README "Google login").
+6. Commit and push, then `bun run db:migrate:remote` and `bun run api:deploy`, so the Worker
+   exists. Put the four secrets `release:gate`'s `secrets` step lists (README "API secrets"),
+   each with `bun scripts/with-deploy-token.ts bunx wrangler secret put <NAME>`. Then
+   `bun run deploy` from the repo root, so the web Worker exists too (`release:gate`'s
+   `versions` step reads both; unverified on a never-deployed one).
+7. Ingest the full catalog locally and with `--remote` (§3.4.1), then `bun run release`.
+8. Update the URLs written into README and this file.
 
 #### 3.7.4 Monitoring
 

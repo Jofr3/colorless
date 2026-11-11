@@ -226,6 +226,98 @@ colorless/
 
 ---
 
+*From §3.7's intro and §3.7.1, the 2026-08 deploy runbook (D203):*
+
+### 3.7 Deployment
+
+- API + DO: `wrangler deploy`; secrets via `wrangler secret`.
+- Web: Cloudflare Pages / Workers static assets, calling the API over HTTPS.
+- Images: R2 bound to a custom domain / Worker route.
+
+#### 3.7.1 The deploy runbook — RUN IN THIS ORDER (D203)
+
+Four slices (D188, D194, D197, D198) each ended with a piece of this owed, and
+each left it in a commit message. It is written down once, here, because the
+first step is a **PREREQUISITE**: skipping it does not degrade the API, it
+**500s an endpoint outright**.
+
+Verified against production D1 (`735f0fb5-…`) on **2026-08-04**: the applied
+migration list is `0000, 0001, 0002, 0003` — so **three migrations are pending,
+not one**. `0004` (`decks.cover_card_id`), `0005` (`users.favourite_deck_id`)
+and `0006` (`cards.suffix`) have all NEVER been applied remotely, and the code
+on `main` reads all three columns. `wrangler d1 migrations apply` applies them
+in order, so this is still one command — but "only 0006 is missing" is wrong,
+and the blast radius is `/decks`, `/auth/me` **and** `/facets`, not `/facets`
+alone.
+
+```sh
+# 1. PREREQUISITE — apply pending migrations to the REMOTE database.
+#    Must precede the deploy: `/facets` selects `cards.suffix` inside the same
+#    db.batch() as the other seven vocabularies, so an unmigrated database
+#    fails the WHOLE endpoint, not just the new field. Likewise `/decks`
+#    (0004) and `GET /auth/me` (0005). `wrangler deploy` does NOT run this.
+cd apps/api && bun run db:migrate:remote
+
+# 2. Deploy the Worker.
+cd apps/api && bun run deploy          # or, from the repo root: bun run api:deploy
+
+# 3. Backfill the catalog (needs network access to api.tcgdex.net — see below).
+#    Populates `cards.suffix` (NULL on all 3,786 rows today) and rewrites the
+#    "None" sentinels in D1 itself: 34 `mfb` rows in `rarity`, 2 of them also in
+#    `regulation_mark` (36 values / 34 rows). Until it runs, `/facets` serves
+#    `"suffixes": []` and the builder's rail hides the section — the filter is
+#    unreachable rather than broken (§5.3.3) — and the read-side normaliser in
+#    `apps/api/src/sentinel.ts` hides the sentinels from the API while leaving
+#    them in the rows.
+cd apps/api && bun scripts/with-deploy-token.ts bun scripts/ingest.ts --serie sv --remote
+
+# 4. Step 3 ends by stamping a new `catalog:epoch` in the CACHE KV namespace,
+#    which is part of every catalog cache key (apps/api/src/catalog/cache.ts), so
+#    the pre-ingest KV entries stop being served within about six minutes; a
+#    browser may show its own cached body for up to an hour more. A data-only
+#    change does not bump `CACHE_VERSION`.
+```
+
+**Command check (against `package.json` and `apps/api/package.json`):**
+
+| Command | Exists? |
+| --- | --- |
+| `bun run db:migrate:remote` **from the repo root** | ❌ **NO** — the root `package.json` has no such script. It is defined only in `apps/api/package.json`, so it must be run as `cd apps/api && bun run db:migrate:remote` (or `bun run --cwd apps/api db:migrate:remote`). Commit messages that quote the bare form are wrong. |
+| `cd apps/api && bun run db:migrate:remote` | ✅ `with-deploy-token.ts wrangler d1 migrations apply colorless --remote` |
+| `cd apps/api && bun scripts/with-deploy-token.ts bun scripts/ingest.ts --remote` | ✅ the script exists; `--remote` and `--serie` are real flags (`apps/api/scripts/ingest.ts`). Note it is `bun scripts/ingest.ts`, **not** `bun run` — there is no npm script wrapping it. |
+| `bun run api:deploy` (repo root) | ✅ `bun run --cwd apps/api deploy` → `release-gate.ts migrations clean-tree ci -- wrangler deploy --minify`, which deploys with the commit's tag and message (§3.7.2) |
+| `cd apps/api && bun run db:migrate:local` | ✅ the local twin, used for the pre-flight |
+
+**Why step 3 has never run here.** `api.tcgdex.net` is refused by this
+environment's network policy — the same wall D188, D194, D197 and D198 hit. The
+ingest is the only step that needs the public internet; steps 1, 2 and 4 do not,
+and step 1 is therefore unblocked TODAY and should not wait for the backfill.
+
+---
+
+*From §3.7.2, the one-time secrets step of 2026-10-27:*
+
+**Secrets before the first Phase 5 release (security audit 2026-10-27).** Generate
+`PASSWORD_PEPPER` and `LOG_TAG_KEY` (`openssl rand -base64 32` each), save both in
+the password manager, then from `apps/api/` run
+`bun scripts/with-deploy-token.ts bunx wrangler secret put PASSWORD_PEPPER` and
+`bun scripts/with-deploy-token.ts bunx wrangler secret put LOG_TAG_KEY`, and only
+then `bun run release`. A secret put applies to the running Worker at once and the old code
+ignores both, so the order is safe; the gate refuses the release until both exist.
+Nobody is logged out: existing hashes are re-peppered at each account's next
+sign-in. Google sign-ins in flight at the deploy fail once (PKCE changed the state
+cookie). `check:static` adds `migration-guard.ts` (no unreviewed table rebuild,
+drop or rename) and `drizzle-drift.ts` (schema.ts matches the migrations); see
+docs/conventions.md "Database migrations".
+
+---
+
+*From §3.7.3, the drill's closing line:*
+
+Record the restore's duration and anything that differed here.
+
+---
+
 *From §5.2 as it stood (the React-era view shapes):*
 
 ### 5.2 Canonical domain `Card` (D5 = unify)
