@@ -1,119 +1,53 @@
-# Next Phase — Backend + Real Card Data
+# Backend and data (as built)
 
-> **Status:** Working spec, all major decisions made. This is a prompt/brief for
-> the next build phase; refine as implementation reveals detail.
-
-## Decisions
-
-| # | Decision | Choice |
-|---|---|---|
-| D1 | Backend data strategy | **Own DB** — ingest tcgdex → Cloudflare **D1**, serve our own API |
-| D2 | Accounts & persistence | **Full accounts + auth**; users own their decks |
-| D2a | Auth methods | **Email + password** *and* **social OAuth (Google)** |
-| D3 | Catalog scope | **Full-history-capable schema, ingest SV-era first** |
-| D4 | Card images | **Mirror into R2**, serve from our domain |
-| D5 | Card type | **Unify** — one canonical `Card`, with builder/playmat view projections |
-| D6 | Online lobby server | **In scope** — real **Durable Object** (WebSocket) lobby server |
+The API Worker and its stores, the catalog ingest, accounts, the lobby Durable Object, releasing
+and production operations, and the API reference (§6). The founding decisions D1-D6 are in
+`docs/decisions.md`. The July plan this file started as (its §1-2 and §7-9) and the 2026-08
+deploy runbook are in `docs/archive/backend-data-plan.md`.
 
 ---
 
-## 1. Where the project is today
-
-`colorless` is currently a **frontend-only skeleton**: the design language,
-the main pages, and simple interactions exist, but there is **no backend and no
-persistence** beyond `localStorage`.
-
-- **Stack:** React 19 + Vite 8 (Rolldown) + Tailwind 4, PixiJS 8 + GSAP for the
-  animated card layer. Bun 1.3 as the package manager/runtime.
-- **Card catalog** is a hand-authored, ~90-card fixture:
-  - `src/features/builder/cardPool.ts` — the browsable pool.
-  - `src/features/builder/cards.ts` — the `BuilderCard` type, energy types,
-    subtypes, rarities, formats, and pure helpers.
-  - Scoped to the **Scarlet & Violet era** only; each entry carries a Scrydex
-    `cardId` (`{setCode}-{number}`).
-- **Card art** is hotlinked from `https://images.scrydex.com/pokemon/{id}/{size}`
-  (`cardImageUrl` in `cards.ts`). The production CSP in `vite.config.ts`
-  allowlists **only** that host for `img-src`/`connect-src`.
-- **Decks** are seed fixtures + folders (`src/features/decks/data.ts`),
-  persisted best-effort to `localStorage` via `src/lib/persistedState.ts`.
-- **Playmat** uses its own `CardModel` (`src/features/playmat/types.ts`).
-- **Online lobby** (`src/features/online/net/*`) is host-authoritative over a
-  `BroadcastChannel`, **deliberately written to swap for a real server** with no
-  UI changes: `net/types.ts` (LobbySnapshot / LobbyMessage / LobbyIntent),
-  `net/lobbyReducer.ts` (the authoritative reducer), `net/channel.ts` (the
-  transport seam).
-
-**The gap:** everything is fixtures. This phase makes it real.
-
----
-
-## 2. Goal of this phase
-
-1. **Stand up the backend** — a Bun + Hono API on Cloudflare Workers.
-2. **Import real card data** from [tcgdex.dev](https://tcgdex.dev/) into our own
-   **D1** database; define **Zod schemas for every tcgdex model** we read.
-3. **Mirror card images into R2**, served from our own domain.
-4. **Serve the catalog** to the frontend, replacing the hand-written fixtures.
-5. **Add accounts + auth** (email/password + Google OAuth); persist
-   users' **decks** server-side.
-6. **Promote the online lobby to a real server** — a Durable Object over
-   WebSocket, reusing the existing lobby reducer + message types.
-
-Out of scope: the real-time **match engine** (playing an actual game of cards).
-This phase gets players into a real shared lobby; the match itself stays a
-placeholder.
-
----
-
-## 3. Proposed architecture
+## 3. Architecture
 
 ```text
-                 ┌───────────────────────────── Cloudflare ─────────────────────────────┐
-tcgdex.dev ──▶   │  ingest job ──▶ D1 (cards/sets/series)     Hono Worker ──▶ web app    │
-(REST/SDK)       │      └──────▶ R2 (mirrored images)   ▲          │  │                   │
-                 │                                      └─ D1 (users/sessions/decks)      │
-                 │   Lobby Durable Object ◀── WS ───────────────────┘  KV (cache/limits)  │
-                 └───────────────────────────────────────────────────────────────────────┘
+browser ──▶ colorless        static web Worker: dist/ (the love.js page), src/notFoundWorker.ts
+   │                         the page runs the engine itself for local play (src/game)
+   └──HTTPS + WebSocket──▶ colorless-api   Hono Worker, apps/api
+                              ├── D1 `colorless`: catalog and user data (§5.3)
+                              ├── KV `CACHE`: catalog responses (§6)
+                              ├── R2 `ASSETS`: card images, mirrored lazily from tcgdex (§3.4)
+                              ├── LobbyDO: one per lobby code; runs the engine, redacts per seat (§3.6)
+                              └── daily cron: the session and limiter sweep (§3.5)
+tcgdex.dev ──▶ apps/api/scripts/ingest.ts (local Bun script) ──▶ D1 catalog (§3.4)
 ```
 
-### 3.1 Repo layout — Bun-workspace monorepo
+The July plan's diagram is in the archive. README "Architecture" describes the page side.
 
-```text
-colorless/
-  apps/
-    web/            # the existing Vite app (relocated from repo root — can be deferred)
-    api/            # NEW — Bun + Hono Cloudflare Worker (+ Lobby Durable Object)
-  packages/
-    schema/         # NEW — shared Zod schemas + TS types (tcgdex, domain, lobby)
-  package.json      # workspaces: ["apps/*", "packages/*"]
-```
+### 3.1 Repo layout
 
-> The web app can stay at the repo root initially; start `apps/api` +
-> `packages/schema` first, relocate `web` in a follow-up commit.
->
-> **Move the lobby vocabulary** (`net/types.ts` — LobbySnapshot / LobbyMessage /
-> LobbyIntent — and the pure `lobbyReducer.ts`) into `packages/schema` so both
-> the web client and the Durable Object import the same source of truth.
+`apps/api` (the API Worker and `LobbyDO`), `packages/schema` (the shared Zod schemas and types:
+tcgdex, catalog, decks, auth, lobby, match), `packages/engine` (the game, run by the DO and by
+the page) and the web app at the root (`src/`, `frontend/lua/`). README "Project structure" has
+the tree.
 
-### 3.2 Backend — Bun + Hono on Cloudflare Workers
+### 3.2 Backend
 
-- **Hono** app deployed as a **Cloudflare Worker** (`wrangler`), config in
-  `wrangler.jsonc`; local dev via `wrangler dev`.
-- **Validation** with **Zod** from `packages/schema`; typed routes via
-  `@hono/zod-validator`.
-- **DB access:** D1 via **Drizzle** (typed migrations + queries) — *≈ assumption,
-  revisit if we'd rather hand-write SQL*.
+Hono on Cloudflare Workers, configured in `apps/api/wrangler.jsonc`. Bodies and queries are
+parsed with the `packages/schema` schemas through `validate` (`apps/api/src/http/validation.ts`).
+D1 is read through Drizzle (`apps/api/src/db/`); migrations are generated into
+`apps/api/drizzle/`. Locally, `bun run api:dev` runs `wrangler dev` after applying the local
+migrations.
 
 ### 3.3 Storage & compute bindings (Cloudflare)
 
-- **D1** (SQLite), two logical schemas in one DB:
-  1. **Catalog:** `series`, `sets`, `cards` (§5.3).
-  2. **User data:** `users`, `oauth_identities`, `sessions`, `folders`, `decks`,
-     `deck_cards`.
-- **R2** — mirrored card images + set logos/symbols, served via our domain.
-- **KV** — response cache for hot catalog reads + rate-limit counters.
-- **Durable Objects** — one instance **per lobby** (keyed by the join code);
-  holds the authoritative `LobbySnapshot` and fans out over WebSocket.
+- **D1** `DB`, two logical schemas in one database: the catalog and user data (§5.3).
+- **R2** `ASSETS`: mirrored card images and set logos and symbols, served through `/assets/*`.
+- **KV** `CACHE`: the catalog response cache and its `catalog:epoch` (§6). No rate limit lives
+  in KV.
+- **Durable Objects** `LOBBY`: one `LobbyDO` per lobby code (§3.6).
+- **Rate limiting** bindings (`ratelimits`, §3.7.4), the sign-in counters in D1
+  (`auth_rate_limits`, §3.5), the daily Cron Trigger (`triggers.crons`) and
+  `CF_VERSION_METADATA`, which `/health` reports.
 
 ### 3.4 Ingest & asset pipeline (D9: local data ingest, lazy image mirror)
 
@@ -1340,78 +1274,42 @@ fixtures in `__fixtures__/`; live sweep via `packages/schema/scripts/validate-li
 
 ### 5.2 Canonical domain `Card` (D5 = unify)
 
-Define **one** canonical `Card` in `packages/schema`, mapped from the tcgdex
-model, and derive the two existing view shapes from it:
-- **`BuilderCard`** view (`src/features/builder/cards.ts`) — browse/filter/deck
-  math. Preserve the existing energy-type/subtype/rarity/format vocabulary.
-- **`CardModel`** view (`src/features/playmat/types.ts`) — in-play card.
-
-> **Status (M5):** the canonical domain now exists in
-> `packages/schema/src/catalog/` — unprefixed `Card`/`CardBrief`,
-> `Set`/`SetBrief`/`SetWithCards`, `Serie`/`SerieBrief` and the
-> `paginatedSchema` envelope. One flat object per card (nullability mirrors
-> the §5.3 columns; consumers narrow on `category`), and `image`/`logo`/
-> `symbol` are OUR asset **base paths** (`/assets/cards/{id}`,
-> `/assets/sets/{id}` — clients append `/{quality}.{ext}` / `/logo.{ext}` /
-> `/symbol.{ext}`), null when the row has no origin URL. The
-> `BuilderCard`/`CardModel` view projections remain future work
-> (M9 frontend swap / P2).
-
-Keep the existing `Deck` / `Folder` shapes (`src/features/decks/data.ts`) as the
-API's deck representation, extended with a card list.
-
-> **Status (M7):** the deck/folder domain schemas now live in
-> `packages/schema/src/decks/` — `Folder`, `Deck` (+ `cards: [{cardId, count}]`),
-> `DeckSummary` (the summed `cardCount`, with `cards` only on complete decks), and the
-> create/patch request schemas for both resources.
+One flat `Card` per print, in `packages/schema/src/catalog/` with `CardBrief`,
+`Set`/`SetBrief`/`SetWithCards`, `Serie`/`SerieBrief` and the `paginatedSchema` envelope. Its
+nullability follows the §5.3 columns rather than tcgdex's optionality; consumers narrow on
+`category`. `image`, `logo` and `symbol` are this API's asset base paths (`/assets/cards/{id}`,
+`/assets/sets/{id}`; the client appends `/high.webp`, `/logo.webp` or `/symbol.webp`), null when
+the row has no origin URL. The deck library's schemas are in `packages/schema/src/decks/`:
+`Deck` (with `cards: [{cardId, count}]`), `DeckSummary` and the request bodies.
 
 ### 5.3 D1 relational schema
 
-Full-history-capable; SV-era rows only, for now. Implemented with Drizzle in
-`apps/api/src/db/` (`catalog.ts` / `users.ts`); migrations in `apps/api/drizzle/`.
+One database, two logical schemas. `apps/api/src/db/catalog.ts` and `users.ts` are authoritative
+for columns and indexes (`schema.ts` exports both); the migrations are in `apps/api/drizzle/`
+(docs/conventions.md "Database migrations"). Catalog dates are ISO text verbatim from tcgdex;
+user-data timestamps are integer epoch ms.
 
-```sql
--- Catalog (ingested; read-only to the app)
-series(id PK, name, release_date, logo_url)
-sets(id PK, serie_id FK, name, logo_url, symbol_url,
-     release_date, count_total, count_official, legal_standard, legal_expanded,
-     tcg_online, abbreviation)              -- abbreviation: tcgdex abbreviation.official
-cards(id PK, set_id FK, local_id, name, category,        -- Pokemon|Trainer|Energy
-      illustrator, rarity, regulation_mark,
-      hp, stage, suffix, evolve_from, types_json, retreat, -- Pokémon fields (nullable)
-      abilities_json, attacks_json, weaknesses_json, resistances_json,
-      trainer_type, energy_type, effect,                 -- Trainer/Energy fields
-      legal_standard, legal_expanded,                    -- tcgdex, per print
-      print_key, legal_standard_effective, legal_expanded_effective,
-        -- the reprint rule: print_key = the card's functional identity (ingest
-        -- map.ts printKey); *_effective = legality OR'd across prints sharing
-        -- it (ingest post-pass reprintLegalitySql). Readers coalesce onto the
-        -- per-print flags. The engine's PROGRAM_ALIAS table
-        -- (scripts/registry-aliases.ts) is generated from print_key, so one
-        -- registry row programs every print in the group.
-      variants_json, image_url, updated)
+| Table | Holds | Key, unique | Foreign keys (ON DELETE) | Written by |
+| --- | --- | --- | --- | --- |
+| `series` | tcgdex series | `id` | none | ingest |
+| `sets` | sets: counts, legality, origin logo and symbol URLs | `id` | `serie_id` → series (no action) | ingest |
+| `cards` | one row per print: the Pokémon, Trainer and Energy fields (lists as JSON), `suffix`, per-print and effective legality, `print_key`, the origin `image_url` | `id`; unique (`set_id`, `local_id`) | `set_id` → sets (no action) | ingest and its reprint pass |
+| `users` | email, display name, password hash (null for OAuth-only), `email_verified`, `name_prompt`, the retired `favourite_deck_id` | `id`; unique `email` | `favourite_deck_id` → decks (SET NULL) | register, the OAuth callback, `PATCH /auth/me` |
+| `oauth_identities` | a provider account linked to a user | (`provider`, `provider_id`) | `user_id` → users (CASCADE) | the OAuth callback |
+| `sessions` | SHA-256 of the cookie token, expiry | `id` | `user_id` → users (CASCADE) | register, login, the OAuth callback; the sweep |
+| `folders` | retired with its routes; kept | `id` | `user_id` → users (CASCADE), `parent_id` → folders (CASCADE) | nothing |
+| `decks` | name, format, tint, `cover_card_id`, `position`, `version`, `updated` | `id` (a UUID) | `user_id` → users (CASCADE), `folder_id` → folders (SET NULL), `cover_card_id` → cards (no action) | the deck routes |
+| `deck_cards` | each card's count in a deck | (`deck_id`, `card_id`) | `deck_id` → decks (CASCADE), `card_id` → cards (no action) | the deck routes |
+| `auth_rate_limits` | sign-in counters: a hashed key, its count and `reset_at` | `key` | none | the D1 limiter (§3.5); the sweep |
 
--- User data (read-write)
-users(id PK, email UNIQUE, display_name, password_hash?, email_verified, name_prompt, created_at)
-  -- display_name: typed, or a generated "Trainer-XXXX" handle (AU3); name_prompt: ask once to
-  -- choose a public name (accounts from before handles; PATCH /auth/me clears it)
-oauth_identities(provider, provider_id, user_id FK, PRIMARY KEY(provider, provider_id))
-sessions(id PK, user_id FK, expires_at, created_at)
-folders(id PK, user_id FK, parent_id FK?, name)
-decks(id PK, user_id FK, folder_id FK?, name, format, tint, updated)
-deck_cards(deck_id FK, card_id FK, count, PRIMARY KEY(deck_id, card_id))
-```
-
-Deltas from the first draft, per the live tcgdex shapes: `series.release_date`
-added; `sets.updated` dropped (tcgdex sets carry no `updated`);
-`cards.abilities_json` added. Per D9 (§3.4), the asset columns are the tcgdex
-**origin** base URLs — extensionless, per §4.4 — not R2 URLs: the original
-`*_r2_url` columns were replaced by `cards.image_url`, `sets.logo_url`/
-`symbol_url`, `series.logo_url` (migrations 0001/0002). tcgdex
-`variants_detailed` (per-physical-print foil/stamp data), `pricing` and
-`boosters` are deliberately **not** persisted — rationale in
-`apps/api/src/db/catalog.ts`. Catalog dates/timestamps are ISO text verbatim
-from tcgdex; user-data timestamps are integer epoch ms.
+"No action" refuses deleting a row another row still points at, so an ingest cannot orphan a
+deck. Deleting a user removes its sessions, identities, folders, decks and deck cards in one
+statement (§3.5); conventions.md "Database migrations" warns what that cascade does to a table
+rebuild. The reprint rule: `print_key` is a card's functional identity (ingest `map.ts`
+`printKey`), and `legal_*_effective` is legality OR'd across every print sharing it (the ingest
+post-pass `reprintLegalitySql`); readers fall back to the per-print flags, and the engine's
+`PROGRAM_ALIAS` table (`scripts/registry-aliases.ts`) is generated from it. tcgdex
+`variants_detailed`, `pricing` and `boosters` are not stored.
 
 #### 5.3.1 "No value" sentinels — the `mfb` set (D194)
 
@@ -1444,17 +1342,8 @@ columns, not the one first reported, and `rarity` is the larger leak.
 without a re-ingest). The KV cache prefix went `v3`→`v4` so the stale facet
 body can't outlive the deploy by up to a TTL.
 
-The write-side guard only takes effect on the next ingest of `mfb`; the rows
-in D1 still hold `"None"` until then. To discharge it at the source:
-
-```sh
-cd apps/api && bun scripts/with-deploy-token.ts bun scripts/ingest.ts --sets mfb --remote
-```
-
-(Idempotent — every statement is an `ON CONFLICT DO UPDATE` upsert, and
-mapping now emits NULL for those two columns.) It could not be run in the
-session that landed the fix: `api.tcgdex.net` is blocked by the network
-policy there.
+The ingest has written NULL there since. The 2026-08 note on the then-pending re-ingest
+is in `docs/archive/backend-data-plan.md`.
 
 #### 5.3.2 Catalog query census (D197) — three measurements, one migration
 
@@ -1512,40 +1401,9 @@ claims hundreds). The column is added, `mapCard` writes it (sentinel-normalised
 like the other facet vocabularies — see §5.3.1), and `CARDS_COLUMNS` emits it,
 so the next ingest populates it.
 
-⚠️ **Unproven until a re-ingest: the column has no values.** Discharge with:
-
-```sh
-cd apps/api && bun scripts/with-deploy-token.ts bun scripts/ingest.ts --remote     # then re-check the census below
-```
-
-```sql
-SELECT suffix, COUNT(*) FROM cards WHERE suffix IS NOT NULL GROUP BY suffix;
-```
-
-`api.tcgdex.net` is blocked by the network policy in this session too (as it
-was for D188, D194 and D197), so the ingest half remains outstanding.
-
-⚠️ **AND THE COLUMN IS NOT IN PRODUCTION AT ALL.** D197 recorded it as "NULL on
-all 3,786 rows"; it is stronger than that — migration `0006` was generated and
-proven against a fresh LOCAL D1, but **never applied to the remote database**
-(`PRAGMA table_info(cards)` on production has no `suffix`; `wrangler d1
-migrations apply` is a manual step and `deploy` does not run it). That is a
-deploy ORDERING constraint for D198, not a code problem, and it is sharp: the
-`/facets` handler now selects `cards.suffix` inside the same `db.batch()` as
-the other seven vocabularies, so deploying the Worker against an unmigrated
-database fails the WHOLE endpoint, not just the new field. **Apply the
-migration first:**
-
-```sh
-cd apps/api && bun run db:migrate:remote        # 0006 — before deploying D198
-```
-
-⚠️ **AND IT IS NOT ONLY `0006` (D203).** Production's `d1_migrations` table lists
-`0000`–`0003` only, checked 2026-08-04: `0004` (`decks.cover_card_id`) and `0005`
-(`users.favourite_deck_id`) are pending too, and `/decks` and `GET /auth/me`
-already read those columns. The command above is unchanged — it applies all
-three in order — but the ordering constraint is wider than this section said.
-**Full runbook: §3.7.1.**
+The 2026-08 notes that the column was still empty and its migration unapplied in
+production are in `docs/archive/backend-data-plan.md`; `release` now applies every
+migration before it deploys (§3.7.2).
 
 ### 5.3.3 `?suffix=` and `CatalogFacets.suffixes` (D198)
 
@@ -1782,79 +1640,4 @@ GET    /lobby/:code/ws           # strict code check (404) → upgrade check (42
                                  #   Mounted BEFORE the CORS middleware: ws
                                  #   handshakes aren't CORS-guarded and the 101
                                  #   response's headers are immutable
-```
-
----
-
-## 7. Frontend changes
-
-- Typed **API client** (shared or `apps/web/src/lib/api.ts`) replacing fixture
-  imports.
-- Swap `CARD_POOL` for a fetched, paginated, server-filtered card search.
-- Point deck + folder persistence at the API (behind the `persistedState` seam);
-  add **auth UI** (login/register, Google buttons, session state).
-- ✅ **Lobby transport swapped** (P1 m8): `net/channel.ts` is a WebSocket
-  channel against the DO; lobby types/reducer/codes come from
-  `packages/schema`. The api origin is read ONCE, in `src/lib/apiOrigin.ts`,
-  from **`VITE_API_ORIGIN`** (default `http://localhost:8787`; ws(s):// is
-  derived from it) — the M9 API client should reuse that module.
-- ✅ **CSP updated** (M9): `vite.config.ts` derives it from `VITE_API_ORIGIN`
-  via `loadEnv` (img-src + connect-src get the api origin, connect-src also
-  its ws(s) twin; scrydex removed). NOTE: the config re-derives the origin —
-  it can't import `apiOrigin.ts` (`import.meta.env`); a shared env-free
-  module is on the M9 review backlog (deck-builder.md).
-
----
-
-## 8. Work plan (milestones)
-
-1. ✅ **Scaffold** `apps/api` (Hono + wrangler) + `packages/schema` (+ stub
-   `packages/engine`); Bun workspaces; `/health` deployed green at
-   `https://colorless-api.jofrescari.workers.dev/health`.
-2. ✅ **Schemas** — tcgdex Zod schemas (`packages/schema/src/tcgdex/`, fixtures
-   + 19 tests + live sweep via `bun packages/schema/scripts/validate-live.ts`,
-   370 requests / 0 failures); lobby types/reducer moved to
-   `packages/schema/src/lobby/`, web importers now use `@colorless/schema`.
-3. ✅ **D1 migrations** — catalog + user tables via Drizzle
-   (`apps/api/src/db/`, migration `apps/api/drizzle/0000_tired_sentry.sql`,
-   scripts `db:generate` / `db:migrate:local` / `db:migrate:remote`). Applied
-   locally and remotely.
-4. ✅ **Ingest + R2 mirror** — local CLI `apps/api/scripts/ingest.ts` (validated
-   upserts, idempotent, `--dry-run`) + lazy cache-aside `/assets/*` mirror (D9,
-   §3.4). *Remote migrations 0001/0002 + full `--serie sv --remote` run pending
-   user approval.*
-5. ✅ **Catalog read API** — cards/sets/series with filtering/pagination + KV
-   cache (`apps/api/src/catalog/`); canonical domain `Card` in
-   `packages/schema/src/catalog/` (§5.2, §6).
-6. ✅ **Auth** — email/password + sessions + Google OAuth
-   (`apps/api/src/auth/`, §3.5 as-built; email flows 501 pending provider;
-   OAuth 503 until the user sets the two Google `wrangler secret`s).
-7. ✅ **Deck persistence API** — decks/folders CRUD tied to the session user
-   (`apps/api/src/decks/`, §6 as-built; domain schemas in
-   `packages/schema/src/decks/`; session gate extracted to
-   `apps/api/src/auth/requireUser.ts`, now also backing `GET /auth/me`).
-8. ✅ **Lobby Durable Object** — `LobbyDO` WS server running the shared
-   reducer (hibernation + alarms, `apps/api/src/lobby/`, §3.6 as-built); wire
-   schemas + `lobbyCode` moved into `packages/schema/src/lobby/`; client
-   transport swapped to WebSocket (`net/channel.ts`, `VITE_API_ORIGIN`).
-9. ✅ **Frontend swap (M9, 2026-07-13)** — typed zod-free client
-   `src/lib/api.ts`; builder on the server catalog (adapter
-   `src/features/builder/catalog.ts`, `useCardSearch`, `cardStore` deck
-   hydration; api gained repeatable type/rarity + sort + extended CardBrief —
-   D10, cache keys `catalog:v2:`); auth UI (`src/features/auth/`,
-   AuthProvider/AuthPage/AccountButton); decks & folders + deck contents on
-   the API (optimistic updates; localStorage deck store retired); CSP from
-   `VITE_API_ORIGIN`. Deferred items → deck-builder.md "M9 review backlog".
-10. **(stretch)** Cron Trigger to refresh new sets; widen ingest scope.
-
----
-
-## 9. Assumptions locked unless overridden
-
-- Bun-workspace monorepo; API + Lobby DO on Cloudflare **Workers** via `wrangler`.
-- **Hono** + **Zod**; **Drizzle** over D1; official `@tcgdex/sdk` for ingest.
-- Server **sessions** (http-only cookie), not stateless JWT.
-- Ingest filters to SV-era but writes the full-history schema.
-- English (`en`) first; schema leaves room for i18n later.
-- Match engine (actual gameplay) stays a placeholder this phase.
 ```
