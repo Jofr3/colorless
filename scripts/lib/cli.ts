@@ -1,6 +1,7 @@
 // Shared plumbing for guard scripts: failing, reporting and reading the environment.
 
 import { readFileSync } from "node:fs";
+import { STATIC_STEPS } from "../check";
 import { repoPath } from "./repo";
 
 export function fail(message: string): never {
@@ -82,9 +83,11 @@ export function wiringProblems(gate: string, site: string, call: string): string
   ];
 }
 
+const STATIC_CALL = "bun scripts/check.ts --static";
+
 /**
- * The `check` script with every `bun run <name>` it calls expanded in place, so a guard can see
- * whether `check` still runs it.
+ * The `check` script with every `bun run <name>` it calls and every `scripts/check.ts --static`
+ * expanded in place, so a guard can see whether `check` still runs it.
  */
 export function expandedCheckScript(): string {
   const pkg = parseJson(
@@ -98,9 +101,11 @@ export function expandedCheckScript(): string {
     const script = scripts[name];
     if (typeof script !== "string" || seen.has(name)) return "";
     seen.add(name);
-    return script.replace(/bun run ([\w:-]+)/g, (call, inner: string) =>
-      inner in scripts ? expand(inner, seen) : call,
-    );
+    return script
+      .replace(/bun run ([\w:-]+)/g, (call, inner: string) =>
+        inner in scripts ? expand(inner, seen) : call,
+      )
+      .replaceAll(STATIC_CALL, STATIC_STEPS.map((step) => `'${step}'`).join(" "));
   };
   return expand("check", new Set());
 }

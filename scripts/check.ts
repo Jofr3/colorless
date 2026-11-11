@@ -3,18 +3,51 @@
  * Runs independent check steps concurrently, at most one per core, and exits 1 if any failed. Each
  * argument is one step, split on spaces and run without a shell from the repo root; a bare name
  * that `node_modules/.bin` provides runs from there. A step's output is printed whole when it
- * finishes, followed by a table of every step's time and result.
+ * finishes, followed by a table of every step's time and result. `--static` alone runs
+ * STATIC_STEPS, which is `check:static`.
  *
  * It refuses to start while a mutation sweep's journal exists (`mutationJournalProblem`).
  *
  *   bun scripts/check.ts 'tsc -b' 'bun scripts/import-graph.ts --check'
+ *   bun scripts/check.ts --static
  */
 
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { availableParallelism } from "node:os";
-import { fail } from "./lib/cli";
 import { localBin, REPO_ROOT, repoPath } from "./lib/repo";
+
+/** `check:static`'s steps, one per line so that branches which each add a step do not conflict. */
+export const STATIC_STEPS: readonly string[] = [
+  "bun scripts/typecheck-coverage.ts",
+  "bun scripts/import-graph.ts --check",
+  "tsc -b",
+  "bun scripts/lint-coverage.ts",
+  "biome ci . --error-on-warnings",
+  "bun scripts/lua-constants.ts --check",
+  "bun scripts/lua-bridge-guard.ts",
+  "bun scripts/log-guard.ts",
+  "bun scripts/docs-writes.ts",
+  "bun scripts/comment-guard.ts",
+  "bun scripts/registry-aliases.ts --check",
+  "bun scripts/worker-bundle.ts --check",
+  "bun scripts/worker-types.ts",
+  "bun scripts/decision-index.ts --check",
+  "bun scripts/mutation/precheck.ts",
+  "bun scripts/migration-guard.ts",
+  "bun scripts/lock-check.ts",
+  "bun scripts/drizzle-drift.ts",
+];
+
+/** The steps a command line names. */
+export function stepsOf(argv: readonly string[]): readonly string[] {
+  return argv.length === 1 && argv[0] === "--static" ? STATIC_STEPS : argv;
+}
+
+function fail(message: string): never {
+  console.error(message);
+  process.exit(1);
+}
 
 /** Set to `1` to check anyway. */
 const OVERRIDE = "CHECK_DURING_MUTATION";
@@ -85,36 +118,40 @@ function run(step: string): Promise<Result> {
   });
 }
 
-const steps = process.argv.slice(2);
-if (steps.length === 0) fail("check: name at least one step to run.");
-const sweep = mutationJournalProblem();
-if (sweep !== undefined) fail(sweep);
+async function main(): Promise<void> {
+  const steps = stepsOf(process.argv.slice(2));
+  if (steps.length === 0) fail("check: name at least one step to run.");
+  const sweep = mutationJournalProblem();
+  if (sweep !== undefined) fail(sweep);
 
-const results: Result[] = [];
-const queue = [...steps];
-await Promise.all(
-  Array.from({ length: Math.min(availableParallelism(), steps.length) }, async () => {
-    for (let step = queue.shift(); step !== undefined; step = queue.shift()) {
-      const result = await run(step);
-      results.push(result);
-      const status = result.ok ? "ok" : "FAILED";
-      console.log(`\n── ${step} · ${status} · ${(result.ms / 1000).toFixed(1)}s`);
-      if (result.output.trim() !== "") console.log(result.output.trimEnd());
-    }
-  }),
-);
-
-const width = Math.max(...steps.map((s) => s.length));
-console.log("");
-for (const step of steps) {
-  const result = results.find((r) => r.step === step);
-  if (result === undefined) continue;
-  console.log(
-    `${step.padEnd(width)}  ${(result.ms / 1000).toFixed(1).padStart(6)}s  ${result.ok ? "ok" : "FAILED"}`,
+  const results: Result[] = [];
+  const queue = [...steps];
+  await Promise.all(
+    Array.from({ length: Math.min(availableParallelism(), steps.length) }, async () => {
+      for (let step = queue.shift(); step !== undefined; step = queue.shift()) {
+        const result = await run(step);
+        results.push(result);
+        const status = result.ok ? "ok" : "FAILED";
+        console.log(`\n── ${step} · ${status} · ${(result.ms / 1000).toFixed(1)}s`);
+        if (result.output.trim() !== "") console.log(result.output.trimEnd());
+      }
+    }),
   );
+
+  const width = Math.max(...steps.map((s) => s.length));
+  console.log("");
+  for (const step of steps) {
+    const result = results.find((r) => r.step === step);
+    if (result === undefined) continue;
+    console.log(
+      `${step.padEnd(width)}  ${(result.ms / 1000).toFixed(1).padStart(6)}s  ${result.ok ? "ok" : "FAILED"}`,
+    );
+  }
+  const failed = results.filter((r) => !r.ok).map((r) => r.step);
+  if (failed.length > 0) {
+    console.error(`\ncheck: ${String(failed.length)} step(s) FAILED: ${failed.join(", ")}`);
+    process.exit(1);
+  }
 }
-const failed = results.filter((r) => !r.ok).map((r) => r.step);
-if (failed.length > 0) {
-  console.error(`\ncheck: ${String(failed.length)} step(s) FAILED: ${failed.join(", ")}`);
-  process.exit(1);
-}
+
+if (import.meta.main) await main();

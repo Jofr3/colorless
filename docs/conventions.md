@@ -72,12 +72,12 @@ something else.
   decision whose sections it pins. Tests must not read source or doc text, and
   must not pin `engineVersion`.
 - **Biome** for lint/format; **Vitest** for tests. Run **`bun run check`** before
-  calling work done. It is `check:static` (the steps `package.json` lists under
-  that name: guards, generators' `--check`, `tsc -b`, `biome ci`, the mutant `precheck`), `check:lua` (the headless Lua tests,
+  calling work done. It is `check:static` (`STATIC_STEPS` in `scripts/check.ts`:
+  guards, generators' `--check`, `tsc -b`, `biome ci`, the mutant `precheck`), `check:lua` (the headless Lua tests,
   requiring Balatro's source) and `check:test` (vitest). `scripts/check.ts` runs
   `check:static` and `check:lua`, and the steps of `check:static`, concurrently,
-  printing each step's output when it finishes and then a timing table; a step is
-  one quoted argument, so adding one to `package.json` is all it takes.
+  printing each step's output when it finishes and then a timing table. Adding a
+  step is one line in `STATIC_STEPS`; an ad-hoc run takes steps as quoted arguments.
   `check:test` runs after them on its own, since vitest already uses every core
   and sharing them makes its timeouts flaky. CI runs the same three
   names, except that Lua tests needing Balatro's source are skipped there, in

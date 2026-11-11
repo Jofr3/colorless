@@ -1,8 +1,10 @@
 import { spawn, spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
+import { STATIC_STEPS, stepsOf } from "./check";
+import { expandedCheckScript } from "./lib/cli";
 import { repoPath } from "./lib/repo";
 
 // Every run reads a private journal path without the override, so a mutation sweep's own journal
@@ -35,6 +37,27 @@ describe("check", () => {
     const run = check(["true", "no-such-check-step"]);
     expect(run.status).toBe(1);
     expect(run.stderr).toContain("FAILED: no-such-check-step");
+  });
+});
+
+describe("check's static steps", () => {
+  it("names a script that exists, or a bin node_modules provides, in every step", () => {
+    expect(STATIC_STEPS.length).toBeGreaterThan(0);
+    for (const step of STATIC_STEPS) {
+      const [bin = "", script = ""] = step.split(" ");
+      const path = bin === "bun" ? script : `node_modules/.bin/${bin}`;
+      expect(existsSync(repoPath(path)), step).toBe(true);
+    }
+  });
+
+  it("runs the list for --static alone, and the arguments otherwise", () => {
+    expect(stepsOf(["--static"])).toBe(STATIC_STEPS);
+    expect(stepsOf(["true", "--static"])).toEqual(["true", "--static"]);
+  });
+
+  it("is what check runs, so a guard looking for its own step finds it", () => {
+    const check = expandedCheckScript();
+    for (const step of STATIC_STEPS) expect(check).toContain(`'${step}'`);
   });
 });
 
