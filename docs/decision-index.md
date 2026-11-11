@@ -78,6 +78,7 @@ fails when it is stale, so rerun the script after adding a decision.
 | 2026-11-11 | Documentation audit Phases 1-6: one way in, as-built references, history archived verbatim, and comments with… | decisions.md:1549 |
 | 2026-11-11 | Developer experience audit decisions and Phase 0: the printed dev URL works, and the docs stop sending agents… | decisions.md:1566 |
 | 2026-11-11 | Developer experience audit Phases 1-5: worktrees need only bun install, a free-port dev pair that reloads aft… | decisions.md:1594 |
+| 2026-11-11 | Maintainability audit decisions and Phase 0: the corpus merges by row id, check:static's steps one per line,… | decisions.md:1626 |
 
 ## Numbered decisions
 
