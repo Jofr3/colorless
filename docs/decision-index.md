@@ -11,70 +11,70 @@ fails when it is stale, so rerun the script after adding a decision.
 | 2026-10-09 | Requested rotated-card support | decisions.md:150 |
 | 2026-10-22 | Online play in the Lua frontend | decisions.md:154 |
 | 2026-10-22 | The Lua frontend replaces React | decisions.md:160 |
-| 2026-10-23 | Path routes replace query-string pages | decisions.md:166 |
-| 2026-10-23 | Code-quality pass: minimal comments, no source-text tests | decisions.md:172 |
-| 2026-10-24 | One gate for CI and check; symbol-guarded re-anchoring | decisions.md:182 |
-| 2026-10-25 | Safety nets before the architecture refactors | decisions.md:188 |
-| 2026-10-25 | A verified provider link revokes an unverified account's credentials | decisions.md:201 |
-| 2026-10-25 | Engine untangling: one implementation per rule | decisions.md:205 |
-| 2026-10-26 | Engine↔client contract: clients read what the engine says | decisions.md:219 |
-| 2026-10-26 | Frontend structure: named wire, a typed page shell, one simulator flow | decisions.md:233 |
-| 2026-10-27 | Performance: measure first, then the boot download, the catalog cache, the save, the frame and the loop | decisions.md:246 |
-| 2026-10-27 | Database safety nets before any schema change | decisions.md:262 |
-| 2026-10-27 | Database hot fixes: the shared quota, races and silent failures | decisions.md:272 |
-| 2026-10-27 | Database additive changes: D1 sign-in counters, versioned decks, sweeps and limits | decisions.md:287 |
-| 2026-10-27 | Account deletion, library controls, and fewer catalog and deck reads | decisions.md:301 |
-| 2026-10-27 | Security safety nets before the fixes | decisions.md:312 |
-| 2026-10-27 | Security hot fixes: lobby origins, the print bridge, seat ownership and the request edge | decisions.md:323 |
-| 2026-10-27 | A same-site Lax session cookie and a cross-site guard | decisions.md:350 |
-| 2026-10-27 | Quota and abuse limits: searches in the browser, rate-limit bindings, bounded lobbies | decisions.md:358 |
-| 2026-10-27 | A cryptographic match RNG and secret seat credentials | decisions.md:391 |
-| 2026-10-27 | Auth hardening, an audit trail, and private default names | decisions.md:410 |
-| 2026-10-28 | Online lobby reliability: a client-to-DO seam suite and the fixes it found | decisions.md:436 |
-| 2026-10-28 | Deck saves that survive a lost response, and client request deadlines | decisions.md:459 |
-| 2026-10-28 | API failure paths: D1 write failures and stalled upstreams degrade to sensible answers | decisions.md:476 |
-| 2026-10-28 | Data ops and the release pipeline: a restore recipe proven locally, recovery per release step | decisions.md:490 |
-| 2026-10-28 | Engine safety nets: real-card fuzz, a wider shape pin, and version 41 retired | decisions.md:510 |
-| 2026-10-28 | The Lua frontend's browser smoke, named mailbox rows, and a page that says what happened | decisions.md:532 |
-| 2026-10-28 | Online lobby follow-ups: a faster sweep while two seats are held, and a definite "not found" | decisions.md:545 |
-| 2026-10-29 | Frontend & UI audit Phase 1: the deck pages speak, keyboard focus shows, and a loading deck is not "unavailab… | decisions.md:561 |
-| 2026-10-29 | Frontend & UI audit Phase 2: the table speaks, plays by keyboard, and holds online buttons while sending | decisions.md:575 |
-| 2026-10-29 | Frontend & UI audit Phase 3: the host page checks, counts and compresses its boot, and the canvas follows the… | decisions.md:592 |
-| 2026-10-30 | Frontend & UI audit Phase 4: data in flight keeps what is on screen, and the Sandbox button no longer waits o… | decisions.md:608 |
-| 2026-10-30 | Frontend & UI audit Phase 5: a 60 fps cap, still frames skipped, and less work per frame and per turn | decisions.md:623 |
-| 2026-10-30 | Frontend & UI audit Phase 6: full-density rendering, an Interface Size setting, phone legibility and text fie… | decisions.md:640 |
-| 2026-10-31 | Frontend & UI audit Phase 7: shared page widgets, simulator and page splits, spatial arrows, history tooltips… | decisions.md:666 |
-| 2026-11-09 | Frontend & UI audit follow-ups: Interface Size on the table and the online lobby, filter option lists, toolti… | decisions.md:695 |
-| 2026-11-09 | Backend and API audit safety nets, and what production says | decisions.md:759 |
-| 2026-11-09 | Backend and API audit Phases 1-4: a lobby alarm that backs off, builder pages from the card index, saves that… | decisions.md:785 |
-| 2026-11-09 | Backend and API audit Phase 5 and CAT2: every catalog miss spends the search budget, and failures say why | decisions.md:832 |
-| 2026-11-09 | Builder prefetch from the index only, page input once the wipe has committed, and springs that do not ring on… | decisions.md:872 |
-| 2026-11-09 | Dependency audit safety nets: Lua for the mutants job, a weekly full-tree report, one Workers runtime in the… | decisions.md:887 |
-| 2026-11-09 | Dependency audit Phase 1: grouped Dependabot, Node 24 actions, one bun and one Node from laptop to CI, a rele… | decisions.md:904 |
-| 2026-11-09 | Dependency refresh: wrangler 4.158 and its own miniflare 5 together, hono past its advisories, in-range dev t… | decisions.md:926 |
-| 2026-11-09 | Deploy the API Worker minified with its source maps, gate the bundle the deploy builds, and pass zod refineme… | decisions.md:966 |
-| 2026-11-09 | Dependency audit Phase 4: an MIT LICENSE, served third-party notices with a Credits button, and love.js 11.4.… | decisions.md:980 |
-| 2026-11-09 | Generate the API Worker's types with wrangler types, check them in check:static, and drop @cloudflare/workers… | decisions.md:1018 |
-| 2026-11-09 | TypeScript 7 for every typecheck, with the TypeScript 6 parser kept for the mutation scripts | decisions.md:1038 |
-| 2026-11-09 | Vitest 5, with the module cache's new key and path | decisions.md:1054 |
-| 2026-11-10 | Biome 2.6.6, with the migrated config and its lint fixes | decisions.md:1067 |
-| 2026-11-10 | Build and CI/CD audit safety nets: CI keeps its static signal, the mutant sample cannot silently lose its dif… | decisions.md:1091 |
-| 2026-11-10 | Release identity and gates: every deploy names its commit, deploy:web cannot ship a stale dist, and the relea… | decisions.md:1104 |
-| 2026-11-10 | CI efficiency and secret scanning: one setup action, a bounded install cache, three jobs, and gitleaks on eve… | decisions.md:1152 |
-| 2026-11-10 | Lua build: the package uuid comes from game.data, so the build is reproducible and the IndexedDB package surv… | decisions.md:1173 |
-| 2026-11-10 | An opt-in pre-push hook runs Biome, the decision index and, when installed, gitleaks on the commits being pus… | decisions.md:1190 |
-| 2026-11-10 | Production only, no staging environment; the build audit's merge and what is left | decisions.md:1208 |
-| 2026-11-10 | Two Cloudflare tokens: a read-only ambient one, and a deploy token only production writes load | decisions.md:1216 |
-| 2026-11-10 | The web Worker's 404 script, a web rollback rehearsal, locked-down Actions, and lexio on the deploy token | decisions.md:1230 |
-| 2026-11-10 | Observability audit: the log guard, logErrorThrottledBy, and a runbook a player's report can be looked up in | decisions.md:1246 |
-| 2026-11-10 | Observability audit Phase 1: an unhandled error names its frames, info lines get a level, Workers Issues and… | decisions.md:1279 |
-| 2026-11-10 | Observability audit Phase 2: frame_failed under the lobby code, the DO's code-bug lines at error, and match_s… | decisions.md:1335 |
-| 2026-11-10 | Observability audit Phase 4: a 6-hourly production watch from GitHub Actions, retried, that never fails on a… | decisions.md:1367 |
-| 2026-11-10 | Observability audit Phases 1, 2 and 4 merged | decisions.md:1388 |
-| 2026-11-10 | Observability audit Phase 3: prod:report: production usage, latency, 5xx, D1, thresholds and SLOs in one read… | decisions.md:1392 |
-| 2026-11-10 | Observability audit released | decisions.md:1481 |
-| 2026-11-11 | No email alert for a new Workers issue (amends decision 2a) | decisions.md:1494 |
-| 2026-11-11 | Documentation audit decisions and Phase 0: wrong facts fixed, and production writes only through the deploy t… | decisions.md:1499 |
+| 2026-10-23 | Path routes replace query-string pages | decisions.md:173 |
+| 2026-10-23 | Code-quality pass: minimal comments, no source-text tests | decisions.md:179 |
+| 2026-10-24 | One gate for CI and check; symbol-guarded re-anchoring | decisions.md:189 |
+| 2026-10-25 | Safety nets before the architecture refactors | decisions.md:195 |
+| 2026-10-25 | A verified provider link revokes an unverified account's credentials | decisions.md:208 |
+| 2026-10-25 | Engine untangling: one implementation per rule | decisions.md:212 |
+| 2026-10-26 | Engine↔client contract: clients read what the engine says | decisions.md:226 |
+| 2026-10-26 | Frontend structure: named wire, a typed page shell, one simulator flow | decisions.md:240 |
+| 2026-10-27 | Performance: measure first, then the boot download, the catalog cache, the save, the frame and the loop | decisions.md:253 |
+| 2026-10-27 | Database safety nets before any schema change | decisions.md:269 |
+| 2026-10-27 | Database hot fixes: the shared quota, races and silent failures | decisions.md:279 |
+| 2026-10-27 | Database additive changes: D1 sign-in counters, versioned decks, sweeps and limits | decisions.md:294 |
+| 2026-10-27 | Account deletion, library controls, and fewer catalog and deck reads | decisions.md:308 |
+| 2026-10-27 | Security safety nets before the fixes | decisions.md:319 |
+| 2026-10-27 | Security hot fixes: lobby origins, the print bridge, seat ownership and the request edge | decisions.md:330 |
+| 2026-10-27 | A same-site Lax session cookie and a cross-site guard | decisions.md:357 |
+| 2026-10-27 | Quota and abuse limits: searches in the browser, rate-limit bindings, bounded lobbies | decisions.md:365 |
+| 2026-10-27 | A cryptographic match RNG and secret seat credentials | decisions.md:398 |
+| 2026-10-27 | Auth hardening, an audit trail, and private default names | decisions.md:417 |
+| 2026-10-28 | Online lobby reliability: a client-to-DO seam suite and the fixes it found | decisions.md:443 |
+| 2026-10-28 | Deck saves that survive a lost response, and client request deadlines | decisions.md:466 |
+| 2026-10-28 | API failure paths: D1 write failures and stalled upstreams degrade to sensible answers | decisions.md:483 |
+| 2026-10-28 | Data ops and the release pipeline: a restore recipe proven locally, recovery per release step | decisions.md:497 |
+| 2026-10-28 | Engine safety nets: real-card fuzz, a wider shape pin, and version 41 retired | decisions.md:517 |
+| 2026-10-28 | The Lua frontend's browser smoke, named mailbox rows, and a page that says what happened | decisions.md:539 |
+| 2026-10-28 | Online lobby follow-ups: a faster sweep while two seats are held, and a definite "not found" | decisions.md:552 |
+| 2026-10-29 | Frontend & UI audit Phase 1: the deck pages speak, keyboard focus shows, and a loading deck is not "unavailab… | decisions.md:568 |
+| 2026-10-29 | Frontend & UI audit Phase 2: the table speaks, plays by keyboard, and holds online buttons while sending | decisions.md:582 |
+| 2026-10-29 | Frontend & UI audit Phase 3: the host page checks, counts and compresses its boot, and the canvas follows the… | decisions.md:599 |
+| 2026-10-30 | Frontend & UI audit Phase 4: data in flight keeps what is on screen, and the Sandbox button no longer waits o… | decisions.md:615 |
+| 2026-10-30 | Frontend & UI audit Phase 5: a 60 fps cap, still frames skipped, and less work per frame and per turn | decisions.md:630 |
+| 2026-10-30 | Frontend & UI audit Phase 6: full-density rendering, an Interface Size setting, phone legibility and text fie… | decisions.md:647 |
+| 2026-10-31 | Frontend & UI audit Phase 7: shared page widgets, simulator and page splits, spatial arrows, history tooltips… | decisions.md:673 |
+| 2026-11-09 | Frontend & UI audit follow-ups: Interface Size on the table and the online lobby, filter option lists, toolti… | decisions.md:702 |
+| 2026-11-09 | Backend and API audit safety nets, and what production says | decisions.md:766 |
+| 2026-11-09 | Backend and API audit Phases 1-4: a lobby alarm that backs off, builder pages from the card index, saves that… | decisions.md:792 |
+| 2026-11-09 | Backend and API audit Phase 5 and CAT2: every catalog miss spends the search budget, and failures say why | decisions.md:839 |
+| 2026-11-09 | Builder prefetch from the index only, page input once the wipe has committed, and springs that do not ring on… | decisions.md:879 |
+| 2026-11-09 | Dependency audit safety nets: Lua for the mutants job, a weekly full-tree report, one Workers runtime in the… | decisions.md:894 |
+| 2026-11-09 | Dependency audit Phase 1: grouped Dependabot, Node 24 actions, one bun and one Node from laptop to CI, a rele… | decisions.md:911 |
+| 2026-11-09 | Dependency refresh: wrangler 4.158 and its own miniflare 5 together, hono past its advisories, in-range dev t… | decisions.md:933 |
+| 2026-11-09 | Deploy the API Worker minified with its source maps, gate the bundle the deploy builds, and pass zod refineme… | decisions.md:973 |
+| 2026-11-09 | Dependency audit Phase 4: an MIT LICENSE, served third-party notices with a Credits button, and love.js 11.4.… | decisions.md:987 |
+| 2026-11-09 | Generate the API Worker's types with wrangler types, check them in check:static, and drop @cloudflare/workers… | decisions.md:1025 |
+| 2026-11-09 | TypeScript 7 for every typecheck, with the TypeScript 6 parser kept for the mutation scripts | decisions.md:1045 |
+| 2026-11-09 | Vitest 5, with the module cache's new key and path | decisions.md:1061 |
+| 2026-11-10 | Biome 2.6.6, with the migrated config and its lint fixes | decisions.md:1074 |
+| 2026-11-10 | Build and CI/CD audit safety nets: CI keeps its static signal, the mutant sample cannot silently lose its dif… | decisions.md:1098 |
+| 2026-11-10 | Release identity and gates: every deploy names its commit, deploy:web cannot ship a stale dist, and the relea… | decisions.md:1111 |
+| 2026-11-10 | CI efficiency and secret scanning: one setup action, a bounded install cache, three jobs, and gitleaks on eve… | decisions.md:1159 |
+| 2026-11-10 | Lua build: the package uuid comes from game.data, so the build is reproducible and the IndexedDB package surv… | decisions.md:1180 |
+| 2026-11-10 | An opt-in pre-push hook runs Biome, the decision index and, when installed, gitleaks on the commits being pus… | decisions.md:1197 |
+| 2026-11-10 | Production only, no staging environment; the build audit's merge and what is left | decisions.md:1215 |
+| 2026-11-10 | Two Cloudflare tokens: a read-only ambient one, and a deploy token only production writes load | decisions.md:1223 |
+| 2026-11-10 | The web Worker's 404 script, a web rollback rehearsal, locked-down Actions, and lexio on the deploy token | decisions.md:1237 |
+| 2026-11-10 | Observability audit: the log guard, logErrorThrottledBy, and a runbook a player's report can be looked up in | decisions.md:1253 |
+| 2026-11-10 | Observability audit Phase 1: an unhandled error names its frames, info lines get a level, Workers Issues and… | decisions.md:1286 |
+| 2026-11-10 | Observability audit Phase 2: frame_failed under the lobby code, the DO's code-bug lines at error, and match_s… | decisions.md:1342 |
+| 2026-11-10 | Observability audit Phase 4: a 6-hourly production watch from GitHub Actions, retried, that never fails on a… | decisions.md:1374 |
+| 2026-11-10 | Observability audit Phases 1, 2 and 4 merged | decisions.md:1395 |
+| 2026-11-10 | Observability audit Phase 3: prod:report: production usage, latency, 5xx, D1, thresholds and SLOs in one read… | decisions.md:1399 |
+| 2026-11-10 | Observability audit released | decisions.md:1488 |
+| 2026-11-11 | No email alert for a new Workers issue (amends decision 2a) | decisions.md:1501 |
+| 2026-11-11 | Documentation audit decisions and Phase 0: wrong facts fixed, and production writes only through the deploy t… | decisions.md:1506 |
 
 ## Numbered decisions
 
