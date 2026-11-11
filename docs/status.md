@@ -12,30 +12,42 @@ a sandbox, or play them online against another account. Updated 2026-11-11.
 | `apps/api` | Hono Worker (`colorless-api`) on D1 and R2: catalog, auth, decks, and the `LobbyDO` that runs online matches. |
 | `src/` | The TypeScript bridge between the browser, the engine and the Lua UI (`src/host`, `src/lua`, `src/game`, `src/decks`, `src/online`, `src/lib`, and `src/seam`, the client-to-API and client-to-lobby tests). |
 | `frontend/lua` | The UI, a LÖVE app run by love.js; `frontend/lua/README.md` covers its structure and the mailbox protocol. |
-| `scripts/` | Dev tooling: catalog ingest, generators with `--check` gates, the mutation corpus (`scripts/mutation`). |
+| `scripts/` | Dev tooling: generators with `--check` gates, the guards in `check:static`, the e2e smoke, the mutation corpus (`scripts/mutation`). The catalog ingest is `apps/api/scripts/ingest.ts`. |
 
 ## Working on it
 
+- First run and prerequisites: the root `README.md`, "Getting started". The docs map, the resume protocol and where each common task's recipe lives: `docs/README.md`.
 - `bun run check` is the gate, and CI runs the same steps. It needs Balatro's source at `../balatro-source` or `BALATRO_SOURCE` for the Lua tests and build.
-- `bun run dev:all` starts the web app and the API. The local D1 catalog setup is in `workstreams/backend-data.md`.
+- `bun run dev:all` starts the web app and the API. The local D1 catalog is loaded by the ingest in `workstreams/backend-data.md` §3.4.1.
 - `bun run release` checks, migrates the remote D1, deploys the API, then the web app, checks both, and tags the release `release-YYYYMMDD-HHMM`. `release:gate` refuses when local and remote `print_key` differ, because the reprint alias table is generated from the local catalog: re-ingest locally and rerun `bun scripts/registry-aliases.ts`.
 - After adding a `decisions.md` entry, run `bun run docs:index`.
 
 ## Current state
 
 - **Deployed:** what is live is the newest `release-*` tag (`git describe --tags --abbrev=0 --match 'release-*'`); not yet live: `git log --oneline <tag>..origin/main`. `GET /health` (`version.tag`, the API) and the page's `<meta name="build">` (the web app) confirm it (`workstreams/backend-data.md` §3.7.2).
-- **Card coverage:** the coverage program finished in October. `simulationGaps` lists text the engine still can't run, and the builder shows it on the card.
-- **Architecture audit:** Phases 0–4 are done (`decisions.md`, 2026-10-24 to 2026-10-26). Left out on purpose: H5 (explicit card-pool cache) and the host art-loader slice.
-- **Performance:** the 2026-10-27 work in `decisions.md` is deployed. `bun run bench` is the engine benchmark; its fingerprint must not change in a pure performance change.
-- **Deferred:** card readings left for a rulings review are the `R-…` entries in `decisions.md` and the "Ruling notes" in `reference/card-revision.md`.
+- **Finished and released:** the card-coverage program (October), and the audits of 2026-10-24 to 2026-11-10 (architecture, performance, database, security, reliability, UI, API, dependencies, build and CI, observability). Each has dated entries in `decisions.md`; `decision-index.md` lists them.
 
-## Docs
+## Open items
 
-| File | What it's for |
-|---|---|
-| `conventions.md` | How to work here: code and test rules, the mutation corpus, generators, releases, and lessons from earlier slices. Read "Code & quality" before changing code. |
-| `decisions.md` | Why things are the way they are. New decisions are dated `###` entries at the end. |
-| `decision-index.md` | Generated: where each numbered decision (D1–D647) and each dated entry is written up. Look decisions up here rather than reading the archive. |
-| `workstreams/*.md` | Per-area design notes: backend and data, deck builder, simulator, online, polish. |
-| `reference/` | The condensed rules (`ptcg-rules.md`) and coverage backlogs. |
-| `archive/` | The old session log (`progress.md`) and simulator build history, kept verbatim. Look things up there through the index; don't read them whole. |
+Each names where it is written up (`decisions.md` entries by date and title).
+
+- **2026-12-01, Cloudflare's Workers Logs pricing change:** recheck the free Workers Logs allowance, and whether Workers Issues stays free (2026-11-09 "Backend and API audit safety nets, and what production says"; 2026-11-10 "Observability audit Phase 1"; 2026-11-11 "No email alert for a new Workers issue").
+- **Latency SLO:** revisit after a month of `prod:report` runs (2026-11-10 "Observability audit Phase 3", "For the user"; "Observability audit released").
+- **The old `agents` Cloudflare token:** revoke or narrow it when the user says so (2026-11-10 "The web Worker's 404 script, a web rollback rehearsal, …", "Still open").
+- **API Worker rollback:** never rehearsed; the web rollback was (same entry; `workstreams/backend-data.md` §3.7.3).
+- **Google OAuth callback:** confirm the deployed API's callback is registered on the Google client (the root `README.md`, "Google login"; the API was renamed in 2026-10-22 "The Lua frontend replaces React").
+- **Deferred dependency majors:** Node 24 in Q1 2027 (`conventions.md` "Dependencies", Toolchain); drizzle stays on 0.x (2026-11-09 "Dependency refresh: wrangler 4.158 …", user decision 13). `bun run deps:check` reports the rest.
+- **Uploaded avatars:** avatars are generated from the account (D82); uploads are still open (`archive/workstreams/polish.md`).
+- **UI items not done:** the builder Retry's hit area (needs a 1 px button move), multi-set search (needs an API change), and the manual checks the user left out: NVDA, real devices, a saved credential (2026-11-09 "Frontend & UI audit follow-ups").
+
+## Known limitations
+
+- **Cards:** `simulationGaps` marks card text the engine does not run (none in Standard), and the builder shows it on the card. Data and design gaps are in `reference/card-revision.md` "Deferred"; readings left for a rulings review are the `R-…` entries in `decisions.md` and that file's "Ruling notes".
+- **Local play** does not enforce deck legality (online does), and a saved local game is dropped on any engine version change (2026-10-26 "Engine↔client contract").
+- **No spectating** in the Lua client: a full lobby says so (`frontend/lua/README.md`, Online).
+- **No email:** password reset and email verification answer 501 until an email provider is chosen (`workstreams/backend-data.md` §3.5).
+- **One site:** both Workers are on `workers.dev`; a custom domain must keep the app and the API on one site, or sign-in breaks (root `README.md`, "Deployment").
+- **Production only**, no staging environment (2026-11-10 "Production only, no staging environment").
+- **Workers Free plan:** daily account-wide limits, and an accepted availability risk from request floods (`workstreams/backend-data.md` §3.7.4).
+- **Browser:** the app needs WebGL and WebAssembly (`frontend/lua/web/host.js`). Nothing is reported off the device when the client fails (2026-11-10 "Observability audit: the log guard …", 5a).
+- **Building** the frontend needs Balatro's source tree (root `README.md`, "Getting started").

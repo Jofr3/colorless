@@ -29,9 +29,11 @@ The root `index.html` is the host page. `build:lua` writes the love.js runtime, 
 
 The production HTML carries a Content-Security-Policy (injected by `vite.config.ts`): same-origin scripts plus `'wasm-unsafe-eval'` for love.wasm, the API origin and its WebSocket twin for `connect-src`/`img-src`, and `data:`/`blob:` images and media.
 
-The build defaults to the sibling `../balatro-source` directory, including its installed `love.js` package. Override with `BALATRO_SOURCE=/absolute/path/to/balatro-source`. No changes are made to that source tree. The compiler uses compatibility mode with 128 MiB initial memory, as in the existing Balatro web build; cross-origin isolation headers are not required.
+The build defaults to the sibling `../balatro-source` directory, including its installed `love.js` package (the root README's "Getting started" describes that tree). Override with `BALATRO_SOURCE=/absolute/path/to/balatro-source`. No changes are made to that source tree. The compiler uses compatibility mode with 128 MiB initial memory, as in the existing Balatro web build; cross-origin isolation headers are not required.
 
-## This milestone
+To run a second web/API pair beside `dev:all` (for browser QA), give each its own ports and point them at each other: the web build's `VITE_API_ORIGIN` at the API, and the API's `APP_ORIGIN` at the page. `bun run e2e` already does this on free ports with its own D1 (`scripts/e2e.ts`).
+
+## Home and settings
 
 - Three equally sized menu buttons: Sandbox (blue) → `/sandbox`, Online (red) → the lobby modal at `/online`, Decks (pale green) → the deck library at `/decks`.
 - Account opens the Account tab in the Lua settings popup. Game, Graphics, Audio and Account share Balatro's overlay, border, controls and Back button. The Account tab shows your email in a disabled input, edits your display name, saves to the shared API, and signs out. Sign-in and registration open a Lua modal with email/password fields and Google sign-in, then return to the Account tab. The modal uses the same border, buttons, motion and screen effects as Settings.
@@ -117,6 +119,11 @@ The palette follows Balatro's `globals.lua`: red `#FE5F55`, blue `#009DFF`, gree
 - `src/online/lobbyClient.ts`: the framework-free lobby WebSocket client used by the Lua adapters; `createLobby.ts` mints a code.
 - `src/lua/online.ts` (`LuaOnline`), `onlineTable.ts` (`LuaOnlineMatch`) and `tableSource.ts` (`TableSource`, `LocalTableSource`): the online modal adapter, the online table source and the seam that lets one `LuaSimulator` drive local and online games.
 - `web/`: browser bootstrap (`host.js`, `host.css`; the page itself is the root `index.html`): the love.js `Module`, the WebAssembly/WebGL check, the early `love.wasm` download and compile (counted into one boot bar), the gzipped game package (`game.data.gz`, handed to host.js by `build.mjs`'s `Module.fetchPackage` patch and unpacked with DecompressionStream, with the plain `game.data` as fallback), the loading and failure overlay, boot performance marks, mailbox writes and their revision list, the viewport/reduced-motion mailbox, card art, the menu music (`music1.ogg`, published beside `game.data` and written into the runtime's filesystem after Lua is ready, only once Lua asks for it: never for a muted player or one whose volume is zero, and not at start under Save-Data), and the screen wipe's eight fallback scans (`transition_cards/`, published and written the same way, for everyone). `host.js` is checked JavaScript (`// @ts-check`, `web/tsconfig.json`).
+- `ui/sim_*.lua`: the rest of the table, split by concern and mixed into `Simulator` at the end of `ui/simulator.lua`: `sim_reconcile` (a snapshot onto the table, card motion across snapshots), `sim_draw`, `sim_controls` (buttons, pile clicks, hit tests), `sim_input` (pointer, keyboard and wheel handlers, the overlays a control opens), `sim_focus` (the keyboard ring), `sim_targeting` (what a prompt can pick), `sim_drag`, `sim_juice` (pops, sounds, the game-over panel), `sim_presence` (the online opponent) and `sim_shared`. `sim_layout` is the table's geometry and `sim_speech` what it says to a screen reader.
+- Deck pages: `ui/library.lua` (the deck library), `ui/builder.lua` (the builder, with `ui/builder_deck.lua` for its deck panel, `ui/builder_filters.lua` for the filters dialog and `ui/text_area.lua` for the decklist field) and `ui/sandbox.lua` (the sandbox chooser). `ui/deck_picker.lua` is the picker the chooser and the lobby share; `deck_pile`, `deck_row`, `deck_labels` and `deck_stats` draw decks and their counts.
+- The lobby's parts: `ui/lobby_seats.lua` (the versus seats) and `ui/lobby_size.lua` (how far Interface Size grows the lobby).
+- Shared widgets: `ui/popup.lua` (the card hover popup), `ui/modal.lua`, `ui/pager.lua` and `ui/wheel_pager.lua`, `ui/tooltip.lua`, `ui/hit_area.lua` (larger hit areas than faces), `ui/card_alert.lua` (the red "!" badge), `ui/dynatext.lua` and `ui/page_text.lua` (Balatro's animated text), `ui/energy.lua` (energy glyphs), `ui/sprites.lua` (stake chips), `ui/dissolve.lua`, `ui/transition_art.lua`, `ui/display.lua` and `ui/interface_size.lua` (on-screen size and Settings' Interface Size).
+- The logo: `ui/menu_logo.lua`, with `ui/menu_logo_layout.lua` and `ui/logo_mask.lua`, which `tools/build-logo.mjs` generates and uses (`assets/branding/SOURCES.md`).
 - `build.mjs`: stages the application and local resources, then invokes love.js into `public/love/`.
 
 Card render textures are recreated after viewport changes because love.js clears canvas contents when resizing its WebGL backbuffer. Keep that behavior when adding future card artwork.
@@ -530,7 +537,7 @@ key (a stack's bottom card) is inferred from frame to frame and resets on reload
 Protocol: Lua prints `COLORLESS:online:<cmd>` (fields encoded with
 `ui/codec.lua`, TAB-separated), which the bridge's shell hands to `LuaOnline`. Commands:
 `open [code]`, `close`, `create`, `join code`, `leave [home]`, `decks`,
-`select deckId`, `ready 1|0`, `kick`, `copy code|link`; `input` and
+`select deckId`, `ready 1|0`, `kick` (no Lua control sends it yet), `copy code|link`; `input` and
 `finish-input` stay in the shell for the native code/search proxies. `LuaOnline`
 publishes to `__online.txt`: a header
 (revision, step, busy, message, code, role, link, countdown, notice, decks
