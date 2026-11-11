@@ -66,7 +66,6 @@ export interface TableHistory {
  * can do. */
 export interface TableSource {
   readonly mode: "local" | "online";
-  readonly spectating: boolean;
   view(): RedactedGame | null;
   names(): { you: string; opponent: string };
   log(): readonly SeatLogEntry[];
@@ -103,7 +102,6 @@ const SAVE_FAILED = "Could not save this game. Browser storage may be full.";
 /** The hot-seat game: the local host, with save, undo and auto-steps. */
 export class LocalTableSource implements TableSource {
   readonly mode = "local";
-  readonly spectating = false;
   readonly history: TableHistory = this;
   host: Host;
   private events = NO_EVENTS;

@@ -48,7 +48,7 @@ export const WIRE_ROWS = {
     },
     lifecycle: {
       tags: ["L"],
-      fields: ["mode", "spectating", "awayName", "awayMs", "flags", "allow"],
+      fields: ["mode", "awayName", "awayMs", "flags", "allow"],
     },
     rareCandy: { tags: ["R"], fields: ["uid"] },
     knockedOut: { tags: ["D"], fields: ["uid"] },
@@ -217,7 +217,6 @@ export const WIRE_ROWS = {
         "deckPhase",
         "name",
         "account",
-        "canKick",
         "status",
       ],
     },

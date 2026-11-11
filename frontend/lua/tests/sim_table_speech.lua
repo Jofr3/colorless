@@ -45,7 +45,7 @@ local function snapshot(opts)
   local f={}
   for name,column in pairs(W.header) do f[column]=enc(h[name] or '') end
   local out={table.concat(f,'\t'),
-    tagged(W.lifecycle,'L',{mode=opts.mode or 'online',spectating='false',flags=opts.flags or 'concede,leave',allow='full'}),
+    tagged(W.lifecycle,'L',{mode=opts.mode or 'online',flags=opts.flags or 'concede,leave',allow='full'}),
     row('S','you',46,6,2,0,0),row('S','opponent',47,6,7,1,0),
     row('C','active1','sv01-033','Houndour','you','active',0,'false','Pokemon','','Basic',70,20,'','','','Fire','true',0),
     row('C','opp1','sv01-052','Quaxly','opponent','active',0,'false','Pokemon','','Basic',60,0,'','','','Water','false',0),

@@ -160,7 +160,6 @@ describe("LuaSimulator over a TableSource", () => {
     // A plain delegate is not a LocalTableSource, so only the seam is used.
     const delegate: TableSource = {
       mode: "local",
-      spectating: false,
       view: () => local.view(),
       names: () => local.names(),
       log: () => local.log(),

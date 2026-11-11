@@ -391,7 +391,7 @@ export type MatchActionOutcome =
 
 /**
  * The most log rows a match keeps. A legal repeatable ability (Solar Transfer moves one
- * Energy as often as you like) appends rows without end, and every reconnect and spectator is sent
+ * Energy as often as you like) appends rows without end, and every reconnect is sent
  * the whole log. A real game logs a few hundred rows.
  */
 export const MATCH_LOG_MAX = 2000;
@@ -464,27 +464,17 @@ function engineOutcome(
   return { ok: true, record: { ...record, state: result.state, log }, logTrimmed: trimmed };
 }
 
-/** Who a match frame is for: a seated player, or a seatless spectator. */
-export type MatchViewer = Seat | "spectator";
-
-/** The side a spectator's board renders from. Every spectator sees the host's orientation; the
-    seatless redaction withholds both hands either way. */
-const SPECTATOR_SIDE = SEAT_OF_SLOT.host;
-
 /**
- * The `match` frame `viewer` receives: the board redacted for their seat, or the seatless
- * redaction for a spectator, plus the shared seat-keyed log, which is leak-safe for every viewer.
- * With `logFrom`, the frame carries only the log entries from that index on.
+ * The `match` frame `viewer`'s seat receives: the board redacted for that seat, plus the shared
+ * seat-keyed log, which is leak-safe for either seat. With `logFrom`, the frame carries only the
+ * log entries from that index on.
  */
 export function matchFrameFor(
   record: MatchRecord,
-  viewer: MatchViewer,
+  viewer: Seat,
   logFrom?: number,
 ): Extract<LobbyServerMessage, { kind: "match" }> {
-  const game =
-    viewer === "spectator"
-      ? redactGame(record.state, SPECTATOR_SIDE, true)
-      : redactGame(record.state, viewer);
+  const game = redactGame(record.state, viewer);
   if (logFrom === undefined) return { kind: "match", game, log: record.log };
   return { kind: "match", game, log: record.log.slice(logFrom), logFrom };
 }

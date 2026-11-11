@@ -146,7 +146,7 @@ describe("lobbyIntentSchema", () => {
 });
 
 describe("lobbyClientMessageSchema (what the DO accepts)", () => {
-  it("accepts hello / intent / kick / bye", () => {
+  it("accepts hello / intent / bye", () => {
     expect(
       lobbyClientMessageSchema.safeParse({ kind: "hello", from: "g1", name: "Bo" }).success,
     ).toBe(true);
@@ -156,9 +156,6 @@ describe("lobbyClientMessageSchema (what the DO accepts)", () => {
         from: "g1",
         intent: { type: "set-ready", ready: true },
       }).success,
-    ).toBe(true);
-    expect(
-      lobbyClientMessageSchema.safeParse({ kind: "reject", to: "g1", reason: "kicked" }).success,
     ).toBe(true);
     expect(
       lobbyClientMessageSchema.safeParse({ kind: "bye", from: "g1", slot: "guest" }).success,
@@ -198,10 +195,11 @@ describe("lobbyClientMessageSchema (what the DO accepts)", () => {
     expect(lobbyClientMessageSchema.safeParse({ kind: "state", snapshot: SNAPSHOT }).success).toBe(
       false,
     );
-    // a client can kick (the host's frame) but can never mint a "full".
-    expect(
-      lobbyClientMessageSchema.safeParse({ kind: "reject", to: "g1", reason: "full" }).success,
-    ).toBe(false);
+    // A reject is the server's to send; the host's kick is gone.
+    for (const reason of ["full", "kicked"])
+      expect(lobbyClientMessageSchema.safeParse({ kind: "reject", to: "g1", reason }).success).toBe(
+        false,
+      );
     // reject-action is the server's to send (the pill), never the client's.
     expect(
       lobbyClientMessageSchema.safeParse({ kind: "reject-action", reason: "nope" }).success,

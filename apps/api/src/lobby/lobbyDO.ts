@@ -47,9 +47,7 @@ import {
   attachLogDeltas,
   attachOverflow,
   attachPlayer,
-  attachSpectator,
   isOverflow,
-  isSpectating,
   takesLogDeltas,
 } from "./attachment";
 import { loadCardPool } from "./cardPool";
@@ -113,7 +111,6 @@ import {
   type MatchRecord,
   type MatchRng,
   type MatchSlot,
-  type MatchViewer,
   matchFrameFor,
   matchSeatOf,
   playerIdOfSeat,
@@ -131,7 +128,6 @@ import {
   type LobbySeat,
   type LobbyState,
   makeSeat,
-  removeGuest,
   seatGuest,
   wireSnapshot,
 } from "./snapshot";
@@ -408,8 +404,6 @@ export class LobbyDO {
         return await this.onIntent(ws, frame, snapshot);
       case "action":
         return await this.onAction(ws, frame, snapshot);
-      case "reject":
-        return await this.onReject(ws, frame, snapshot);
       case "bye":
         return await this.onBye(ws, frame, snapshot);
       case "rematch":
@@ -595,20 +589,6 @@ export class LobbyDO {
       : matchSeatOf(snapshot, playerId);
   }
 
-  private async onReject(
-    ws: WebSocket,
-    frame: ClientFrame<"reject">,
-    snapshot: LobbyState | null,
-  ): Promise<void> {
-    // The host's kick. Valid only from the host's socket, aimed at the seated
-    // guest. Relay it first (the sticky "you were removed"), then free the
-    // seat and broadcast the now-waiting lobby.
-    if (snapshot === null || snapshot.guest === null) return;
-    if (frame.to !== snapshot.guest.id || !(await this.ownsSeat(ws, snapshot.host.id))) return;
-    this.sendToPlayer(frame.to, frame);
-    await this.commit(removeGuest(snapshot));
-  }
-
   private async onBye(
     ws: WebSocket,
     frame: ClientFrame<"bye">,
@@ -641,8 +621,8 @@ export class LobbyDO {
     snapshot: LobbyState | null,
   ): Promise<void> {
     // Play again in this same lobby — since a `bye` mid-match forfeits but keeps
-    // the seat, an in-game lobby otherwise has no route back except the host's
-    // kick. Legality is the SERVER's to judge, which is why this is a
+    // the seat, an in-game lobby otherwise has no route back. Legality is the SERVER's to
+    // judge, which is why this is a
     // frame and not a seat `intent`: only the DO can see whether the match it
     // holds has finished, and a rematch mid-game must be refused (conceding is
     // how you leave a live one).
@@ -1383,10 +1363,9 @@ export class LobbyDO {
     const stamped = stampCountdown(next, this.deps.now());
     if (previous !== null && sameSnapshot(previous, stamped)) return;
     // A persisted match outlives EXACTLY the match it describes: when this commit
-    // takes the lobby out of in-game (the host's kick, or `endMatch` retiring an
-    // unreadable record; a mid-match `bye` keeps the seat), drop the stale
-    // GameState so a rematch in this same lobby mints a fresh one instead of
-    // handoffToMatch's guard reusing the old (online.md).
+    // takes the lobby out of in-game (`endMatch` retiring an unreadable record; a mid-match
+    // `bye` keeps the seat), drop the stale GameState so a rematch in this same lobby mints a
+    // fresh one instead of handoffToMatch's guard reusing the old (online.md).
     const abandoned = abandonsMatch(previous, stamped);
     // Stored before it is mirrored, so a failed put leaves memory agreeing with storage.
     await this.state.storage.put(SNAPSHOT_KEY, stamped);
@@ -1503,12 +1482,6 @@ export class LobbyDO {
     }
   }
 
-  private sendToPlayer(playerId: string, message: LobbyServerMessage): void {
-    for (const ws of this.liveSockets()) {
-      if (attachedPlayer(ws) === playerId) this.send(ws, message);
-    }
-  }
-
   /** Send `message` to every member socket; a turned-away one gets nothing but its refusal. */
   private broadcast(message: LobbyServerMessage): void {
     const encoded = JSON.stringify(message);
@@ -1517,7 +1490,7 @@ export class LobbyDO {
 
   /**
    * Send each socket its own redacted view of the match, plus the shared seat-keyed log. `only`
-   * targets one socket; otherwise all live sockets. Unseated non-spectators are skipped.
+   * targets one socket; otherwise all live sockets. Unseated sockets are skipped.
    * `logFrom` is the log length every socket already holds: a socket that takes log deltas gets
    * only the entries after it, and every other socket the whole log.
    */
@@ -1527,8 +1500,8 @@ export class LobbyDO {
     { only, logFrom }: { only?: WebSocket; logFrom?: number } = {},
   ): Promise<void> {
     const seatUsers = await this.seatUsers();
-    // Every spectator, and every socket of one seat, gets the same frame: each distinct one is
-    // redacted and encoded once per broadcast.
+    // Every socket of one seat gets the same frame: each distinct one is redacted and encoded
+    // once per broadcast.
     const frames = new Map<string, string>();
     for (const ws of only === undefined ? this.liveSockets() : [only]) {
       const viewer = viewerOf(ws, snapshot, seatUsers);
@@ -1558,41 +1531,13 @@ export class LobbyDO {
   }
 
   /**
-   * No seat for this socket. It is always rejected as full, and if a match is running it becomes a
-   * spectator with the seatless board. Spectators have no playerId, so they cannot act, and anyone
-   * with the lobby code can watch.
-   *
-   * `cause` says why: both seats are held by others (`full`), or the seat is bound to an
-   * account this socket is not signed in as (`bound`). A `full` that only makes a spectator is how
-   * watching works, so it is not logged.
+   * No seat for this socket: it is answered "full" and sent nothing else. `cause` says why: both
+   * seats are held by others (`full`), or the seat is bound to an account this socket is not
+   * signed in as (`bound`).
    */
   private async refuseSeat(ws: WebSocket, to: string, cause: "full" | "bound"): Promise<void> {
     this.send(ws, { kind: "reject", to, reason: "full" });
-    const spectating = await this.watchMatch(ws);
-    if (cause === "bound" || !spectating) {
-      await this.log(
-        "hello_refused",
-        { cause, signedIn: attachedUserId(ws) !== null, spectating },
-        true,
-      );
-    }
-  }
-
-  /** Make a seatless socket a spectator of the running match, true when there is one to watch. */
-  private async watchMatch(ws: WebSocket): Promise<boolean> {
-    const snapshot = await this.loadSnapshot();
-    if (snapshot === null || snapshot.phase !== "in-game") return false;
-    const load = await this.loadOrMigrateMatch();
-    if (load.kind !== "ok") return false;
-    attachSpectator(ws);
-    // The snapshot as well as the board. `state` frames only go out on a lobby
-    // COMMIT, and a match in progress may not produce one for many minutes — so a
-    // spectator who joined mid-match would otherwise have no idea who is playing
-    // (a browser run caught exactly this: their board read "Host vs Guest"). It
-    // carries nothing private; it is the same frame both players already hold.
-    this.send(ws, { kind: "state", snapshot: wireSnapshot(snapshot) });
-    await this.broadcastMatch(load.record, snapshot, { only: ws });
-    return true;
+    await this.log("hello_refused", { cause, signedIn: attachedUserId(ws) !== null }, true);
   }
 
   /**
@@ -1734,13 +1679,13 @@ function ownsSeat(ws: WebSocket, playerId: string, seatUsers: Record<string, str
   );
 }
 
-/** Whose view a socket gets: the seat it owns, a spectator's, or null for any other socket. */
+/** Whose view a socket gets: the seat it owns, or null for any other socket. */
 function viewerOf(
   ws: WebSocket,
   snapshot: LobbyState,
   seatUsers: Record<string, string>,
-): MatchViewer | null {
+): Seat | null {
   const playerId = attachedPlayer(ws);
-  if (playerId === null) return isSpectating(ws) ? "spectator" : null;
+  if (playerId === null) return null;
   return ownsSeat(ws, playerId, seatUsers) ? matchSeatOf(snapshot, playerId) : null;
 }

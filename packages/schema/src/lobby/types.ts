@@ -89,9 +89,8 @@ export type LobbyMessage =
       to the socket's own seat (a client can't act for the opponent) and runs it
       through the engine's total `applyAction`. */
   | { kind: "action"; action: WireAction }
-  /** host → guest: you're not welcome — the seat is taken ("full"), or the host
-      removed you ("kicked"). */
-  | { kind: "reject"; to: string; reason: "full" | "kicked" }
+  /** server → one client: no seat for this hello, as both are held by others. */
+  | { kind: "reject"; to: string; reason: "full" }
   /** server → the acting client: their last game action was refused — an illegal
       move, or an unsupported type. TRANSIENT, unlike `reject`: it aims at
       the socket that sent the action (no `to`), carries the engine's own reason

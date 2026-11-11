@@ -33,7 +33,7 @@ local function snapshot(step,opts,rows)
   local lines={row(nil,W.header,{revision=revision,step=step,busy=opts.busy and 1 or 0,message=opts.message or '',
     code=opts.code or 'ABCD',role=opts.role or 'host',link=opts.link or 'connected',countdown=opts.countdown or '',
     notice=opts.notice or '',deckPhase=opts.decks or 'idle',name=opts.name or 'Ash',
-    account=opts.account or 'authenticated',canKick=opts.kick and 1 or 0,status=opts.status or ''})}
+    account=opts.account or 'authenticated',status=opts.status or ''})}
   for _,r in ipairs(rows or {}) do lines[#lines+1]=row(r[1],r[1]=='P' and W.seat or W.deck,r[2]) end
   o:sync(table.concat(lines,'\n'))
 end
@@ -115,35 +115,35 @@ before=#commands;o:activate(1);assert(#commands==before,'Create tab while waitin
 o:activate(2);assert(o.tab==2 and last()[1]=='leave' and #last()==1,'Join leaves the lobby')
 snapshot('menu',{code='',role='',link=''});assert(action('join') and not action('create'))
 o:activate(1);assert(o.tab==1 and last()[1]=='create' and o.busy,'Returning to Create makes a lobby')
-snapshot('versus',{kick=true,status='Waiting for your opponent to ready up...'},seats(false,false))
+snapshot('versus',{status='Waiting for your opponent to ready up...'},seats(false,false))
 assert(said[#said]:find('^Versus%. Misty joined%.') and sounds[#sounds]=='cardFan2','Opponent join cue')
 local _,ready=action('ready');assert(ready.disabled,'Ready needs a deck')
-snapshot('versus',{kick=true},seats(false,true))
+snapshot('versus',{},seats(false,true))
 _,ready=action('ready');assert(not ready.disabled and action('choose'))
 -- After a reload the client no longer knows which deck it picked (the server keeps the id):
 -- the pick still counts, and its name labels the pile.
 local reloaded=seats(false,true);reloaded[1][2].deckId=''
-snapshot('versus',{kick=true},reloaded)
+snapshot('versus',{},reloaded)
 _,ready=action('ready');local _,change=action('choose')
 assert(not ready.disabled and change.label=='Change deck' and o.piles.you,'A pick the client forgot still counts')
-snapshot('versus',{kick=true},seats(false,true))
+snapshot('versus',{},seats(false,true))
 o:activate((action('ready')));assert(last()[1]=='ready' and last()[2]=='1')
-snapshot('versus',{kick=true},seats(true,true,true))
+snapshot('versus',{},seats(true,true,true))
 assert(said[#said]:find('You are ready%.') and said[#said]:find('Misty is ready%.'))
 local _,choose=action('choose');assert(choose.disabled,'A readied deck is locked')
 _,ready=action('ready');assert(ready.label=='Cancel ready')
-snapshot('versus',{kick=true},seats(false,true))
+snapshot('versus',{},seats(false,true))
 assert(said[#said]:find('You are no longer ready%.') and said[#said]:find('Misty is no longer ready%.'),'Unready is announced')
 assert(not action('kick'),'The opponent has no Kick button')
 -- Opponent away and back.
-snapshot('versus',{kick=true},seats(false,true,false,false));assert(sounds[#sounds]=='chips1' and said[#said]=='Misty disconnected.')
+snapshot('versus',{},seats(false,true,false,false));assert(sounds[#sounds]=='chips1' and said[#said]=='Misty disconnected.')
 
 -- The picker: Escape returns to versus, a pick sends select.
 o:activate((action('choose')));assert(o.picker and last()[1]=='decks' and o.items[#o.items].label=='Back')
 assert(said[#said]=='Choose your deck. Loading decks.')
 before=#commands;o:keypressed('escape');assert(not o.picker and #commands==before,'Picker Escape returns to versus')
 o:activate((action('choose')))
-snapshot('versus',{kick=true,decks='ready'},decks())
+snapshot('versus',{decks='ready'},decks())
 assert(#o.cards==10 and o.pages==2 and said[#said]=='Choose your deck. 12 decks.')
 -- Regulation cycle: All, Standard, Not Standard, Expanded, Not Expanded.
 local cycle=find(function(item) return item.kind=='cycle' end)
@@ -176,20 +176,20 @@ o:input('6\tsearch\tdeck 1\t6\t6\tinput');assert(#o.cards==4 and o.editing=='sea
 o:input('7\tsearch\tdeck 12\t7\t7\tdone')
 local card=find(function(it) return it.kind=='card' end)
 o:activate(card);assert(last()[1]=='select' and last()[2]=='deck12' and not o.picker and sounds[#sounds]=='cardSlide1')
-o:activate((action('choose')));snapshot('versus',{kick=true,decks='anonymous'},seats(false,false))
+o:activate((action('choose')));snapshot('versus',{decks='anonymous'},seats(false,false))
 assert(action('signin'));o:activate((action('signin')));assert(signin==1)
 o.picker=false;o:build()
 -- The picker closing under the search field ends the native input.
-o:activate((action('choose')));snapshot('versus',{kick=true,decks='ready'},decks())
+o:activate((action('choose')));snapshot('versus',{decks='ready'},decks())
 o:input('8\tsearch\tdeck\t4\t4\tinput');assert(o.editing=='search')
-snapshot('versus',{kick=true,decks='ready'},seats(true,true));assert(not o.picker and not o.editing and last()[1]=='finish-input')
-o:activate((action('ready')));snapshot('versus',{kick=true,decks='ready'},decks())
+snapshot('versus',{decks='ready'},seats(true,true));assert(not o.picker and not o.editing and last()[1]=='finish-input')
+o:activate((action('ready')));snapshot('versus',{decks='ready'},decks())
 o:activate((action('choose')));o:input('9\tsearch\tdeck\t4\t4\tinput')
 snapshot('waiting',{decks='ready'},{seats()[1]});assert(not o.picker and not o.editing and last()[1]=='finish-input')
 
 -- Countdown: only Leave stays live and Escape is ignored.
-snapshot('versus',{kick=true},seats(true,true,true))
-snapshot('countdown',{kick=true,countdown=3,status='Both ready - starting...'},seats(true,true,true))
+snapshot('versus',{},seats(true,true,true))
+snapshot('countdown',{countdown=3,status='Both ready - starting...'},seats(true,true,true))
 assert(said[#said]=='Battle starting. 3' and sounds[#sounds]=='generic1')
 for i,it in ipairs(o.items) do assert((i<#o.items)==(it.disabled==true),'Countdown locks all but Leave: '..it.label) end
 before=#commands;o:keypressed('escape');assert(#commands==before and home==1,'Countdown ignores Escape')
@@ -205,8 +205,8 @@ snapshot('countdown',{countdown=1},seats(true,true,true));snapshot('starting',{}
 assert(said[#said]=='Go!' and o.items[#o.items].label=='Leave','GO! even when the zero second is skipped')
 o:activate(#o.items);assert(last()[1]=='leave' and last()[2]=='home' and home==2,'Leaving a set match goes home')
 -- Info steps: Back to online leaves to the menu; Back goes home.
-snapshot('kicked',{role='guest'})
-assert(said[#said]=='Removed from the lobby. The host removed you from this lobby.' and sounds[#sounds]=='whoosh')
+snapshot('full',{role='guest'})
+assert(said[#said]=='Lobby is full. Lobby ABCD already has two players.')
 o:activate((action('online')));assert(last()[1]=='leave' and #last()==1)
 snapshot('not-found',{code='ZZZZ'});assert(said[#said]:find('No open lobby with the code ZZZZ'))
 o:keypressed('escape');assert(home==3 and last()[2]=='home')
@@ -216,9 +216,9 @@ assert(action('online'),'An unreachable lobby offers Back to online')
 -- Every step fits its frame in both rooms.
 local steps={
   {'menu',{account='anonymous'}},{'menu',{account='anonymous'},nil,2},{'joining'},{'waiting',{},{you}},
-  {'versus',{kick=true},seats(false,true)},{'versus',{kick=true,decks='ready'},decks(),nil,true},
+  {'versus',{},seats(false,true)},{'versus',{decks='ready'},decks(),nil,true},
   {'versus',{decks='anonymous'},seats(false,false),nil,true},{'countdown',{countdown=2},seats(true,true,true)},
-  {'starting'},{'invalid'},{'full'},{'not-found'},{'unreachable'},{'kicked'},
+  {'starting'},{'invalid'},{'full'},{'not-found'},{'unreachable'},
 }
 -- Draw every step too, against a no-op renderer.
 setmetatable(love.graphics,{__index=function() return function() end end})

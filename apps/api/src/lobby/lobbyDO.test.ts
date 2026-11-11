@@ -470,17 +470,16 @@ describe("LobbyDO — match actions", () => {
     expect(host.sent.length).toBe(hostFrames);
   });
 
-  it("lets a refused socket watch with the seatless view, but not act", async () => {
-    await startedMatch();
+  it("answers a refused socket full and sends it no board, through the match", async () => {
+    const { guest } = await startedMatch();
     const watcher = await h.connect("eve");
     await h.send(watcher, hello("w"));
     const record = await storedMatch();
-    expect(watcher.last("reject")).toEqual({ kind: "reject", to: seatIdOf("w"), reason: "full" });
-    expect(snapshotOf(watcher).phase).toBe("in-game");
-    expect(watcher.last("match")).toEqual(matchFrameFor(record, "spectator"));
-
+    expect(watcher.sent).toEqual([{ kind: "reject", to: seatIdOf("w"), reason: "full" }]);
     await h.send(watcher, { kind: "action", action: { type: "concede" } });
     expect(await storedMatch()).toEqual(record);
+    await h.send(guest, { kind: "action", action: { type: "concede" } });
+    expect(watcher.framesOf("match")).toEqual([]);
   });
 });
 
@@ -558,18 +557,6 @@ describe("LobbyDO — log deltas", () => {
     const { host } = await mixedMatch();
     await h.send(host, deltaHello("h"));
     expect(host.last("match")).toEqual(matchFrameFor(await storedMatch(), "p1"));
-  });
-
-  it("gives a spectator the full log on arrival and deltas after", async () => {
-    const { guest } = await mixedMatch();
-    const watcher = await h.connect("eve");
-    await h.send(watcher, deltaHello("w"));
-    const start = await storedMatch();
-    expect(watcher.last("match")).toEqual(matchFrameFor(start, "spectator"));
-    await h.send(guest, { kind: "action", action: { type: "concede" } });
-    expect(watcher.last("match")).toEqual(
-      matchFrameFor(await storedMatch(), "spectator", start.log.length),
-    );
   });
 
   it("starts a rematch with the full log", async () => {
@@ -1247,10 +1234,10 @@ describe("LobbyDO — a rematch re-checks each seat's session (MI4)", () => {
 
   it("starts the rematch after one read of both sessions, and never reads them per frame", async () => {
     const { host, guest, checks } = await finishedMatch();
-    // A signed-in spectator holds no seat, so its session is not the rematch's to check.
+    // A signed-in socket refused a seat holds none, so its session is not the rematch's to check.
     const watcher = await h.connect("vic");
     await h.send(watcher, hello("w"));
-    expect(watcher.framesOf("match").length).toBeGreaterThan(0);
+    expect(watcher.last("reject")?.reason).toBe("full");
     await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
     expect(snapshotOf(host).phase).toBe("selecting");
     expect(checks).toEqual([[sessionIdOf("ana"), sessionIdOf("bo")]]);
@@ -1289,16 +1276,14 @@ describe("LobbyDO — a rematch re-checks each seat's session (MI4)", () => {
     ]);
 
     // Without a live cookie the reload is anonymous: the account-bound seat refuses it, and it
-    // watches the finished board instead of acting for the seat.
+    // is sent no board and cannot act for the seat.
     const reloaded = await h.connect();
     await h.send(reloaded, hello("g"));
     expect(reloaded.last("reject")).toEqual({ kind: "reject", to: seatIdOf("g"), reason: "full" });
-    expect(reloaded.framesOf("match").length).toBeGreaterThan(0);
+    expect(reloaded.framesOf("match")).toEqual([]);
     await h.send(reloaded, { kind: "rematch", from: seatIdOf("g") });
     expect(snapshotOf(host).phase).toBe("in-game");
-    expect(logged("hello_refused")).toMatchObject([
-      { cause: "bound", signedIn: false, spectating: true },
-    ]);
+    expect(logged("hello_refused")).toMatchObject([{ cause: "bound", signedIn: false }]);
   });
 
   it("refuses a rematch with an opponent whose account was deleted", async () => {

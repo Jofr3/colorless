@@ -3,13 +3,7 @@ import { EVOLVE_DECK, MIXED_DECK, mustCreate, walkGame } from "@colorless/engine
 import type { WireAction } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { FakeStorage } from "./lobbyHarness";
-import {
-  applyMatchAction,
-  MATCH_RECORD_VERSION,
-  type MatchRecord,
-  type MatchViewer,
-  matchFrameFor,
-} from "./match";
+import { applyMatchAction, MATCH_RECORD_VERSION, type MatchRecord, matchFrameFor } from "./match";
 import { MatchStore } from "./matchStore";
 
 // Byte budgets for one seeded game: what the DO writes per action and what each socket is sent.
@@ -18,7 +12,7 @@ import { MatchStore } from "./matchStore";
 
 const SEED = 31;
 const NAMES = { p1: "Ana", p2: "Bo" } as const;
-const VIEWERS: MatchViewer[] = ["p1", "p2", "spectator"];
+const VIEWERS: Seat[] = ["p1", "p2"];
 
 /** About a quarter above what the seeded game measures, in JSON characters. */
 const BUDGET = {

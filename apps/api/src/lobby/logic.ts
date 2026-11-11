@@ -109,10 +109,10 @@ export const INACTIVE_LOBBY_MS = 60 * 60_000;
 export const ACTIVITY_STAMP_MS = 5 * 60_000;
 
 /**
- * Sockets one lobby admits: two seats, eight spectators, and two for a player
- * whose old socket has not closed yet when the reload's new one opens. Past it, a socket is turned
- * away (it is answered "full"), unless its account holds a seat in this lobby, so a crowd cannot
- * keep a player out of their own match.
+ * Sockets one lobby admits: two seats, eight more tabs (answered "full", holding no seat), and two
+ * for a player whose old socket has not closed yet when the reload's new one opens. Past it, a
+ * socket is turned away and closed, unless its account holds a seat in this lobby, so a crowd
+ * cannot keep a player out of their own match.
  */
 export const LOBBY_SOCKET_CAP = 2 + 8 + 2;
 
@@ -416,9 +416,8 @@ export function countdownEndsAt(snapshot: LobbyState): number | null {
 }
 
 /** Whether a committed transition ABANDONS a running match — i.e. takes the
-    lobby out of in-game: `removeGuest` (only the host's KICK — a mid-match
-    `bye` keeps the seat) and `endMatch`; `recomputePhase` never leaves
-    in-game on its own. The DO drops its persisted match record on exactly these,
+    lobby out of in-game, which only `endMatch` does (a mid-match `bye` keeps the seat, and
+    `recomputePhase` never leaves in-game on its own). The DO drops its persisted match record on exactly these,
     so a rematch in the same lobby mints a fresh game instead of `handoffToMatch`
     reusing the stale one. `prev` null = a brand-new lobby, never in-game. */
 export function abandonsMatch(prev: LobbyState | null, next: LobbyState): boolean {

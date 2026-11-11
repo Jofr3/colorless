@@ -60759,8 +60759,8 @@ export const MUTANTS: Mutant[] = [
     what: "Taking a seat rewrites the attachment without the delta flag, so a seated client that asked for deltas gets the whole log. Killed by the attachment codec and the DO delta tests.",
     file: "apps/api/src/lobby/attachment.ts",
     symbol: "attachPlayer",
-    find: "update(ws, { playerId, spectating: false });",
-    replace: "update(ws, { playerId, spectating: false, logDeltas: false });",
+    find: "update(ws, { playerId });",
+    replace: "update(ws, { playerId, logDeltas: false });",
     expectKilledBy: ["apps/api/src/lobby/attachment.test.ts", "apps/api/src/lobby/lobbyDO.test.ts"],
   },
   {

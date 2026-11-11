@@ -3,7 +3,7 @@
 return {
   sim={
     header={revision=1,phase=2,you=3,opponent=4,turn=5,gamePhase=6,message=7,title=8,hint=9,turnIndex=10,turnCount=11,waitingOn=12,activePlayer=13,seat=14,energyAttached=15,supporterPlayed=16,retreated=17,outcome=18,outcomeDetail=19,shuffled=20,matchId=21,announce=22,messageSerial=23,warning=24},
-    lifecycle={mode=2,spectating=3,awayName=4,awayMs=5,flags=6,allow=7},
+    lifecycle={mode=2,awayName=3,awayMs=4,flags=5,allow=6},
     rareCandy={uid=2},
     knockedOut={uid=2},
     side={owner=2,deck=3,prizes=4,hand=5,discard=6,mulligans=7},
@@ -29,7 +29,7 @@ return {
     field={key=2,value=3},
   },
   online={
-    header={revision=1,step=2,busy=3,message=4,code=5,role=6,link=7,countdown=8,notice=9,deckPhase=10,name=11,account=12,canKick=13,status=14},
+    header={revision=1,step=2,busy=3,message=4,code=5,role=6,link=7,countdown=8,notice=9,deckPhase=10,name=11,account=12,status=13},
     seat={seat=2,present=3,name=4,connected=5,ready=6,deckId=7,deckName=8,hasDeck=9},
     deck={id=2,name=3,count=4,standard=5,expanded=6,online=7,formatName=8},
   },

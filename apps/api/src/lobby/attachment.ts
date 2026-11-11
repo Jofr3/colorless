@@ -3,9 +3,8 @@
 // `userId`, `sessionId` and `displayName` are the account from the session cookie at upgrade, set
 // independently of the seat; none is ever broadcast. The session id lets the match handoff check
 // that the session still lives when it reads the account's decks. `connectedAt` is when the upgrade
-// was accepted, which the liveness sweep judges a never-answered socket by. `spectating` marks a
-// refused socket watching the match; spectators have no seat. `logDeltas` records that the
-// socket's hello announced it takes log deltas in match frames.
+// was accepted, which the liveness sweep judges a never-answered socket by. `logDeltas` records
+// that the socket's hello announced it takes log deltas in match frames.
 //
 // Attachments written before `sessionId` and `connectedAt` existed read them as null. A deploy
 // disconnects every socket, so such attachments do not outlive one in practice; the readers below
@@ -21,7 +20,6 @@ type LobbyAttachment = {
   sessionId: string | null;
   displayName: string | null;
   connectedAt: number | null;
-  spectating: boolean;
   logDeltas: boolean;
   overflow: boolean;
 };
@@ -38,7 +36,6 @@ function read(ws: AttachmentCarrier): LobbyAttachment {
       sessionId: null,
       displayName: null,
       connectedAt: null,
-      spectating: false,
       logDeltas: false,
       overflow: false,
     };
@@ -50,7 +47,6 @@ function read(ws: AttachmentCarrier): LobbyAttachment {
     sessionId: typeof partial.sessionId === "string" ? partial.sessionId : null,
     displayName: typeof partial.displayName === "string" ? partial.displayName : null,
     connectedAt: Number.isFinite(partial.connectedAt) ? (partial.connectedAt as number) : null,
-    spectating: partial.spectating === true,
     logDeltas: partial.logDeltas === true,
     overflow: partial.overflow === true,
   };
@@ -63,9 +59,7 @@ function update(ws: AttachmentCarrier, patch: Partial<LobbyAttachment>): void {
 /** Bind a socket to the public id of the seat its hello claimed, preserving any account
     already resolved at the /ws upgrade. */
 export function attachPlayer(ws: AttachmentCarrier, playerId: string): void {
-  // Taking a seat ends any spectating: the same browser can be refused a seat,
-  // watch for a while, and then be seated when one frees up.
-  update(ws, { playerId, spectating: false });
+  update(ws, { playerId });
 }
 
 /** Record the authenticated account, the session that authenticated it and its lobby name (null
@@ -87,15 +81,6 @@ export function attachConnectedAt(ws: AttachmentCarrier, connectedAt: number): v
   update(ws, { connectedAt });
 }
 
-/** Mark a socket a SPECTATOR of the running match — refused a seat
-    while both are held, and watching instead. Keeps any resolved account (they
-    may still be signed in) and never grants a playerId, which is what stops a
-    spectator's frames from acting on a seat: every handler that matters gates on
-    `attachedPlayer`, and theirs stays null. */
-export function attachSpectator(ws: AttachmentCarrier): void {
-  update(ws, { playerId: null, spectating: true });
-}
-
 /** Record whether the socket's latest hello announced that it takes log deltas. */
 export function attachLogDeltas(ws: AttachmentCarrier, logDeltas: boolean): void {
   update(ws, { logDeltas });
@@ -110,11 +95,6 @@ export function attachOverflow(ws: AttachmentCarrier): void {
 /** Whether this socket was admitted past the socket cap only to be turned away. */
 export function isOverflow(ws: AttachmentCarrier): boolean {
   return read(ws).overflow;
-}
-
-/** Whether this socket is watching the match without a seat. */
-export function isSpectating(ws: AttachmentCarrier): boolean {
-  return read(ws).spectating;
 }
 
 /** Whether this socket's match frames may carry only the log's new entries. */

@@ -39,7 +39,6 @@ export type OnlineStep =
   | "full"
   | "not-found"
   | "unreachable"
-  | "kicked"
   | "invalid";
 
 type Surface = "none" | "modal" | "match";
@@ -56,7 +55,7 @@ const PHASE_STEP = {
 const SEATED = new Set<OnlineStep>(["waiting", "versus", "countdown", "starting"]);
 
 /** The online modal's data side over one LobbyClient; Lua owns all layout,
- * controls and motion. Spectating is not offered: a full lobby is an info step. */
+ * controls and motion. A full lobby is an info step. */
 /** How long a live match waits for the table to take its client (see `release`). */
 export const TABLE_CLAIM_MS = 30_000;
 
@@ -114,8 +113,7 @@ export class LuaOnline {
     const c = this.client;
     if (!c) return "menu";
     const { status, snapshot } = c.state;
-    if (status === "kicked" || status === "not-found" || status === "unreachable") return status;
-    if (status === "full" || status === "spectating") return "full";
+    if (status === "not-found" || status === "unreachable" || status === "full") return status;
     if (!snapshot || !c.self) return "joining";
     return PHASE_STEP[snapshot.phase];
   }
@@ -176,7 +174,6 @@ export class LuaOnline {
             deckPhase: this.deckPhase,
             name: this.name(),
             account: this.account,
-            canKick: +(c?.role === "host" && !!opponent),
             status: step === "versus" || step === "countdown" ? versusStatus(self, opponent) : "",
           }),
         ),
@@ -346,8 +343,6 @@ export class LuaOnline {
     } else if (action === "ready") {
       const self = this.client?.self;
       if (self && (a !== "1" || self.hasDeck)) this.client?.setReady(a === "1");
-    } else if (action === "kick") {
-      if (this.client?.role === "host" && this.client.opponent) this.client.kick();
     } else if (action === "copy" && this.code) {
       const text =
         a === "link" ? `${globalThis.location?.origin ?? ""}/online/${this.code}` : this.code;
@@ -460,7 +455,7 @@ export class LuaOnline {
    * at the table as a watcher, where the result and the reason are, rather than "Lobby is full". */
   private watchingFinished(c: LobbyClient) {
     const { status } = c.state;
-    return this.over && (status === "full" || status === "spectating");
+    return this.over && status === "full";
   }
 
   /** A seated match is running; a reconnecting link still counts. */

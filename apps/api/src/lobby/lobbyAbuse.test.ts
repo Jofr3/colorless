@@ -438,7 +438,7 @@ describe("lobby abuse — sockets and lifetime (LB2, LB3)", () => {
     expect(refused).toBe(10 - accepted.length);
   });
 
-  it("LB2: spectators are capped, and each distinct match frame is built once per broadcast", async () => {
+  it("LB2: refused sockets are capped and sent no board, and each seat's frame is built once", async () => {
     const { host, guest, actor, actorSocket } = await matchInTurnOne();
     const watchers: FakeSocket[] = [];
     for (let i = 0; i < 20; i++) {
@@ -446,25 +446,25 @@ describe("lobby abuse — sockets and lifetime (LB2, LB3)", () => {
       await h.send(ws, hello(`watcher-${String(i)}`));
       watchers.push(ws);
     }
-    const spectators = watchers.filter((ws) => ws.framesOf("match").length > 0);
+    const refused = watchers.filter((ws) => ws.closed === null);
     const turnedAway = watchers.filter((ws) => ws.closed !== null);
-    // The two seats and ten spectators fill the cap, and the rest are answered "full" and
-    // closed.
-    expect(spectators).toHaveLength(LOBBY_SOCKET_CAP - 2);
-    expect(turnedAway).toHaveLength(20 - spectators.length);
-    expect(turnedAway.every((ws) => ws.last("reject")?.reason === "full")).toBe(true);
+    // The two seats and ten refused tabs fill the cap, and the rest are closed as well.
+    expect(refused).toHaveLength(LOBBY_SOCKET_CAP - 2);
+    expect(turnedAway).toHaveLength(20 - refused.length);
+    expect(watchers.every((ws) => ws.last("reject")?.reason === "full")).toBe(true);
     expect(turnedAway.every((ws) => ws.closed?.code === 1013)).toBe(true);
+    expect(watchers.every((ws) => ws.framesOf("match").length === 0)).toBe(true);
 
-    const sockets = [host, guest, ...spectators];
+    const sockets = [host, guest];
     const before = sockets.map((ws) => ws.framesOf("match").length);
     const uid = (await storedState()).players[actor].bench[0]?.stack[0];
     const stringify = vi.spyOn(JSON, "stringify");
     await h.send(actorSocket, { kind: "action", action: { type: "reorderBench", uid, index: 1 } });
     const sent = sockets.map((ws, i) => ws.framesOf("match").length - (before[i] ?? 0));
-    expect(sent).toEqual(sockets.map(() => 1));
-    // One redaction and encoding per distinct frame, not per socket: each seat's delta and the
-    // spectators' shared one, plus the harness encoding the action it sends.
-    expect(stringify).toHaveBeenCalledTimes(1 + 3);
+    expect(sent).toEqual([1, 1]);
+    expect(refused.every((ws) => ws.framesOf("match").length === 0)).toBe(true);
+    // One redaction and encoding per seat's delta, plus the harness encoding the action it sends.
+    expect(stringify).toHaveBeenCalledTimes(1 + 2);
     stringify.mockRestore();
   });
 
@@ -695,7 +695,7 @@ describe("lobby abuse — a socket left on a seat that is then bound (LBX1)", ()
     expect(shadow.framesOf("match")).toEqual([]);
   });
 
-  it("LBX1: a shadow on the host's seat cannot kick the guest", async () => {
+  it("LBX1: no socket can remove the guest, the host's own included (kick is gone)", async () => {
     await h.create();
     const shadow = await h.connect();
     await h.send(shadow, hello("h", "Evil"));
@@ -705,7 +705,8 @@ describe("lobby abuse — a socket left on a seat that is then bound (LBX1)", ()
     await h.send(host, hello("h"));
     const guest = await h.connect("bo");
     await h.send(guest, hello("g"));
-    await h.send(shadow, { kind: "reject", to: seatIdOf("g"), reason: "kicked" });
+    for (const from of [shadow, host])
+      await h.send(from, JSON.stringify({ kind: "reject", to: seatIdOf("g"), reason: "kicked" }));
     expect(host.last("state")?.snapshot.guest?.id).toBe(seatIdOf("g"));
     expect(guest.framesOf("reject")).toEqual([]);
   });
@@ -753,7 +754,7 @@ describe("lobby abuse — names that forge client bridge commands (WC1)", () => 
     await h.send(spectator, hello("watcher"));
 
     expect(victim.framesOf("match").length).toBeGreaterThan(0);
-    expect(spectator.framesOf("match").length).toBeGreaterThan(0);
+    expect(spectator.framesOf("state").length).toBeGreaterThan(0);
     const seen = [...victim.sent, ...spectator.sent].flatMap(strings);
     expect(seen.filter((text) => /[\p{Cc}\p{Cf}]/u.test(text))).toEqual([]);
     expect(seen.some((text) => text.includes(`Mal${CLEAN}`))).toBe(true);
@@ -764,7 +765,7 @@ describe("lobby abuse — what a snapshot gives away (LB5, LB6)", () => {
   /** Everything a socket was sent, as the text it went out as. */
   const wire = (ws: FakeSocket) => ws.sent.map((frame) => JSON.stringify(frame)).join("\n");
 
-  it("LB5, LB6: no frame carries a deck id or a seat secret, to an opponent, a spectator or a lurker", async () => {
+  it("LB5, LB6: no frame carries a deck id or a seat secret, to an opponent, a refused socket or a lurker", async () => {
     await h.create();
     const lurker = await h.connect();
     const host = await h.connect("ana");
@@ -782,7 +783,7 @@ describe("lobby abuse — what a snapshot gives away (LB5, LB6)", () => {
     expect(host.last("state")?.snapshot.phase).toBe("in-game");
     const spectator = await h.connect("eve");
     await h.send(spectator, hello("w"));
-    expect(spectator.framesOf("match").length).toBeGreaterThan(0);
+    expect(spectator.last("reject")?.reason).toBe("full");
     await h.send(guest, { kind: "action", action: { type: "concede" } });
     await h.send(guest, { kind: "rematch", from: seatIdOf("g") });
 
@@ -832,7 +833,7 @@ describe("lobby abuse — what a snapshot gives away (LB5, LB6)", () => {
       reason: "full",
     });
     // No hello seated it, so it acts for neither seat.
-    await h.send(intruder, { kind: "reject", to: guestId, reason: "kicked" });
+    await h.send(intruder, JSON.stringify({ kind: "reject", to: guestId, reason: "kicked" }));
     await h.send(intruder, {
       kind: "intent",
       from: guestId,
@@ -889,7 +890,6 @@ describe("lobby abuse — the audit trail (LB8)", () => {
         lobby: "ABCD",
         cause: "full",
         signedIn: true,
-        spectating: false,
       },
     ]);
 
@@ -898,21 +898,19 @@ describe("lobby abuse — the audit trail (LB8)", () => {
     const shadow = await h.connect();
     await h.send(shadow, hello("g"));
     expect(shadow.last("reject")).toEqual({ kind: "reject", to: seatIdOf("g"), reason: "full" });
-    expect(logged("hello_refused").slice(1)).toMatchObject([
-      { cause: "bound", signedIn: false, spectating: false },
-    ]);
+    expect(logged("hello_refused").slice(1)).toMatchObject([{ cause: "bound", signedIn: false }]);
 
     // Throttled: a refused client that keeps asking writes one line per ten minutes.
     for (let i = 0; i < 5; i++) await h.send(shadow, hello("g"));
     expect(logged("hello_refused")).toHaveLength(2);
   });
 
-  it("LB8: watching a match is not a refusal worth a line", async () => {
+  it("LB8: a refusal during a match is a line like any other", async () => {
     await matchInTurnOne();
     const watcher = await h.connect("vic");
     await h.send(watcher, hello("w"));
-    expect(watcher.framesOf("match").length).toBeGreaterThan(0);
-    expect(logged("hello_refused")).toEqual([]);
+    expect(watcher.framesOf("match")).toEqual([]);
+    expect(logged("hello_refused")).toMatchObject([{ cause: "full", signedIn: true }]);
   });
 
   it("LB8: no lobby line names an account, a session, a seat secret or a deck", async () => {

@@ -154,7 +154,7 @@ for _,view in ipairs(VIEWS) do
     revision=revision+1
     local lines={row(nil,W.header,{revision=revision,step=step,busy=0,message='',code=step=='menu' and '' or 'ABCD',
       role=step=='menu' and '' or 'host',link=step=='menu' and '' or 'connected',countdown='',notice='',deckPhase='ready',name='Ash',
-      account='authenticated',canKick=0,status=''})}
+      account='authenticated',status=''})}
     for _,r in ipairs(rows or {}) do lines[#lines+1]=row(r[1],r[1]=='P' and W.seat or W.deck,r[2]) end
     o:sync(table.concat(lines,'\n'))
   end

@@ -149,7 +149,7 @@ online:open(true,'')
 online:layout(1280,800)
 local header={}
 for _,column in pairs(W.header) do header[column]='' end
-for name,value in pairs({revision=1,step='menu',busy=0,code='',role='',link='connected',deckPhase='idle',name='Ash',account='authenticated',canKick=0}) do
+for name,value in pairs({revision=1,step='menu',busy=0,code='',role='',link='connected',deckPhase='idle',name='Ash',account='authenticated'}) do
   header[W.header[name]]=Codec.encode(value)
 end
 online:sync(table.concat(header,'\t'))

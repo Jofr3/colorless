@@ -351,7 +351,7 @@ do
   o:layout(1280,800);o:open(true,'')
   local function snapshot(decks)
     local lines={row(nil,O.header,{revision=nextRevision(),step='versus',busy=0,message='',code='ABCD',role='host',link='connected',
-      countdown='',notice='',deckPhase='ready',name='Ash',account='authenticated',canKick=0,status=''})}
+      countdown='',notice='',deckPhase='ready',name='Ash',account='authenticated',status=''})}
     lines[#lines+1]=row('P',O.seat,{seat='you',present=1,name='Ash',connected=1,ready=0,deckId='',deckName='',hasDeck=0})
     lines[#lines+1]=row('P',O.seat,{seat='opponent',present=1,name='Misty',connected=1,ready=0,deckId='',deckName='',hasDeck=0})
     for i=1,decks do lines[#lines+1]=row('D',O.deck,{id='d'..i,name='Deck '..i,count=60,standard=1,expanded=1,online=1,formatName='Standard'}) end

@@ -150,32 +150,21 @@ describe("LobbyClient", () => {
     expect(client.state.status).toBe("connected");
   });
 
-  it("a full lobby turns into spectating once a match arrives", () => {
+  it("a full lobby stays full: later states, matches and errors are ignored", () => {
     const { client, push } = make("guest", "z");
     push({ kind: "reject", to: "someone-else", reason: "full" });
     expect(client.state.status).toBe("connecting");
     push({ kind: "reject", to: testSeatId("z"), reason: "full" });
     expect(client.state.status).toBe("full");
     push({ kind: "state", snapshot: snap({ phase: "in-game" }) });
-    expect(client.state.snapshot?.phase).toBe("in-game");
-    expect(client.state.status).toBe("full");
-    push({ kind: "match", game, log: [] });
-    expect(client.state.status).toBe("spectating");
-    expect(client.state.match).toBe(game);
-  });
-
-  it("a kick is sticky: later states, matches and errors are ignored", () => {
-    const { client, push, kinds } = make("guest");
-    push({ kind: "state", snapshot: snap() });
-    push({ kind: "reject", to: testSeatId("g"), reason: "kicked" });
-    expect(client.state.status).toBe("kicked");
-    push({ kind: "state", snapshot: snap() });
     push({ kind: "match", game, log: [] });
     push({ kind: "match-error", reason: "x" });
-    expect(client.state).toMatchObject({ status: "kicked", match: null, matchError: null });
-    const sent = kinds().length;
-    vi.advanceTimersByTime(10_000);
-    expect(kinds().length).toBe(sent);
+    expect(client.state).toMatchObject({
+      status: "full",
+      snapshot: null,
+      match: null,
+      matchError: null,
+    });
   });
 
   it("a match-error survives the state that clears it", () => {
@@ -246,16 +235,6 @@ describe("LobbyClient", () => {
     expect(client.state.matchLog).toEqual([a, a, c]);
   });
 
-  it("a spectator resyncs a gap the same way", () => {
-    const { client, push, kinds } = make("guest", "z");
-    push({ kind: "reject", to: testSeatId("z"), reason: "full" });
-    push({ kind: "match", game, log: [] });
-    const sent = kinds().length;
-    push({ kind: "match", game, log: [{ kind: "turn", turn: 2 }], logFrom: 1 });
-    expect(client.state.matchLog).toEqual([]);
-    expect(kinds().slice(sent)).toEqual(["hello"]);
-  });
-
   it("publishes an immutable state per change", () => {
     const { client, push } = make("guest");
     const seen: unknown[] = [];
@@ -281,19 +260,6 @@ describe("LobbyClient", () => {
     b.client.dispose({ bye: false });
     expect(b.kinds()).not.toContain("bye");
     expect(b.closed()).toBe(true);
-  });
-
-  it("kick needs the host seat and a guest", () => {
-    const g = make("guest");
-    g.push({ kind: "state", snapshot: snap() });
-    g.client.kick();
-    expect(g.kinds()).not.toContain("reject");
-    const h = make("host");
-    h.client.kick();
-    expect(h.kinds()).not.toContain("reject");
-    h.push({ kind: "state", snapshot: snap() });
-    h.client.kick();
-    expect(h.posts.at(-1)).toEqual({ kind: "reject", to: testSeatId("g"), reason: "kicked" });
   });
 
   it("posts intents, rematch and actions for its own seat", () => {

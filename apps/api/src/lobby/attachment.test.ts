@@ -10,10 +10,8 @@ import {
   attachLogDeltas,
   attachOverflow,
   attachPlayer,
-  attachSpectator,
   attachAccount,
   isOverflow,
-  isSpectating,
   takesLogDeltas,
 } from "./attachment";
 
@@ -88,7 +86,7 @@ describe("attachment codec", () => {
     attachAccount(ws, account("user-9", "Ana"));
     attachPlayer(ws, "player-1");
     attachLogDeltas(ws, true);
-    attachSpectator(ws);
+    attachConnectedAt(ws, 1);
     expect(attachedDisplayName(ws)).toBe("Ana");
     attachAccount(ws, account("user-9", null));
     expect(attachedDisplayName(ws)).toBeNull();
@@ -131,7 +129,7 @@ describe("the log-delta flag", () => {
     expect(takesLogDeltas(ws)).toBe(false);
     attachAccount(ws, account("user-9", null));
     attachLogDeltas(ws, true);
-    attachSpectator(ws);
+    attachConnectedAt(ws, 1);
     expect(takesLogDeltas(ws)).toBe(true);
     attachPlayer(ws, "player-1");
     attachAccount(ws, account("user-10", null));
@@ -147,41 +145,5 @@ describe("the log-delta flag", () => {
       false,
     );
     expect(takesLogDeltas(fakeSocket({ logDeltas: "yes" }))).toBe(false);
-  });
-});
-
-describe("the spectator marker (3c-vii-b)", () => {
-  it("marks a socket watching, WITHOUT giving it a seat", () => {
-    // The safety property: every handler that can touch the game gates on
-    // `attachedPlayer`, so a spectator must never acquire one.
-    const ws = fakeSocket();
-    attachSpectator(ws);
-    expect(isSpectating(ws)).toBe(true);
-    expect(attachedPlayer(ws)).toBeNull();
-  });
-
-  it("keeps the authenticated account (a watcher may still be signed in)", () => {
-    const ws = fakeSocket();
-    attachAccount(ws, account("user-9", null));
-    attachSpectator(ws);
-    expect(attachedUserId(ws)).toBe("user-9");
-    // …and the account survives while watching, so a later seat claim still
-    // presents it to `seatClaimAllowed`.
-    expect(isSpectating(ws)).toBe(true);
-  });
-
-  it("stops spectating the moment the socket takes a seat", () => {
-    // A refused client can watch and then be seated when one frees up; leaving
-    // the flag set would hand a seated player the seatless board.
-    const ws = fakeSocket();
-    attachSpectator(ws);
-    attachPlayer(ws, "player-1");
-    expect(isSpectating(ws)).toBe(false);
-    expect(attachedPlayer(ws)).toBe("player-1");
-  });
-
-  it("reads a never-attached socket as not spectating", () => {
-    expect(isSpectating(fakeSocket())).toBe(false);
-    expect(isSpectating(fakeSocket({ playerId: "p" }))).toBe(false);
   });
 });

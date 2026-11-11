@@ -48,7 +48,7 @@ function Late.snapshot(options)
   local out={row(nil,W.header,{revision=options.revision or 1,phase='ready',you=flipped and 'Misty' or 'Ash',opponent=flipped and 'Ash' or 'Misty',turn=flipped and 10 or 9,gamePhase='turn:action',
     title='Your turn',hint='Attach Energy, play Trainers and Pokemon, then attack or end your turn.',turnIndex=0,turnCount=1,
     waitingOn='you',activePlayer='you',seat=flipped and 'p2' or 'p1',energyAttached=1,supporterPlayed=0,retreated=0,matchId=options.matchId or 'late'})}
-  out[#out+1]=row('L',W.lifecycle,{mode='local',spectating='false',flags='undo,newgame,choosedecks,concede,leave',allow='full'})
+  out[#out+1]=row('L',W.lifecycle,{mode='local',flags='undo,newgame,choosedecks,concede,leave',allow='full'})
   -- `player` names the seat in uids (Ash's cards are you-*), `owner` is the
   -- side of the table the viewer sees it on.
   for _,player in ipairs({'you','opponent'}) do

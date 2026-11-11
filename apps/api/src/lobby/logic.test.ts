@@ -80,7 +80,6 @@ describe("parseClientMessage — the length bounds", () => {
       { kind: "intent", from: G1, intent: { type: "select-deck", deckId: id, deckName: "A" } },
       { kind: "bye", from: id, slot: "guest" },
       { kind: "rematch", from: id },
-      { kind: "reject", to: id, reason: "kicked" },
     ]) {
       expect(parseClientMessage(JSON.stringify(frame))).toBeNull();
     }
@@ -544,8 +543,8 @@ describe("countdown helpers", () => {
 describe("abandonsMatch", () => {
   it("is true only when a commit takes the lobby out of in-game (the match-record drop)", () => {
     const inGame: LobbyState = { ...countdownLobby(), phase: "in-game" };
-    // The real abandon path: removeGuest (a guest's bye / the host's kick) resets
-    // in-game → waiting. This is the transition that must drop the stale match.
+    // Any commit that leaves in-game, here removeGuest from a running match, resets
+    // in-game → waiting: the transition that must drop the stale match.
     expect(abandonsMatch(inGame, removeGuest(inGame))).toBe(true);
     // Entering the match (countdown → in-game) is NOT an abandon — the handoff
     // just wrote the record; dropping it here would erase every fresh match.

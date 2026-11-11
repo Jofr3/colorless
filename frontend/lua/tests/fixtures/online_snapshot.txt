@@ -1,4 +1,4 @@
-5	versus	0		ABCD	guest	connected			ready	Ash	authenticated	0	
+5	versus	0		ABCD	guest	connected			ready	Ash	authenticated	
 P	you	1	Ash	1	0		Zap	1
 P	opponent	1	Misty	1	1			0
 D	d1	Zap	60	1	1	1	Standard

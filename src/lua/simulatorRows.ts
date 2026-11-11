@@ -379,7 +379,6 @@ export function tableRows(f: EmitFrame, s: EmitState) {
     // -1 away with no clock, '' present.
     f.row(W.lifecycle, {
       mode: src.mode,
-      spectating: src.spectating,
       awayName: away?.name ?? "",
       awayMs: !away ? "" : away.forfeitAt === null ? -1 : Math.max(0, away.forfeitAt - s.now),
       flags: life.flags.join(","),

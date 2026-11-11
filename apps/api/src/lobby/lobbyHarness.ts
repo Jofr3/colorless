@@ -26,7 +26,7 @@ export function seatSecret(label: string): string {
 }
 
 /** The public id the lobby names `label`'s seat by: what its snapshots carry and what intents,
-    byes, rematches and kicks address. */
+    byes and rematches address. */
 export function seatIdOf(label: string): string {
   return publicSeatId(seatSecret(label));
 }

@@ -30,7 +30,7 @@ const matchMessageSchema = z.object({
 const rejectMessageSchema = z.object({
   kind: z.literal("reject"),
   to: z.string(),
-  reason: z.enum(["full", "kicked"]),
+  reason: z.literal("full"),
 });
 const rejectActionMessageSchema = z.object({
   kind: z.literal("reject-action"),
@@ -66,7 +66,7 @@ export const lobbyMessageSchemaMatchesType: Equals<
 > = true;
 
 /** What the lobby server sends a client: authoritative snapshots after every
-    change, rejections ("full" to a refused hello, "kicked" to a removed guest),
+    change, a `reject` "full" to a hello that gets no seat,
     each socket's redacted in-game match view, a transient `reject-action`
     to the actor when a game action is refused, and a `match-error` to both when
     a match couldn't start (a deck wouldn't resolve). Keepalive pongs

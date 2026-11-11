@@ -125,7 +125,7 @@ describe("LuaOnlineMatch", () => {
     expect(header[2]).toBe("Ash");
     expect(header[3]).toBe("Brock");
     expect(header[20]).toBe(`${CODE}:1`);
-    expect(t.tagged("L")).toEqual([["L", "online", "false", "", "", "concede,leave", "full"]]);
+    expect(t.tagged("L")).toEqual([["L", "online", "", "", "concede,leave", "full"]]);
     // Catalogue faces arrive after the frame and add I rows; asked once each.
     await vi.waitFor(() => expect(t.tagged("I").length).toBeGreaterThan(0));
     t.push(frame(t.state));
@@ -443,7 +443,7 @@ describe("LuaOnlineMatch", () => {
     expect(renders()).toBe(before);
     t.fake().push({ kind: "state", snapshot: snap(t.me, { host: { ...host, connected: false } }) });
     expect(renders()).toBe(before + 1);
-    expect(t.tagged("L")[0]?.[3]).toBe("Brock");
+    expect(t.tagged("L")[0]?.[2]).toBe("Brock");
     t.fake().push({ kind: "state", snapshot: snap(t.me, { host: { ...host, name: "Misty" } }) });
     expect(renders()).toBe(before + 2);
     expect(t.rows()[0]?.[3]).toBe("Misty");
@@ -454,12 +454,12 @@ describe("LuaOnlineMatch", () => {
     const t = await table();
     const opponent = { ...makePlayer("h", "Brock"), connected: false, forfeitAt: 1_030_000 };
     t.fake().push({ kind: "state", snapshot: snap(t.me, { host: opponent }) });
-    expect(t.tagged("L")[0]?.slice(3, 5)).toEqual(["Brock", "30000"]);
+    expect(t.tagged("L")[0]?.slice(2, 4)).toEqual(["Brock", "30000"]);
     t.fake().push({
       kind: "state",
       snapshot: snap(t.me, { host: { ...opponent, forfeitAt: null } }),
     });
-    expect(t.tagged("L")[0]?.[4]).toBe("-1");
+    expect(t.tagged("L")[0]?.[3]).toBe("-1");
   });
 
   it("rematch posts once, flags it, and the next match is a fresh id", async () => {
@@ -469,27 +469,27 @@ describe("LuaOnlineMatch", () => {
       v.outcome = { result: "win", winner: "you", reason: "conceded" };
     });
     t.push(over);
-    expect(t.tagged("L")[0]?.[5]).toBe("rematch,leave");
+    expect(t.tagged("L")[0]?.[4]).toBe("rematch,leave");
     t.sim.command("rematch");
     t.sim.command("rematch");
     expect(t.fake().posts.filter((p) => p.kind === "rematch")).toEqual([
       { kind: "rematch", from: t.me },
     ]);
-    expect(t.tagged("L")[0]?.[5]).toBe("rematch,rematch-sent,leave");
+    expect(t.tagged("L")[0]?.[4]).toBe("rematch,rematch-sent,leave");
     expect(t.tagged("A")[0]?.slice(2, 5)).toEqual(["Waiting...", "red", "true"]);
     // The lobby leaves the game for the rematch, readying this seat: both stay at the finished table.
     t.route.mockClear();
     const readied = { ...makePlayer(t.me, "Ash"), ready: true };
     t.fake().push({ kind: "state", snapshot: snap(t.me, { phase: "selecting", guest: readied }) });
     expect(t.route).not.toHaveBeenCalled();
-    expect(t.tagged("L")[0]?.[5]).toBe("rematch,rematch-sent,leave");
+    expect(t.tagged("L")[0]?.[4]).toBe("rematch,rematch-sent,leave");
     expect(t.fake().kinds()).not.toContain("intent");
     // The next game starts on the same table under a fresh id.
     t.fake().push({ kind: "state", snapshot: snap(t.me) });
     t.push(frame(t.state));
     expect(t.route).not.toHaveBeenCalled();
     expect(t.rows()[0]?.[20]).toBe(`${CODE}:2`);
-    expect(t.tagged("L")[0]?.[5]).toBe("concede,leave");
+    expect(t.tagged("L")[0]?.[4]).toBe("concede,leave");
   });
 
   it("a rematch the opponent's got ahead of is accepted by readying, once", async () => {
@@ -509,7 +509,7 @@ describe("LuaOnlineMatch", () => {
     expect(readies()).toEqual([
       { kind: "intent", from: t.me, intent: { type: "set-ready", ready: true } },
     ]);
-    expect(t.tagged("L")[0]?.[5]).toBe("rematch,rematch-sent,leave");
+    expect(t.tagged("L")[0]?.[4]).toBe("rematch,rematch-sent,leave");
     // A handoff that fails unreadies both: that is the players' to retry.
     t.fake().push({ kind: "state", snapshot: snap(t.me, { phase: "selecting" }) });
     t.fake().push({ kind: "state", snapshot: snap(t.me, { phase: "selecting", host: asked }) });
@@ -524,10 +524,10 @@ describe("LuaOnlineMatch", () => {
     });
     t.push(over);
     t.sim.command("rematch");
-    expect(t.tagged("L")[0]?.[5]).toBe("rematch,rematch-sent,leave");
+    expect(t.tagged("L")[0]?.[4]).toBe("rematch,rematch-sent,leave");
     const reason = "You're signed out. Sign in again to play another game.";
     t.fake().push({ kind: "reject-action", reason });
-    expect(t.tagged("L")[0]?.[5]).toBe("rematch,leave");
+    expect(t.tagged("L")[0]?.[4]).toBe("rematch,leave");
     expect(t.rows()[0]?.[6]).toBe(reason);
     t.sim.command("rematch");
     expect(t.fake().posts.filter((p) => p.kind === "rematch")).toHaveLength(2);
@@ -537,7 +537,7 @@ describe("LuaOnlineMatch", () => {
     const watched = structuredClone(over);
     watched.outcome = { result: "win", winner: "opponent", reason: "conceded" };
     t.push(watched);
-    expect(t.tagged("L")[0]?.[5]).toBe("leave");
+    expect(t.tagged("L")[0]?.[4]).toBe("leave");
     expect(t.sim.view()?.outcome).toEqual(over.outcome);
     expect(t.rows()[0]?.[6]).toBe(reason);
     // The finished table stays up for the watcher rather than routing to "Lobby is full".
@@ -557,7 +557,7 @@ describe("LuaOnlineMatch", () => {
     // Brock asked first: the server already took the lobby out of the game.
     const asked = { ...makePlayer("h", "Brock"), ready: true };
     t.fake().push({ kind: "state", snapshot: snap(t.me, { phase: "selecting", host: asked }) });
-    expect(t.tagged("L")[0]?.[5]).toBe("rematch,leave");
+    expect(t.tagged("L")[0]?.[4]).toBe("rematch,leave");
     t.sim.command("rematch");
     const posts = t.fake().posts;
     expect(posts.filter((p) => p.kind === "rematch")).toEqual([]);
@@ -625,7 +625,7 @@ describe("an online action in flight", () => {
     const button = t.tagged("A").find((r) => r[2] === "End turn");
     t.sim.command(`invoke\t${t.rows()[0]?.[0]}\t${button?.[1]}`);
   };
-  const flags = (t: Awaited<ReturnType<typeof table>>) => t.tagged("L")[0]?.[5]?.split(",");
+  const flags = (t: Awaited<ReturnType<typeof table>>) => t.tagged("L")[0]?.[4]?.split(",");
 
   it("a double click sends one action, and the L row says it is pending", async () => {
     const t = await table();

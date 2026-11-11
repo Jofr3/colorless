@@ -112,13 +112,13 @@ export const lobbyClientMessageSchema = z.discriminatedUnion("kind", [
   helloMessageSchema,
   intentMessageSchema,
   actionMessageSchema,
-  z.object({ kind: z.literal("reject"), to: clientId, reason: z.literal("kicked") }),
   byeMessageSchema,
   rematchMessageSchema,
 ]);
-export type LobbyClientMessage =
-  | Extract<LobbyMessage, { kind: "hello" | "intent" | "action" | "bye" | "rematch" }>
-  | { kind: "reject"; to: string; reason: "kicked" };
+export type LobbyClientMessage = Extract<
+  LobbyMessage,
+  { kind: "hello" | "intent" | "action" | "bye" | "rematch" }
+>;
 export const lobbyClientMessageSchemaMatchesType: Equals<
   z.infer<typeof lobbyClientMessageSchema>,
   LobbyClientMessage
