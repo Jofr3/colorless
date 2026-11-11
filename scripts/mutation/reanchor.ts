@@ -20,6 +20,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 // TypeScript 7 (the Go compiler) has no stable compiler API yet, so the parser comes from
 // TypeScript 6 under its own name; port to TS 7.1's API when it is stable.
 import ts from "@typescript/typescript6";
+import { flags } from "../lib/cli";
 import { REPO_ROOT, repoPath, sourceCache } from "../lib/repo";
 import { MUTANTS, type Mutant } from "./mutants";
 import { currentSymbol, enclosingSymbol } from "./symbol";
@@ -274,18 +275,24 @@ function retireRows(ids: Set<string>): void {
   console.log(`retired ${cuts.length} row(s)`);
 }
 
-if (import.meta.main && process.argv.includes("--retire")) {
-  const list = process.argv[process.argv.indexOf("--retire") + 1];
-  if (list === undefined) throw new Error("--retire needs a file of row ids");
+const cli = import.meta.main
+  ? flags("bun scripts/mutation/reanchor.ts", process.argv.slice(2), {
+      booleans: ["--write", "--accept-symbols"],
+      values: ["--retire"],
+    })
+  : undefined;
+const retireList = cli?.values.get("--retire");
+
+if (retireList !== undefined) {
   retireRows(
     new Set(
-      readFileSync(list, "utf8")
+      readFileSync(retireList, "utf8")
         .split("\n")
         .map((l) => l.trim())
         .filter(Boolean),
     ),
   );
-} else if (import.meta.main) {
+} else if (cli !== undefined) {
   const broken = MUTANTS.filter((m) => {
     try {
       return occurrences(sourceOf(m.file), m.find) !== 1;
@@ -320,7 +327,7 @@ if (import.meta.main && process.argv.includes("--retire")) {
     });
   }
   const brokenIds = new Set(broken.map((m) => m.id));
-  const acceptSymbols = process.argv.includes("--accept-symbols");
+  const acceptSymbols = cli.given.has("--accept-symbols");
   let backfilled = 0;
   let renamed = 0;
   for (const m of MUTANTS) {
@@ -341,7 +348,7 @@ if (import.meta.main && process.argv.includes("--retire")) {
     }
   }
   if (backfilled > 0) console.log(`${backfilled} row(s) without a symbol`);
-  if (process.argv.includes("--write") && patches.size > 0) {
+  if (cli.given.has("--write") && patches.size > 0) {
     rewriteCorpus(patches);
     console.log(
       `rewrote ${fixes.length} re-anchored, ${backfilled} backfilled and ${renamed} renamed row(s) in ${CORPUS}`,

@@ -122,8 +122,8 @@ const music = "sounds/music1.ogg";
 // The screen wipe's fallback scans download after ready too (web/host.js), each beside game.data
 // under its content hash; Lua lists only those already written.
 const transitionCards = "transition_cards";
-// Kept in the repo for tools/logo_bake.lua and attribution; Lua never reads them.
-const unpackaged = new Set(["assets/branding/colorless.png", "assets/branding/colorless-menu.png"]);
+// The logo's static preview composite (assets/branding/SOURCES.md); Lua never reads it.
+const unpackaged = new Set(["assets/branding/colorless-menu.png"]);
 try {
   for (const name of ["conf.lua", "main.lua", "ui", "assets"])
     cpSync(join(here, name), join(stage, name), {
@@ -154,7 +154,6 @@ try {
   /** @type {Record<string, string>} */
   const manifest = {};
   for (const name of [
-    "colorless.png",
     "colorless-menu.png",
     "colorless-menu-base.png",
     "colorless-energy-star.png",

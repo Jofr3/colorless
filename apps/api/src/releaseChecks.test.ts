@@ -29,6 +29,8 @@ import {
   releaseTagName,
   remoteMainOf,
   webDistProblems,
+  sameSite,
+  siteOf,
 } from "./releaseChecks";
 
 const HEAD = "3d6b1a12eb7102be8def0b5451d238b9064a9277";
@@ -171,6 +173,32 @@ describe("health", () => {
   });
 });
 
+describe("sameSite", () => {
+  it("reads one label under workers.dev and pages.dev, which are public suffixes", () => {
+    expect(sameSite("https://colorless-api.a.workers.dev", "https://colorless.a.workers.dev")).toBe(
+      true,
+    );
+    expect(sameSite("https://colorless.a.workers.dev", "https://colorless.b.workers.dev")).toBe(
+      false,
+    );
+    expect(sameSite("https://a.pages.dev", "https://b.pages.dev")).toBe(false);
+    expect(siteOf("https://x.colorless.a.pages.dev")).toBe("https://a.pages.dev");
+  });
+
+  it("reads the last two labels of any other domain, and compares schemes", () => {
+    expect(sameSite("https://api.colorless.dev", "https://colorless.dev")).toBe(true);
+    expect(sameSite("https://api.colorless.dev", "https://colorless.app")).toBe(false);
+    expect(sameSite("http://colorless.dev", "https://colorless.dev")).toBe(false);
+  });
+
+  it("takes an IP address whole and refuses what is not an origin", () => {
+    expect(sameSite("http://127.0.0.1:9", "http://127.0.0.1:5175")).toBe(true);
+    expect(sameSite("http://10.0.0.1", "http://192.168.0.1")).toBe(false);
+    expect(siteOf("not a url")).toBeUndefined();
+    expect(sameSite("not a url", "not a url")).toBe(false);
+  });
+});
+
 describe("web-dist", () => {
   const info: BuildInfo = {
     commit: HEAD,
@@ -212,6 +240,18 @@ describe("web-dist", () => {
     ).toHaveLength(1);
     expect(webDistProblems(info, { ...expected, appOrigin: "https://elsewhere.dev" })).toEqual([
       "apps/api/wrangler.jsonc APP_ORIGIN https://elsewhere.dev is not .env.production's VITE_SITE_ORIGIN https://colorless.example.dev",
+    ]);
+  });
+
+  it("refuses an API on another site than the page, whose session cookie would not be sent", () => {
+    const split = {
+      head: HEAD,
+      apiOrigin: "https://api.colorless.example",
+      siteOrigin: "https://colorless.example.dev",
+      appOrigin: "https://colorless.example.dev",
+    };
+    expect(webDistProblems({ ...info, apiOrigin: split.apiOrigin }, split)).toEqual([
+      ".env.production's VITE_API_ORIGIN https://api.colorless.example and VITE_SITE_ORIGIN https://colorless.example.dev are different sites",
     ]);
   });
 

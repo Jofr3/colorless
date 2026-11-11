@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { envInt, isRecord, linesWithOverflow, parseJson } from "./cli";
+import { envInt, flags, isRecord, linesWithOverflow, parseFlags, parseJson } from "./cli";
 
 describe("envInt", () => {
   afterEach(() => {
@@ -55,6 +55,60 @@ describe("linesWithOverflow", () => {
       "item 1",
       "item 2",
       "and 2 more",
+    ]);
+  });
+});
+
+describe("parseFlags", () => {
+  const spec = { booleans: ["--keep", "--gpu"], values: ["--runs"] };
+
+  it("reads boolean flags and values", () => {
+    const parsed = parseFlags(["--gpu", "--runs", "3"], spec);
+    expect(parsed.problems).toEqual([]);
+    expect([...parsed.given]).toEqual(["--gpu", "--runs"]);
+    expect(parsed.values.get("--runs")).toBe("3");
+  });
+
+  it("refuses an unknown flag or a positional, so a typo cannot run the default configuration", () => {
+    expect(parseFlags(["--firefx", "keep"], spec).problems).toEqual([
+      "unknown flag `--firefx`",
+      "unexpected argument `keep`",
+    ]);
+  });
+
+  it("refuses a repeated flag and a value flag with no value", () => {
+    expect(parseFlags(["--keep", "--keep"], spec).problems).toEqual([
+      "`--keep` given more than once",
+    ]);
+    expect(parseFlags(["--runs"], spec).problems).toEqual(["`--runs` needs a value"]);
+    expect(parseFlags(["--runs", "--gpu"], spec)).toMatchObject({
+      problems: ["`--runs` needs a value"],
+      given: new Set(["--runs", "--gpu"]),
+    });
+  });
+});
+
+describe("flags", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("exits 1 with the problems and the usage line", () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(process, "exit").mockImplementation((code) => {
+      throw new Error(`exit ${code}`);
+    });
+    expect(() =>
+      flags("bun run e2e", ["--firefx"], { booleans: ["--firefox"], values: ["--runs"] }),
+    ).toThrow("exit 1");
+    expect(error).toHaveBeenCalledWith(
+      "unknown flag `--firefx`\nusage: bun run e2e [--firefox] [--runs <value>]",
+    );
+  });
+
+  it("returns what a well-formed command line set", () => {
+    expect([...flags("x", ["--firefox"], { booleans: ["--firefox"] }).given]).toEqual([
+      "--firefox",
     ]);
   });
 });

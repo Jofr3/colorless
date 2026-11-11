@@ -6,13 +6,14 @@
  * fails when engine runtime code imports a value from zod or the schema package's root, which
  * builds every zod schema on import; `@colorless/schema/constants` is zod-free. It also fails when
  * the web page's eager bundle (everything `EAGER_ENTRY` imports without `import()`) reaches a
- * module in `LAZY_ONLY`. Without `--check` it prints every runtime cycle and every crossing
- * import. A step of `bun run check`.
+ * module in `LAZY_ONLY`, when a src/ module imports from a later layer of `SRC_LAYERS`, or when
+ * anything `PROD_WATCH` runs imports a package. Without `--check` it prints every runtime cycle and
+ * every crossing import. A step of `bun run check`.
  */
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
-import { expandedCheckScript, fail, isRecord, parseJson } from "./lib/cli";
+import { expandedCheckScript, fail, flags, isRecord, parseJson } from "./lib/cli";
 import { REPO_ROOT, repoPath, repoSourceFiles } from "./lib/repo";
 
 const SELF_PATH = "scripts/import-graph.ts";
@@ -51,12 +52,31 @@ export const EAGER_ENTRY = "src/lua/bridge.ts";
  */
 export const LAZY_ONLY: readonly string[] = ["packages/engine/src/index.ts"];
 
+/**
+ * src/ directories in layers: a non-test module may import its own layer or an earlier one, type
+ * imports included. The data, game and protocol code stays free of the Lua adapters, the page host
+ * and the test harnesses.
+ */
+export const SRC_LAYERS: readonly (readonly string[])[] = [
+  ["src/lib", "src/decks", "src/game", "src/online"],
+  ["src/lua", "src/host", "src/seam", "src/test"],
+];
+
+/**
+ * The production monitor runs with Bun and no install, where a workspace package does not resolve
+ * and a bare npm specifier is fetched unpinned; everything it runs imports only `node:` modules.
+ */
+export const PROD_WATCH = "scripts/prod-watch.ts";
+
 const EXTENSIONS = ["ts", "tsx", "mts", "cts"];
 const RESOLVE_SUFFIXES = ["", ".ts", ".tsx", ".mts", ".cts", "/index.ts", "/index.tsx"];
 const WORKSPACE_GROUPS = ["packages", "apps"];
 const ROOT_DIRS = ["src", "scripts"];
 
 const isTestFile = (file: string): boolean => /\.test\.tsx?$/.test(file);
+
+const layerOf = (file: string): number =>
+  SRC_LAYERS.findIndex((dirs) => dirs.some((dir) => file.startsWith(`${dir}/`)));
 
 const ZOD_SPECIFIERS = ["zod", "@colorless/schema"];
 
@@ -174,6 +194,10 @@ export type Graph = {
   staticEdges: Map<string, Set<string>>;
   crossings: { from: string; specifier: string; to: string }[];
   engineZodImports: { from: string; specifier: string }[];
+  /** Imports, type-only ones included, from a non-test src/ module into a later layer. */
+  layerImports: { from: string; specifier: string }[];
+  /** Each non-test module's runtime imports that are neither relative nor `node:`. */
+  packageImports: Map<string, string[]>;
 };
 
 export function buildGraph(files: readonly string[], read: (file: string) => string): Graph {
@@ -183,9 +207,12 @@ export function buildGraph(files: readonly string[], read: (file: string) => str
   const staticEdges = new Map<string, Set<string>>();
   const crossings: Graph["crossings"] = [];
   const engineZodImports: Graph["engineZodImports"] = [];
+  const layerImports: Graph["layerImports"] = [];
+  const packageImports = new Map<string, string[]>();
   for (const file of files) {
     const edges = new Set<string>();
     const eager = new Set<string>();
+    const packages: string[] = [];
     for (const imp of importsOf(read(file))) {
       if (imp.runtime && isEngineRuntimeFile(file) && ZOD_SPECIFIERS.includes(imp.specifier)) {
         engineZodImports.push({ from: file, specifier: imp.specifier });
@@ -196,6 +223,11 @@ export function buildGraph(files: readonly string[], read: (file: string) => str
         if (workspaceRootOf(path) !== workspaceRootOf(file)) {
           crossings.push({ from: file, specifier: imp.specifier, to: path });
         }
+        if (!isTestFile(file) && layerOf(file) >= 0 && layerOf(path) > layerOf(file)) {
+          layerImports.push({ from: file, specifier: imp.specifier });
+        }
+      } else if (imp.runtime && !imp.specifier.startsWith("node:")) {
+        packages.push(imp.specifier);
       }
       const target = relativeSpec
         ? resolveRelative(file, imp.specifier, known)
@@ -209,9 +241,10 @@ export function buildGraph(files: readonly string[], read: (file: string) => str
     if (!isTestFile(file)) {
       runtimeEdges.set(file, edges);
       staticEdges.set(file, eager);
+      packageImports.set(file, packages);
     }
   }
-  return { runtimeEdges, staticEdges, crossings, engineZodImports };
+  return { runtimeEdges, staticEdges, crossings, engineZodImports, layerImports, packageImports };
 }
 
 /** Tarjan's strongly connected components with more than one member (or a self-import). */
@@ -275,6 +308,22 @@ export function eagerPathTo(
   return null;
 }
 
+/** Every package import in the runtime closure of `entry`, or null when `entry` is not in the graph. */
+export function closurePackageImports(
+  graph: Graph,
+  entry: string,
+): { from: string; specifier: string }[] | null {
+  if (!graph.runtimeEdges.has(entry)) return null;
+  const seen = new Set([entry]);
+  const out: { from: string; specifier: string }[] = [];
+  for (const file of seen) {
+    for (const specifier of graph.packageImports.get(file) ?? [])
+      out.push({ from: file, specifier });
+    for (const to of graph.runtimeEdges.get(file) ?? []) seen.add(to);
+  }
+  return out;
+}
+
 const sameSet = (a: readonly string[], b: readonly string[]): boolean =>
   a.length === b.length && a.every((x) => b.includes(x));
 
@@ -313,6 +362,22 @@ export function problemsOf(graph: Graph): string[] {
       `import-graph: FAIL — ${z.from} imports a value from "${z.specifier}", which builds zod schemas on import; import types only, and values from "@colorless/schema/constants".`,
     );
   }
+  for (const l of graph.layerImports) {
+    problems.push(
+      `import-graph: FAIL — ${l.from} imports "${l.specifier}" from a later layer of SRC_LAYERS; move what it needs down a layer.`,
+    );
+  }
+  const closure = closurePackageImports(graph, PROD_WATCH);
+  if (closure === null) {
+    problems.push(
+      `import-graph: FAIL — ${PROD_WATCH} is not in the graph; update PROD_WATCH to the production monitor.`,
+    );
+  }
+  for (const p of closure ?? []) {
+    problems.push(
+      `import-graph: FAIL — ${p.from} imports "${p.specifier}" and ${PROD_WATCH} runs it with no install; import only node: modules and repo files there.`,
+    );
+  }
   const eager = eagerPathTo(graph.staticEdges, EAGER_ENTRY, LAZY_ONLY);
   if (eager) {
     problems.push(
@@ -324,8 +389,9 @@ export function problemsOf(graph: Graph): string[] {
 }
 
 /**
- * Keeps the guard able to go red: a known cycle, a known crossing and an engine value import from
- * the schema root must all be reported.
+ * Keeps the guard able to go red: a known cycle, a known crossing, an engine value import from the
+ * schema root, an import from a later src/ layer and a package in prod-watch's closure must all be
+ * reported.
  */
 export function selfCheck(): string[] {
   const problems: string[] = [];
@@ -340,6 +406,12 @@ export function selfCheck(): string[] {
       'import type { Card } from "@colorless/schema";\nimport { X } from "@colorless/schema/constants";\nimport { cardSchema } from "@colorless/schema";',
     "packages/engine/src/a.test.ts": 'import { cardSchema } from "@colorless/schema";',
     "packages/engine/src/fixtures/a.ts": 'import * as z from "zod";',
+    "src/lib/l.ts": 'import type { U } from "../lua/u";\nimport { d } from "../d";',
+    "src/lib/l.test.ts": 'import { u } from "../lua/u";',
+    "src/lua/u.ts": 'import { l } from "../lib/l";',
+    [PROD_WATCH]: 'import { readFileSync } from "node:fs";\nimport { p } from "./lib/p";',
+    "scripts/lib/p.ts": 'import type { Card } from "@colorless/schema";\nexport { d } from "../d";',
+    "scripts/d.ts": 'import { x } from "./x";\nimport { z } from "zod";',
   };
   const graph = buildGraph(Object.keys(files), (f) => files[f] ?? "");
   const cycles = cyclesOf(graph.runtimeEdges);
@@ -367,6 +439,24 @@ export function selfCheck(): string[] {
       `import-graph: SELF-CHECK FAILED — expected one engine value import from the schema root, in packages/engine/src/a.ts, got ${JSON.stringify(zod)}.`,
     );
   }
+  const layers = graph.layerImports;
+  if (layers.length !== 1 || layers[0]?.from !== "src/lib/l.ts") {
+    problems.push(
+      `import-graph: SELF-CHECK FAILED — expected one later-layer import, the type import in src/lib/l.ts, got ${JSON.stringify(layers)}.`,
+    );
+  }
+  const closure = closurePackageImports(graph, PROD_WATCH);
+  if (closure?.length !== 1 || closure[0]?.from !== "scripts/d.ts") {
+    problems.push(
+      `import-graph: SELF-CHECK FAILED — expected one package import in ${PROD_WATCH}'s closure, zod in scripts/d.ts, got ${JSON.stringify(closure)}.`,
+    );
+  }
+  const reported = problemsOf(graph).join("\n");
+  for (const line of ['src/lib/l.ts imports "../lua/u" from a later layer', 'imports "zod" and']) {
+    if (!reported.includes(line)) {
+      problems.push(`import-graph: SELF-CHECK FAILED — problemsOf reports no "${line}".`);
+    }
+  }
   return problems;
 }
 
@@ -381,7 +471,9 @@ function checkRunsThisGuard(): string[] {
 }
 
 function main(): void {
-  const check = process.argv.includes("--check");
+  const check = flags("bun scripts/import-graph.ts", process.argv.slice(2), {
+    booleans: ["--check"],
+  }).given.has("--check");
   const t0 = performance.now();
   const files = repoSourceFiles(EXTENSIONS);
   const graph = buildGraph(files, (f) => readFileSync(repoPath(f), "utf8"));
@@ -397,7 +489,7 @@ function main(): void {
   if (problems.length > 0) fail(problems.join("\n"));
   const ms = (performance.now() - t0).toFixed(0);
   console.log(
-    `import-graph: OK — ${files.length} files, one recorded runtime cycle of ${RECORDED_CYCLE.length} modules, no cross-root relative imports beyond the ${ALLOWED_CROSSINGS.length} allowed, no zod in engine runtime imports · ${ms}ms.`,
+    `import-graph: OK — ${files.length} files, one recorded runtime cycle of ${RECORDED_CYCLE.length} modules, no cross-root relative imports beyond the ${ALLOWED_CROSSINGS.length} allowed, no zod in engine runtime imports, no later-layer import in src/, no package in ${PROD_WATCH}'s closure · ${ms}ms.`,
   );
 }
 

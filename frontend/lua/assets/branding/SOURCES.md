@@ -55,19 +55,9 @@ There is no startup mask processing, shader baking, Canvas readback or format co
 This removes the graphics-dependent path that could leave the menu logo blank.
 CRT scanlines and fringing are applied live by the game.
 
-`colorless.png` is the 2057 × 764 lighter lettering from imagegen pass 3,
-retained as the legacy authoring source. `tools/logo_bake.lua` extracts its ivory and
-pastel faces and renders the measured source edge with a deeper lower ledge. Cleanup removes
-detached mask fragments, fills small extraction holes and trims hairline spurs
-before beveling. Two local contour repairs remove a coral protrusion below the
-C and the notch inside its upper curve. Resolution, face palette and filtering
-remain unchanged. The broader bevel uses the original B/O's distinct warm-gray,
-slate and charcoal steps; export restores their exact sampled colours after
-WebGL's rgba4 quantization. The superseded palette
-reduction and coarse-grid revision is retained locally in
-`tmp/colorless-iterations/07-pixel-cleanup*`. The authoring renderer explicitly
-converts GPU readback (which can be rgba4) into straight-alpha rgba8 before PNG
-export, and refuses an empty result.
+The earlier rounded lettering (`colorless.png`, from imagegen pass 3) and its Lua
+bake tools (`tools/logo_bake.lua`, `tools/logo_shapes.lua`), which the Refinement
+list below describes, were deleted; git history keeps them.
 
 To rebuild the current finished asset, run `node frontend/lua/tools/build-logo.mjs`,
 serve the printed directory with a local HTTP server, then open its page in a
@@ -75,16 +65,14 @@ browser. The exporter downsamples the angular artwork with transparent padding,
 preserves its proportions, extracts and thins its face mask, then samples that
 mask onto the logical pixel grid. It rebuilds the border and hand-drawn
 reflection paint there, validates nine faces and three counters, and exports
-exact 2x pixel blocks. The current authoring path does not load the
-original Balatro sprite; the legacy path still uses the sibling source checkout.
+exact 2x pixel blocks. The authoring path does not load the original Balatro
+sprite.
 Download the composite into this directory as `colorless-menu.png`. The page
 also exposes `window.logoLayers`: base64 PNGs in `background` and `star`, plus
 `centerX`/`centerY`. Save those as `colorless-menu-base.png` and
 `colorless-energy-star.png`, and regenerate `ui/menu_logo_layout.lua` as
 `return {starX=centerX,starY=centerY}` using the exported numeric coordinates.
 Inspect the composite/layers and run `bun run build:lua`.
-The old coordinate-based face cleanup and bevel renderer remains available with
-`--legacy`; it reproduces the earlier rounded lettering, not the current redraw.
 
 The pre-border-cleanup source and menu sprite are saved locally as
 `tmp/colorless-iterations/15-before-border-fix-{source,menu}.png`. A built-in

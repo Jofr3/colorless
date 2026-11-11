@@ -21,13 +21,13 @@ import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { extname, join, normalize } from "node:path";
 import { gzipSync } from "node:zlib";
-import { fail } from "./lib/cli";
+import { fail, flags } from "./lib/cli";
 import { localBin, REPO_ROOT } from "./lib/repo";
 
-function option(name: string, fallback: string): string {
-  const at = process.argv.indexOf(`--${name}`);
-  return at >= 0 ? (process.argv[at + 1] ?? fail(`--${name} needs a value`)) : fallback;
-}
+const { values } = flags("bun scripts/bench-boot.ts", process.argv.slice(2), {
+  values: ["--dist", "--mbps", "--runs", "--latency"],
+});
+const option = (name: string, fallback: string): string => values.get(`--${name}`) ?? fallback;
 
 const runs = Number(option("runs", "3"));
 const latency = Number(option("latency", "40"));

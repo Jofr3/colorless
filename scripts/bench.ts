@@ -33,6 +33,7 @@ import {
   candidateActions,
   walkGame,
 } from "@colorless/engine/testing";
+import { flags } from "./lib/cli";
 
 const REPO_ROOT = resolve(import.meta.dirname, "..");
 const OUT_DIR = resolve(REPO_ROOT, "tmp/bench");
@@ -48,16 +49,19 @@ const PAIRS = [
 ] as const satisfies readonly (readonly [BenchDeckName, BenchDeckName])[];
 
 const args = process.argv.slice(2);
-const flag = (name: string) => args.includes(name);
+const { given, values } = flags("bun run bench", args, {
+  booleans: ["--node", "--cpu-prof"],
+  values: ["--games", "--runs", "--json"],
+});
+const flag = (name: string) => given.has(name);
 function option(name: string, fallback: number): number {
-  const at = args.indexOf(name);
-  if (at === -1) return fallback;
-  const value = Number(args[at + 1]);
+  const raw = values.get(name);
+  if (raw === undefined) return fallback;
+  const value = Number(raw);
   if (!Number.isInteger(value) || value < 1) throw new Error(`${name} takes a positive integer`);
   return value;
 }
-const jsonAt = args.indexOf("--json");
-const jsonOut = jsonAt === -1 ? undefined : args[jsonAt + 1];
+const jsonOut = values.get("--json");
 const isBun = typeof process.versions.bun === "string";
 
 if (process.env[CHILD_ENV] === undefined && (flag("--node") || flag("--cpu-prof"))) {
