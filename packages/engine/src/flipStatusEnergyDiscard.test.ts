@@ -439,7 +439,7 @@ describe("§6 — the census moves in exactly ONE summand", () => {
     const rows = legalAttackCorpus();
     const resolved = rows.filter(([, s]) => resolvedByAnyReader(s));
     const without = resolved.filter(([, s]) => s !== PRINTED);
-    expect([without.length, units(without)]).toEqual([599, 1661]);
+    expect([resolved.length - without.length, units(resolved) - units(without)]).toEqual([1, 2]);
   });
 
   it("no registry row shadows the sentence — the deriver is what answers", () => {

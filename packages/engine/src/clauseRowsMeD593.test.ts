@@ -637,7 +637,7 @@ describe("D593 §7 — Spiky Rolling: +80 when this Pokémon used Spiky Rolling 
 });
 
 describe("D593 §8 — Giga Railgun: does nothing without a Voltaic Lightning Energy attached", () => {
-  it('with Voltaic Lightning Energy attached: 260 ( D604 (D539): "260" is WITHDRAWN as the dealt figure — the Voltaic is a built Energy since D604, +20 on its {L} holder\'s attacks to the Active: 280)', () => {
+  it("with Voltaic Lightning Energy attached: 280", () => {
     expect(
       dealt(
         table("me05-026", [
@@ -705,7 +705,7 @@ describe("D593 §10 — Cutting Riposte: payable for {D} while this Pokémon has
 describe('D593 §11 — "Fade Out" under three printed names', () => {
   const BOUNCE = [{ op: "returnSelf", dest: "hand" }];
 
-  it('three NEW attack-only objects, each at its printed index; the other index keeps deriving ( D628 (D539): "attack-only" WITHDRAWN for `TUCK_TAIL` — it carries Meowth ex\'s "Last-Ditch Catch" trigger too)', () => {
+  it("three NEW attack objects, each at its printed index (Meowth ex's also carries Last-Ditch Catch); the other index keeps deriving", () => {
     expect(programFor("mep-006")).toEqual({ attack: { 1: BOUNCE } });
     expect(programFor("me04-030")).toEqual({ attack: { 1: BOUNCE } });
     expect(programFor("me03-062")?.attack).toEqual({ 0: BOUNCE });

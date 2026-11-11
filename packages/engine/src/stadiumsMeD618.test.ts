@@ -362,7 +362,7 @@ describe("D618 §1 — the programs: three objects over 8 printings", () => {
     );
   });
 
-  it("the dropped Stadiums stay unkeyed ( D635 (D539): but Fossil Quarry, keyed since D635; D642 (D539): WITHDRAWN — the other three are keyed since D642, the rung is inverted)", () => {
+  it("the dropped Stadiums are keyed: Dizzying Valley, Risky Ruins and Ange Floette carry a `stadium` program (D642)", () => {
     for (const id of ["me02-088", "me01-127", "me04-075"])
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["stadium"]);
   });

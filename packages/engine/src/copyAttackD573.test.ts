@@ -584,7 +584,7 @@ describe("D573 §1 — the reader: four whole-sentence anchors, nine printings, 
     expect(deriveAttackCopy(TRY_TO_IMITATE)).toEqual({ from: "opponentActive", flip: true });
   });
 
-  it("~~refuses the two mid-attack-park members (they stay BLOCKED)~~ ( D574: claims them as RESOLVE-TIME kinds) and refuses every one-token near miss", () => {
+  it("claims the two mid-attack-park members as RESOLVE-TIME kinds (D574) and refuses every one-token near miss", () => {
     expect(deriveAttackCopy(HAUGHTY_ORDER)).toEqual({
       from: "opponentDeckTop",
       count: 10,

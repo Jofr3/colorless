@@ -672,7 +672,7 @@ describe("D610 §8 — Tyrannically Gutsy: any Special Energy attached, +150 HP"
 });
 
 describe("D610 §9 — what WP37 leaves, and the version", () => {
-  it('the dropped and out-of-scope texts stay unkeyed (Meowth ex keeps only its attack key) ( D628 (D539): WITHDRAWN for Meowth ex — "Last-Ditch Catch" is keyed since D628; Clawitzer stays dropped) ( D631 (D539): WITHDRAWN for Kingambit, Garbodor, Decidueye ex ×2, Bastiodon ×3 and Yveltal — keyed since D631) ( D636 (D539): WITHDRAWN for Clawitzer — keyed since D636)', () => {
+  it("the dropped and out-of-scope texts are keyed: Clawitzer by Ability, the D631 bodies by passive, and Meowth ex by its attack plus Last-Ditch Catch", () => {
     for (const id of [
       ...["me01-038", "me01-141"], // Clawitzer "Fall Back to Reload"
     ])

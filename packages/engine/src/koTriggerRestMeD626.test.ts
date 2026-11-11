@@ -353,7 +353,7 @@ describe("D626 §1 — the texts and the registry rows", () => {
     });
   });
 
-  it("out of scope (K2): Spiteful Swirl ×2 and Counterattack Grouping stay unkeyed ( D642 (D539): WITHDRAWN — keyed since D642, the rung is inverted)", () => {
+  it("out of scope (K2): Spiteful Swirl ×2 and Counterattack Grouping are keyed as passives (D642)", () => {
     for (const id of ["me01-087", "me01-148", "30th-022"])
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
   });

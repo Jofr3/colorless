@@ -497,7 +497,7 @@ describe("§8 — the census moves in exactly ONE summand", () => {
       rs.reduce((sum, [n]) => sum + n, 0);
     const resolved = rows.filter(([, s]) => resolvedByAnyReader(s));
     const without = resolved.filter(([, s]) => s !== PRINTED);
-    expect([without.length, units(without)]).toEqual([599, 1662]);
+    expect([resolved.length - without.length, units(resolved) - units(without)]).toEqual([1, 1]);
     expect(programFor("fix-deflock")).toBeUndefined();
   });
 

@@ -483,7 +483,7 @@ describe("§6 — the census moves in exactly ONE summand", () => {
     const rows = legalAttackCorpus();
     const resolved = rows.filter(([, s]) => resolvedByAnyReader(s));
     const without = resolved.filter(([, s]) => s !== PRINTED_TWO && s !== UNTIL_TAILS);
-    expect([without.length, units(without)]).toEqual([598, 1661]);
+    expect([resolved.length - without.length, units(resolved) - units(without)]).toEqual([2, 2]);
   });
 });
 

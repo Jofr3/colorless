@@ -93,7 +93,7 @@ describe("D607 §1 — the texts: 8 attack sentences / 14 printings", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(14);
   });
 
-  it("WP28b stays unbuilt: 7 texts / 11 printings, named ( D623 (D539): WITHDRAWN — five are built at D623; Doublade ×3 and Okidogi stay unbuilt) ( D630 (D539): Okidogi built at D630; only Doublade ×3 stays) ( D633 (D539): Doublade ×3 built at D633; none stays)", () => {
+  it("WP28b's 7 texts / 11 printings are corpus rows, and every one resolves on a reader", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     const stillUnbuilt = new Set<string | undefined>([]);
     for (const [text, n] of WP28B) {

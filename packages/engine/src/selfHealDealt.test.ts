@@ -188,7 +188,7 @@ function contOf(state: GameState): { ctx: Record<string, unknown>; rest: EffectO
 }
 
 describe("§3 — the carrier is `EffectContext`, and `MATCH_RECORD_VERSION` stays 26", () => {
-  it("`EffectRecord` ~~could not have held it~~ ( D579 (D539): WITHDRAWN as absolute — `placed` files a COUNT as repeated uids; the figure stays on `ctx.dealt` by CHOICE) — every slot's value type is a LIST OF UIDS", () => {
+  it("every `EffectRecord` slot's value type is a LIST OF UIDS, while `ctx.dealt` carries the figure as a number", () => {
     const cont = contOf(parkedMidAttack());
     const record = (cont as unknown as { record?: Record<string, unknown> }).record ?? {};
     for (const value of Object.values(record)) {

@@ -126,7 +126,7 @@ describe("§1 — the census D282 priced its refusal against: counts reproduce, 
     expect(units(gateAll) - units(firstTurn)).toBe(6);
   });
 
-  it("S2 — ~~17 of 968~~ registry ids carry an `attackGate`, in three kinds ( D582 (D539): the figures are WITHDRAWN — 18 of 1,087 at D582)", () => {
+  it("S2 — 18 of 1,523 registry ids carry an `attackGate`, in three kinds", () => {
     const ids = programmedCardIds();
     expect(ids.length).toBe(1523);
     const gated = ids.filter((id) => programFor(id)?.attackGate !== undefined);

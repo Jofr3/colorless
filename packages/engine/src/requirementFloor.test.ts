@@ -408,7 +408,7 @@ describe("§5 — on a BOARD: each of the three cancels and lands, and the ids a
 });
 
 describe("§6 — `allOf` gains its first DERIVED producer, and nothing downstream moves", () => {
-  it("every `allOf` before this slice was authored in registry.ts — 5 sites, ~~14~~ ids ( D582 (D539): *14* WITHDRAWN — 15 since the `me` alias Terapagos ex `me02.5-179`; D591: 8 sites / 24 ids with the Flapping trio; D599: 9 sites / 26 ids with Anthea & Concordia; D628: 10 sites / 27 ids with Latios)", () => {
+  it("27 registry ids carry an `allOf`, and none of this slice's bought ids is among them", () => {
     const withAllOf = programmedCardIds().filter((id) =>
       JSON.stringify(programFor(id) ?? {}).includes('"allOf"'),
     );

@@ -739,8 +739,8 @@ describe("D611 §10 — Evolutionary Guidance: any Energy attached; an Evolution
   });
 });
 
-describe("D611 §11 — Lethargic Charge is dropped and named ( D628 (D539): WITHDRAWN — BUILT at D628)", () => {
-  it("Larry's Komala `me02.5-175` stays unkeyed: an Active-only target AND a which-Energy-card choice (two pieces) ( D628 (D539): WITHDRAWN — both pieces built, `attachFromHand` `one` + `activeOnly`; onBenchMoveMeD628.test.ts §4)", () => {
+describe("D611 §11 — Lethargic Charge is built (D628)", () => {
+  it("Larry's Komala `me02.5-175` carries Lethargic Charge (D628)", () => {
     expect(programFor(KOMALA)?.abilities?.[0]?.name).toBe("Lethargic Charge");
   });
 });

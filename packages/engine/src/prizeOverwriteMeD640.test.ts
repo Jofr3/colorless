@@ -55,7 +55,7 @@ describe("D640 §1 — the texts", () => {
     expect(SENTENCES.flatMap(([, ids]) => ids)).toHaveLength(3);
   });
 
-  it("Multi Adapter (Rotom ex ×3) stays unbuilt, named for 47 → 48: no program ( D643 (D539): WITHDRAWN — built at D643, 47 → 48; inverted)", () => {
+  it("Multi Adapter (Rotom ex ×3) is built (D643): a passive key", () => {
     for (const id of ["me02-029", "me02-111", "me02-126"])
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
   });

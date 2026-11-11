@@ -236,7 +236,7 @@ describe("D606 §1 — the programs: five objects over 9 printings", () => {
     ]);
   });
 
-  it("dropped and excluded Stadiums stay unkeyed ( D618 (D539): Battle Cage, Mystery Garden and Forest of Vitality are keyed since D618; D635 (D539): Fossil Quarry since D635; D642 (D539): WITHDRAWN for the last three — keyed since D642, the rung is inverted)", () => {
+  it("the last three dropped Stadiums are keyed: Dizzying Valley, Risky Ruins and Ange Floette carry a `stadium` program (D642)", () => {
     for (const id of [
       "me02-088", // Dizzying Valley
       "me01-127", // Risky Ruins

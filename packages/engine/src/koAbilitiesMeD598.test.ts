@@ -93,7 +93,7 @@ describe("D598 §1 — the texts and the registry rows", () => {
     expect(programFor(PECHARUNT)?.triggered?.[0]?.program).toEqual(deriveAttackEffect(consequent));
   });
 
-  it("the five dropped WP32 texts stay unkeyed (decisions.md D598) ( D626 (D539): ~~five~~ — Fainting Spell ×2 and Photon Cord ×2 are keyed since D626, K1) ( D632 (D539): WITHDRAWN for Damp — keyed since D632, D1) ( D642 (D539): WITHDRAWN for the rest — Spiteful Swirl ×2 and Counterattack Grouping keyed since D642, K2)", () => {
+  it("the five WP32 texts dropped at D598 are all keyed: Spiteful Swirl, Counterattack Grouping and Damp as passives, Fainting Spell and Photon Cord as programs", () => {
     for (const id of ["me01-087", "me01-148", "30th-022"]) {
       expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]);
     }

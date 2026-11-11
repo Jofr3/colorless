@@ -276,7 +276,7 @@ describe("the boundaries — what the channel must NOT refuse", () => {
     expect(prevented(events)).toEqual([]);
   });
 
-  it("labels a played Item, and never an Ability's program, as a Trainer ( D614 (D539): ~~leaves invokedBy absent for an Ability's program~~ — it is \"ability\")", () => {
+  it("labels a played Item's program as a Trainer: `invokedBy` is `item`", () => {
     const state = board("fix-unnerve", ["fix-titan"]);
     // Nothing in this deck has a parking Ability; the claim is about the setter,
     // and cardplay.ts labels ONLY the trainer call. A grep-shaped assertion would

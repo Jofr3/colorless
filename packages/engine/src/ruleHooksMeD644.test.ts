@@ -392,7 +392,7 @@ const topId = (state: GameState, seat: Seat) =>
   idOf(state, state.players[seat].active?.stack.at(-1));
 
 describe("D644 §1 — the prints and the registry rows", () => {
-  it("five keys on five NEW objects; ~~Backtrack Badge stays unkeyed (dropped and named)~~ ( D646 (D539): keyed at D646)", () => {
+  it("five keys on five NEW objects, and Backtrack Badge is keyed as a passive (D646)", () => {
     expect(programFor(CINDERACE)).toEqual({ setupActiveFromHand: "Explosiveness" });
     expect(programFor(PATRAT)).toEqual({ passive: { countersCantMove: true } });
     expect(programFor(ILLUMISE)).toEqual({

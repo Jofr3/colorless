@@ -211,7 +211,7 @@ describe("D635 §1 — the prints and the programs", () => {
     expect(deriveAttackDamageBonus(BEATDOWN_TEXT.replace("Antique", "Fossil"))).toBeNull();
   });
 
-  it("the dropped fossils stay unbuilt: no program, no in-play face ( D637 (D539): WITHDRAWN — all four are built at D637: a program and an in-play face each)", () => {
+  it("the four dropped fossils are built: each plays as a Pokémon and is a fossil id (D637)", () => {
     for (const id of [JAW, "me03-069", "me05-072", "me05-073"]) {
       expect(programFor(id)?.playAsPokemon, id).toBe(true);
       expect(FOSSIL_IDS.has(id), id).toBe(true);

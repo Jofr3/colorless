@@ -134,7 +134,7 @@ describe("§1 — the price, RE-DERIVED off the corpus rather than inherited", (
     expect(new Set(pair.map(([, s]) => BONUS.exec(s)?.[2]))).toEqual(new Set(["90", "120"]));
   });
 
-  it("the FIELD is worth 6 printings across FOUR sentences — and ~~4 of them stay unbought~~ ( D579 (D539): WITHDRAWN — stale since D395 / D396, and NO printing of the field stays unbought: Rollout and Angelite are registry rows, Ancient is read through the seat record)", () => {
+  it("the `during your last turn` family is 5 sentences / 7 units: Rollout and Angelite are off the readers, Ancient resolves on one", () => {
     const family = corpus().filter(([, s]) => s.includes("during your last turn"));
     expect(family).toHaveLength(5);
     expect(units(family)).toBe(7);

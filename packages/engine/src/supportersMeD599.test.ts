@@ -65,7 +65,7 @@ describe("D599 §1 — the faces: 4 `me` printings / 2 texts, one object per tex
     expect(objects.size).toBe(2);
   });
 
-  it("the other 20 WP24 printings (7 texts) ~~stay unkeyed~~ ( D617 (D539): WITHDRAWN — WP24b keys 9 of them: AZ's Tranquility, Grimsley's Move, Gwynn and Naveen; ~~Gladion's Final Battle, Acerola's Mischief and Roxie's Performance stay unkeyed~~ D621 (D539): WITHDRAWN — WP24c keys those three: all 20 are keyed)", () => {
+  it("the other 20 WP24 printings (7 texts) are all keyed (D617, D621)", () => {
     const ids = Object.values(NOT_KEYED).flat();
     expect(ids).toHaveLength(20);
     for (const id of ids) expect(programFor(id), id).toBeDefined();

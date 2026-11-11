@@ -536,13 +536,12 @@ describe("D522 §3 — the census moved in exactly ONE summand, by 1 sentence / 
     const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
     expect(resolved.map(([, s]) => s)).toContain(PRINTED);
     const without = resolved.filter(([, s]) => s !== PRINTED);
-    expect([without.length, units(without)]).toEqual([599, 1662]);
+    expect([resolved.length - without.length, units(resolved) - units(without)]).toEqual([1, 1]);
   });
 
   it("the RAW reader-only residue fell by exactly 1 sentence / 1 printing — 91 / 142 — and the row left it", () => {
     const unbuilt = legalAttackCorpus().filter(([, s]) => !resolvedByAnyReader(s));
     expect(unbuilt.map(([, s]) => s)).not.toContain(PRINTED);
-    // The parts add up to the whole quoted in the same case.
   });
 
   it("the move is READER-keyed: no gate clause, no trailing split, no cancel split, no requirement split claims the row", () => {

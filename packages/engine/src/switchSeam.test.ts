@@ -684,7 +684,7 @@ describe("⏹️ FLAGGED — the CHOSEN DESTINATION counter move (D216: 2 of 8 l
     expect(done.players.p2.bench[0]?.damage).toBe(0);
   });
 
-  it("and the ~~ONE still-flagged printing resolves on NEITHER route~~ ( D572: was FOUR; D574: ZERO — Alakazam resolves on the DERIVER route, by composition)", () => {
+  it("and no printing stays flagged: Alakazam resolves on the DERIVER route, by composition (D574)", () => {
     expect(deriveAttackEffect(EXTENDED_DAMAGRIIIGUS)).toEqual([{ op: "moveCountersChosen" }]);
     expect(programFor("sv06-082")?.attack, "sv06-082 was half-built").toBeUndefined();
     expect(IDS).toHaveLength(0);

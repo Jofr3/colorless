@@ -269,7 +269,7 @@ describe("D592 §4 — Corrosive Liquid: Megaton Blower's two sweeps on an attac
     expect(deriveAttackEffect(CORROSIVE_LIQUID.replace("'", "’"))).toEqual(program);
   });
 
-  it('no printing of this slice is registry-keyed ( D598 (D539): WITHDRAWN for Annihilape `me05-041` — keyed for its Ability "Durable Body"; its attack is still the reader\'s; D626 (D539): and for Miraidon `mep-082` and Gengar ex `30th-090` / `-154` — keyed for their Abilities "Photon Cord" / "Fainting Spell"; their attacks are still the reader\'s)', () => {
+  it("no attack of this slice is registry-keyed: nine printings carry no program, and Annihilape, Miraidon and Gengar ex are keyed only for Abilities", () => {
     for (const id of [
       "me04-065",
       "me04-104",

@@ -829,7 +829,7 @@ describe("§8 — the census this row moves, and the summands it does not", () =
   it("the resolving corpus gains ONE sentence and ONE printing", () => {
     const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
     const without = resolved.filter(([, s]) => s !== SENTENCE);
-    expect([without.length, units(without)]).toEqual([599, 1662]);
+    expect([resolved.length - without.length, units(resolved) - units(without)]).toEqual([1, 1]);
   });
 
   it("the move is READER-keyed — no registry row, no splitter, no gate clause", () => {

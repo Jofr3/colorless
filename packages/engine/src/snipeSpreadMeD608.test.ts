@@ -139,7 +139,7 @@ describe("D608 §1 — the texts", () => {
     }
   });
 
-  it('WP30\'s rest ~~stays unbuilt~~: 8 texts / 8 printings, named ( D629 (D539): WITHDRAWN for seven — S1 builds all but Deoxys `me04-032` "Psyspear"; `snipeSpreadRestMeD629.test.ts`) ( D645 (D539): and Psyspear is built at D645)', () => {
+  it("WP30's rest: 8 texts / 8 printings, each a corpus row a reader or the trailing splitter resolves, with no registry program", () => {
     const me = new Map(meAttackCorpus().map(([n, text]) => [text, n]));
     for (const [text, id] of WP30_REST) {
       expect([id, me.get(text)]).toEqual([id, 1]);

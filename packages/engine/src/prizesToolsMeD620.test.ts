@@ -412,7 +412,7 @@ describe("D620 §1 — the prints, the registry rows and the readings", () => {
     }
   });
 
-  it("Adversity Policy is dropped: unkeyed ( D626 (D539): WITHDRAWN — built at D626, K1, `koTriggerRestMeD626.test.ts`)", () => {
+  it("Adversity Policy is keyed with a trigger (D626)", () => {
     expect(Object.keys(programFor(ADVERSITY) ?? {})).toEqual(["triggered"]);
   });
 });

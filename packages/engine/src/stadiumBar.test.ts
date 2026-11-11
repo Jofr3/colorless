@@ -222,7 +222,7 @@ describe("D287 §1 — the printing, the class list, and the census that priced 
     expect(programFor(COPPERAJAH)?.passive?.preventOpponentPokemonPlay).toBeUndefined();
   });
 
-  it('`"Stadium"` IS A `HandPlayClass` AND *NOT* A `StampedHandPlayClass` — the seam ( D636 (D539): WITHDRAWN — Scorching Earth stamps it, so the key is present and `null` here; the continuous half still answers)', () => {
+  it('`"Stadium"` is a stamped `HandPlayClass`: its key is present and `null` here, and the continuous half still bars it (D636)', () => {
     // The type says so and tsc enforces it; what a TEST can drive is the
     // CONSEQUENCE, which is that the persisted record has no key for it. §7
     // drives the round trip; this is the literal anchor beside it.

@@ -203,7 +203,7 @@ describe("§2 — the install: a record on the PLAYER's side, stamped for the op
       ]);
   });
 
-  it("OVERWRITE, not sum: a second install replaces the record (one Supporter per turn — named at the type) ( D630 (D539): WITHDRAWN — a second install APPENDS and the two SUM; Iron Defender is an Item)", () => {
+  it("a second install APPENDS to the record, so the two reductions SUM (D630)", () => {
     const { state } = gaze(table());
     const events: GameEvent[] = [];
     const again = runProgram(

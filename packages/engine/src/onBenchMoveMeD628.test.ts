@@ -293,7 +293,7 @@ describe("D628 §1 — the programs: Meowth ex on D593's object, two new objects
     });
   });
 
-  it("Clawitzer ×2 'Fall Back to Reload' stays unkeyed: a hand-attach choice inside the non-parking Active→Bench self sweep ( D636 (D539): WITHDRAWN — keyed at D636 on the persisted moved-to-Bench stamp, `nextTurnLocksD636.test.ts`)", () => {
+  it("Clawitzer ×2 'Fall Back to Reload' is keyed (D636)", () => {
     for (const id of CLAWITZER)
       expect(programFor(id)?.abilities?.[0]?.name, id).toBe("Fall Back to Reload");
   });

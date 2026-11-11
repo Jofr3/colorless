@@ -240,7 +240,7 @@ describe("D444 §2 — the population, and the honest zero", () => {
     for (const [, text] of gated) expect(timingGateFromAttackText(text), text).toBeDefined();
   });
 
-  it("~~17~~ registry ids carry `attackGate` ( D582 (D539): *17* WITHDRAWN — 18 since the `me` alias Terapagos ex `me02.5-179`; 17 is the `sv` figure), and the 5 DISTINCT values are the 4 leading-clause derivations plus the trailing gate ( D541 — which DERIVES too now, so the old either/or in this title is withdrawn)", () => {
+  it("18 registry ids carry `attackGate`, and the 5 DISTINCT values are the 4 leading-clause derivations plus the trailing gate", () => {
     const gatedIds = programmedCardIds().filter((id) => programFor(id)?.attackGate !== undefined);
     expect(gatedIds.length).toBe(18);
 

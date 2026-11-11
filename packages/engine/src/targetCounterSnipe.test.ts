@@ -252,7 +252,7 @@ describe("D530 §1 — file line 551 derives to EXACTLY the count-1 opponentBenc
     expect(resolvedByAnyReader(PRINTED)).toBe(true);
   });
 
-  it("the anchor is WHOLE-SENTENCE at BOTH ends: a PREFIXED and a SUFFIXED print are null on every reader and every splitter (`D530-anchor-loses-the-head` / `-anchor-loses-the-tail`) ( D629 (D539): WITHDRAWN for the trailing splitter on the SUFFIXED print — it composes since D629)", () => {
+  it("the anchor is WHOLE-SENTENCE at BOTH ends: both prints are null on every reader and splitter but the SUFFIXED trailing split (`D530-anchor-loses-the-head` / `-tail`)", () => {
     const prefixed = `Draw a card. ${PRINTED}`;
     const suffixed = `${PRINTED} Draw a card.`;
     for (const s of [prefixed, suffixed]) {
@@ -271,7 +271,7 @@ describe("D530 §1 — file line 551 derives to EXACTLY the count-1 opponentBenc
     expect(splitAttackTrailingClause(suffixed)).toEqual({ head: PRINTED, tail: "Draw a card." });
   });
 
-  it('the single-axis near-misses: `2 of`, `Pokémon` without `Benched`, and `on this Pokémon` are null on EVERY reader — none is a printed sentence ( D608 (D539): ~~`Pokémon` without `Benched`~~ — WITHDRAWN: the `me` serie prints it (Greninja ex "Stealthy Slash", 30 per counter) and it reads at `opponentAny` since D608; the other two still hold, and none of the three is printed in `sv`)', () => {
+  it("the single-axis near-misses: `2 of` and `on this Pokémon` are null on EVERY reader, and `Pokémon` without `Benched` reads at `opponentAny` (D608)", () => {
     const twoOf = PRINTED.replace("to 1 of", "to 2 of");
     const unbenched = PRINTED.replace("Benched Pokémon for", "Pokémon for");
     const onThis = PRINTED.replace("on that Pokémon", "on this Pokémon");
@@ -373,7 +373,7 @@ describe("D530 §2 — the census moved in exactly ONE summand, by 1 sentence / 
     const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
     expect(resolved.map(([, s]) => s)).toContain(PRINTED);
     const without = resolved.filter(([, s]) => s !== PRINTED);
-    expect([without.length, units(without)]).toEqual([599, 1662]);
+    expect([resolved.length - without.length, units(resolved) - units(without)]).toEqual([1, 1]);
   });
 
   it("the RAW reader-only residue fell by exactly 1 sentence / 1 printing — 84 / 134 — and the row left it", () => {

@@ -441,7 +441,7 @@ describe("§8 — the census moves in exactly ONE summand", () => {
   it("the resolving corpus gains ONE sentence and TWO printings", () => {
     const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
     const without = resolved.filter(([, s]) => s !== PRINTED);
-    expect([without.length, units(without)]).toEqual([599, 1661]);
+    expect([resolved.length - without.length, units(resolved) - units(without)]).toEqual([1, 2]);
   });
 
   it("the CENSUS is blind to whether the claim is CORRECT — stated, not assumed", () => {

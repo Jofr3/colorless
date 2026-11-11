@@ -429,7 +429,7 @@ describe("D532 §2 — the census moved in exactly ONE summand, by 1 sentence / 
     const resolved = legalAttackCorpus().filter(([, s]) => resolvedByAnyReader(s));
     expect(resolved.map(([, s]) => s)).toContain(PRINTED);
     const without = resolved.filter(([, s]) => s !== PRINTED);
-    expect([without.length, units(without)]).toEqual([599, 1662]);
+    expect([resolved.length - without.length, units(resolved) - units(without)]).toEqual([1, 1]);
   });
 
   it("the RAW reader-only residue fell by exactly 1 sentence / 1 printing — 82 / 132 — and the row left it", () => {
@@ -597,7 +597,7 @@ describe("D532 §4 — the park offers EXACTLY the opponent's in-play Pokémon, 
     }
   });
 
-  it("(ii) THREE sequential parks, from EITHER seat: ~~each answer moves the FIRST matching uid of the OPPONENT's pile~~ (card revision B01: while the OPPONENT's pile holds unlike Energy the ATTACKER picks the card — {R}, {R}, then the Special, `anyEnergy`) onto the chosen OPPONENT body; `ENERGY_ATTACHED { seat: attacker, uid, target: chosen spot }`; the Item stays; the attacker's own pile UNTOUCHED; the third answer ends the turn", () => {
+  it("(ii) THREE sequential parks, from EITHER seat: the ATTACKER picks each unlike Energy from the OPPONENT's pile onto the chosen body; the third ends the turn", () => {
     for (const attacker of SEATS) {
       const defender = other(attacker);
       const { before, after } = swing({ attacker });

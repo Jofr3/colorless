@@ -211,7 +211,7 @@ describe("Curious Tea Party — the ACTIVE holder prevents NOTHING", () => {
     expect(done.players.p2.active?.damage).toBe(40);
   });
 
-  it("is put to Sleep — the EFFECTS half has no reachable board on this Active-aimed op ( D622 (D539): ~~today~~ — live at a gust or a put-counter Bench pick)", () => {
+  it("is put to Sleep: the EFFECTS half prevents nothing on this Active-aimed op", () => {
     const state = active();
     deepFreeze(state);
 

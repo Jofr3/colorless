@@ -209,7 +209,7 @@ describe("D595 §2 — near misses and the dropped texts stay null", () => {
     );
   });
 
-  it("the seven dropped texts are unbuilt ( D634: six are built at D634; Octillery stays unbuilt) ( D636 (D539): WITHDRAWN — Octillery is built at D636; all seven are built)", () => {
+  it("the seven dropped texts are corpus rows, and every one resolves on a reader", () => {
     const me = new Set(meAttackCorpus().map(([, text]) => text));
     for (const [why, text] of Object.entries(DROPPED)) {
       expect(resolvedByAnyReader(text), why).toBe(true);
@@ -509,7 +509,7 @@ describe("D595 §5 — the `programPerHeads` arms on a board", () => {
     expect(promptOf(declined.state)).toMatchObject({ kind: "choosePokemon" });
   });
 
-  it("~~KNOWN LIMITATION (inherited from the five `sv` discard-attach sentences): the ENERGY is not chosen~~ (card revision B01: RETIRED — the ENERGY is chosen)", () => {
+  it("the discarded ENERGY to attach is chosen (card revision B01)", () => {
     let state = table(SMEARGLE, [H, X, X], 0, 1);
     state = discardFromDeck(state, "p1", FIRE, 1);
     state = discardFromDeck(state, "p1", WATER, 1);

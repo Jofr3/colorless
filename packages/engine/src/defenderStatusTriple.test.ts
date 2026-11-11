@@ -391,7 +391,10 @@ describe("§6 — the census moves in exactly ONE summand", () => {
     const rows = legalAttackCorpus();
     const resolved = rows.filter(([, s]) => resolvedByAnyReader(s));
     const withoutOxford = resolved.filter(([, s]) => s !== OXFORD);
-    expect([withoutOxford.length, units(withoutOxford)]).toEqual([599, 1661]);
+    expect([
+      resolved.length - withoutOxford.length,
+      units(resolved) - units(withoutOxford),
+    ]).toEqual([1, 2]);
   });
 });
 

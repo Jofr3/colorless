@@ -70,7 +70,7 @@ describe("D586 §1 — the texts: 8 attack sentences / 17 printings, plus Carbin
     for (const [text] of SENTENCES) expect(resolvedByAnyReader(text), text).toBe(true);
   });
 
-  it("the near miss ~~stays unbuilt~~: Abyss Eye's clause with a damage-counter consequent ~~is not claimed~~ ( D629 (D539): WITHDRAWN — Mismagius \"Assassin's Magic\" is built at D629, `CLAUSE_GATED_BENCH_COUNTERS`)", () => {
+  it("the near miss, Abyss Eye's clause with a damage-counter consequent, is a corpus row a reader resolves (D629)", () => {
     const near =
       "If your opponent's Active Pokémon is affected by a Special Condition, place 6 damage counters on 1 of your opponent's Benched Pokémon.";
     expect(meAttackCorpus().some(([, text]) => text === near)).toBe(true);
