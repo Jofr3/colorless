@@ -1,5 +1,8 @@
 # Workstream: Deck Builder & Decks List (Phase 2)
 
+> **History:** the React-era plan and notes, to 2026-10-22; moved from `docs/workstreams/` on 2026-11-11. Its paths name deleted files.
+> Current code: `frontend/lua/README.md` (the builder pages) and `src/decks`; the deck API is `docs/workstreams/backend-data.md`.
+
 Goal: replace the fixture card pool with the live catalog API, upgrade the
 filters using the richer tcgdex fields, and complete the deck **editor** and the
 **decks list** with real persistence.
