@@ -1,10 +1,10 @@
 // PBKDF2-SHA256 via WebCrypto, in one of two stored encodings:
 //
-//   pbkdf2$<iterations>$<salt>$<hash>             PBKDF2 of the password itself (before 2026-10-27)
+//   pbkdf2$<iterations>$<salt>$<hash>             PBKDF2 of the password itself (older hashes)
 //   pbkdf2p$<pepper id>$<iterations>$<salt>$<hash> PBKDF2 of HMAC-SHA256(pepper, password)
 //
-// The pepper (security audit AU9) is the `PASSWORD_PEPPER` Worker secret, which lives outside D1:
-// a database export alone no longer lets anyone test guesses offline. Its id is a short MAC of a
+// The pepper is the `PASSWORD_PEPPER` Worker secret, which lives outside D1:
+// a database export alone does not let anyone test guesses offline. Its id is a short MAC of a
 // fixed string under the pepper, so a stored hash names the pepper it needs without revealing it,
 // and a rotation can keep the old one as `PASSWORD_PEPPER_PREVIOUS` until its accounts sign in.
 //

@@ -10,7 +10,7 @@ import { cleanDisplayName } from "@colorless/schema";
     Null rather than a fallback, because the ONE fallback that suggests itself
     here — the email, which `AccountButton` uses — must never be taken: that
     control shows a user their OWN address, while a lobby name is broadcast to
-    the opponent (and to spectators since P4 3c-vii). A blank name is a cosmetic
+    the opponent (and to spectators). A blank name is a cosmetic
     problem; a published email address is not. The caller falls back to the
     client-announced handle instead. Pure. */
 export function lobbyDisplayName(stored: string | null | undefined): string | null {

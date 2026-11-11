@@ -1,6 +1,6 @@
-// The catalog's filter vocabularies (P2 task 10) — what GET /facets serves,
-// so the web's filter selects reflect what is actually ingested instead of
-// hardcoded constants.
+// The catalog's filter vocabularies — what GET /facets serves, so the
+// builder's filters reflect what is actually ingested instead of hardcoded
+// constants.
 
 import * as z from "zod";
 

@@ -1,4 +1,4 @@
-// Live validation sweep for the tcgdex Zod schemas (P1 milestone 2).
+// Live validation sweep for the tcgdex Zod schemas.
 //
 //   bun packages/schema/scripts/validate-live.ts
 //

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { type CoverCandidate, effectiveCoverCardId, pickCoverCardId } from "./cover";
 
-// The rule that decides a deck's face (P5-3). Kept pure precisely so it can be
+// The rule that decides a deck's face. Kept pure precisely so it can be
 // argued with here rather than buried in SQL.
 
 const card = (partial: Partial<CoverCandidate> & { cardId: string }): CoverCandidate => ({

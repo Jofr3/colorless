@@ -4,7 +4,7 @@
 // it (src/env.ts). The pepper and the log key degrade quietly: an unpeppered production keeps
 // hashing passwords the old way, and an untagged one logs no account trail. The Google client's
 // two answer a loud 503, but only to someone who tries Google sign-in, so a deleted or renamed one
-// would go unnoticed until a user hit it (build audit ENV6, decision 12).
+// would go unnoticed until a user hit it.
 
 export const REQUIRED_SECRETS = [
   "PASSWORD_PEPPER",

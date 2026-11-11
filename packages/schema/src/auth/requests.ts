@@ -43,7 +43,7 @@ export const loginRequestSchema = z.object({
 });
 export type LoginRequest = z.infer<typeof loginRequestSchema>;
 
-/** Editing your own profile (P5-5). Same field as register's optional name, but REQUIRED here:
+/** Editing your own profile. Same field as register's optional name, but REQUIRED here:
     register may omit it and get a generated handle ("Trainer-7K3Q"), while explicitly saving a
     blank one would only cost you your name. Saving also answers the one-time "choose your public
     name" prompt (`User.namePrompt`): sending the current name unchanged keeps it. */

@@ -34,17 +34,17 @@ export const DISCONNECT_GRACE_MS = 5000;
  */
 export const ABANDON_GRACE_MS = 90_000;
 
-/** How long a socket may go without answering a keepalive before the lobby gives up on it (P4
-    3c-viii). The client pings every 1.5s (channel.ts) and the DO's `setWebSocketAutoResponse`
-    answers WITHOUT waking it, so 10s is six missed pings. It was 15s; it matches the client's own
-    silence limit (channel.ts `SOCKET_SILENCE_MS`), so a client whose path died has already given
-    the socket up for a new one by the time the lobby does, and closing it here costs nothing. A
-    hidden tab's timers still fire once a second, well inside it. A tab frozen for longer, or a
+/** How long a socket may go without answering a keepalive before the lobby gives up on it.
+    The client pings every 1.5s (channel.ts) and the DO's `setWebSocketAutoResponse` answers
+    WITHOUT waking it, so 10s is six missed pings. It matches the client's own silence limit
+    (channel.ts `SOCKET_SILENCE_MS`), so a client whose path died has already given the socket up
+    for a new one by the time the lobby does, and closing it here costs nothing. A hidden tab's
+    timers still fire once a second, well inside it. A tab frozen for longer, or a
     phone that switched networks, loses this TCP connection whatever the limit, and reconnects. */
 export const SOCKET_SILENCE_MS = 10_000;
 
 /** How often the alarm checks for silent sockets while any are connected and nobody holds the
-    other seat (3c-viii). It is a POLL, and it has to be: the whole point of the auto-response is
+    other seat. It is a POLL, and it has to be: the whole point of the auto-response is
     that a ping does not wake the DO, so nothing else will ever notice pings that STOPPED. With one
     seat held there is nobody to tell, so a lone host's lobby wakes twice a minute instead of the
     ~40 times a minute it would if we answered keepalives in the handler and gave up hibernation. */
@@ -98,7 +98,7 @@ export const EMPTY_LOBBY_TTL_MS = 10 * 60_000;
 
 /**
  * How long a lobby with sockets may go without a commit, an accepted action or a seated hello
- * before the alarm closes every socket and wipes it (LB2). A socket that only pings otherwise holds
+ * before the alarm closes every socket and wipes it. A socket that only pings otherwise holds
  * a lobby, and its 30s liveness alarm, forever. The activity stamp is written at most every
  * `ACTIVITY_STAMP_MS`, so the ceiling lands up to that much early.
  */
@@ -109,7 +109,7 @@ export const INACTIVE_LOBBY_MS = 60 * 60_000;
 export const ACTIVITY_STAMP_MS = 5 * 60_000;
 
 /**
- * Sockets one lobby admits (LB2, decision 7): two seats, eight spectators, and two for a player
+ * Sockets one lobby admits: two seats, eight spectators, and two for a player
  * whose old socket has not closed yet when the reload's new one opens. Past it, a socket is turned
  * away (it is answered "full"), unless its account holds a seat in this lobby, so a crowd cannot
  * keep a player out of their own match.
@@ -129,7 +129,7 @@ export const OVERFLOW_SOCKETS_MAX = 4;
 export const OVERFLOW_HELLO_MS = 5_000;
 
 /**
- * Frames one socket may send at once (LB1, MI2). A reconnect flushes the client's queue of up to
+ * Frames one socket may send at once. A reconnect flushes the client's queue of up to
  * 32 frames (channel.ts) plus its hello and the hello's 700ms retries, which this covers.
  */
 export const FRAME_BURST = 40;
@@ -139,7 +139,7 @@ export const FRAME_BURST = 40;
 export const FRAME_REFILL_PER_SECOND = 5;
 
 /**
- * The longest frame a socket may send, in UTF-16 code units (LB1). The largest legitimate frame
+ * The longest frame a socket may send, in UTF-16 code units. The largest legitimate frame
  * is an action answering a prompt over a whole deck, a few kilobytes; a hello or intent is under
  * half a kilobyte.
  */
@@ -204,7 +204,7 @@ export function helloDecision(snapshot: LobbyState | null, from: string): HelloD
  * Whether a socket with `userId` may claim a seat bound to `boundUserId`. Once an account claims a
  * seat, only that account can reclaim it, even with the seat's secret (a tab signed out of it, or a
  * secret copied elsewhere). An unbound seat is claimed by its secret alone, which only its client
- * holds (LB6).
+ * holds.
  */
 export function seatClaimAllowed(boundUserId: string | null, userId: string | null): boolean {
   return boundUserId === null || boundUserId === userId;
@@ -248,7 +248,7 @@ export function withForfeitAt(
 
 /** Every seat with a forfeit deadline, as (slot, deadline) pairs — what the DO
     schedules its alarm from and judges due forfeits against. Reading them off
-    the SNAPSHOT rather than a second storage list is the point of 3c-v: the
+    the SNAPSHOT rather than a second storage list is the point: the
     deadline the opponent's countdown renders is the same number the alarm fires
     on, so the two can never disagree. */
 export function forfeitDeadlines(snapshot: LobbyState): { slot: LobbySlot; deadline: number }[] {
@@ -265,7 +265,7 @@ export function forfeitDeadlines(snapshot: LobbyState): { slot: LobbySlot; deadl
 
 /** Re-seat a reconnecting host: same semantics as `seatGuest` for a known id —
     keep their deck/ready, adopt the announced name, mark them present — and, as
-    on every other return path, cancel any armed forfeit (3c-v). */
+    on every other return path, cancel any armed forfeit. */
 export function reseatHost(
   snapshot: LobbyState,
   name: string,
@@ -291,7 +291,7 @@ export function readSnapshot(raw: unknown): LobbyState | null {
 }
 
 /**
- * Whether `raw` is a lobby stored before the seat secret split (LB6): its seats are named by the
+ * Whether `raw` is a lobby stored before the seat secret split: its seats are named by the
  * ids clients sent, which every snapshot broadcast, so they cannot be carried over as public ids,
  * and no client can present a secret for them. Absent and unreadable values are not legacy.
  */
@@ -336,7 +336,7 @@ const legacySnapshotSchema = z.object({
 });
 
 /** The countdown ended but the match couldn't START (a chosen deck wouldn't
-    resolve, P4 increment 3): un-ready both seats and re-derive the phase, so the
+    resolve): un-ready both seats and re-derive the phase, so the
     lobby falls back to `selecting` for a retry instead of wedging in-game with no
     match. Un-readying is what breaks the loop — leaving it in `countdown` past
     its deadline would just re-fire the failing handoff on the next alarm. */
@@ -416,11 +416,11 @@ export function countdownEndsAt(snapshot: LobbyState): number | null {
 }
 
 /** Whether a committed transition ABANDONS a running match — i.e. takes the
-    lobby out of in-game: `removeGuest` (now only the host's KICK — a mid-match
-    `bye` keeps the seat since 3c-iv) and `endMatch`; `recomputePhase` never leaves
+    lobby out of in-game: `removeGuest` (only the host's KICK — a mid-match
+    `bye` keeps the seat) and `endMatch`; `recomputePhase` never leaves
     in-game on its own. The DO drops its persisted match record on exactly these,
     so a rematch in the same lobby mints a fresh game instead of `handoffToMatch`
-    reusing the stale one (P4). `prev` null = a brand-new lobby, never in-game. */
+    reusing the stale one. `prev` null = a brand-new lobby, never in-game. */
 export function abandonsMatch(prev: LobbyState | null, next: LobbyState): boolean {
   return prev !== null && prev.phase === "in-game" && next.phase !== "in-game";
 }

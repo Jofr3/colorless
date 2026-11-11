@@ -26,7 +26,7 @@ export const users = sqliteTable(
     passwordHash: text("password_hash"),
     emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
     /**
-     * Ask this account, once, to choose its public name (security audit AU3): its name may be the
+     * Ask this account, once, to choose its public name: its name may be the
      * email's local part or the Google account's real name, from before new accounts got a
      * generated handle. Cleared when the user saves a name or keeps the current one
      * (PATCH /auth/me). The default is true, so a row written by any path that does not say
@@ -113,11 +113,11 @@ export const decks = sqliteTable(
       .references(() => users.id, { onDelete: "cascade" }),
     folderId: text("folder_id").references(() => folders.id, { onDelete: "set null" }),
     name: text("name").notNull(),
-    /** Play format ("standard" | "expanded" | …); free text until §5.2 lands. */
+    /** Play format ("standard" | "expanded" | …): free text, null when none is picked. */
     format: text("format"),
     /** Base hue 0–360 for the deck cover gradient (web `Deck.tint`). */
     tint: integer("tint").notNull(),
-    /** The owner's CHOSEN cover card (P5-6), or null for the derived default
+    /** The owner's CHOSEN cover card, or null for the derived default
         (`pickCoverCardId`). References the catalog like `deck_cards` does, so
         ingest can't orphan it; the read side falls back to the default anyway
         if the card has left the deck. */

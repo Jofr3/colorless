@@ -13,7 +13,7 @@ export const userSchema = z.object({
   email: z.string().min(1).max(254),
   displayName: z.string(),
   emailVerified: z.boolean(),
-  /** The account's generated-avatar token (P5-2), derived server-side from the
+  /** The account's generated-avatar token, derived server-side from the
       id — the SAME value a lobby seat carries in `PlayerState.avatarSeed`, so
       the face a player sees on their own profile is the face opponents see.
       Sent rather than derived client-side on purpose: one hash, one place. */
@@ -22,10 +22,9 @@ export const userSchema = z.object({
       the fact: the hash never leaves apps/api. */
   hasPassword: z.boolean(),
   /** Ask this user, once, to choose their public name: the account predates generated default
-      handles, so its name may be its email's local part or its Google real name (security audit
-      AU3). Saving a name, or keeping this one, through PATCH /auth/me clears it. Optional so a
-      client reads a server from before the field as "do not ask"; a client from before it
-      ignores it. */
+      handles, so its name may be its email's local part or its Google real name. Saving a
+      name, or keeping this one, through PATCH /auth/me clears it. Optional so a client reads a
+      server from before the field as "do not ask"; a client from before it ignores it. */
   namePrompt: z.boolean().optional(),
   /** ISO datetime — the api serializes the epoch-ms DB column at the boundary. */
   createdAt: z.iso.datetime(),

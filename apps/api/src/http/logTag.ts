@@ -1,4 +1,4 @@
-// Pseudonymous tags for log lines (security audit AU10). An auth event names the account it
+// Pseudonymous tags for log lines. An auth event names the account it
 // concerns, and a refusal the network it came from, by a keyed HMAC-SHA256 of the id, truncated:
 // the same account always gets the same tag, so one account's events line up across requests and
 // addresses, while a log reader without the `LOG_TAG_KEY` Worker secret can neither reverse a tag

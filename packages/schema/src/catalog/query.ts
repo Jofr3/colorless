@@ -6,8 +6,8 @@ import { cardCategorySchema } from "./card";
 
 /**
  * The longest value a catalog param other than free text takes: an id, a vocabulary value, an
- * exact illustrator. The longest stored one is a 44-character illustrator (2026-11-09). A longer
- * value only lengthens the KV key, which past 512 bytes skips KV.
+ * exact illustrator, all far shorter than this. A longer value only lengthens the KV key, which
+ * past 512 bytes skips KV.
  */
 export const MAX_PARAM_LENGTH = 100;
 
@@ -35,8 +35,8 @@ export const MAX_ID_VALUES = 100;
 /**
  * Caps on the repeatable vocabulary filters, per dimension and across all of them. Each value is
  * one bound SQL parameter (ids are one JSON parameter), and D1 rejects a statement with more than
- * 100, which would surface as a 500; the scalar filters bind about 15 more. The longest
- * vocabulary (rarities) has 24 values, and all six together 53 (GET /facets, 2026-10-27).
+ * 100, which would surface as a 500; the scalar filters bind about 15 more. Both caps sit above
+ * what the vocabularies GET /facets lists can fill, per dimension and together.
  */
 export const MAX_FILTER_VALUES = 30;
 export const MAX_FILTER_VALUES_TOTAL = 60;

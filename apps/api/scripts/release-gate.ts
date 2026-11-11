@@ -23,7 +23,7 @@
 // audit       `bun scripts/audit.ts`: the production advisory audit CI runs, with the same ignore
 //             list (scripts/audit-ignore.txt). Blocking.
 // ci          Prints CI's result for HEAD (static, test, mutants) from the GitHub check runs.
-//             Never blocking (build audit decision 1b): local `check` already ran the same suites.
+//             Never blocking: local `check` already ran the same suites.
 // secrets     The production Worker holds every secret in src/requiredSecrets.ts. `wrangler secret
 //             list` shows names only.
 // bookmark    Records the remote database's Time Travel bookmark (scripts/d1.ts recordBookmark).
@@ -32,7 +32,7 @@
 //             PROGRAM_ALIAS table is generated from the LOCAL catalog (scripts/registry-aliases.ts),
 //             so a release built on a stale local ingest ships aliases production does not match.
 // migrations  Every file in drizzle/ is applied remotely, and nothing else is: a Worker deployed
-//             ahead of its migrations 500s the endpoints that read the new columns (D203).
+//             ahead of its migrations 500s the endpoints that read the new columns.
 // web-dist    dist/build-info.json says dist/ is a clean build of HEAD, with the strict /love/
 //             versions and .env.production's origins, and the site origin is the API's APP_ORIGIN.
 //             A `deploy:web` after new commits must rebuild (`bun run deploy`).
@@ -607,8 +607,8 @@ function deployLabelled(command: readonly string[]): void {
   mkdirSync(join(REPO_ROOT, "tmp"), { recursive: true });
   const output = join(REPO_ROOT, "tmp", `wrangler-deploy-${process.pid}.ndjson`);
   rmSync(output, { force: true });
-  // The ambient CLOUDFLARE_API_TOKEN is read-only; the deploy loads the production-write token
-  // (build audit DEP3). Every step before this one only reads, so they keep the ambient token.
+  // The ambient CLOUDFLARE_API_TOKEN is read-only; the deploy loads the production-write token.
+  // Every step before this one only reads, so they keep the ambient token.
   const withToken = deployTokenEnv(process.env, homedir(), readText);
   if ("error" in withToken) throw new Error(withToken.error);
   const run = spawnSync("bunx", [...command, ...deployAnnotations(head, subject)], {

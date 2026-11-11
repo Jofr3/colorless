@@ -7,7 +7,7 @@
 import type { LobbyIntent, LobbySlot, LobbySnapshot, PlayerState } from "@colorless/schema";
 
 /** One seat as the DO stores it: the broadcast seat, with the chosen deck's id in place of
-    `hasDeck`. The id names a private library deck, so it never leaves the DO (LB5); the handoff
+    `hasDeck`. The id names a private library deck, so it never leaves the DO; the handoff
     reads the deck with it. `id` is the seat's public id (seatId.ts). */
 export type LobbySeat = Omit<PlayerState, "hasDeck"> & {
   /** Chosen deck, or null until they pick one. */

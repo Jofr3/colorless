@@ -1,4 +1,4 @@
-// Runs one command with the production-write Cloudflare token (build audit DEP3). The ambient
+// Runs one command with the production-write Cloudflare token. The ambient
 // CLOUDFLARE_API_TOKEN is read-only, so wrangler can list, query and read production but not change
 // it; a write goes through here (or through release-gate.ts's deploy, which loads the same token).
 //

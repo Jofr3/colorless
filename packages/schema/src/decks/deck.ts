@@ -41,7 +41,7 @@ const deckBaseSchema = z.object({
 /** The full deck resource — what GET /decks/:id (and create/patch) serve. */
 export const deckSchema = deckBaseSchema.extend({
   cards: z.array(deckCardSchema),
-  /** The cover the OWNER picked (P5-6), or null for "automatic" — the default
+  /** The cover the OWNER picked, or null for "automatic" — the default
       the server derives from the contents. Deliberately NOT the same field as
       `DeckSummary.coverCardId`, which is the face actually being drawn: this is
       the stored CHOICE, the editor's state, and it is null for almost every
@@ -65,7 +65,7 @@ export const deckSummarySchema = deckBaseSchema.extend({
   cards: z.array(deckCardSchema).optional(),
   /** The card whose art fronts this deck in the library grid — the owner's
       `chosenCoverCardId` when they picked one that is still in the deck and
-      drawable (P5-6), else the derived default (P5-3, `pickCoverCardId`), else
+      drawable, else the derived default (`pickCoverCardId`), else
       null for a deck with nothing to show (an empty one, or one whose Pokémon
       have no scan yet). Resolved server-side on read, so it follows the deck's
       contents with nothing to keep in sync. */

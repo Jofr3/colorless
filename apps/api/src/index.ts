@@ -77,9 +77,9 @@ app.use("*", (c, next) =>
   })(c, next),
 );
 
-// A state-changing request from another site is refused (AEX1): the session cookie is Lax, so a
+// A state-changing request from another site is refused: the session cookie is Lax, so a
 // browser leaves it off such requests anyway, but this also stops a request that needs no cookie
-// (POST /lobby, register) and covers a cookie set before the move to Lax. A request with no Origin
+// (POST /lobby, register) and covers an older cookie set without Lax. A request with no Origin
 // is not from a browser page, so it carries no visitor's cookie; `Sec-Fetch-Site` catches a
 // browser that sent no Origin.
 const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);

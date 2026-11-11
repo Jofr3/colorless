@@ -1,6 +1,5 @@
 // Requests from a foreign site carrying the visitor's session cookie: every unsafe-method route
-// and the lobby WebSocket upgrade (findings AU1 and AEX1 of the 2026-10 security audit). A new
-// unsafe route must be added to UNSAFE_ROUTES.
+// and the lobby WebSocket upgrade. A new unsafe route must be added to UNSAFE_ROUTES.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { sessionCookie } from "./auth/session";
@@ -14,7 +13,7 @@ const UNSAFE = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 /** Every unsafe-method route with a body its schema accepts, and for a POST (which a page can
     send without a preflight) what a cross-site form-encodable POST with the cookie gets: the
-    Origin guard refuses each before it runs (AEX1). */
+    Origin guard refuses each before it runs. */
 const UNSAFE_ROUTES: Record<string, { body?: unknown; textPlain?: number }> = {
   "POST /auth/register": {
     body: { email: "new@example.com", password: "hunter2hunter2" },
@@ -24,14 +23,14 @@ const UNSAFE_ROUTES: Record<string, { body?: unknown; textPlain?: number }> = {
     body: { email: "victim@example.com", password: "hunter2hunter2" },
     textPlain: 403,
   },
-  // AEX1: signed the visitor out before the guard.
+  // Without the guard, would sign the visitor out.
   "POST /auth/logout": { textPlain: 403 },
-  // AU7: would sign the visitor out everywhere.
+  // Would sign the visitor out everywhere.
   "POST /auth/logout-all": { textPlain: 403 },
   "POST /auth/verify-email": { textPlain: 403 },
   "POST /auth/reset-password": { textPlain: 403 },
   "POST /decks": { body: { name: "Planted", tint: 1 }, textPlain: 403 },
-  // LB3: minted a lobby on the visitor's address before the guard.
+  // Without the guard, would mint a lobby on the visitor's address.
   "POST /lobby": { textPlain: 403 },
   "PATCH /auth/me": { body: { displayName: "Mallory" } },
   "DELETE /auth/me": { body: { confirmEmail: "victim@example.com" } },

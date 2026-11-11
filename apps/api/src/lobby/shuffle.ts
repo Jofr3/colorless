@@ -1,4 +1,4 @@
-// The match handoff's pre-shuffle of each deck list (security audit MIX1). The engine mints card
+// The match handoff's pre-shuffle of each deck list. The engine mints card
 // uids `p1#i` in list order, and D1 returns a deck sorted by card id, so without it a uid the
 // opponent sees would place that card in the sorted list and bound the rest of the decklist. The
 // shuffle is independent of the match RNG, which the engine's own shuffle draws from.

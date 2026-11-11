@@ -19,7 +19,7 @@ export const DECK_NAME_MAX = 100;
 
 /** Longest card id a write accepts. Catalog ids are a set id and a number ("swsh10.5-001", 12
     characters at most today); the cap leaves room for longer set ids without letting a request
-    carry, or a 400 echo, an arbitrarily long string (security audit DK3). */
+    carry, or a 400 echo, an arbitrarily long string. */
 export const CARD_ID_MAX = 40;
 
 /** A card id as a write names it: the catalog's characters only. Read schemas stay loose, so a
@@ -83,7 +83,7 @@ export const patchDeckRequestSchema = nonEmptyPatch({
   folderId: z.null().optional(),
   /** When present, REPLACES the whole card list (no per-entry merging). */
   cards: deckCardsField.optional(),
-  /** The owner's cover pick (P5-6): a card id to pin, `null` for automatic.
+  /** The owner's cover pick: a card id to pin, `null` for automatic.
       Must be a card in the deck AFTER this patch applies — sending one that
       isn't is a 400, since the request contradicts itself. */
   chosenCoverCardId: cardIdSchema.nullable().optional(),

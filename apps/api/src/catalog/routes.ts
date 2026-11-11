@@ -95,8 +95,8 @@ export function cardsPageStatements(db: DrizzleD1Database, query: CardsQuery) {
  * The page with the match count riding along on every row, for a free-text query. A typed term
  * matches sparsely, so filling the page walks most of the table and the count then scans it again;
  * the window counts during that one walk. It costs the table plus about the matches, so it halves
- * a typical search and costs a dense one-letter term up to 40% more than the pair (5,084-card
- * catalog, 2026-10-27). The window is ordered like the page and framed over the whole result, so
+ * a typical search and costs a dense one-letter term up to 40% more than the pair. The window is
+ * ordered like the page and framed over the whole result, so
  * SQLite feeds it straight off the sort's index; a bare `over ()` buffers every match and sorts it
  * again, about twice the pair's rows on that one-letter term.
  */

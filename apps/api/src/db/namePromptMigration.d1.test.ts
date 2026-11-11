@@ -1,4 +1,4 @@
-// Migration 0012's backfill (security audit AU3, decision 12): which existing accounts are asked,
+// Migration 0012's backfill: which existing accounts are asked,
 // once, to choose their public name. No name changes.
 
 import { convertV4MiniflareOptions, Miniflare } from "miniflare";

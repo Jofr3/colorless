@@ -26,9 +26,9 @@ import {
 } from "./match";
 import type { LobbyState } from "./snapshot";
 
-// P4 — the lobby → engine handoff. `startMatch` is a pure wrapper over the P3
-// engine's `createGame`, so this also proves the engine imports and runs inside the
-// API/Worker package (the first cross-package integration).
+// The lobby → engine handoff. `startMatch` is a pure wrapper over the engine's
+// `createGame`, so this also proves the engine imports and runs inside the
+// API/Worker package.
 
 /** A minimal valid Basic Pokémon — the one card the synthetic decks below are made
     of, so `createGame`'s "60 cards + at least one Basic" check passes. */

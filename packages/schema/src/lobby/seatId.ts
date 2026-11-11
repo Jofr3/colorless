@@ -1,4 +1,4 @@
-// A lobby seat's two names (LB6). The client mints a SECRET per tab and lobby and presents it only
+// A lobby seat's two names. The client mints a SECRET per tab and lobby and presents it only
 // in its hello; everything the lobby broadcasts names the seat by its PUBLIC id, a hash of the
 // secret. Knowing a public id from a snapshot therefore does not let anyone claim the seat, and the
 // lobby stores no secret: it hashes the hello's and looks the seat up by the result.

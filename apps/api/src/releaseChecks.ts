@@ -1,7 +1,6 @@
 // The verdicts scripts/release-gate.ts reaches about a release, as pure functions of what it read
 // (git, wrangler, gh, the deployed site), so vitest can test them; it sits here beside
-// requiredSecrets.ts for that reason, and the Worker imports neither. Build audit ENV1, DEP1,
-// DEP4, DEPM1, CI1 and DEP3.
+// requiredSecrets.ts for that reason, and the Worker imports neither.
 
 /** The commit a release names everywhere: wrangler's `--tag`, /health's `version.tag`, the log. */
 export const shortSha = (commit: string): string => commit.slice(0, 8);
@@ -68,8 +67,8 @@ export function pinRefusal(
 
 /** What keeps the working tree from being the commit a deploy may ship: uncommitted changes, a
     HEAD that is not the remote's main (read with `git ls-remote`, never the local origin/main ref,
-    which a merge on GitHub leaves behind; DEPM1), or a HEAD other than the commit an active
-    release pinned (another agent committed mid-release; DEP4). */
+    which a merge on GitHub leaves behind), or a HEAD other than the commit an active release
+    pinned (another agent committed mid-release). */
 export function cleanTreeProblems(input: {
   changes: string;
   head: string;
@@ -288,7 +287,7 @@ export function assetProblem(
 
 // ---- CI ----
 
-/** The ci.yml jobs whose result the release prints (decision 1b: printed, never blocking). */
+/** The ci.yml jobs whose result the release prints: printed, never blocking. */
 export const CI_JOBS = ["static", "test", "mutants"] as const;
 
 const PASSING = new Set(["success", "neutral", "skipped"]);
@@ -388,7 +387,7 @@ export function releaseLogLine(input: {
   ].join(" ");
 }
 
-// ---- The deploy token (build audit DEP3) ----
+// ---- The deploy token ----
 
 /** Where the production-write Cloudflare token lives, relative to $HOME, unless
     CLOUDFLARE_DEPLOY_TOKEN_FILE names another file. The ambient CLOUDFLARE_API_TOKEN is read-only;

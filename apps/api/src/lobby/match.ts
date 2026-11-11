@@ -1,6 +1,6 @@
-// The lobby → engine handoff (online.md). When a lobby's countdown ends with both
-// players ready, the DO starts a real match: it instantiates the engine server-side
-// and owns the RNG seed + hidden info. This module is the seam.
+// The lobby → engine handoff (docs/workstreams/backend-data.md §3.6). When a lobby's
+// countdown ends with both players ready, the DO starts a real match: it instantiates the
+// engine server-side and owns the RNG state and the hidden information. This module is the seam.
 //
 // The lobby has no p1/p2 concept — seats are "host"/"guest" — so the mapping to the
 // engine's Seat is minted HERE, at match start: the host is p1, the guest is p2.
@@ -36,8 +36,8 @@ import type { LobbyState } from "./snapshot";
 
 export type { Seat };
 
-/** A match's RNG: always a ChaCha20 state with a fresh 256-bit key (security audit MI1). The type
-    is the guard: a handoff cannot start a match on a guessable numeric seed. */
+/** A match's RNG: always a ChaCha20 state with a fresh 256-bit key. The type is the guard: a
+    handoff cannot start a match on a guessable numeric seed. */
 export type MatchRng = DrbgState;
 
 /** The RNG a new match starts from, keyed from the platform CSPRNG. The key never leaves the DO:
@@ -207,7 +207,7 @@ export interface MatchRecord {
       engine can migrate is migrated and written back, and anything else is retired. */
   version: number;
   /** The RNG state the match was created from: the ChaCha20 state the DO minted, or the u32
-      seed of a match started before MI1's fix. Server-side only, like `state`. */
+      seed of an older match on the mulberry32 generator. Server-side only, like `state`. */
   seed: RngState;
   /** Epoch ms the match started — the log's "+MM:SS" elapsed origin. */
   startedAt: number;
@@ -236,7 +236,7 @@ export const MATCH_RECORD_VERSION = GAME_STATE_VERSION;
 /**
  * Migrate an older record to this deploy's version, or `null` if it is not a well-formed migratable
  * record. The envelope is kept; the engine migrates the state. A state still on the mulberry32
- * generator (a match started before MI1's fix) carries on under a fresh ChaCha20 key from `rekey`:
+ * generator (an older match) carries on under a fresh ChaCha20 key from `rekey`:
  * its 32-bit seed may already have been recovered from a player's opening hand, and nothing
  * replays an online match, so changing generator mid-match costs nothing. What the old seed already
  * decided (deck orders, Prizes) stays as dealt until the next shuffle.
@@ -314,7 +314,7 @@ const storedStateSchema = z.custom<GameState>(
 function matchRecordSchema(version: z.ZodType<number>, state: z.ZodType<GameState>) {
   return z.object({
     version,
-    // A record from before MI1's fix holds the u32 the DO minted, which can pass the int32 range.
+    // An older record holds the u32 seed the DO minted, which can pass the int32 range.
     seed: z.custom<RngState>(
       (value) => (typeof value === "number" && Number.isFinite(value)) || isRngState(value),
     ),
@@ -382,15 +382,15 @@ const UNAVAILABLE_MOVE_REASON = "That move isn't available here.";
  * Apply a client action to a persisted match. The action is bound to the actor's own `seat`, never
  * the client-claimed one, gated to `SUPPORTED_MATCH_ACTIONS`, then run through the engine's total
  * `applyAction`. On accept returns the next record with the events logged at `now`; on reject
- * returns a `reason` and changes nothing. A throw out of the engine (a broken totality contract,
- * MI3) is a refusal too, carrying the caught `thrown` for the caller to log.
+ * returns a `reason` and changes nothing. A throw out of the engine (a broken totality contract)
+ * is a refusal too, carrying the caught `thrown` for the caller to log.
  */
 export type MatchActionOutcome =
   | { ok: true; record: MatchRecord; logTrimmed: boolean }
   | { ok: false; reason: string; thrown?: unknown };
 
 /**
- * The most log rows a match keeps (MIX2). A legal repeatable ability (Solar Transfer moves one
+ * The most log rows a match keeps. A legal repeatable ability (Solar Transfer moves one
  * Energy as often as you like) appends rows without end, and every reconnect and spectator is sent
  * the whole log. A real game logs a few hundred rows.
  */
@@ -431,7 +431,7 @@ export function applyMatchAction(
   if (!SUPPORTED_MATCH_ACTIONS.has(action.type)) {
     return { ok: false, reason: UNAVAILABLE_MOVE_REASON };
   }
-  // The engine is meant to be total, but a crafted frame once threw out of it (MI3). Nothing is
+  // The engine is meant to be total, but a crafted frame can still throw out of it. Nothing is
   // persisted before this returns, so a throw is refused like an off-allowlist move instead of
   // escaping `webSocketMessage` and leaving the actor without a reply.
   try {

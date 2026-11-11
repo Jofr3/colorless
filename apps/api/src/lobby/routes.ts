@@ -94,7 +94,7 @@ lobbySocketRoutes.get("/:code/ws", async (c) => {
     return c.json({ error: "expected a websocket upgrade" }, 426);
   }
   // CORS does not govern a handshake and the DO trusts the forwarded cookie, so a page on another
-  // site must not open a socket as its visitor (AU1). A client that sends no Origin is not a
+  // site must not open a socket as its visitor. A client that sends no Origin is not a
   // browser and cannot carry a visitor's cookie.
   const origin = c.req.header("Origin");
   if (origin !== undefined && !appCorsOrigins(c.env).includes(origin)) {

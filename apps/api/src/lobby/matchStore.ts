@@ -98,7 +98,7 @@ function headOf(record: MatchRecord): StoredHead {
 /**
  * The storage entries that persist `record`, given what the keys already hold: the head always,
  * the card tables when they are not the ones written, and the log chunks from the first one
- * holding a new entry, or all of them once the log was trimmed (MIX2). Nothing written means
+ * holding a new entry, or all of them once the log was trimmed. Nothing written means
  * everything is.
  */
 function matchEntries(record: MatchRecord, written: Written | null): Record<string, unknown> {
