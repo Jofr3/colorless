@@ -37,6 +37,7 @@ local info={
   full={'Lobby is full','Lobby %s already has two players.'},
   ['not-found']={'Lobby not found','No open lobby with the code %s. Ask for a fresh code, or create your own.'},
   unreachable={"Can't reach the lobby","Couldn't connect to lobby %s. Check your connection, then try again."},
+  outdated={'A new version is available','Reload the page to play online.'},
 }
 local backs={menu={'Back','home'},joining={'Cancel','leave'},waiting={'Leave','home'},versus={'Leave','leave'},
   countdown={'Leave','leave'},starting={'Leave','home'}}

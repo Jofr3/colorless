@@ -1,4 +1,5 @@
 import {
+  LOBBY_PROTOCOL,
   createSnapshot,
   isSeatSecret,
   type LobbySnapshot,
@@ -154,7 +155,7 @@ describe("Lua online adapter", () => {
       kind: "hello",
       from: identity().secret,
       name: "Ash",
-      logDeltas: true,
+      protocol: LOBBY_PROTOCOL,
     });
     await online.command("create");
     expect(route).toHaveBeenCalledOnce();
@@ -700,5 +701,9 @@ describe("Lua online adapter", () => {
     await online.command(`join\t${CODE}`);
     vi.advanceTimersByTime(UNREACHABLE_MS + 700);
     expect(header()[H("step")]).toBe("unreachable");
+    await online.command("leave");
+    await online.command(`join\t${CODE}`);
+    online.client?.lobbyClosed("outdated");
+    expect(header()[H("step")]).toBe("outdated");
   });
 });

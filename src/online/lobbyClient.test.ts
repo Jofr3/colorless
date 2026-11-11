@@ -1,4 +1,5 @@
 import {
+  LOBBY_PROTOCOL,
   createSnapshot,
   type LobbySnapshot,
   makePlayer,
@@ -52,7 +53,7 @@ describe("LobbyClient", () => {
     expect(client.self?.id).toBe(testSeatId("h"));
     expect(client.opponent).toBeNull();
     expect(posts).toEqual([
-      { kind: "hello", from: testSeatSecret("h"), name: "Host", logDeltas: true },
+      { kind: "hello", from: testSeatSecret("h"), name: "Host", protocol: LOBBY_PROTOCOL },
     ]);
   });
 
@@ -89,6 +90,16 @@ describe("LobbyClient", () => {
     vi.advanceTimersByTime(UNREACHABLE_MS);
     expect(kinds().length).toBe(sent);
     expect(client.state.status).toBe("not-found");
+  });
+
+  it("reports outdated, and stops re-announcing, when the server says this page is too old", () => {
+    const { client, push, kinds } = make("guest");
+    push({ kind: "state", snapshot: snap() });
+    client.lobbyClosed("outdated");
+    expect(client.state.status).toBe("outdated");
+    const sent = kinds().length;
+    vi.advanceTimersByTime(UNREACHABLE_MS);
+    expect(kinds().length).toBe(sent);
   });
 
   it("a host whose first socket never answers reports unreachable, not its seeded lobby", () => {
@@ -229,7 +240,7 @@ describe("LobbyClient", () => {
     expect(client.state.matchLog).toEqual([a]);
     expect(client.state.match).toBe(game);
     expect(posts.slice(sent)).toEqual([
-      { kind: "hello", from: testSeatSecret("h"), name: "Host", logDeltas: true },
+      { kind: "hello", from: testSeatSecret("h"), name: "Host", protocol: LOBBY_PROTOCOL },
     ]);
     push({ kind: "match", game: skipped, log: [a, a, c] });
     expect(client.state.matchLog).toEqual([a, a, c]);

@@ -86,6 +86,7 @@ export const helloMessageSchema = z.object({
   // The account display name's rule (displayName.ts), stripped rather than refused.
   name: z.string().transform(cleanDisplayName),
   logDeltas: z.boolean().optional(),
+  protocol: z.number().int().nonnegative().optional(),
 });
 export const intentMessageSchema = z.object({
   kind: z.literal("intent"),

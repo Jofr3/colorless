@@ -39,6 +39,7 @@ export type OnlineStep =
   | "full"
   | "not-found"
   | "unreachable"
+  | "outdated"
   | "invalid";
 
 type Surface = "none" | "modal" | "match";
@@ -113,7 +114,13 @@ export class LuaOnline {
     const c = this.client;
     if (!c) return "menu";
     const { status, snapshot } = c.state;
-    if (status === "not-found" || status === "unreachable" || status === "full") return status;
+    if (
+      status === "not-found" ||
+      status === "unreachable" ||
+      status === "full" ||
+      status === "outdated"
+    )
+      return status;
     if (!snapshot || !c.self) return "joining";
     return PHASE_STEP[snapshot.phase];
   }

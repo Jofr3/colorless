@@ -1,6 +1,10 @@
 import {
+  LOBBY_PING_MS,
+  LOBBY_SILENCE_MS,
   LOBBY_WS_CLOSED,
   LOBBY_WS_NOT_FOUND,
+  LOBBY_WS_NUDGE,
+  LOBBY_WS_OUTDATED,
   LOBBY_WS_PING,
   LOBBY_WS_PONG,
   type LobbyMessage,
@@ -24,12 +28,13 @@ export interface LobbyChannel {
 // and broadcasts `state` snapshots; this channel is a dumb pipe that knows only its transport-level
 // jobs.
 
-const PING_INTERVAL_MS = 1500;
-/** An open socket with no frame back for this long since a ping it sent is given up for a new one:
-    a half-open link (NAT rebinding, a middlebox drop) never closes on its own. It is counted from
-    the oldest unanswered ping, so a background tab whose timers are throttled to one a minute
-    does not trip it, and it stays well inside the server's forfeit budget. */
-export const SOCKET_SILENCE_MS = 10_000;
+/** An open socket with no frame back for `LOBBY_SILENCE_MS` since a ping it sent is given up for a
+    new one: a half-open link (NAT rebinding, a middlebox drop) never closes on its own. It is
+    counted from the oldest unanswered ping, so a hidden tab whose timers fire once a minute does
+    not trip it. Those timers also hold its pings back, which the server would take for a dead
+    link; the server's `LOBBY_WS_NUDGE` is answered with a ping from the message handler, which
+    runs at once (protocol.ts). */
+export const SOCKET_SILENCE_MS = LOBBY_SILENCE_MS;
 /** A socket still connecting after this long is given up and retried. */
 export const CONNECT_TIMEOUT_MS = 10_000;
 const RECONNECT_BASE_MS = 400;
@@ -66,7 +71,8 @@ function createNoopChannel(): LobbyChannel {
 
 /** Open the transport for a given lobby code. `onLobbyClosed` runs once if the server says the
     code names no lobby: it closed the lobby for good (`LOBBY_WS_CLOSED`), or there is none
-    (`LOBBY_WS_NOT_FOUND`, at once on the upgrade). The channel then stops reconnecting. `openSocket`
+    (`LOBBY_WS_NOT_FOUND`, at once on the upgrade); or, with "outdated", that this page is too old
+    for the lobby (`LOBBY_WS_OUTDATED`). The channel then stops reconnecting. `openSocket`
     opens each socket (the browser's WebSocket by default; the seam suites pass one wired to the
     lobby DO, as one tab's cookie would upgrade it). */
 export function createLobbyChannel(
@@ -74,7 +80,10 @@ export function createLobbyChannel(
   {
     onLobbyClosed,
     openSocket,
-  }: { onLobbyClosed?: () => void; openSocket?: (url: string) => WebSocket } = {},
+  }: {
+    onLobbyClosed?: (reason: "closed" | "outdated") => void;
+    openSocket?: (url: string) => WebSocket;
+  } = {},
 ): LobbyChannel {
   if (openSocket === undefined && typeof WebSocket === "undefined") return createNoopChannel();
   const socketFor = openSocket ?? ((url: string) => new WebSocket(url));
@@ -129,12 +138,12 @@ export function createLobbyChannel(
     socket = null;
     stopSocketTimers();
     if (closed) return;
-    // The lobby is gone (wiped after an hour without play), or there never was one: a reconnect
-    // could only fail.
-    if (code === LOBBY_WS_CLOSED || code === LOBBY_WS_NOT_FOUND) {
+    // The lobby is gone (wiped after an hour without play), there never was one, or this page is
+    // too old for it: a reconnect could only fail.
+    if (code === LOBBY_WS_CLOSED || code === LOBBY_WS_NOT_FOUND || code === LOBBY_WS_OUTDATED) {
       closed = true;
       queue.length = 0;
-      onLobbyClosed?.();
+      onLobbyClosed?.(code === LOBBY_WS_OUTDATED ? "outdated" : "closed");
       return;
     }
     // Unexpected close (server restart, network blip, a refused upgrade): retry with capped
@@ -182,7 +191,7 @@ export function createLobbyChannel(
         }
         unansweredSince ??= now;
         ws.send(LOBBY_WS_PING);
-      }, PING_INTERVAL_MS);
+      }, LOBBY_PING_MS);
     };
 
     ws.onmessage = (event: MessageEvent) => {
@@ -190,6 +199,11 @@ export function createLobbyChannel(
       if (typeof event.data !== "string") return;
       if (event.data === LOBBY_WS_PONG) {
         dispatch(SERVER_HEARTBEAT);
+        return;
+      }
+      if (event.data === LOBBY_WS_NUDGE) {
+        unansweredSince = Date.now();
+        ws.send(LOBBY_WS_PING);
         return;
       }
       let parsed: unknown;

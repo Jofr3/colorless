@@ -5,6 +5,7 @@ import { drbgSeed } from "@colorless/engine/testing";
 import {
   LOBBY_WS_CLOSED,
   LOBBY_WS_NOT_FOUND,
+  LOBBY_WS_OUTDATED,
   type LobbyClientMessage,
   type LobbyIntent,
 } from "@colorless/schema";
@@ -29,6 +30,7 @@ import {
   LIVENESS_SWEEP_MS,
   LOBBY_SOCKET_CAP,
   LOBBY_SOCKET_HARD_CAP,
+  MIN_LOBBY_PROTOCOL,
   OVERFLOW_HELLO_MS,
   OVERFLOW_SOCKETS_MAX,
 } from "./logic";
@@ -955,5 +957,30 @@ describe("lobby abuse — the removed set-name intent (AU8)", () => {
     expect(logged("socket_closed")).toMatchObject([
       { cause: "frame_rate", frames: FRAME_BURST + 1 },
     ]);
+  });
+});
+
+describe("lobby abuse — a page older than the lobby protocol (LEGX1)", () => {
+  it("LEGX1: a hello below the DO's minimum is closed outdated and seats nothing", async () => {
+    await h.create();
+    h.deps.minLobbyProtocol = 1;
+    const old = await h.connect();
+    await h.send(old, hello("h", "Old"));
+    expect(old.closed).toEqual({ code: LOBBY_WS_OUTDATED, reason: "client outdated" });
+    expect(old.sent).toEqual([]);
+    expect(logged("hello_refused")).toMatchObject([{ cause: "outdated", protocol: 0 }]);
+    const current = await h.connect();
+    await h.send(current, { kind: "hello", from: seatSecret("h"), name: "New", protocol: 1 });
+    expect(current.closed).toBeNull();
+    expect(current.last("state")?.snapshot.host).toMatchObject({ id: seatIdOf("h"), name: "New" });
+  });
+
+  it("LEGX1: seats a hello without a protocol while the minimum is 0", async () => {
+    expect(MIN_LOBBY_PROTOCOL).toBe(0);
+    await h.create();
+    const old = await h.connect();
+    await h.send(old, hello("h"));
+    expect(old.closed).toBeNull();
+    expect(old.last("state")?.snapshot.host.id).toBe(seatIdOf("h"));
   });
 });

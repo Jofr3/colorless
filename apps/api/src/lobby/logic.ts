@@ -8,6 +8,8 @@ import {
   isPublicSeatId,
   LOBBY_DECK_NAME_MAX,
   LOBBY_NAME_MAX,
+  LOBBY_PING_MS,
+  LOBBY_SILENCE_MS,
   type LobbyClientMessage,
   lobbyClientMessageSchema,
   lobbyPhaseSchema,
@@ -34,14 +36,19 @@ export const DISCONNECT_GRACE_MS = 5000;
  */
 export const ABANDON_GRACE_MS = 90_000;
 
-/** How long a socket may go without answering a keepalive before the lobby gives up on it.
-    The client pings every 1.5s (channel.ts) and the DO's `setWebSocketAutoResponse` answers
-    WITHOUT waking it, so 10s is six missed pings. It matches the client's own silence limit
-    (channel.ts `SOCKET_SILENCE_MS`), so a client whose path died has already given the socket up
-    for a new one by the time the lobby does, and closing it here costs nothing. A hidden tab's
-    timers still fire once a second, well inside it. A tab frozen for longer, or a
-    phone that switched networks, loses this TCP connection whatever the limit, and reconnects. */
-export const SOCKET_SILENCE_MS = 10_000;
+/** How long a socket may go without answering a keepalive before the lobby gives up on it:
+    `LOBBY_SILENCE_MS`, the client's own limit, so a client whose path died has already given the
+    socket up for a new one by the time the lobby does. The DO's `setWebSocketAutoResponse` answers
+    each ping WITHOUT waking it. A hidden tab's pings can stop for most of a minute (Chromium holds
+    its timers back), which a `LOBBY_WS_NUDGE` after `NUDGE_AFTER_MS` covers. A tab frozen for
+    longer, or a phone that switched networks, loses this TCP connection whatever the limit, and
+    reconnects. */
+export const SOCKET_SILENCE_MS = LOBBY_SILENCE_MS;
+
+/** How long a socket's pings may lapse before the liveness sweep nudges it: two ping intervals. A
+    visible tab never reaches it; a hidden one is nudged on every sweep it reaches it on, and a
+    seated lobby's sweep comes before `SOCKET_SILENCE_MS` runs out. */
+export const NUDGE_AFTER_MS = 2 * LOBBY_PING_MS;
 
 /** How often the alarm checks for silent sockets while any are connected and nobody holds the
     other seat. It is a POLL, and it has to be: the whole point of the auto-response is
@@ -69,9 +76,18 @@ export function livenessSweepMs(snapshot: LobbyState | null): number {
   return snapshot?.guest != null ? SEATED_LIVENESS_SWEEP_MS : LIVENESS_SWEEP_MS;
 }
 
+/** The oldest lobby protocol (`LOBBY_PROTOCOL`, protocol.ts) the DO seats; a hello below it is
+    closed with `LOBBY_WS_OUTDATED`. 0 admits the pages from before the protocol had a number. */
+export const MIN_LOBBY_PROTOCOL = 0;
+
+/** Whether a hello's protocol (absent is 0) is older than `min`. */
+export function helloIsOutdated(protocol: number | undefined, min: number): boolean {
+  return (protocol ?? 0) < min;
+}
+
 /** The extra time a socket that has never been answered gets on top of `SOCKET_SILENCE_MS`,
-    counted from the upgrade: the client's first ping goes out 1.5s after its socket opens, and
-    the 101 has to reach it first. */
+    counted from the upgrade: the client's first ping goes out `LOBBY_PING_MS` after its socket
+    opens, and the 101 has to reach it first. */
 export const FIRST_KEEPALIVE_MARGIN_MS = 5_000;
 
 /**
@@ -87,6 +103,16 @@ export function socketIsSilent(
 ): boolean {
   if (lastAutoResponse !== null) return now - lastAutoResponse.getTime() > SOCKET_SILENCE_MS;
   return now - connectedAt > SOCKET_SILENCE_MS + FIRST_KEEPALIVE_MARGIN_MS;
+}
+
+/** Whether a socket that is not silent should be nudged: no ping answered for `NUDGE_AFTER_MS`,
+    counted from the upgrade for a socket never answered. */
+export function socketNeedsNudge(
+  lastAutoResponse: Date | null,
+  connectedAt: number,
+  now: number,
+): boolean {
+  return now - (lastAutoResponse?.getTime() ?? connectedAt) > NUDGE_AFTER_MS;
 }
 
 /** How long an empty lobby (zero sockets — also a freshly-minted, never-joined

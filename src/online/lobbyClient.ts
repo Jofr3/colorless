@@ -2,6 +2,7 @@ import type { GameAction } from "@colorless/engine";
 import {
   COUNTDOWN_MS,
   createSnapshot,
+  LOBBY_PROTOCOL,
   type LobbyIntent,
   type LobbyMessage,
   type LobbySlot,
@@ -28,8 +29,15 @@ import { createLobbyChannel, type LobbyChannel } from "./channel";
     client that lost the server and is trying to reconnect. "not-found" is the server's definite
     word that the code names no lobby; "unreachable" is a first connection that
     never got an answer (a later one still takes the client back). "full" means
-    both seats are held by others. */
-export type LobbyStatus = "connecting" | "connected" | "not-found" | "unreachable" | "full";
+    both seats are held by others. "outdated" is the server's word that this page is too old for
+    the lobby, and a reload fixes it. */
+export type LobbyStatus =
+  | "connecting"
+  | "connected"
+  | "not-found"
+  | "unreachable"
+  | "full"
+  | "outdated";
 
 export type DeckChoice = { id: string; name: string };
 
@@ -152,7 +160,8 @@ export class LobbyClient {
     this.name = opts.name;
     this.now = deps.now ?? Date.now;
     this.channel =
-      deps.channel ?? createLobbyChannel(opts.code, { onLobbyClosed: () => this.lobbyClosed() });
+      deps.channel ??
+      createLobbyChannel(opts.code, { onLobbyClosed: (reason) => this.lobbyClosed(reason) });
     this.current = {
       ...initialLobbyState(opts.code, opts.role, this.playerId, opts.name),
       ...opts.resume,
@@ -236,16 +245,22 @@ export class LobbyClient {
     this.tick = setInterval(() => this.poll(), HELLO_RETRY_MS);
   }
 
-  /** The server says the code names no lobby: closed for good, or never there. */
-  lobbyClosed() {
+  /** The server says the code names no lobby (closed for good, or never there), or that this page
+      is too old for it. */
+  lobbyClosed(reason: "closed" | "outdated" = "closed") {
     if (this.disposed) return;
     this.closedForGood = true;
     this.stop();
-    this.set({ status: "not-found" });
+    this.set({ status: reason === "outdated" ? "outdated" : "not-found" });
   }
 
   private hello() {
-    this.channel.post({ kind: "hello", from: this.secret, name: this.name, logDeltas: true });
+    this.channel.post({
+      kind: "hello",
+      from: this.secret,
+      name: this.name,
+      protocol: LOBBY_PROTOCOL,
+    });
   }
 
   private intent(intent: LobbyIntent) {

@@ -69,8 +69,9 @@ export type LobbyIntent =
 export type LobbyMessage =
   /** client → server: request to join, or re-announce after a reconnect. `from` is the client's
       seat secret (seatId.ts), sent in no other frame. `logDeltas` says the client takes `match`
-      frames that carry only the log's new entries. */
-  | { kind: "hello"; from: string; name: string; logDeltas?: boolean }
+      frames that carry only the log's new entries. `protocol` is the page's `LOBBY_PROTOCOL`
+      (protocol.ts); a hello without one is protocol 0. */
+  | { kind: "hello"; from: string; name: string; logDeltas?: boolean; protocol?: number }
   /** host → all: the authoritative snapshot after any change. */
   | { kind: "state"; snapshot: LobbySnapshot }
   /** server → one client: that client's REDACTED view of the in-game match.

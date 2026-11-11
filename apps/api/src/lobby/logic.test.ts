@@ -1,4 +1,11 @@
-import { COUNTDOWN_MS, LOBBY_DECK_NAME_MAX, LOBBY_ID_MAX, LOBBY_NAME_MAX } from "@colorless/schema";
+import {
+  COUNTDOWN_MS,
+  LOBBY_DECK_NAME_MAX,
+  LOBBY_ID_MAX,
+  LOBBY_NAME_MAX,
+  LOBBY_PING_MS,
+  LOBBY_SILENCE_MS,
+} from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import {
   ABANDON_GRACE_MS,
@@ -9,6 +16,7 @@ import {
   forfeitDeadlines,
   endMatch,
   FIRST_KEEPALIVE_MARGIN_MS,
+  NUDGE_AFTER_MS,
   FRAME_BURST,
   FRAME_REFILL_PER_SECOND,
   type FrameBudget,
@@ -30,6 +38,7 @@ import {
   slotOf,
   SOCKET_SILENCE_MS,
   socketIsSilent,
+  socketNeedsNudge,
   spendFrame,
   splitDuePending,
   stampCountdown,
@@ -592,6 +601,27 @@ describe("socketIsSilent — the half-open connection (3c-viii)", () => {
     expect(SEATED_LIVENESS_SWEEP_MS + SOCKET_SILENCE_MS + DISCONNECT_GRACE_MS).toBeLessThanOrEqual(
       20_000,
     );
+  });
+
+  it("is the client's limit, with room for the first ping (APP7)", () => {
+    expect(SOCKET_SILENCE_MS).toBe(LOBBY_SILENCE_MS);
+    expect(FIRST_KEEPALIVE_MARGIN_MS).toBeGreaterThanOrEqual(LOBBY_PING_MS);
+  });
+});
+
+describe("socketNeedsNudge — a hidden tab whose pings lapsed (APPX2)", () => {
+  const at = (ms: number) => new Date(ms);
+
+  it("nudges after two missed pings, counted from the upgrade before the first answer", () => {
+    expect(socketNeedsNudge(at(1_000), 0, 1_000 + NUDGE_AFTER_MS)).toBe(false);
+    expect(socketNeedsNudge(at(1_000), 0, 1_000 + NUDGE_AFTER_MS + 1)).toBe(true);
+    expect(socketNeedsNudge(null, 1_000, 1_000 + NUDGE_AFTER_MS)).toBe(false);
+    expect(socketNeedsNudge(null, 1_000, 1_000 + NUDGE_AFTER_MS + 1)).toBe(true);
+  });
+
+  it("leaves a pinging tab alone, and reaches a seated one before the silence limit", () => {
+    expect(NUDGE_AFTER_MS).toBeGreaterThan(LOBBY_PING_MS);
+    expect(NUDGE_AFTER_MS + SEATED_LIVENESS_SWEEP_MS).toBeLessThan(SOCKET_SILENCE_MS);
   });
 });
 

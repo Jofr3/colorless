@@ -15,6 +15,8 @@ import {
   LOBBY_NAME_MAX,
   LOBBY_WS_CLOSED,
   LOBBY_WS_NOT_FOUND,
+  LOBBY_WS_NUDGE,
+  LOBBY_WS_OUTDATED,
   LOBBY_WS_PING,
   LOBBY_WS_PONG,
   type LobbyClientMessage,
@@ -87,7 +89,10 @@ import {
   seatedUsers,
   setSeatConnected,
   slotOf,
+  helloIsOutdated,
+  MIN_LOBBY_PROTOCOL,
   socketIsSilent,
+  socketNeedsNudge,
   spendFrame,
   splitDuePending,
   stampCountdown,
@@ -241,6 +246,8 @@ export interface LobbyDeps {
   loadPool(ids: readonly string[]): Promise<Record<string, Card>>;
   /** The ids of the `owners`' sessions that still live for their account (`liveSessionIds`). */
   liveSessions(owners: readonly DeckOwner[]): Promise<Set<string>>;
+  /** The oldest lobby protocol a hello may name (`MIN_LOBBY_PROTOCOL`). */
+  minLobbyProtocol: number;
 }
 
 /** The production wiring: the system clock, a CSPRNG-keyed match RNG and shuffle, and the
@@ -249,6 +256,7 @@ export function lobbyDepsFromEnv(env: Env): LobbyDeps {
   const db = () => drizzle(env.DB);
   return {
     now: () => Date.now(),
+    minLobbyProtocol: MIN_LOBBY_PROTOCOL,
     randomSeed: () => freshMatchRng(),
     shuffleDeck: (ids) => cryptoShuffle(ids),
     resolveAccount: (cookie) => resolveAccountFromCookie(db(), cookie),
@@ -428,6 +436,10 @@ export class LobbyDO {
     frame: ClientFrame<"hello">,
     snapshot: LobbyState | null,
   ): Promise<void> {
+    if (helloIsOutdated(frame.protocol, this.deps.minLobbyProtocol)) {
+      await this.log("hello_refused", { cause: "outdated", protocol: frame.protocol ?? 0 }, true);
+      return await this.closeSocket(ws, LOBBY_WS_OUTDATED, "client outdated");
+    }
     attachLogDeltas(ws, frame.logDeltas === true);
     // The hello's secret names the seat through its hash: a public id read off a snapshot is
     // not a secret, and the secret of the seat it names is known only to that seat's client. A
@@ -999,8 +1011,11 @@ export class LobbyDO {
       if (isOverflow(ws) && now - since > OVERFLOW_HELLO_MS) {
         await this.closeSocket(ws, 1013, "lobby full");
         unanswered++;
-      } else if (socketIsSilent(this.state.getWebSocketAutoResponseTimestamp(ws), since, now)) {
-        await this.closeSocket(ws, 1001, "keepalive lost");
+      } else {
+        const answered = this.state.getWebSocketAutoResponseTimestamp(ws);
+        if (socketIsSilent(answered, since, now))
+          await this.closeSocket(ws, 1001, "keepalive lost");
+        else if (socketNeedsNudge(answered, since, now)) this.sendEncoded(ws, LOBBY_WS_NUDGE);
       }
     }
     // One line per sweep, however many it let go.

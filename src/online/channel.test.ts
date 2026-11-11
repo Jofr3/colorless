@@ -1,4 +1,11 @@
-import { LOBBY_WS_CLOSED, LOBBY_WS_NOT_FOUND, type LobbyMessage } from "@colorless/schema";
+import {
+  LOBBY_WS_CLOSED,
+  LOBBY_WS_NOT_FOUND,
+  LOBBY_WS_NUDGE,
+  LOBBY_WS_OUTDATED,
+  LOBBY_WS_PING,
+  type LobbyMessage,
+} from "@colorless/schema";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   CONNECT_TIMEOUT_MS,
@@ -133,6 +140,21 @@ describe("createLobbyChannel", () => {
     ws.open();
     vi.advanceTimersByTime(3100);
     expect(ws.sent.filter((frame) => frame === "ping")).toHaveLength(2);
+    channel.close();
+  });
+
+  it("answers the server's nudge with a ping at once, and dispatches nothing", () => {
+    const channel = createLobbyChannel("ABCD");
+    const ws = FakeWebSocket.last();
+    ws.open();
+    const seen: LobbyMessage[] = [];
+    channel.subscribe((message) => seen.push(message));
+    ws.receive(LOBBY_WS_NUDGE);
+    expect(ws.sent).toEqual([LOBBY_WS_PING]);
+    expect(seen).toEqual([]);
+    // The nudge's ping counts toward the silence watchdog like a timer's.
+    vi.advanceTimersByTime(SOCKET_SILENCE_MS + 1500);
+    expect(ws.closedWith).not.toBeNull();
     channel.close();
   });
 
@@ -329,6 +351,18 @@ describe("createLobbyChannel", () => {
     channel.post(HELLO);
     vi.advanceTimersByTime(60_000);
     expect(onLobbyClosed).toHaveBeenCalledTimes(1);
+    expect(onLobbyClosed).toHaveBeenCalledWith("closed");
+    expect(FakeWebSocket.instances).toHaveLength(1);
+  });
+
+  it("stops reconnecting and says outdated when the server closes an old page's socket (LEGX1)", () => {
+    const onLobbyClosed = vi.fn();
+    createLobbyChannel("ABCD", { onLobbyClosed });
+    const ws = FakeWebSocket.last();
+    ws.open();
+    ws.drop(LOBBY_WS_OUTDATED);
+    vi.advanceTimersByTime(60_000);
+    expect(onLobbyClosed.mock.calls).toEqual([["outdated"]]);
     expect(FakeWebSocket.instances).toHaveLength(1);
   });
 

@@ -4,6 +4,7 @@ import {
   COUNTDOWN_MS,
   LOBBY_WS_CLOSED,
   LOBBY_WS_NOT_FOUND,
+  LOBBY_WS_NUDGE,
   LOBBY_WS_PING,
   LOBBY_WS_PONG,
   type LobbyClientMessage,
@@ -692,6 +693,23 @@ describe("LobbyDO — disconnects", () => {
     expect(h.world.now - silentFrom).toBeLessThanOrEqual(20_000);
     // The forfeit clock runs from the moment the host is told.
     expect(snapshotOf(host).guest?.forfeitAt).toBe(h.world.now + ABANDON_GRACE_MS);
+  });
+
+  it("nudges a seated socket whose pings lapsed, and keeps it while it answers (APPX2)", async () => {
+    const { host, guest } = await startedMatch();
+    // A hidden tab: its timers stopped its pings, but its message handler answers a nudge at once.
+    guest.lastPong = new Date(h.world.now);
+    const send = guest.send.bind(guest);
+    guest.send = (data: string) => {
+      if (data === LOBBY_WS_NUDGE) guest.lastPong = new Date(h.world.now);
+      send(data);
+    };
+    const until = h.world.now + 60_000;
+    while (h.world.now < until) await h.fireAlarm();
+    expect(guest.closed).toBeNull();
+    expect(guest.nudges).toBeGreaterThanOrEqual(60_000 / (SEATED_LIVENESS_SWEEP_MS * 2));
+    expect(host.nudges).toBe(0);
+    expect(snapshotOf(host).guest?.connected).toBe(true);
   });
 
   it("keeps a lone host's lobby on the 30s sweep, before and after a guest leaves", async () => {

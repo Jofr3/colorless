@@ -6,6 +6,7 @@
 import { drbgSeed } from "@colorless/engine/testing";
 import {
   type Card,
+  LOBBY_WS_NUDGE,
   type LobbyClientMessage,
   type LobbyServerMessage,
   lobbyServerMessageSchema,
@@ -17,6 +18,7 @@ import type { Env } from "../env";
 import type { LoadDeckResult } from "./deckLoad";
 import { DO_CREATE_PATH, DO_WS_PATH, doUrl, LOBBY_CODE_HEADER } from "./doProtocol";
 import { type LobbyDeps, LobbyDO } from "./lobbyDO";
+import { MIN_LOBBY_PROTOCOL } from "./logic";
 import type { MatchRng } from "./match";
 
 /** A seat secret for a test's player `label`: fixed per label, so a test can say hello as "h"
@@ -44,6 +46,8 @@ export class FakeSocket {
   /** Whether the client keeps pinging, as the web client does every 1.5s. A test of a silent
       socket pins `lastPong`, or clears this for a client that never pinged at all. */
   pings = true;
+  /** How many `LOBBY_WS_NUDGE` strings the DO sent this socket. */
+  nudges = 0;
   /** Accepted with the standard `accept()`, outside hibernation, as an answer the DO closes at
       once is. */
   acceptedStandalone = false;
@@ -65,6 +69,10 @@ export class FakeSocket {
 
   send(data: string): void {
     if (this.closed !== null) throw new Error("socket is closed");
+    if (data === LOBBY_WS_NUDGE) {
+      this.nudges++;
+      return;
+    }
     const frame: unknown = JSON.parse(data);
     const checked = lobbyServerMessageSchema.safeParse(frame);
     if (!checked.success) {
@@ -263,6 +271,7 @@ export function sessionIdOf(userId: string): string {
 export function worldDeps(world: LobbyWorld): LobbyDeps {
   return {
     now: () => world.now,
+    minLobbyProtocol: MIN_LOBBY_PROTOCOL,
     randomSeed: () => world.seed,
     shuffleDeck: (ids) => [...ids],
     resolveAccount: async (cookie) => {
