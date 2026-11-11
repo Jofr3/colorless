@@ -1,0 +1,3 @@
+# Mutant rows merge by id once merge.corpus.driver is set (docs/conventions.md, "Mutants are DECLARED").
+# Without it git merges the text as usual.
+scripts/mutation/mutants.ts merge=corpus

@@ -768,14 +768,15 @@ Two or three agents share this checkout. Work like it:
   (D215 — it holds the original bytes rather than asking git). Read history with
   **`git show <rev>:<path>`**.
 - **Commit with EXPLICIT PATHS.** Never `git add -A`, never `git commit -a`.
-- ⚠️ **`decisions.md` and the engine version are SERIALISATION POINTS.**
+- ⚠️ **`decisions.md`, the mutant corpus and the engine version are SERIALISATION POINTS.**
   `decisions.md` lost three rows to concurrent writes (D177's and D187's had to
   be reconstructed after the fact — D176, D187). Only a change to what an action
   does bumps the engine version (simulator.md step 7); a refactor, a test or a
   `GAME_STATE_VERSION` change alone does not. Two branches that bump it from the
   same base claim the same version (D186/D199 both took 0.127.0), so the later
   merge takes the next minor. If you cannot hold `index.ts`, declare the bump
-  **OWED** in the commit body.
+  **OWED** in the commit body. The corpus merges with `merge-corpus.ts` ("Mutants
+  are DECLARED").
 - **Annotate provenance; never overwrite it.** How a claim was warranted at the
   time is what this repo keeps losing (D178; D180's follow-up kept the
   asserted-from-doc paragraph and added the measurement beside it).
@@ -806,6 +807,15 @@ So: **if you write a mutant tally, the mutants go in `scripts/mutation/mutants.t
   `expectKilledBy` (≈2 s, versus ≈70 s for the full suite), and restores. Whole
   corpus at D215: **42 mutants / 138 s**. `--only` / `--decision` / `--full` /
   `--list` / `--allow-dirty`.
+- **Merging the corpus.** Two branches that append rows conflict at its tail.
+  `scripts/mutation/merge-corpus.ts` merges it by row `id`: a row changed on one side takes
+  that side, theirs' new rows follow ours', and an id changed differently on both sides is
+  refused. `.gitattributes` makes it the `corpus` merge driver once the user runs, once per
+  clone (worktrees share it), `git config merge.corpus.driver 'bun scripts/mutation/merge-corpus.ts %O %A %B'`;
+  agents never run `git config`. Without the driver git merges the text; after that conflict run
+  `bun scripts/mutation/merge-corpus.ts` with no arguments. Do not hand-merge or use `--union`,
+  which drops the `},`/`{` pair between rows. Then run `bun run mutants:precheck`, which also
+  refuses two rows with one id.
 - **A green baseline is a precondition.** If the target suites are already red,
   the harness reports ERROR rather than a verdict — because "the suite went red"
   would otherwise mean nothing. This fires for real when a sibling agent is
