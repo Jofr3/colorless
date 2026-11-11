@@ -813,8 +813,8 @@ So: **if you write a mutant tally, the mutants go in `scripts/mutation/mutants.t
   refused. `.gitattributes` makes it the `corpus` merge driver once the user runs, once per
   clone (worktrees share it), `git config merge.corpus.driver 'bun scripts/mutation/merge-corpus.ts %O %A %B'`;
   agents never run `git config`. Without the driver git merges the text; after that conflict run
-  `bun scripts/mutation/merge-corpus.ts` with no arguments. Do not hand-merge or use `--union`,
-  which drops the `},`/`{` pair between rows. Then run `bun run mutants:precheck`, which also
+  `bun scripts/mutation/merge-corpus.ts` with no arguments. Merge by hand only the rows it
+  refuses; never the whole tail, and never with `--union`, which drops the `},`/`{` pair between rows. Then run `bun run mutants:precheck`, which also
   refuses two rows with one id.
 - **A green baseline is a precondition.** If the target suites are already red,
   the harness reports ERROR rather than a verdict — because "the suite went red"

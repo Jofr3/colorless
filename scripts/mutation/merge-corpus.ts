@@ -116,7 +116,7 @@ export function mergeCorpus(base: string, ours: string, theirs: string): CorpusM
 }
 
 function refused(problems: string[]): void {
-  console.error(`merge-corpus: REFUSED — ${CORPUS} needs a hand merge:`);
+  console.error(`merge-corpus: REFUSED — ${CORPUS} needs these rows merged by hand:`);
   for (const problem of problems) console.error(`  ${problem}`);
 }
 
