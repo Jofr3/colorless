@@ -792,7 +792,10 @@ out.push(
 out.push(...releaseSection);
 out.push("", "== Thresholds", ...signalLines(signals));
 if (release)
-  out.push("(a release finding is a warn: compare by hand, roll back with `wrangler rollback`)");
+  out.push(
+    "(a release finding is a warn: compare by hand; roll back from apps/api with " +
+      "`bun scripts/with-deploy-token.ts bunx wrangler rollback <version id>`)",
+  );
 
 const text = out.join("\n");
 const leaks = leaksIn(text);

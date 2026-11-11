@@ -426,7 +426,8 @@ if (postPassFailed) {
 if (!epochStamped) {
   console.error(
     `could not stamp ${CATALOG_EPOCH_KEY}: cached catalog responses stay up to a day — rerun ` +
-      `\`wrangler kv key put ${CATALOG_EPOCH_KEY} <new value> --binding CACHE ${d1Target}\``,
+      `\`${args.remote ? "bun scripts/with-deploy-token.ts " : ""}bunx wrangler kv key put ${CATALOG_EPOCH_KEY} <new value> --binding CACHE ${d1Target}\`` +
+      " from apps/api",
   );
 }
 if (

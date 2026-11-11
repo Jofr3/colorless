@@ -140,8 +140,9 @@ panel/legality) closed most of what M9 left open. As-built:
   ⚠️ **The chips are gone until an ingest fills the column**: the vocabulary is
   the data, so `suffixes: []` renders no section. That is a deliberate,
   temporary loss of the EX filter, traded for a filter that cannot lie — and it
-  is dischargeable by one command (`cd apps/api && bun scripts/ingest.ts
-  --remote`, after `bun run db:migrate:remote`; `api.tcgdex.net` is still
+  is dischargeable by one command
+  (`cd apps/api && bun scripts/with-deploy-token.ts bun scripts/ingest.ts --remote`,
+  after `bun run db:migrate:remote`; `api.tcgdex.net` is still
   blocked here). Kind chips and rule-box chips are separate DIMENSIONS: the
   server ANDs across them ("a Basic that is also an ex") where the one-dimension
   fallback OR-ed.

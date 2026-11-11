@@ -85,7 +85,7 @@ export function recordBookmark(reason: string): string {
   appendFileSync(BOOKMARK_LOG, `${at} ${bookmark} ${reason}\n`);
   console.log(`D1 bookmark before ${reason}: ${bookmark} (logged to tmp/d1-bookmarks.log)`);
   console.log(
-    `  restore: bunx wrangler d1 time-travel restore ${DATABASE} --bookmark=${bookmark} (from apps/api)`,
+    `  restore: bun scripts/with-deploy-token.ts bunx wrangler d1 time-travel restore ${DATABASE} --bookmark=${bookmark} (from apps/api)`,
   );
   return bookmark;
 }

@@ -82,6 +82,14 @@ Checks that compare against Balatro's source skip themselves when it is missing
 
 ## Deployment
 
+**Cloudflare access.** The ambient `CLOUDFLARE_API_TOKEN` is read-only: it serves
+every listing, read and release gate. Production writes load the deploy token from
+`~/.local/state/secrets/CLOUDFLARE_DEPLOY_TOKEN` (or the file
+`CLOUDFLARE_DEPLOY_TOKEN_FILE` names): `deploy`, `api:deploy` and `release` do it
+themselves, and any other write goes through
+`bun scripts/with-deploy-token.ts <command>` from `apps/api/`. Details in
+`docs/workstreams/backend-data.md` §3.7.2, "Cloudflare tokens".
+
 | Worker | URL | Command |
 |---|---|---|
 | `colorless` (static assets, root `wrangler.jsonc`) | <https://colorless.jofrescari.workers.dev> | `bun run deploy` |
@@ -114,12 +122,13 @@ the password manager first: Cloudflare never shows a secret again. From `apps/ap
 
 ```sh
 openssl rand -base64 32   # once per secret; save it in the password manager
-bunx wrangler secret put PASSWORD_PEPPER
-bunx wrangler secret put LOG_TAG_KEY
+bun scripts/with-deploy-token.ts bunx wrangler secret put PASSWORD_PEPPER
+bun scripts/with-deploy-token.ts bunx wrangler secret put LOG_TAG_KEY
 cd ../.. && bun run release
 ```
 
-`wrangler secret put` applies at once to the deployed Worker. Existing password
+A secret put applies at once to the deployed Worker. Run it from `apps/api/`:
+from the repository root it would target the web Worker instead. Existing password
 hashes keep working and are re-peppered at each account's next sign-in, so nobody
 is logged out. To rotate the pepper, set the old value as `PASSWORD_PEPPER_PREVIOUS`
 and the new one as `PASSWORD_PEPPER`; delete the previous one only once the accounts
@@ -141,8 +150,8 @@ If the Google consent screen is in testing mode, add your sign-in account as a t
 For the deployed API, run these from `apps/api/`:
 
 ```sh
-bunx wrangler secret put GOOGLE_CLIENT_ID
-bunx wrangler secret put GOOGLE_CLIENT_SECRET
+bun scripts/with-deploy-token.ts bunx wrangler secret put GOOGLE_CLIENT_ID
+bun scripts/with-deploy-token.ts bunx wrangler secret put GOOGLE_CLIENT_SECRET
 ```
 
 The deployed API's `APP_ORIGIN` (`apps/api/wrangler.jsonc`) is the deployed

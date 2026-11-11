@@ -140,8 +140,8 @@ colorless/
    UPDATE … WHERE <a column changed>`, ≤100 cards per statement
    (`apps/api/src/ingest/`, unit-tested). Unchanged rows are not rewritten.
 3. Apply in FK order (series, then one file per set holding the set row and
-   its card statements) via `wrangler d1 execute colorless --local|--remote
-   --file …`, then the reprint-legality pass, then stamp `catalog:epoch` in
+   its card statements) via `wrangler d1 execute colorless --file …` against
+   the `--local` or `--remote` database, then the reprint-legality pass, then stamp `catalog:epoch` in
    the CACHE namespace of the same target (§6). Idempotent by tcgdex `id` —
    rerunning is always safe; `--dry-run` writes SQL, applies nothing.
 
@@ -170,7 +170,7 @@ bun run db:migrate:local                     # tables must exist first
 bun scripts/ingest.ts --sets sve --dry-run   # smallest set (24 cards): SQL only
 bun scripts/ingest.ts --sets sve             # …then really apply it
 bun scripts/ingest.ts --serie sv             # the whole Scarlet & Violet serie
-bun scripts/ingest.ts --serie sv --remote    # the production backfill
+bun scripts/with-deploy-token.ts bun scripts/ingest.ts --serie sv --remote    # the production backfill
 ```
 
 `--dry-run` writes the SQL files under `apps/api/.wrangler/tmp/ingest-<stamp>/`
@@ -300,7 +300,7 @@ data loss rather than a validation failure.
   `wrangler secret`, never in D1, so an exported database alone cannot be
   cracked offline; the price is that losing it locks every peppered password
   account out of password sign-in (Google sign-in still works) — keep a copy in
-  the password manager before `wrangler secret put`. Rotation: set the old value
+  the password manager before putting the secret (README, "API secrets"). Rotation: set the old value
   as `PASSWORD_PEPPER_PREVIOUS` and the new one as `PASSWORD_PEPPER`; hashes
   under either verify and are re-peppered with the new one on login; drop the
   previous one once the accounts that matter have signed in. **Without the
@@ -436,8 +436,8 @@ data loss rather than a validation failure.
   then install the secrets (from `apps/api/`):
 
   ```sh
-  wrangler secret put GOOGLE_CLIENT_ID
-  wrangler secret put GOOGLE_CLIENT_SECRET
+  bun scripts/with-deploy-token.ts bunx wrangler secret put GOOGLE_CLIENT_ID
+  bun scripts/with-deploy-token.ts bunx wrangler secret put GOOGLE_CLIENT_SECRET
   ```
 
   For local dev put the same names in `apps/api/.dev.vars` (gitignored).
@@ -577,7 +577,7 @@ cd apps/api && bun run deploy          # or, from the repo root: bun run api:dep
 #    unreachable rather than broken (§5.3.3) — and the read-side normaliser in
 #    `apps/api/src/sentinel.ts` hides the sentinels from the API while leaving
 #    them in the rows.
-cd apps/api && bun scripts/ingest.ts --serie sv --remote
+cd apps/api && bun scripts/with-deploy-token.ts bun scripts/ingest.ts --serie sv --remote
 
 # 4. Step 3 ends by stamping a new `catalog:epoch` in the CACHE KV namespace,
 #    which is part of every catalog cache key (apps/api/src/catalog/cache.ts), so
@@ -591,8 +591,8 @@ cd apps/api && bun scripts/ingest.ts --serie sv --remote
 | Command | Exists? |
 | --- | --- |
 | `bun run db:migrate:remote` **from the repo root** | ❌ **NO** — the root `package.json` has no such script. It is defined only in `apps/api/package.json`, so it must be run as `cd apps/api && bun run db:migrate:remote` (or `bun run --cwd apps/api db:migrate:remote`). Commit messages that quote the bare form are wrong. |
-| `cd apps/api && bun run db:migrate:remote` | ✅ `wrangler d1 migrations apply colorless --remote` |
-| `cd apps/api && bun scripts/ingest.ts --remote` | ✅ the script exists; `--remote` and `--serie` are real flags (`apps/api/scripts/ingest.ts`). Note it is `bun scripts/ingest.ts`, **not** `bun run` — there is no npm script wrapping it. |
+| `cd apps/api && bun run db:migrate:remote` | ✅ `with-deploy-token.ts wrangler d1 migrations apply colorless --remote` |
+| `cd apps/api && bun scripts/with-deploy-token.ts bun scripts/ingest.ts --remote` | ✅ the script exists; `--remote` and `--serie` are real flags (`apps/api/scripts/ingest.ts`). Note it is `bun scripts/ingest.ts`, **not** `bun run` — there is no npm script wrapping it. |
 | `bun run api:deploy` (repo root) | ✅ `bun run --cwd apps/api deploy` → `release-gate.ts migrations clean-tree ci -- wrangler deploy --minify`, which deploys with the commit's tag and message (§3.7.2) |
 | `cd apps/api && bun run db:migrate:local` | ✅ the local twin, used for the pre-flight |
 
@@ -622,8 +622,8 @@ and step 1 is therefore unblocked TODAY and should not wait for the backfill.
    - `secrets`: the production Worker holds every secret in
      `apps/api/src/requiredSecrets.ts` (`PASSWORD_PEPPER`, `LOG_TAG_KEY`,
      `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`). It reads `wrangler secret
-     list`, which shows names only, and prints the `wrangler secret put` lines
-     to run.
+     list`, which shows names only, and prints the secret puts to run,
+     through the deploy token.
    - `bookmark`: records the remote Time Travel bookmark.
    - `versions`: records each Worker's running version (`wrangler
      deployments status`).
@@ -710,10 +710,12 @@ Scripts, D1, Workers KV and R2. It lives in
 `secrets/CLOUDFLARE_DEPLOY_TOKEN.age`, or the file `CLOUDFLARE_DEPLOY_TOKEN_FILE`
 names. Only the production writes load it: release-gate.ts's
 `-- wrangler deploy` (both Workers), `db:migrate:remote`, and anything run by hand
-through `bun apps/api/scripts/with-deploy-token.ts <command>`. That covers
-`bunx wrangler rollback`, `wrangler secret put`, `d1 time-travel restore`,
-`ingest.ts --remote`, and a writing `d1 execute --remote`. Run any of those
-commands below through it. A missing file stops the write with the path.
+through `bun apps/api/scripts/with-deploy-token.ts <command>`: a Worker
+rollback, a secret put, a Time Travel restore, a remote KV key put (the
+catalog epoch), a remote ingest, and a writing remote `d1 execute`. Every such
+command in README and the workstream docs is written with the wrapper, and
+`scripts/docs-writes.ts` in `check:static` fails on one that is not. A missing
+token file stops the write with the path.
 The split stops a mistaken write, not a deliberate one: any process running as
 this user can read the file.
 
@@ -747,8 +749,8 @@ earliest line for it in `tmp/d1-bookmarks.log`). From `apps/api` unless noted:
 | `check`, `release:gate`, `build` | Nothing changed. | Fix what it printed and release again. |
 | `db:migrate:remote` | The files before the failing one are applied; the failing one rolled back (one transaction per file). The old Worker reads the expanded schema fine. | A transient error: release again. A SQL error: fix the file (it is not applied remotely), commit, push, release again. |
 | `api:deploy` | New schema, old Worker. | Release again, or `bun run api:deploy`, then `bun run release:health`, then `bun run deploy:web` from the repo root (`web-dist` refuses a `dist/` built at another commit: then `bun run deploy`). |
-| `release:health` | New Worker, which cannot read D1, sees another migration count or fails a route; or the new version never answered `/health`. | The tag never matched: `bunx wrangler deployments list` shows whether the deploy took; rerun `bun run release:health` once it has. A D1 error: `evt = "d1", kind = "health_failed"` in Workers Logs (§3.7.4) carries the error and cause names and `quota`. `quota: true` is a spent daily quota (wait for 00:00 UTC); otherwise it is a binding or schema problem (`bunx wrangler d1 migrations list colorless --remote`): fix it, rerun `bun run release:health`. Bad code (a failed `/sets` or `/auth/me` probe, or D1 errors from the code): `bunx wrangler rollback <version id> -m "<why>"` to the version before the release (the `versions` line it printed), and check `HEALTH_TAG='*' bun run release:health` again. The schema stays: the old Worker reads it (expand, then contract). |
-| `deploy:web` (`web-dist`, the deploy, `web-health`) | New API, and the old web app, or a new one `web-health` found broken. The old web app is fine when the API change kept the old client working, as an API-first release should. | `bun run deploy` from the repo root, then `bun run --cwd apps/api release:finish` if the pin is still there (`abort` dropped it otherwise, and the release goes untagged; tag it by hand as below). A bad web build: `bunx wrangler deployments list` and `bunx wrangler rollback <version id>` from the repo root (Worker `colorless`). |
+| `release:health` | New Worker, which cannot read D1, sees another migration count or fails a route; or the new version never answered `/health`. | The tag never matched: `bunx wrangler deployments list` shows whether the deploy took; rerun `bun run release:health` once it has. A D1 error: `evt = "d1", kind = "health_failed"` in Workers Logs (§3.7.4) carries the error and cause names and `quota`. `quota: true` is a spent daily quota (wait for 00:00 UTC); otherwise it is a binding or schema problem (`bunx wrangler d1 migrations list colorless --remote`): fix it, rerun `bun run release:health`. Bad code (a failed `/sets` or `/auth/me` probe, or D1 errors from the code): from `apps/api`, `bun scripts/with-deploy-token.ts bunx wrangler rollback <version id> -m "<why>"` to the version before the release (the `versions` line it printed), and check `HEALTH_TAG='*' bun run release:health` again. The schema stays: the old Worker reads it (expand, then contract). |
+| `deploy:web` (`web-dist`, the deploy, `web-health`) | New API, and the old web app, or a new one `web-health` found broken. The old web app is fine when the API change kept the old client working, as an API-first release should. | `bun run deploy` from the repo root, then `bun run --cwd apps/api release:finish` if the pin is still there (`abort` dropped it otherwise, and the release goes untagged; tag it by hand as below). A bad web build: `bunx wrangler deployments list` and `bun apps/api/scripts/with-deploy-token.ts bunx wrangler rollback <version id>` from the repo root (Worker `colorless`). |
 | `release:finish` | Both new. Only the record is missing: the log line, the tag, or its push. | It prints the `git tag -a … && git push origin refs/tags/…` to run. A missing log line can be rebuilt from `bunx wrangler deployments list` (both Workers) and `tmp/d1-bookmarks.log`. |
 
 Never revert or edit a migration file that is applied remotely: undo it with a
@@ -757,16 +759,17 @@ new migration. A rollback of the API across a change of
 the newer Worker stored, so players in a match at that moment lose it.
 
 A Durable Object migration (a `migrations` entry in apps/api/wrangler.jsonc that
-adds, renames or deletes a class) blocks `wrangler rollback` to any API version
+adds, renames or deletes a class) blocks a rollback to any API version
 before it: Cloudflare refuses a rollback across a DO class change. Ship such a
 migration in a release with no other API change, so the version before it is
 not one a rollback would need (build audit DEP2).
 
 **Secrets before the first Phase 5 release (security audit 2026-10-27).** Generate
 `PASSWORD_PEPPER` and `LOG_TAG_KEY` (`openssl rand -base64 32` each), save both in
-the password manager, then from `apps/api/` run `bunx wrangler secret put
-PASSWORD_PEPPER` and `bunx wrangler secret put LOG_TAG_KEY`, and only then `bun
-run release`. A secret put applies to the running Worker at once and the old code
+the password manager, then from `apps/api/` run
+`bun scripts/with-deploy-token.ts bunx wrangler secret put PASSWORD_PEPPER` and
+`bun scripts/with-deploy-token.ts bunx wrangler secret put LOG_TAG_KEY`, and only
+then `bun run release`. A secret put applies to the running Worker at once and the old code
 ignores both, so the order is safe; the gate refuses the release until both exist.
 Nobody is logged out: existing hashes are re-peppered at each account's next
 sign-in. Google sign-ins in flight at the deploy fail once (PKCE changed the state
@@ -801,8 +804,8 @@ What can be lost, and how it comes back:
 | LobbyDO storage | Ephemeral by design; matches in progress are lost. |
 
 **Time Travel** is always on: the database can be restored to any minute in
-the last 7 days on the Free plan (30 on paid). `release` and
-`ingest.ts --remote` record the bookmark taken just before they write, with
+the last 7 days on the Free plan (30 on paid). `release` and a remote
+ingest record the bookmark taken just before they write, with
 the reason, in `tmp/d1-bookmarks.log` (gitignored) and print the restore
 command. A restore rewinds the WHOLE database, catalog and user data
 together, so every deck edit, registration and login after that point is lost.
@@ -812,12 +815,12 @@ export) when the damage is confined to one side.
 ```sh
 cd apps/api
 bunx wrangler d1 time-travel info colorless                       # current bookmark
-bunx wrangler d1 time-travel restore colorless --bookmark=<bookmark>
-bunx wrangler d1 time-travel restore colorless --timestamp=2026-10-27T09:00:00Z
+bun scripts/with-deploy-token.ts bunx wrangler d1 time-travel restore colorless --bookmark=<bookmark>
+bun scripts/with-deploy-token.ts bunx wrangler d1 time-travel restore colorless --timestamp=2026-10-27T09:00:00Z
 # After any restore, in this order:
 bun scripts/release-gate.ts migrations    # "not applied remotely" = the restore rewound a migration
 bun run db:check -- --remote
-bunx wrangler kv key put catalog:epoch $(date +%s) --binding CACHE --remote
+bun scripts/with-deploy-token.ts bunx wrangler kv key put catalog:epoch $(date +%s) --binding CACHE --remote
 HEALTH_TAG='*' bun run release:health    # any version: the live one may not be HEAD's
 ```
 
@@ -830,12 +833,13 @@ reads `d1_migrations`. When `release-gate.ts migrations` lists a file as not
 applied remotely:
 
 1. Roll the API back to the version deployed before the release: `bunx
-   wrangler deployments list`, then `bunx wrangler rollback <version id> -m
-   "D1 restored to <bookmark>"`. Then `curl -fsS
+   wrangler deployments list`, then
+   `bun scripts/with-deploy-token.ts bunx wrangler rollback <version id> -m "D1 restored to <bookmark>"`. Then `curl -fsS
    https://colorless-api.jofrescari.workers.dev/health/db` should count the
    files minus the ones listed (`release:health` compares with all of
-   `drizzle/`, so it fails until step 3). Roll the web app back too (`bunx
-   wrangler rollback` from the repo root) if it needs the new API.
+   `drizzle/`, so it fails until step 3). Roll the web app back too
+   (`bun apps/api/scripts/with-deploy-token.ts bunx wrangler rollback <version id>`
+   from the repo root) if it needs the new API.
 2. Do not follow the gate's hint to run `db:migrate:remote` yet: it re-applies
    the migration that did the damage. Fix that migration or remove it in a
    new commit; it is no longer applied remotely, so editing it is allowed here.
@@ -889,7 +893,7 @@ sed -i '1i PRAGMA defer_foreign_keys=TRUE;' $D/*.sql
 ls -l $D    # each file under ~700 KB; a table step 1 lists but no chunk holds needs a chunk
 # 3. Import in name order. A failed file imported nothing: fix the cause and rerun the loop,
 #    which resumes at that file.
-for f in $D/*.sql; do bunx wrangler d1 execute colorless --remote --yes --file $f && mv $f $f.done || break; done
+for f in $D/*.sql; do bun scripts/with-deploy-token.ts bunx wrangler d1 execute colorless --remote --yes --file $f && mv $f $f.done || break; done
 # 4. Backfills. A migration newer than the export never ran its data statements on these
 #    rows. List the export's migrations and compare with drizzle/:
 grep '^INSERT INTO "d1_migrations"' $F | grep -o "'[0-9]\{4\}_[a-z0-9_]*\.sql'"
@@ -897,10 +901,10 @@ ls drizzle/*.sql
 #    For each newer file that has UPDATE, INSERT or DELETE lines (0003 and 0012 today),
 #    run them, which start at the first such line (docs/conventions.md "Database migrations"):
 sed -n '/^\(UPDATE\|INSERT\|DELETE\)/,$p' drizzle/0012_users_name_prompt.sql > $D/backfill-0012.sql
-bunx wrangler d1 execute colorless --remote --yes --file $D/backfill-0012.sql
+bun scripts/with-deploy-token.ts bunx wrangler d1 execute colorless --remote --yes --file $D/backfill-0012.sql
 # 5. Check, compare the row counts it prints with step 1, and retire the cached catalog.
 bun run db:check -- --remote
-bunx wrangler kv key put catalog:epoch $(date +%s) --binding CACHE --remote
+bun scripts/with-deploy-token.ts bunx wrangler kv key put catalog:epoch $(date +%s) --binding CACHE --remote
 ```
 
 A target that still holds its catalog (only user rows are gone) takes the user
@@ -962,7 +966,9 @@ code that reads D1 and holds live matches.
 expectation below held, and `colorless-drill` was deleted afterwards; it needs
 `CI=true` so `d1 create` does not prompt). It proves the remote restore path,
 including that a restore rewinds `d1_migrations`, on a throwaway database that
-nothing else uses. From the repo root, about ten minutes:
+nothing else uses. From the repo root, about ten minutes. Each write below
+(create, migrate, execute, restore, delete) needs the deploy token: prefix it
+with `bun ../../apps/api/scripts/with-deploy-token.ts`.
 
 ```sh
 mkdir -p tmp/drill/migrations && cd tmp/drill
@@ -1431,7 +1437,7 @@ The write-side guard only takes effect on the next ingest of `mfb`; the rows
 in D1 still hold `"None"` until then. To discharge it at the source:
 
 ```sh
-cd apps/api && bun scripts/ingest.ts --sets mfb --remote
+cd apps/api && bun scripts/with-deploy-token.ts bun scripts/ingest.ts --sets mfb --remote
 ```
 
 (Idempotent — every statement is an `ON CONFLICT DO UPDATE` upsert, and
@@ -1498,7 +1504,7 @@ so the next ingest populates it.
 ⚠️ **Unproven until a re-ingest: the column has no values.** Discharge with:
 
 ```sh
-cd apps/api && bun scripts/ingest.ts --remote     # then re-check the census below
+cd apps/api && bun scripts/with-deploy-token.ts bun scripts/ingest.ts --remote     # then re-check the census below
 ```
 
 ```sql

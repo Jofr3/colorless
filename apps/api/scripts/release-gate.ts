@@ -22,7 +22,7 @@
 //             other agents share the checkout and wrangler deploys the working tree.
 // audit       `bun scripts/audit.ts`: the production advisory audit CI runs, with the same ignore
 //             list (scripts/audit-ignore.txt). Blocking.
-// ci          Prints CI's result for HEAD (static, lua, test, mutants) from the GitHub check runs.
+// ci          Prints CI's result for HEAD (static, test, mutants) from the GitHub check runs.
 //             Never blocking (build audit decision 1b): local `check` already ran the same suites.
 // secrets     The production Worker holds every secret in src/requiredSecrets.ts. `wrangler secret
 //             list` shows names only.
@@ -306,7 +306,9 @@ const STEPS: Record<string, () => void | Promise<void>> = {
               `Copy ${google.join(" and ")} from the Google Auth Platform client (README "Google login").`,
             ]),
         "Then from apps/api:",
-        ...missing.map((name) => `  bunx wrangler secret put ${name}`),
+        ...missing.map(
+          (name) => `  bun scripts/with-deploy-token.ts bunx wrangler secret put ${name}`,
+        ),
         "and release again.",
       ].join("\n"),
     );
@@ -416,7 +418,8 @@ const STEPS: Record<string, () => void | Promise<void>> = {
     const expected = migrationFiles().length;
     const rollback = [
       'A D1 error is logged as evt = "d1" in Workers Logs. To put the previous API back, from',
-      "apps/api: `bunx wrangler deployments list`, then `bunx wrangler rollback <version id>`",
+      "apps/api: `bunx wrangler deployments list`, then",
+      "`bun scripts/with-deploy-token.ts bunx wrangler rollback <version id>`",
       "(tmp/releases.log names the version each release replaced).",
       "See the recovery table in docs/workstreams/backend-data.md §3.7.2.",
     ];
@@ -504,7 +507,8 @@ const STEPS: Record<string, () => void | Promise<void>> = {
         `web-health: FAIL — ${site}:`,
         ...problems.map((problem) => `  ${problem}`),
         "A missing file: rebuild and deploy with `bun run deploy`. A bad build: from the repo root,",
-        "`bunx wrangler deployments list`, then `bunx wrangler rollback <version id>` (Worker colorless;",
+        "`bunx wrangler deployments list`, then",
+        "`bun apps/api/scripts/with-deploy-token.ts bunx wrangler rollback <version id>` (Worker colorless;",
         "tmp/releases.log names the version the release replaced).",
       ].join("\n"),
     );
