@@ -3,9 +3,16 @@ import { tmpdir } from "node:os";
 import { resolve, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
+import { balatroSource, sourceProblem } from "../balatroSource.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const source = resolve(process.env.BALATRO_SOURCE || join(here, "../../../../balatro-source"));
+const found = balatroSource(resolve(here, "../../.."));
+const problem = sourceProblem(found, { loveJs: true });
+if (problem !== undefined) {
+  console.error(problem);
+  process.exit(1);
+}
+const source = found.dir;
 const root = mkdtempSync(join(tmpdir(), "colorless-effects-"));
 const stage = join(root, "source");
 const web = join(root, "web");

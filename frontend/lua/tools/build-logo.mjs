@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { resolve, join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
+import { balatroSource, sourceProblem } from "../balatroSource.mjs";
 const here = dirname(fileURLToPath(import.meta.url));
 // Extract the approved angular artwork, then render its border and hand-drawn
 // reflections on the source-scale logical grid and export exact 2x pixels.
@@ -48,7 +49,13 @@ await source.decode();
   console.log(web);
   process.exit(0);
 }
-const source = resolve(process.env.BALATRO_SOURCE || join(here, "../../../../balatro-source"));
+const found = balatroSource(resolve(here, "../../.."));
+const problem = sourceProblem(found, { loveJs: true });
+if (problem !== undefined) {
+  console.error(problem);
+  process.exit(1);
+}
+const source = found.dir;
 const root = mkdtempSync(join(tmpdir(), "colorless-logo-"));
 const stage = join(root, "source"),
   web = join(root, "web");

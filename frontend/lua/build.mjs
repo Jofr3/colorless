@@ -2,7 +2,6 @@
 import {
   cpSync,
   copyFileSync,
-  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -16,16 +15,19 @@ import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { brotliCompressSync, constants as zlibConstants, gzipSync } from "node:zlib";
+import { balatroSource, sourceProblem } from "./balatroSource.mjs";
 import { withPackageUuid } from "./packageUuid.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "../..");
-const source = resolve(process.env.BALATRO_SOURCE || join(root, "../balatro-source"));
+const found = balatroSource(root);
+const problem = sourceProblem(found, { loveJs: true });
+if (problem !== undefined) {
+  console.error(problem);
+  process.exit(1);
+}
+const source = found.dir;
 const compiler = join(source, "node_modules/love.js/index.js");
-if (!existsSync(compiler))
-  throw new Error(
-    `Install love.js in ${source}, or set BALATRO_SOURCE to your Balatro source directory.`,
-  );
 /** Runs a repo script under bun and returns its stdout; its stderr reaches the terminal.
     @param {string} script @param {string[]} args */
 const bunScript = (script, args) =>

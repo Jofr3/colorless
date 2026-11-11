@@ -12,6 +12,18 @@ export function repoPath(relative: string): string {
   return resolve(REPO_ROOT, relative);
 }
 
+/**
+ * The main checkout's root (the parent of git's common dir), the same from every worktree;
+ * `undefined` outside git. frontend/lua/balatroSource.mjs has the same lookup for the Lua build.
+ */
+export function mainCheckout(cwd = REPO_ROOT): string | undefined {
+  const git = spawnSync("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], {
+    cwd,
+    encoding: "utf8",
+  });
+  return git.status === 0 ? dirname(git.stdout.trim()) : undefined;
+}
+
 /** The repo's own copy of a dev tool, falling back to whatever `PATH` finds. */
 export function localBin(name: string): string {
   const local = repoPath(`node_modules/.bin/${name}`);

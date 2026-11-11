@@ -7,9 +7,11 @@
 // love.js in a browser and is skipped. Tests that compare against Balatro's
 // source exit 77 when it is missing
 // (frontend/lua/tests/support/balatro_source.lua), or skip only those checks
-// and say so (`PARTIAL`); --require-source makes either a failure instead,
-// and refuses any interpreter but 5.1: it is the release's only source-comparing
-// run, so it must not pass under a dialect the game cannot run.
+// and say so (`PARTIAL`). The source is found as the Lua build finds it
+// (frontend/lua/balatroSource.mjs) and handed to each file as BALATRO_SOURCE.
+// --require-source refuses a missing source up front, and any interpreter but
+// 5.1: it is the release's only source-comparing run, so it must not pass under
+// a dialect the game cannot run.
 // Files run concurrently, one per core; a failure's output is printed whole,
 // in file order. Naming test files (by name or path) runs only those (a
 // mutant row's killer).
@@ -30,6 +32,23 @@ const SHIPPED = "lua5.1";
 const NIX_LINK = repoPath("node_modules/.cache/lua5.1");
 const lua = process.env.LUA ?? findShipped();
 const requireSource = process.argv.includes("--require-source");
+
+type SourceModule = {
+  balatroSource: (root: string) => { dir: string; from: string };
+  sourceProblem: (
+    source: { dir: string; from: string },
+    needs: { loveJs: boolean },
+  ) => string | undefined;
+};
+const { balatroSource, sourceProblem }: SourceModule = await import(
+  repoPath("frontend/lua/balatroSource.mjs")
+);
+const source = balatroSource(REPO_ROOT);
+const childEnv = {
+  ...process.env,
+  BALATRO_SOURCE: source.dir,
+  ...(requireSource ? { COLORLESS_REQUIRE_SOURCE: "1" } : {}),
+};
 
 /** A Lua 5.1 binary: lua5.1 on PATH, else nixpkgs#lua5_1 through `nix`, else plain `lua`. */
 function findShipped(): string {
@@ -62,7 +81,7 @@ function runOne(file: string): Promise<Outcome> {
   return new Promise((resolve, reject) => {
     const child = spawn(lua, [`${TESTS}/${file}`], {
       cwd: REPO_ROOT,
-      env: requireSource ? { ...process.env, COLORLESS_REQUIRE_SOURCE: "1" } : process.env,
+      env: childEnv,
       stdio: ["ignore", "pipe", "pipe"],
       timeout: TIMEOUT_MS,
     });
@@ -86,6 +105,11 @@ if (requireSource && !versionOf(lua)?.startsWith("Lua 5.1")) {
     `--require-source needs Lua 5.1, the dialect love.js ships; ${lua} is ${versionOf(lua) ?? "not runnable"}.\n` +
       "Install lua5.1 (apt install lua5.1, or nix build nixpkgs#lua5_1), or set LUA=<a 5.1 binary>.",
   );
+  process.exit(1);
+}
+const missingSource = requireSource ? sourceProblem(source, { loveJs: false }) : undefined;
+if (missingSource !== undefined) {
+  console.error(`--require-source: ${missingSource}`);
   process.exit(1);
 }
 
