@@ -19,7 +19,7 @@ bun run dev:tailnet
 Open the printed frontend URL. Tailscale must be connected;
 the command selects free ports. Ctrl+C stops both servers and its Tailnet proxies.
 
-`bun run dev` rebuilds after an edit to Lua or host files (`watch.mjs`); refresh the page once the build prints. Without it, rebuild by hand, then refresh (a running Vite dev server picks the new files up):
+`bun run dev` rebuilds after an edit to Lua or host files (`watch.mjs`), and the page reloads once the build prints (`vite.config.ts` reloads it when `public/love/versions.json`, written last, changes). A by-hand rebuild reloads a running dev server's page the same way:
 
 ```sh
 bun run build:lua
@@ -31,7 +31,14 @@ The production HTML carries a Content-Security-Policy (injected by `vite.config.
 
 The build defaults to the sibling `../balatro-source` directory, including its installed `love.js` package (the root README's "Getting started" describes that tree). Override with `BALATRO_SOURCE=/absolute/path/to/balatro-source`. No changes are made to that source tree. The compiler uses compatibility mode with 128 MiB initial memory, as in the existing Balatro web build; cross-origin isolation headers are not required.
 
-To run a second web/API pair beside `dev:all` (for browser QA), give each its own ports and point them at each other: the web build's `VITE_API_ORIGIN` at the API, and the API's `APP_ORIGIN` at the page. `bun run e2e` already does this on free ports with its own D1 (`scripts/e2e.ts`).
+To run a second web/API pair beside `dev:all` (for browser QA), run `bun run dev:local` (`scripts/dev-tailnet.ts --local`). It starts both on `127.0.0.1` on ports the system picks, each pointed at the other, and once both answer prints one line, `web=http://127.0.0.1:<port> api=http://127.0.0.1:<port> inspector=<port>`. Ctrl+C stops both. The API uses the checkout's local D1, so a fresh worktree's is empty, and Google sign-in needs the API on 8787. `bun run e2e` runs its own pair with a fresh D1 (`scripts/e2e.ts`).
+
+## Debugging
+
+- **Lua errors** go to the devtools console as errors (`Error:` and `stack traceback:`), with the traceback's frames as plain lines after them; the page shows only "The menu could not start" or "Something went wrong". A temporary `print` also reaches the console, but `check` (`lua-bridge-guard.ts`) refuses it.
+- **The Worker.** `api:dev` (and `dev:all`) opens wrangler's inspector on port 9229, `dev:tailnet` on the first free port from 9229, and `dev:local` prints its own. In Chromium, open `chrome://inspect`, add `127.0.0.1:<port>` under Configure, and inspect the Worker for its console, breakpoints and profiler.
+- **Local D1.** From `apps/api`, `bunx wrangler d1 execute colorless --local --command "SELECT …"`. A running `wrangler dev` also serves its local explorer API at `<api>/cdn-cgi/local/explorer/api`: `/d1/database` lists the databases, and `POST /local/observability/query` runs read-only SQL over the requests and console logs it captured (`curl <api>/cdn-cgi/local/explorer/api` returns the full schema).
+- **e2e.** `bun run e2e --keep` keeps its directory (site, D1 state, API log) after a pass. A failed run always keeps it, writes a `<page>.png` screenshot of each page there, and prints each page's console tail and the API log tail.
 
 ## Home and settings
 

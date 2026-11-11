@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv, type Plugin } from "vite";
 
 // Content-Security-Policy for the production HTML only, injected at build time so it does not break
@@ -169,6 +170,26 @@ function noticedPackagesPlugin(): Plugin {
   };
 }
 
+// `build:lua` writes public/love/versions.json last, so its rewrite means a Lua build finished: the
+// page reloads, as it does for a TS edit.
+function loveReloadPlugin(): Plugin {
+  return {
+    name: "love-reload",
+    apply: "serve",
+    configureServer(server) {
+      const signal = join(server.config.publicDir, "love", "versions.json");
+      const reload = (file: string) => {
+        if (file !== signal) return;
+        server.config.logger.info("page reload (Lua build)", { timestamp: true });
+        server.ws.send({ type: "full-reload" });
+      };
+      server.watcher.on("add", reload).on("change", reload);
+    },
+  };
+}
+
+const ROOT = dirname(fileURLToPath(import.meta.url));
+
 // index.html is the love.js host page. `bun run build:lua` generates the
 // runtime, game package and host script/styles into public/love/, which Vite
 // serves at /love/ in dev and copies into dist/love/ on build; the page's one
@@ -181,6 +202,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       loveVersions,
+      loveReloadPlugin(),
       cspPlugin(buildCsp(apiOrigin)),
       shareUrlsPlugin(siteOrigin),
       noticedPackagesPlugin(),
@@ -190,6 +212,8 @@ export default defineConfig(({ mode }) => {
       // The dev server's root is the repo root, so without this it serves any file in it, such as
       // apps/api/.dev.vars (OAuth secret) and the local D1 database under .wrangler/. Setting
       // `deny` replaces Vite's defaults, so the first four entries repeat them.
+      // Vite matches these against absolute paths, so tmp/ and apps/ are anchored to this checkout:
+      // unanchored, they would deny every file of a checkout that lives under a tmp/ or apps/.
       fs: {
         deny: [
           ".env",
@@ -198,10 +222,12 @@ export default defineConfig(({ mode }) => {
           "**/.git/**",
           ".dev.vars*",
           "**/.wrangler/**",
-          "**/tmp/**",
-          "**/apps/**",
+          `${ROOT}/tmp/**`,
+          `${ROOT}/apps/**`,
         ],
       },
+      // Nothing the page imports lives in these, and following them costs memory and inotify watches.
+      watch: { ignored: [`${ROOT}/tmp/**`, `${ROOT}/.claude/**`, "**/.wrangler/**"] },
     },
     build: {
       // Match the TypeScript target so output isn't down-levelled further than needed.

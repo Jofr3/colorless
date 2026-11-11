@@ -33,6 +33,8 @@ export interface Browser {
   evaluate<T>(page: Page, expression: string): Promise<T>;
   /** Presses and releases a key in the focused element. */
   key(page: Page, key: "ArrowRight" | "Tab"): Promise<void>;
+  /** The tab's viewport as a PNG, canvas included. */
+  screenshot(page: Page): Promise<Buffer>;
   /** Closes the tab as a user would, skipping any beforeunload prompt. */
   closePage(page: Page): Promise<void>;
   /** Ends the session; the process itself is the caller's to stop. */
@@ -220,6 +222,10 @@ export async function launchChromium(launch: Launch): Promise<Browser> {
           of(page).session,
         );
     },
+    async screenshot(page) {
+      const { data } = await call("Page.captureScreenshot", { format: "png" }, of(page).session);
+      return Buffer.from(String(data), "base64");
+    },
     async closePage(page) {
       await call("Target.closeTarget", { targetId: of(page).target });
       sessions.delete(page);
@@ -363,6 +369,10 @@ export async function launchFirefox(launch: Launch): Promise<Browser> {
           },
         ],
       });
+    },
+    async screenshot(page) {
+      const { data } = await call("browsingContext.captureScreenshot", { context: of(page) });
+      return Buffer.from(String(data), "base64");
     },
     async closePage(page) {
       const context = of(page);

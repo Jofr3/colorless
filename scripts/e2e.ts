@@ -23,7 +23,8 @@
  * else Xvfb on PATH, else nixpkgs#xorg.xvfb), with Mesa's software GL (MESA, else nixpkgs#mesa)
  * where the system has none in /run/opengl-driver. --gpu adds the CRT parity check
  * (frontend/lua/tests/effects_gpu.lua). --keep leaves the temporary directory (site, D1 state, API
- * log); a failed run always leaves it.
+ * log); a failed run always leaves it, with a screenshot of each page, and prints each page's console
+ * tail.
  */
 
 import { type ChildProcess, spawn, spawnSync } from "node:child_process";
@@ -37,7 +38,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
-import { type AddressInfo, createServer as createNetServer } from "node:net";
+import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { delimiter, extname, join, normalize } from "node:path";
 import { FIXTURE_DECK, fixtureCatalogStatements } from "@colorless/api/testing/fixtureCatalog";
@@ -51,6 +52,7 @@ import {
   type PageOptions,
 } from "./lib/browser";
 import { fail } from "./lib/cli";
+import { systemPort } from "./lib/ports";
 import { localBin, REPO_ROOT, repoPath } from "./lib/repo";
 
 const keep = process.argv.includes("--keep");
@@ -154,17 +156,6 @@ function run(command: string, args: string[], cwd = REPO_ROOT, env: Record<strin
   if (result.status !== 0)
     throw new Error(`${command} ${args.join(" ")} failed:\n${result.stdout}${result.stderr}`);
   return result.stdout;
-}
-
-function freePort(): Promise<number> {
-  return new Promise((done, reject) => {
-    const probe = createNetServer();
-    probe.once("error", reject);
-    probe.listen(0, "127.0.0.1", () => {
-      const { port } = probe.address() as AddressInfo;
-      probe.close(() => done(port));
-    });
-  });
 }
 
 // ---------- the site ----------
@@ -335,7 +326,7 @@ async function launchBrowser() {
   const options = {
     binary,
     profile: join(root, "profile"),
-    port: await freePort(),
+    port: await systemPort(),
     start: (command: string, args: string[]) => start(command, args, { env }),
     headless: !firefox,
     hook: HOOK,
@@ -714,8 +705,8 @@ const pages: Page[] = [];
 let apiLog = "";
 
 async function smoke() {
-  const apiPort = await freePort();
-  const inspectorPort = await freePort();
+  const apiPort = await systemPort();
+  const inspectorPort = await systemPort();
   const dist = join(root, "dist");
   const sitePort = await serve(dist);
   site = `http://127.0.0.1:${sitePort}`;
@@ -1008,6 +999,16 @@ async function report(error: unknown) {
       `location.pathname + ' | ' + document.body.className + ' | ' + document.getElementById('status').textContent`,
     ).catch(() => "(no answer)");
     log(`${page.name}: ${state}`);
+    const shot = join(root, `${page.name}.png`);
+    await Promise.race([
+      driver().screenshot(page),
+      sleep(10_000).then(() => Promise.reject(new Error("no answer in 10 s"))),
+    ])
+      .then((png) => {
+        writeFileSync(shot, png);
+        log(`${page.name} screenshot: ${shot}`);
+      })
+      .catch((reason: unknown) => log(`${page.name}: no screenshot (${String(reason)})`));
     const prints = await evaluate<string[]>(page, "window.__e2e.prints.slice(-15)").catch(() => []);
     if (prints.length > 0) log(`${page.name} last prints: ${JSON.stringify(prints)}`);
     for (const name of [MAILBOXES.simulator, MAILBOXES.online]) {
@@ -1019,6 +1020,9 @@ async function report(error: unknown) {
     }
     if (page.consoleErrors.length > 0)
       log(`${page.name} errors: ${JSON.stringify(page.consoleErrors.slice(-5))}`);
+    // A Lua traceback's frame lines reach console.log; only its first lines are errors.
+    if (page.consoleLines.length > 0)
+      log(`${page.name} console tail:\n  ${page.consoleLines.slice(-20).join("\n  ")}`);
   }
   if (apiLog && existsSync(apiLog))
     log(`API log tail:\n${readFileSync(apiLog, "utf8").split("\n").slice(-20).join("\n")}`);
