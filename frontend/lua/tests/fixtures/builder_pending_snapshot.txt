@@ -5,7 +5,7 @@ D	sv01-050	Pikachu	Pok%C3%A9mon	Basic	4	0	60	G	12	4	0	ability%2Cattack
 D	sv01-181	Nest%20Ball	Trainer	Item	2	2		G	12	4	0	
 L	sv01-999	Loading%20card...	3
 S	sv01-050	Pikachu	Pok%C3%A9mon	Basic	4	0	60	G	12	4	0	ability%2Cattack
-V	Loading%20cards...	4	2	0
+V	Loading%20cards...	4	2	0	4
 O	supertype	Category	All	4	1	1
 O	types	Energy%20type	All	11	1	1
 O	subtypes	Card%20kind	All	1	1	1

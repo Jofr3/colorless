@@ -33,6 +33,7 @@ import {
   suffixOptions,
 } from "../decks/catalog";
 import {
+  basicPokemonCount,
   remainingAllowedFor,
   validateDeck,
   countsBySupertype,
@@ -446,6 +447,7 @@ export class LuaBuilder {
         pokemon: groups.Pokémon,
         trainer: groups.Trainer,
         energy: groups.Energy,
+        basic: basicPokemonCount(deck),
       }),
     );
     for (const o of this.options()) {

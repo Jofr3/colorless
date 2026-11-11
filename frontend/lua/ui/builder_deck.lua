@@ -23,8 +23,7 @@ function Builder:visibleDeck()
   if self.deckType=='all' then return self.deck end
   local visible={}
   for _,item in ipairs(self.deck)do
-    local kind=item.kind=='Pokemon' and 'Pokémon' or item.kind
-    if kind==self.deckType then visible[#visible+1]=item end
+    if item.kind==self.deckType then visible[#visible+1]=item end
   end
   return visible
 end

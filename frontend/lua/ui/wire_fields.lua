@@ -22,7 +22,7 @@ return {
     header={revision=1,phase=2,name=3,format=4,saveStatus=5,message=6,busy=7,page=8,pages=9,total=10,count=11,selected=12,details=13,transfer=14,cover=15,importing=16,dirty=17,retry=18},
     card={cardId=2,name=3,supertype=4,subtype=5,quantity=6,remaining=7,hp=8,mark=9,number=10,copyLimit=11,illegal=12,gaps=13},
     pending={cardId=2,name=3,quantity=4},
-    validation={message=2,pokemon=3,trainer=4,energy=5},
+    validation={message=2,pokemon=3,trainer=4,energy=5,basic=6},
     option={key=2,label=3,value=4,count=5,index=6,selected=7},
     picker={key=2,label=3,page=4,pages=5,query=6},
     choice={value=2,label=3,selected=4},

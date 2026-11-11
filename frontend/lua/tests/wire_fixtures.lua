@@ -109,6 +109,7 @@ check(ball.kind=='Trainer' and ball.subtype=='Item' and ball.quantity==2 and bal
 check(#builder.deck==2 and builder.selectedItem.name=='Pikachu','Deck list and selection parsed')
 check(builder.selectedItem.gaps=='ability,attack' and pikachu.gaps=='ability,attack' and ball.gaps=='','Simulation gaps parsed')
 check(builder.validation:find('more cards') and builder.groups[1]=='4' and builder.groups[2]=='2' and builder.groups[3]=='0','Validation parsed')
+check(builder.basic==4,'Basic Pokémon count parsed')
 local legal=find(builder.options,function(o) return o.key=='legalOnly' end)
 check(legal.label=='Legal cards only' and legal.value=='On' and legal.count==2,'Filter option parsed')
 check(builder.fields.sort=='name' and builder.fields.query=='','Filter fields parsed')

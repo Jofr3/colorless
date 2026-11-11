@@ -3,7 +3,7 @@ import { json, stubFetch } from "../test/fetchStub";
 import { cardBrief as brief, cardIndexPayload, cardsPage, FACETS } from "../test/fixtures";
 import { type Card, prepareCardIndex } from "@colorless/schema";
 import { DEFAULT_FORMAT, formatById } from "@colorless/engine";
-import { isBasicEnergy } from "./cards";
+import { isBuilderBasicEnergy } from "./cards";
 import { validateDeck } from "./deckMath";
 import {
   filtersToCardsQuery,
@@ -84,7 +84,7 @@ describe("toBuilderCard", () => {
     };
     const special = toBuilderCard(ignition);
     expect(special.subtype).toBe("Special Energy");
-    expect(isBasicEnergy(special)).toBe(false);
+    expect(isBuilderBasicEnergy(special)).toBe(false);
     // A brief carries the API's answer to the same test (catalog/map.ts): "Special" stays Special.
     expect(
       toBuilderCard(

@@ -45,7 +45,7 @@ function Simulator:artwork(item,w,h)
     if (info.hp or '')~='' then T.text(info.hp..' HP',14,12,44,w-24,T.ink,'right') end
     Energy.pip(w/2,h/2+6,24,types[1] or 'Colorless')
     local st=tostring(info.stage or '')
-    if st~='' then T.text(st=='Stage1' and 'Stage 1' or st=='Stage2' and 'Stage 2' or st,13,12,h-34,w-24,T.ink) end
+    if st~='' then T.text(Popup.STAGES[st] or st,13,12,h-34,w-24,T.ink) end
   elseif info.category=='Energy' then
     Energy.pip(w/2,h/2+6,30,types[1] or 'Special')
   else

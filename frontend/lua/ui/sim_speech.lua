@@ -55,7 +55,6 @@ function Speech.card(item,info)
   for _,s in ipairs(Speech.conditions(item.status)) do parts[#parts+1]=s end
   return table.concat(parts,', ')
 end
-local STAGES={Stage1='Stage 1',Stage2='Stage 2'}
 local function sentence(text)
   text=tostring(text or ''):gsub('%s+$','')
   if text=='' then return '' end
@@ -73,7 +72,7 @@ function Speech.details(info)
   local out={}
   local function add(text) text=sentence(text);if text~='' then out[#out+1]=text end end
   if info.category=='Pokemon' then
-    local stage=STAGES[info.stage] or (info.stage~='' and info.stage or 'Basic')
+    local stage=Popup.STAGES[info.stage] or (info.stage~='' and info.stage or 'Basic')
     local types=Codec.list(info.types)
     add(stage..' Pokémon'..(#types>0 and ', '..Speech.list(types)..' type' or '')..(info.hp~='' and ', '..info.hp..' HP' or ''))
     for _,a in ipairs(Popup.parseAbilities(info.abilities)) do

@@ -193,7 +193,7 @@ export const WIRE_ROWS = {
     },
     /** A deck entry whose card details are still on their way: no card fields, no controls. */
     pending: { tags: ["L"], fields: ["cardId", "name", "quantity"] },
-    validation: { tags: ["V"], fields: ["message", "pokemon", "trainer", "energy"] },
+    validation: { tags: ["V"], fields: ["message", "pokemon", "trainer", "energy", "basic"] },
     option: {
       tags: ["O"],
       fields: ["key", "label", "value", "count", "index", "selected"],

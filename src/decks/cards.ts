@@ -78,7 +78,7 @@ export interface BuilderCard {
 
 /** True for a Basic Pokémon — the card a legal deck must contain at least one
     of, and the only Pokémon that can start play. */
-export function isBasicPokemon(card: BuilderCard): boolean {
+export function isBuilderBasicPokemon(card: BuilderCard): boolean {
   return card.supertype === "Pokémon" && card.subtype === "Basic";
 }
 
@@ -87,7 +87,7 @@ export function isBasicPokemon(card: BuilderCard): boolean {
  * engine's Basic/Special classification, not the raw tcgdex tag, so Special Energies tagged
  * "Normal" still count toward the limit.
  */
-export function isBasicEnergy(card: BuilderCard): boolean {
+export function isBuilderBasicEnergy(card: BuilderCard): boolean {
   return card.supertype === "Energy" && card.subtype === "Basic Energy";
 }
 
@@ -99,8 +99,9 @@ export function deckRuleCardOf(card: BuilderCard): DeckRuleCard {
   return {
     name: card.name,
     category: CATEGORY_BY_SUPERTYPE[card.supertype],
-    stage: isBasicPokemon(card) ? "Basic" : null,
-    energyType: card.supertype !== "Energy" ? null : isBasicEnergy(card) ? "Normal" : "Special",
+    stage: isBuilderBasicPokemon(card) ? "Basic" : null,
+    energyType:
+      card.supertype !== "Energy" ? null : isBuilderBasicEnergy(card) ? "Normal" : "Special",
     rarity: card.rarity ?? null,
     legal: card.legal,
   };
