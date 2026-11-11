@@ -22,7 +22,8 @@ planning sessions didn't — the actual code, real data, what just broke. Use it
 - Prefer facts already written in these docs over re-deriving them.
 
 ## End-of-session ritual (do not skip)
-1. Update `status.md`'s current state and next step.
+1. Update `status.md`'s current state and its "Open items": add what this
+   session left open, with its `decisions.md` anchor, and drop what it closed.
 2. Record any decision as a dated entry at the end of `decisions.md`, then run
    `bun run docs:index`.
 3. Write anything learned into the right workstream/reference doc so the next
@@ -105,7 +106,9 @@ something else.
   flow, which run programs), and on a relative import that crosses a workspace
   root (each package, each app, `src`, `scripts`). Import another root through
   its package entry: `@colorless/engine/testing` is the fixture barrel,
-  `@colorless/schema/tcgdex-fixtures/*` the TCGdex payloads and `@colorless/schema/constants` the
+  `@colorless/schema/tcgdex-fixtures/*` the TCGdex payloads, `@colorless/schema/jitless` turns off
+  zod's eval probe and must be the first import of any page entry (`src/lua/bridge.ts`;
+  `scripts/zodJitless.test.ts` checks it), and `@colorless/schema/constants` holds the
   zod-free constants; engine runtime code imports only that subpath's values, so it never builds
   a zod schema (`--check` fails on a value import from zod or the schema root). Schemas that only tests parse (`redactedGameSchema`, `lobbyServerMessageSchema`)
   sit in modules nothing on the Worker's runtime path imports, so the bundle drops them. A pure helper that
@@ -267,8 +270,8 @@ something else.
   (apps/api), which fails when the local and remote `print_key` columns differ; then
   re-ingest locally, re-run `bun scripts/registry-aliases.ts`, and commit.
 - `scripts/residue-census*.ts` and `scripts/opaque-anatomy*.ts` were deleted
-  (2026-10-23) after measuring zero residue; sections below that describe them
-  are history.
+  (2026-10-23) after measuring zero residue; the archived lessons that describe
+  them (`archive/conventions-lessons.md`) are history.
 - An engine function that appends to an `events: GameEvent[]` out-parameter takes it as its last
   positional parameter, after any options record; optional parameters before it are passed
   explicitly (`undefined`, or `{}` for a fresh `EffectRecord`).
@@ -353,9 +356,9 @@ D214 came after. Three were caught by their own author, which is the only reason
 the trend improved.
 
 - ⚠️ **It bites verification PROCEDURES as hard as tests.** D214: three prior
-  reduced-motion slices "verified" by grepping the built CSS for
-  `.motion-reduce\:transition-none` — `glass.ts` already emitted that rule, so
-  the check was green before the work started. What rescued it was an
+  reduced-motion slices "verified" by grepping the built CSS for a
+  `motion-reduce` rule that another module already emitted, so the check was
+  green before the work started. What rescued it was an
   **attribution control**: a build with the variant deliberately typo'd emits
   nothing anywhere. Any check whose subject is a shared artifact needs one.
 - **Assert the thing, not a proxy for it.** `biome lint <path>` exits 0 on a path
@@ -387,8 +390,8 @@ the trend improved.
 
 - 🛑 **WHEN ONE FACT GAINS A SECOND FIELD, FIND EVERY READ SITE BEFORE YOU FIX ANY OF THEM (D412).**
   The §11 retreat lock went from one field to two (an imposed boolean and a self-installed stamp).
-  The engine gate and `redact.ts` were routed through a single new reader; **`GameHud.tsx` was the
-  third site and was still spelling the old field by hand** — a live afford-then-reject, found by
+  The engine gate and `redact.ts` were routed through a single new reader; **the HUD (the React
+  app's, since deleted) was the third site and was still spelling the old field by hand** — a live afford-then-reject, found by
   grep rather than by a red test. ⚠️ **THE SERVER-SIDE TWIN PASSING PROVES NOTHING ABOUT THE LOCAL
   PANEL** (D213's rule, re-earned). `grep -rn "<fieldName>" src/ apps/ packages/` is the whole
   procedure, and it costs seconds.
@@ -510,6 +513,15 @@ the trend improved.
   neither thing the note pointed at).
 
 ## Database migrations
+
+**Adding one.** Edit `apps/api/src/db/schema.ts`, then from `apps/api/` run
+`bun run db:generate --name <what_it_does>`: drizzle-kit writes the next
+numbered file into `apps/api/drizzle/` and updates `drizzle/meta/`. SQL that
+drizzle-kit cannot write (a trigger, a backfill) goes in that file, or in an
+empty one from `bun run db:generate --custom --name <what>`. Apply it with
+`bun run db:migrate:local`, then `bun run check` (`migration-guard.ts`,
+`drizzle-drift.ts` and `migrations.d1.test.ts` read the new file). `bun run
+release` applies it remotely. Every migration follows the rules below.
 
 D1 applies each migration file in one transaction with foreign keys enforced, and
 the previous Worker keeps serving while `release` migrates. Two rules follow.
