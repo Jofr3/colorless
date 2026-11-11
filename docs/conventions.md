@@ -57,15 +57,20 @@ and the most expensive to find, because every check below it is busy checking
 something else.
 
 ## Code & quality
-- TypeScript strict; match the surrounding code's style.
+- TypeScript strict; match the surrounding code's style. A command-line entry point is
+  kebab-case (`scripts/comment-guard.ts`); a module and its test are camelCase
+  (`scripts/commentGuard.test.ts`).
 - **Comments are minimal (2026-10-23).** Comment only what the code cannot say:
   a game rule or card wording it implements, a non-obvious invariant or ordering
   constraint, or why something is done an unexpected way. No decision ids, emoji
   markers, history ("was", "now", "corrected"), census counts, dates or line
   numbers in code or tests — that record belongs in `docs/decisions.md` and git.
-  `bun scripts/comment-guard.ts` (in `check:static`) enforces the id and date part
-  on comments. Strings are data: a test title may name the decision whose sections
-  it pins. Tests must not read source or doc text, and must not pin `engineVersion`.
+  `bun scripts/comment-guard.ts` (in `check:static`) enforces the ids, dates and
+  line numbers (`line N`, `file.ts:N`, a bare `:N`) on comments; name the function,
+  constant or sentence instead. A comment line that names Balatro may cite a line
+  of its source, which does not move. Strings are data: a test title may name the
+  decision whose sections it pins. Tests must not read source or doc text, and
+  must not pin `engineVersion`.
 - **Biome** for lint/format; **Vitest** for tests. Run **`bun run check`** before
   calling work done. It is `check:static` (the steps `package.json` lists under
   that name: guards, generators' `--check`, `tsc -b`, `biome ci`, the mutant `precheck`), `check:lua` (the headless Lua tests,
@@ -88,8 +93,12 @@ something else.
   `prod-watch.yml` ("Production watch") probes production every 6 hours with
   `scripts/prod-watch.ts`: Bun only, no install and no secret, so keep that
   script's imports to Node built-ins and the files it reads now. Its failure
-  email is the outage alert. Before committing, format the files you changed
-  with `bunx biome format --write <paths>`; `bun run format` rewrites the whole
+  email is the outage alert. Edits are formatted on write: a PostToolUse hook in
+  the tracked `.claude/settings.json` runs `biome format --write` on each file a
+  Claude Code Edit or Write touches (format only, no lint fixes), in the main
+  checkout and every worktree, so copy a later Edit's old text from the formatted
+  file. Format what a generator or script wrote with
+  `bunx biome format --write <paths>`; `bun run format` rewrites the whole
   tree even when given a path, so use it only in a tree you own. `bun run
   release` runs check, the release gates (with the production advisory audit,
   and CI's result for HEAD printed, not waited for), the web build, the remote
@@ -123,17 +132,17 @@ something else.
   simulation gaps load the full engine through `import()`. The bridge queues the table's commands
   while its chunk loads (`LazyScreen`). Type-only imports from `@colorless/engine` are free;
   `import-graph.ts --check` fails when the bridge's static imports reach the engine root.
-- Vitest has three projects (`vitest.config.ts`): `engine` runs without per-file
-  isolation, so engine suites must not use mocks, stubs, fake timers or other
-  module-level state that leaks between files. The app suites are split by the
-  config itself: a file that calls `vi.mock`, `vi.stubGlobal`, `vi.stubEnv`,
+- Vitest has four projects (`vitest.config.ts`), and the config splits the suites
+  itself: an engine or app file that calls `vi.mock`, `vi.stubGlobal`, `vi.stubEnv`,
   `vi.useFakeTimers`, `vi.setSystemTime`, `vi.spyOn`, `vi.unstubAll*` or
-  `vi.resetModules`, or names `globalThis`, runs in `app-isolated`; every other
-  app file runs in `app`, without isolation, so it must not leave other
-  module-level state behind either. Both shared projects undo stubbed globals,
+  `vi.resetModules`, or names `globalThis`, runs isolated, in `engine-isolated`
+  (`fixtureRegistry`, `rng`) or `app-isolated`; every other file runs in `engine`
+  or `app`, without per-file isolation, so it must not leave other module-level
+  state behind either. Both shared projects undo stubbed globals,
   stubbed env vars and spies after every test, so a stub a helper installs (for
   example `stubFetch`) lasts one test there. Vitest caches transformed modules in
-  `node_modules/.vitest-cache` (`bunx vitest --clearCache` empties it).
+  `node_modules/.vitest-cache` (`bunx vitest --clearCache` empties it). Watch mode
+  (`bun run test`) does not follow `tmp/` or `.claude/`.
 - **The engine remembers derived facts by object identity**: `disabledAbilityUids` per
   `GameState` (`DISABLED_ABILITY_UIDS`, `continuous.ts`), `cardOfUid`'s faces per `cardIdByUid`
   and `cardPool` (`FACES_BY_UID`, `cards.ts`) and `poolHasOwnerBoundEnergy` per `cardPool`
@@ -348,7 +357,8 @@ something else.
 - **Never inherit a suite figure from prose — six were stale in one session**
   (D206 found the recorded baseline of 233 files / 4367 tests was really
   234 / 4373). Measure with `bun run test:run` (the same `vitest run` as
-  `check:test`); `bun test` is the wrong harness entirely.
+  `check:test`). `bun test` would run Bun's own runner, so bunfig.toml stops it
+  with that hint.
 
 ## A guard must be able to go RED (D200 → D214)
 
@@ -605,7 +615,8 @@ meant to change dependencies changes bun.lock (dependency audit, DEP-P1).
   else may import it. Port them and drop it when TS 7.1's API is stable (DEP-P5).
 
 **Toolchain.** `.bun-version` (read by setup-bun) and `packageManager` name the
-same bun, and `.node-version` (read by setup-node) names the Node 22 LTS line:
+same bun (lock-check fails when they differ and warns when the running bun is
+neither), and `.node-version` (read by setup-node) names the Node 22 LTS line:
 tsc, vite, vitest, wrangler and biome start with `#!/usr/bin/env node`, so
 `bun run` executes them under Node. Bump them in a commit of their own and
 keep `engines` in step; Dependabot does not update them. Move Node to 24 in
