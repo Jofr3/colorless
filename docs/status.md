@@ -17,7 +17,8 @@ a sandbox, or play them online against another account. Updated 2026-11-11.
 ## Working on it
 
 - First run and prerequisites: the root `README.md`, "Getting started". The docs map, the resume protocol and where each common task's recipe lives: `docs/README.md`.
-- `bun run check` is the gate, and CI runs the same steps. It needs Balatro's source at `../balatro-source` or `BALATRO_SOURCE` for the Lua tests and build.
+- `bun run check` is the gate, and CI runs the same steps. It needs Balatro's source for the Lua tests and build: `BALATRO_SOURCE`, else `balatro-source` beside the main checkout, which a git worktree finds too.
+- A worktree needs only `bun install`; run tools through `bun run`/`bunx`, not bare names (a bare `vitest` or `wrangler` can run the main checkout's copy). Its D1 checks read the main checkout's local catalog, read-only, until it has its own. For a catalog `api:dev` can serve in a worktree, copy it: `mkdir -p apps/api/.wrangler && cp -r <main>/apps/api/.wrangler/state apps/api/.wrangler/` (a copy, so no database is shared).
 - `bun run dev:all` starts the web app and the API. The local D1 catalog is loaded by the ingest in `workstreams/backend-data.md` §3.4.1.
 - `bun run release` checks, migrates the remote D1, deploys the API, then the web app, checks both, and tags the release `release-YYYYMMDD-HHMM`. `release:gate` refuses when local and remote `print_key` differ, because the reprint alias table is generated from the local catalog: re-ingest locally and rerun `bun scripts/registry-aliases.ts`.
 - After adding a `decisions.md` entry, run `bun run docs:index`.
