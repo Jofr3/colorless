@@ -66,7 +66,8 @@ protocol, the Lua tests).
 | Add an API route | `workstreams/backend-data.md` §6 |
 | Add a migration | `conventions.md`, "Database migrations" |
 | Write or run a mutant | `conventions.md`, "Mutants are DECLARED, not narrated"; `bun run mutants` |
-| Drive the real page in a browser | `bun run e2e` (`scripts/e2e.ts` says what it covers and its options) |
+| Drive the real page in a browser | `bun run e2e` (`scripts/e2e.ts` says what it covers and its options); a web+API pair on free ports for your own browser: `bun run dev:local` (`frontend/lua/README.md`, "Run") |
+| Debug a Lua error, the Worker or the local D1 | `frontend/lua/README.md`, "Debugging" |
 | Release, roll back, read production | README.md, "Deployment"; `workstreams/backend-data.md` §3.7 |
 | Record a decision | A dated `###` entry at the end of `decisions.md`, then `bun run docs:index` |
 
