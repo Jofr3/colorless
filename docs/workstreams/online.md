@@ -1,36 +1,39 @@
 # Workstream: Online Matches (Phase 4)
 
+> **What this file is.** The "Status" sections at the top are dated notes on what the online system
+> does; from "Build log (history)" on, it is the P4 build record, which names React-era files
+> that no longer exist. Current code: `src/online/`, `src/lua/online.ts`,
+> `src/lua/onlineTable.ts` and `apps/api/src/lobby/`. The client's behaviour is in
+> `frontend/lua/README.md` "Online", the server's in `backend-data.md` §3.6.
+
 Goal: two players on different machines play a real game, with the **P3 engine**
 running authoritatively server-side.
 
-**Depends on:** P3 engine + P1 lobby Durable Object.
-
 ## Status — Lua online client (2026-10-22)
 
-**Online play now runs in the Lua frontend** (`frontend/lua/README.md` → Online). No server or
-wire change: the Lua pages talk to the same lobby Durable Object as React.
+**Online play runs in the Lua frontend** (`frontend/lua/README.md` → Online), against the lobby
+Durable Object.
 
-- `src/features/online/net/lobbyClient.ts` — the lobby WebSocket logic lifted out of `useLobby`
-  into a framework-free `LobbyClient` (hello retry, presence/not-found timers, refusals, match
-  frames). `useLobby` is now a thin wrapper with the same `Lobby` shape; `createLobby.ts` mints
-  codes for both clients.
-- `src/features/lua/online.ts` (`LuaOnline`) drives the Lua lobby modal (`/lua/?page=online`,
-  `/lua/?lobby=CODE`) over the `__online.txt` mailbox; `onlineTable.ts` (`LuaOnlineMatch`) is a
-  `TableSource` so the one `LuaSimulator` renders the live match at `/lua/?page=match&lobby=CODE`.
-- User decisions: invite links use `/lua/?lobby=CODE`; the deck picker has a view-only regulation
-  filter (All / Standard legal / Not Standard / Expanded legal / Not Expanded); spectating is not
-  offered in Lua ("Lobby is full"); the in-match Leave asks to be pressed again, while browser
-  Back and tab close keep React's behaviour (immediate forfeit on Back, the 90 s abandonment on
-  close).
-- Verified in two headless browsers (create, link and typed join, kick, sign-in mid-lobby, ready,
-  countdown, setup and turns, refused action, away banner and 90 s forfeit, resume on reload,
-  concede, rematch, Leave, Back forfeit, full / not-found / invalid) and a Lua guest joining a
-  React-created lobby.
-- Not on the wire, so absent online: coin-flip events, the Energy/Retreat allowances, effect
-  continuation titles and stack bottoms for bench order (a server deploy would have to add them to
-  `RedactedGame` first). *Superseded 2026-10-26/27: the frame carries `allowances`, coin flips come
-  from the log's cues, and prompts carry `invokedBy`/`abilityName`; only stack bottoms are still
-  inferred client-side (`frontend/lua/README.md`, "Online").*
+- `src/online/lobbyClient.ts` — the framework-free `LobbyClient` (hello retry, presence/not-found
+  timers, refusals, match frames); `src/online/createLobby.ts` mints codes.
+- `src/lua/online.ts` (`LuaOnline`) drives the Lua lobby modal over the `__online.txt` mailbox;
+  `src/lua/onlineTable.ts` (`LuaOnlineMatch`) is a `TableSource`, so the one `LuaSimulator` renders
+  the live match.
+- Pages (`src/host/router.ts`): `/online` is the lobby modal, `/online/CODE` the invite link (it
+  joins or resumes that lobby) and `/online/CODE/play` the live table. The 2026-10-22 invite link,
+  `/lua/?lobby=CODE`, was replaced by these path routes on 2026-10-23 (`decisions.md`, "Path routes
+  replace query-string pages"); old `?lobby=CODE` and `?page=…` links still resolve and are
+  rewritten.
+- User decisions: the deck picker has a view-only regulation filter (All / Standard legal / Not
+  Standard / Expanded legal / Not Expanded); spectating is not offered in Lua ("Lobby is full");
+  the in-match Leave asks to be pressed again. Browser Back from the table goes Home, which forfeits
+  a live match; closing the tab starts the 90 s abandonment.
+- Verified at the time in two headless browsers (create, link and typed join, kick, sign-in
+  mid-lobby, ready, countdown, setup and turns, refused action, away banner and 90 s forfeit,
+  resume on reload, concede, rematch, Leave, Back forfeit, full / not-found / invalid).
+- On the wire since 2026-10-26/27: the frame carries `allowances`, coin flips come from the log's
+  cues, and prompts carry `invokedBy`/`abilityName`. Only the stack bottoms for bench order are
+  still inferred client-side (`frontend/lua/README.md`, "Online").
 
 ## Status — match RNG (security Phase 4, MI1, 2026-10-27)
 
@@ -91,6 +94,12 @@ Wire change, shipped with the web client in one release (the deploy drops every 
   be carried over: its ids were public, and no client holds a secret that hashes to them. The DO
   wipes it, on the next `/ws` (closed at once with 4004, "Lobby not found") or on its next alarm (live sockets
   closed with 4000), logging `lobby_wiped cause=legacy`. Players create a new lobby.
+
+## Build log (history)
+
+From here to the end: the P4 build record from 2026-07-23 on, kept as written. It describes the
+React client (`src/features/…` paths), which was deleted on 2026-10-22; the current code and
+behaviour are named at the top of this file.
 
 ## Status — P4 kickoff (2026-07-23)
 
@@ -1052,32 +1061,3 @@ until 1c broadcasts the redacted view.
     **DO-storage-migration hardening** the 2b-iii-d-ii LOW deferred (default the missing `MatchRecord`
     fields on read, or reset on shape mismatch) — do this BEFORE any further `MatchRecord` shape change.
     (5) **spectate** — per-viewer redaction makes this nearly free (a third, seatless viewer).
-
-## What already exists (reuse it)
-The lobby was built to swap transports without UI changes:
-- `src/features/online/net/types.ts` — LobbySnapshot / LobbyMessage / LobbyIntent.
-- `src/features/online/net/lobbyReducer.ts` — the authoritative reducer.
-- `src/features/online/net/channel.ts` — the transport seam (currently
-  BroadcastChannel).
-These types + reducer move into `packages/schema` in P1 so the DO and client
-share one source of truth.
-
-## Plan
-1. **Transport swap:** implement a WebSocket `channel.ts` against the lobby DO
-   (`/lobby/:code/ws`). Lobby behaviour is unchanged — the DO runs the existing
-   reducer.
-2. **Match handoff:** when both players are ready, the DO transitions from lobby
-   to **match**: it instantiates the P3 engine, deals, and drives the game.
-3. **Authoritative engine in the DO:** the server owns the RNG seed and hidden
-   info (hands, deck order, prizes); clients send intents and render the
-   snapshots/events the DO broadcasts — the host-authoritative model the client
-   already assumes.
-4. **Reconnect / hibernation:** `PlayerState.id` already supports reconnect;
-   handle DO hibernation + snapshot resync.
-5. **Later:** spectate, per-recipient hidden-info filtering, anti-cheat.
-
-## Milestones
-1. WS transport + lobby over the DO (no game yet).
-2. Lobby → match handoff; engine instance per lobby.
-3. Per-player hidden-info snapshots + intent validation.
-4. Reconnect, timeouts, concede/rematch.
