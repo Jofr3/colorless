@@ -53,8 +53,7 @@ const expectDeckPicker = () => {
 };
 
 describe("the simulator save", () => {
-  // A save made before MI1's fix: its game draws from the legacy mulberry32 generator, and still
-  // replays on it.
+  // A legacy save: its game draws from the mulberry32 generator, and still replays on it.
   it.each([
     ["the legacy generator", false],
     ["ChaCha20", true],

@@ -19,7 +19,7 @@ export type DeckSnapshot = {
   name: string;
   format: string;
   cards: DeckCard[];
-  /** The owner's cover pick (P5-6), null for the derived default. It rides the
+  /** The owner's cover pick, null for the derived default. It rides the
       SAME debounced save as everything else — a cover is an edit like any
       other, and pairing it with the card list in ONE patch is what keeps the
       two consistent. */

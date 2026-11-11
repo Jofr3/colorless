@@ -153,7 +153,7 @@ export class LuaOnline {
           name: p?.name ?? "",
           connected: +!!p?.connected,
           ready: +!!p?.ready,
-          // The server sends no seat's deck id (LB5): yours is the client's memory of its pick,
+          // The server sends no seat's deck id: yours is the client's memory of its pick,
           // unknown after a reload, so whether a deck is picked rides on its own.
           deckId: (own && p?.hasDeck && c?.state.deckId) || "",
           deckName: (own && p?.deckName) || "",

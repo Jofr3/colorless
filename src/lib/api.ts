@@ -93,8 +93,8 @@ interface RequestOptions {
       symptom — the whole /auth surface (me() = signed out, login = wrong
       credentials, and the recovery probe itself is /auth/me, so recovering
       there would recurse). Declared per call instead of inferred from a
-      `/auth/` path prefix (the P2-M1 shape): the prefix silently decided for
-      any route added under it, and couldn't express the reverse case. */
+      `/auth/` path prefix: a prefix would silently decide for any route added
+      under it, and could not express the reverse case. */
   recoverSession?: false;
   /** How long the call may take, body included, before it is abandoned. Default
       REQUEST_TIMEOUT_MS. */
@@ -301,7 +301,7 @@ export function me(): Promise<User> {
   return request("/auth/me", { recoverSession: false });
 }
 
-/** Rename yourself (P5-5). 400 when the name is blank or over 64 chars; 401
+/** Rename yourself. 400 when the name is blank or over 64 chars; 401
     when the session is gone — and, like every /auth call, NOT retried through
     session recovery, because there a 401 IS the answer. */
 export function updateProfile(body: UpdateProfileRequest): Promise<User> {

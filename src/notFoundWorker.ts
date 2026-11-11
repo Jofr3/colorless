@@ -1,12 +1,11 @@
 // The web Worker's script (wrangler.jsonc `main`). It runs only when no static asset matches a
 // request that is not a page navigation: navigations still get index.html from
-// `not_found_handling: "single-page-application"` without it. Before it, a missing /assets/ or
-// /love/ file was answered with index.html, status 200 and /assets/'s one-year immutable cache, so
-// a stale tab that lazy-loaded a chunk across a deploy kept that HTML under the chunk's URL, and a
-// later web rollback that made the URL valid again stayed broken in that browser (build audit
-// DEP6). Under those two prefixes a miss is now a 404 that is never stored. Any other path is a
-// page asked for without `Sec-Fetch-Mode: navigate` (Safari before 16.4, a link preview) and gets
-// index.html as before. public/_headers does not reach a script's own responses, so the 404 sets
+// `not_found_handling: "single-page-application"` without it. Under /assets/ and /love/ a miss is
+// a 404 that is never stored: answered with index.html, status 200 and /assets/'s one-year
+// immutable cache, a stale tab that lazy-loaded a chunk across a deploy would keep that HTML under
+// the chunk's URL, and a later web rollback that made the URL valid again would stay broken in
+// that browser. Any other path is a page asked for without `Sec-Fetch-Mode: navigate` (Safari
+// before 16.4, a link preview) and gets index.html. public/_headers does not reach a script's own responses, so the 404 sets
 // the headers every response needs.
 
 type Env = { ASSETS: { fetch(request: Request): Promise<Response> } };

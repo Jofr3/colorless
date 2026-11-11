@@ -192,9 +192,9 @@ export function filtersToCardsQuery(filters: Filters, format: Format): CardsQuer
 
 // ---- The card index: every card, searched in the browser -------------------------------------
 // GET /cards/index loads once and is searched here, so the builder's name and rules-text searches
-// and the decklist import's name lookups cost the API no D1 reads (security audit CA1). Searching
-// applies GET /cards' own semantics (@colorless/schema `searchCardIndex`, held to the API's
-// answers by apps/api/src/catalog/cardIndex.d1.test.ts).
+// and the decklist import's name lookups cost the API no D1 reads. Searching applies GET /cards'
+// own semantics (@colorless/schema `searchCardIndex`, held to the API's answers by
+// apps/api/src/catalog/cardIndex.d1.test.ts).
 
 /** How long a loaded index is reused before it is fetched again. An ingest changes it; while the
     API's copy is unchanged the browser's HTTP cache answers the refetch. */
