@@ -65,8 +65,8 @@ prompt. The interpreter may place damage but never resolves a Knock Out: `settle
 
 **What clients see.** `redactGame(state, seat)` (`redact.ts`) builds the `RedactedGame` one viewer
 may see: no opponent hand, deck order or prize contents, no RNG state. `logFromEvents` (`log.ts`)
-turns events into the seat-keyed log, and `cuesFromEvents` (`cues.ts`) attaches the animation cues
-both table sources play. Clients read prompts and phases from the redacted game, never
+turns events into the seat-keyed log and gives each row its animation cues (`cuesFromEvents`,
+`cues.ts`), which both table sources play. Clients read prompts and phases from the redacted game, never
 `pendingOp`.
 
 **Persisted state.** `GAME_STATE_VERSION` and `migrateGameState` (`persist.ts`) version a stored
