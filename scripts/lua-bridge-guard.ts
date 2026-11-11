@@ -17,20 +17,33 @@ const BRIDGE = "ui/bridge.lua";
 
 const RULES: readonly { label: string; pattern: RegExp }[] = [
   // Any use of the global, not LÖVE's `g.print` or a method named print.
-  { label: "the global print", pattern: /(^|[^\w.:])print\b/m },
-  { label: "_G.print", pattern: /\b_G\s*(\.|\[)\s*["']?print\b/ },
-  { label: "io.write or io.stdout", pattern: /\bio\s*[.:]\s*(write|stdout|output)\b/ },
-  { label: "a COLORLESS: literal", pattern: /COLORLESS:/ },
+  { label: "the global print", pattern: /(^|[^\w.:])print\b/gm },
+  { label: "_G.print", pattern: /\b_G\s*(\.|\[)\s*["']?print\b/g },
+  { label: "io.write or io.stdout", pattern: /\bio\s*[.:]\s*(write|stdout|output)\b/g },
+  { label: "a COLORLESS: literal", pattern: /COLORLESS:/g },
 ];
 
 export type LuaSource = { path: string; text: string };
 
+/** Each line of `text` that a rule matches, from 1, with the rules' labels. A hit belongs to the
+    line its match ends on, since the global print's match can start at the newline before it. */
+function hitLines(text: string): [number, string[]][] {
+  const hits = new Map<number, string[]>();
+  for (const { label, pattern } of RULES) {
+    for (const match of text.matchAll(pattern)) {
+      const line = text.slice(0, match.index + match[0].length).split("\n").length;
+      hits.set(line, [...(hits.get(line) ?? []), label]);
+    }
+  }
+  return [...hits].sort(([a], [b]) => a - b);
+}
+
 export function luaBridgeReport(files: readonly LuaSource[]): Report {
-  const problems = files.flatMap(({ path, text }) => {
-    if (path === BRIDGE) return [];
-    const found = RULES.filter((rule) => rule.pattern.test(text)).map((rule) => rule.label);
-    return found.length === 0 ? [] : [`  ${ROOT}/${path}: ${found.join(", ")}`];
-  });
+  const problems = files.flatMap(({ path, text }) =>
+    path === BRIDGE
+      ? []
+      : hitLines(text).map(([line, labels]) => `  ${ROOT}/${path}:${line}: ${labels.join(", ")}`),
+  );
   if (problems.length > 0) {
     return {
       ok: false,
