@@ -86,7 +86,7 @@ function Popup.parseAttacks(raw)
   end
   return list
 end
--- The printed name of the wire's `stage` (Stage1, Stage2); other stages print as sent.
+-- How a card names the wire's `stage` (Stage1, Stage2); other stages show as sent.
 Popup.STAGES={Stage1='Stage 1',Stage2='Stage 2'}
 local function stageLabel(stage)
   stage=tostring(stage or '')

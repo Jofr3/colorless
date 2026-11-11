@@ -4,9 +4,12 @@
  * the page one stdout line per byte 10 and `src/host/shell.ts` runs every line that starts with
  * `COLORLESS:` as a command, so a print of unencoded data, such as an opponent's name holding a
  * newline, can forge commands. The bridge encodes every payload; everything else sends through it.
+ * It also fails on a literal channel sent through the bridge, or given a screen's `callbacksFor`,
+ * that neither host.js nor the shell handles (src/host/mailboxes.ts), which would do nothing.
  */
 
 import { readdirSync, readFileSync } from "node:fs";
+import { HOST_PRINT_CHANNELS, SHELL_PRINT_CHANNELS } from "../src/host/mailboxes";
 import { type Report, runReport } from "./lib/cli";
 import { repoPath } from "./lib/repo";
 
@@ -23,7 +26,18 @@ const RULES: readonly { label: string; pattern: RegExp }[] = [
   { label: "a COLORLESS: literal", pattern: /COLORLESS:/g },
 ];
 
+/** A channel named as a literal: `Bridge.emit('x'`, `Bridge.send('x'` or main.lua's `callbacksFor('x'`. */
+const CHANNEL = /\b(?:Bridge\s*\.\s*(?:emit|send)|callbacksFor)\s*\(\s*(["'])(.*?)\1/g;
+const CHANNELS: ReadonlySet<string> = new Set([...SHELL_PRINT_CHANNELS, ...HOST_PRINT_CHANNELS]);
+
 export type LuaSource = { path: string; text: string };
+
+/** Each literal channel in `text` that nothing on the page handles, by line from 1. */
+function unknownChannels(text: string): string[] {
+  return [...text.matchAll(CHANNEL)]
+    .filter((match) => !CHANNELS.has(match[2] ?? ""))
+    .map((match) => `${text.slice(0, match.index).split("\n").length}: channel '${match[2]}'`);
+}
 
 /** Each line of `text` that a rule matches, from 1, with the rules' labels. A hit belongs to the
     line its match ends on, since the global print's match can start at the newline before it. */
@@ -54,7 +68,25 @@ export function luaBridgeReport(files: readonly LuaSource[]): Report {
       ],
     };
   }
-  return { ok: true, lines: [`${files.length} Lua files write to stdout only through the bridge`] };
+  const unknown = files.flatMap(({ path, text }) =>
+    unknownChannels(text).map((hit) => `  ${ROOT}/${path}:${hit}`),
+  );
+  if (unknown.length > 0) {
+    return {
+      ok: false,
+      lines: [
+        "lua-bridge-guard: FAIL — a channel the page does not handle, so its print does nothing:",
+        ...unknown,
+        "Handle it in src/host/shell.ts runPrint and list it in SHELL_PRINT_CHANNELS (src/host/mailboxes.ts).",
+      ],
+    };
+  }
+  return {
+    ok: true,
+    lines: [
+      `${files.length} Lua files write to stdout only through the bridge, on channels the page handles`,
+    ],
+  };
 }
 
 function shippedLua(): LuaSource[] {

@@ -6,7 +6,7 @@ import { readPersisted, writePersisted } from "../lib/persistedState";
 import { reportError } from "../lib/reportError";
 import { decodeFields, encodeFields } from "../lua/wire";
 import type { ColorlessHost } from "./bridgeProtocol";
-import { MAILBOXES } from "./mailboxes";
+import { MAILBOXES, SHELL_PRINT_CHANNELS, type ShellPrintChannel } from "./mailboxes";
 import type { Page } from "./router";
 import { WIRE_ROWS, wireColumn } from "../lua/wireFields";
 import { storePasswordCredential } from "./passwordCredential";
@@ -138,6 +138,9 @@ export function parsePrint(message: string): { channel: string; rest: string } |
   if (!match) return null;
   return { channel: match[1] ?? "", rest: match[2] ?? "" };
 }
+
+const isShellChannel = (channel: string): channel is ShellPrintChannel =>
+  (SHELL_PRINT_CHANNELS as readonly string[]).includes(channel);
 
 /** A payload of one text field, decoded, with control characters shown as spaces. */
 export function printText(rest: string): string {
@@ -473,6 +476,10 @@ export class HostShell {
     const print = parsePrint(message);
     if (!print) return;
     const { channel, rest } = print;
+    if (!isShellChannel(channel)) {
+      reportError("run a Lua command", Error(`no print channel "${channel}"`));
+      return;
+    }
     switch (channel) {
       case "ready":
         this.ready = true;
@@ -536,6 +543,8 @@ export class HostShell {
           this.doc.getElementById("credits-link")?.getAttribute("href") ?? CREDITS_URL,
         );
         break;
+      default:
+        return channel satisfies never;
     }
   }
 

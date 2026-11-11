@@ -26,3 +26,29 @@ export const MAILBOXES = {
 } as const;
 
 export type Mailbox = keyof typeof MAILBOXES;
+
+/** The `COLORLESS:<channel>` prints from Lua (frontend/lua/ui/bridge.lua) that src/host/shell.ts
+ * runs. scripts/lua-bridge-guard.ts refuses a literal channel in the Lua that no list here names. */
+export const SHELL_PRINT_CHANNELS = [
+  "ready",
+  "page",
+  "library",
+  "sandbox",
+  "online",
+  "builder",
+  "simulator",
+  "auth",
+  "account",
+  "announce",
+  "preferences",
+  "settings",
+  "transition",
+  "field-box",
+  "focus-edge",
+  "credits",
+] as const;
+
+export type ShellPrintChannel = (typeof SHELL_PRINT_CHANNELS)[number];
+
+/** The prints frontend/lua/web/host.js answers itself and does not hand the shell. */
+export const HOST_PRINT_CHANNELS = ["music", "transition-art"] as const;

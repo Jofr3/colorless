@@ -39,6 +39,7 @@ export const ALLOWED_CROSSINGS: readonly string[] = [
   "scripts/lua-constants.ts -> ../src/lua/wireFields",
   "scripts/e2e.ts -> ../src/host/mailboxes",
   "scripts/e2e.ts -> ../src/lua/wireFields",
+  "scripts/lua-bridge-guard.ts -> ../src/host/mailboxes",
   "scripts/prod-watch.ts -> ../apps/api/src/releaseChecks",
 ];
 

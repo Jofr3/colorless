@@ -247,6 +247,17 @@ describe("HostShell", () => {
     expect(ports.command).toHaveBeenLastCalledWith("simulator", encodeFields(["open"]));
   });
 
+  it("reports a print on a channel it has no case for, and runs nothing", () => {
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { shell, ports } = fakePage();
+    shell.onPrint(print("libary", "open"));
+    expect(logged).toHaveBeenCalledTimes(1);
+    expect(String(logged.mock.calls[0]?.[1])).toContain('"libary"');
+    expect(ports.command).not.toHaveBeenCalled();
+    shell.onPrint(print("library", "open"));
+    expect(logged).toHaveBeenCalledTimes(1);
+  });
+
   it("says a copy failed where the page has no clipboard", () => {
     vi.stubGlobal("navigator", {});
     const { shell, mailboxes } = fakePage();
