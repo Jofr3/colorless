@@ -32,6 +32,9 @@ export interface ColorlessBridge {
    * once per change, and on connect when the page was already stalled or failed. */
   onDegraded(state: DegradedState): void;
   artwork: HostArtworkCache;
+  /** How many card scans the host keeps staged, evicting the least recently wanted beyond it: the
+   * adapters' cap on a wanted list (LUA_ART_SLOTS), so a list that fits is never evicted. */
+  artSlots: number;
   mailboxes: typeof MAILBOXES;
 }
 

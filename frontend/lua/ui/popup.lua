@@ -86,11 +86,12 @@ function Popup.parseAttacks(raw)
   end
   return list
 end
+-- How a card names the wire's `stage` (Stage1, Stage2); other stages show as sent.
+Popup.STAGES={Stage1='Stage 1',Stage2='Stage 2'}
 local function stageLabel(stage)
   stage=tostring(stage or '')
   if stage=='' then return nil end
-  if stage=='Stage1' then return 'STAGE 1' elseif stage=='Stage2' then return 'STAGE 2' end
-  return stage:upper()
+  return (Popup.STAGES[stage] or stage):upper()
 end
 -- Build a layout for `info` (the I row) and the live card item (damage, status).
 -- Returns a table with w,h and a draw(x,y) closure; x,y is the top-left.

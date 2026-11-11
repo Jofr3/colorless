@@ -96,6 +96,15 @@ check(library.items[2].count==42 and library.items[2].illegal,'Illegal deck flag
 check(not library.items[3].illegal,'Unchecked deck carries no alert')
 print('PASS: library snapshot')
 
+library:input(fixture('text_record.txt'))
+check(library.search=='Éclair' and library.editing=='search' and library.first==6 and library.last==6,'Text record parsed')
+local auth=require('ui.auth').new()
+check(auth:input(fixture('auth_record.txt')),'Sign-in record accepted')
+check(auth.editing=='password' and auth.field=='password' and auth.action=='input','Sign-in record names the field')
+check(auth.email=='ash@example.com' and auth.password=='*******' and auth.name=='','Sign-in fields parsed, the password masked')
+check(auth.selectionStart==0 and auth.selectionEnd==7,'Sign-in selection parsed')
+print('PASS: text input records')
+
 local builder=Builder.new({command=function() end,announce=function() end,feedback=function() end})
 builder:layout(1280,800)
 builder:sync(fixture('builder_snapshot.txt'))
@@ -109,6 +118,7 @@ check(ball.kind=='Trainer' and ball.subtype=='Item' and ball.quantity==2 and bal
 check(#builder.deck==2 and builder.selectedItem.name=='Pikachu','Deck list and selection parsed')
 check(builder.selectedItem.gaps=='ability,attack' and pikachu.gaps=='ability,attack' and ball.gaps=='','Simulation gaps parsed')
 check(builder.validation:find('more cards') and builder.groups[1]=='4' and builder.groups[2]=='2' and builder.groups[3]=='0','Validation parsed')
+check(builder.basic==4,'Basic Pokémon count parsed')
 local legal=find(builder.options,function(o) return o.key=='legalOnly' end)
 check(legal.label=='Legal cards only' and legal.value=='On' and legal.count==2,'Filter option parsed')
 check(builder.fields.sort=='name' and builder.fields.query=='','Filter fields parsed')

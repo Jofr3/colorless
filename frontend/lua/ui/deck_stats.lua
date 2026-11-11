@@ -4,13 +4,9 @@ local T=require('ui.theme')
 local Button=require('ui.button')
 local Limits=require('ui.limits')
 local Stats={}
+-- `deck.basic` is TypeScript's count of the deck's Basic Pokémon (builder.ts emit).
 function Stats.rows(deck)
-  local basic=0
-  for _,item in ipairs(deck.deck)do
-    if item.kind~='' then
-      if (item.kind=='Pokémon' or item.kind=='Pokemon') and item.subtype=='Basic' then basic=basic+item.quantity end
-    end
-  end
+  local basic=tonumber(deck.basic) or 0
   local total,size=deck.count,Limits.deckSizeFor(deck.format)
   local left={
     {label='Format',value=deck.format=='expanded' and 'Expanded' or 'Standard'},

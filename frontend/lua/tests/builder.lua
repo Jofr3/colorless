@@ -6,10 +6,10 @@ local Codec=require('ui.codec')
 local commands={};local b=Builder.new({command=function(raw)commands[#commands+1]=Codec.fields(raw)end,feedback=function()end,announce=function()end})
 local function snapshot(rev,n)
  local lines={table.concat({rev,'ready','Test Deck','standard','','','0','1','2','16','8','','','', '', '0','0','0'},'\t')}
- for i=1,n do lines[#lines+1]='C\tc'..i..'\tCard '..i..'\tPokemon\tBasic\t1\t3\t60\tH\t1' end
- for i=1,12 do lines[#lines+1]='D\td'..i..'\tDeck card '..i..'\tPokemon\tBasic\t1\t3' end
+ for i=1,n do lines[#lines+1]='C\tc'..i..'\tCard '..i..'\tPokémon\tBasic\t1\t3\t60\tH\t1' end
+ for i=1,12 do lines[#lines+1]='D\td'..i..'\tDeck card '..i..'\tPokémon\tBasic\t1\t3' end
  for i=1,10 do lines[#lines+1]='O\tf'..i..'\tFilter '..i..'\tAll' end
- lines[#lines+1]='S\tc1\tCard 1\tPokemon\tBasic\t1\t3\t60\tH\t1'
+ lines[#lines+1]='S\tc1\tCard 1\tPokémon\tBasic\t1\t3\t60\tH\t1'
  return table.concat(lines,'\n')
 end
 local function bounds()
@@ -43,7 +43,7 @@ local beforeTabs=#commands
 tabs.deckPage=2;choose('Trainer')
 assert(tabs.deckPage==1 and #tabs:visibleDeck()==1 and tabs:visibleDeck()[1].id=='t1')
 for _,c in ipairs(tabs.controls)do if c.action=='detail' then assert(c.arg.id=='t1','Row controls must target the filtered card')end end
-choose('Pokémon');assert(#tabs:visibleDeck()==12,'Pokémon and ASCII Pokemon share the category')
+choose('Pokémon');assert(#tabs:visibleDeck()==12,'The Pokémon tab lists the Pokémon entries')
 tabs.deckPage=2;tabs:build();local rows=0
 for _,c in ipairs(tabs.controls)do if c.action=='detail' then rows=rows+1 end end
 assert(rows==3,'Filtered pagination must use nine desktop rows')
@@ -79,19 +79,14 @@ assert(commands[#commands][1]=='preview-cards' and commands[#commands][2]=='','R
 print('PASS: compact deck paginator, card view pagination, inspection, category filtering and responsive toggle')
 
 local Stats=require('ui.deck_stats')
-local example={format='standard',count=9,groups={7,2,0},deck={
- {name='Pikachu',kind='Pokemon',subtype='Basic',quantity=3},
- {name='Pikachu',kind='Pokémon',subtype='Basic',quantity=1},
- {name='Raichu',kind='Pokémon',subtype='Stage 1',quantity=3},
- {name='Supporter',kind='Trainer',subtype='Supporter',quantity=2},
-}}
+local example={format='standard',count=9,groups={7,2,0},basic=4}
 local left,right=Stats.rows(example)
 assert(#left==3 and #right==3 and left[2].value=='9/60' and left[3].value=='4')
 assert(right[1].value=='7' and right[1].suffix==' (77%)')
-example.count=0;example.deck={};example.groups={0,0,0};left,right=Stats.rows(example)
+example.count=0;example.groups={0,0,0};example.basic=0;left,right=Stats.rows(example)
 assert(left[3].value=='0' and right[2].progress==0 and right[2].suffix==' (0%)')
 for _,format in ipairs({'expanded','unknown'})do
- assert((Stats.rows({format=format,count=60,groups={0,0,0},deck={}}))[2].value=='60/60')
+ assert((Stats.rows({format=format,count=60,groups={0,0,0}}))[2].value=='60/60')
 end
 local deckTab;for _,c in ipairs(tabs.controls)do if c.action=='tab' and c.arg=='deck' then deckTab=c.label end end
 assert(deckTab=='Deck '..tabs.count..'/60')
@@ -174,7 +169,7 @@ assert(lists==6,'Every Cards tab filter but Format opens its list')
 for i=beforeFilterClick+1,#commands do assert(commands[i][1]~='cycle' and commands[i][1]~='format','Filter values must not step the cycle') end
 print('PASS: filter centers open their lists; arrow controls remain available')
 
-local flagged=snapshot(5000,8)..'\nD\tx1\tOld card\tPokemon\tBasic\t2\t2\t60\tE\t1\t4\t1\nD\tx2\tNew card\tPokemon\tBasic\t2\t2\t60\tH\t1\t4\t0'
+local flagged=snapshot(5000,8)..'\nD\tx1\tOld card\tPokémon\tBasic\t2\t2\t60\tE\t1\t4\t1\nD\tx2\tNew card\tPokémon\tBasic\t2\t2\t60\tH\t1\t4\t0'
 tabs.deckType='all';tabs.deckView='list';tabs.deckPage=1;tabs:sync(flagged);tabs:closeModal()
 local byId={};for _,item in ipairs(tabs.deck)do byId[item.id]=item end
 assert(byId.x1.illegal==true and byId.x2.illegal==false and byId.d1.illegal==false,'Row legality follows the illegal field')

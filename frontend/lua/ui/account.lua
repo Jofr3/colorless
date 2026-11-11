@@ -1,4 +1,5 @@
 local Codec=require('ui.codec')
+local TextRecord=require('ui.text_record')
 local H=require('ui.wire_fields').account.header
 local Account={}
 Account.__index=Account
@@ -40,12 +41,10 @@ end
 -- Typing in a refused field takes its mark away.
 function Account:clearInvalid(field) self.invalid[field]=nil end
 function Account:input(raw)
-  if not raw or raw==self.inputRaw then return false end
-  self.inputRaw=raw
-  local f=Codec.fields(raw)
-  if #f<6 or self.status~='authenticated' then return false end
-  self.draftName=f[3]; self.editing=f[6]=='input'
-  self.selectionStart=tonumber(f[4]) or 0; self.selectionEnd=tonumber(f[5]) or 0
+  local r=TextRecord.read(self,raw)
+  if not r or self.status~='authenticated' then return false end
+  self.draftName=r.value; self.editing=r.action=='input'
+  self.selectionStart=r.selectionStart; self.selectionEnd=r.selectionEnd
   self.message=''
   return true
 end

@@ -5,17 +5,15 @@ import { LocalTableSource } from "../lua/tableSource";
 import { playSimulatorGame } from "../test/simulatorGame";
 import { clearSimulatorSave, loadSimulatorSave, saveSimulator } from "./simulatorSave";
 import { hasSimulatorSave } from "./simulatorSaveKey";
+import { fullStorage, memoryStorage } from "../test/storageStub";
 
 const SAVE_KEY = "colorless:simulator:game";
 let storage: Map<string, string>;
 
 beforeEach(() => {
-  storage = new Map();
-  vi.stubGlobal("localStorage", {
-    getItem: (key: string) => storage.get(key) ?? null,
-    setItem: (key: string, value: string) => storage.set(key, value),
-    removeItem: (key: string) => storage.delete(key),
-  });
+  const local = memoryStorage();
+  storage = local.values;
+  vi.stubGlobal("localStorage", local);
   let clock = 1_700_000_000_000;
   vi.spyOn(Date, "now").mockImplementation(() => {
     clock += 1_000;
@@ -235,13 +233,7 @@ describe("the simulator save", () => {
 
   it("reports a write that did not stick", () => {
     const { src } = playSimulatorGame(11, { maxMoves: 5 });
-    vi.stubGlobal("localStorage", {
-      getItem: () => null,
-      setItem: () => {
-        throw new Error("full");
-      },
-      removeItem: () => {},
-    });
+    vi.stubGlobal("localStorage", fullStorage());
     expect(saveSimulator(src.host)).toBe(false);
   });
 

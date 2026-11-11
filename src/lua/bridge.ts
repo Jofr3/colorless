@@ -11,7 +11,7 @@ import { deckStore } from "../decks/deckStore";
 import { decodeFields, encodeFields } from "./wire";
 import { setSessionRecoveryHandler } from "../lib/api";
 import { reportError } from "../lib/reportError";
-import { ArtworkCache } from "./artworkCache";
+import { ArtworkCache, LUA_ART_SLOTS } from "./artworkCache";
 import type { ArtRequest } from "../host/bridgeProtocol";
 import { MAILBOXES } from "../host/mailboxes";
 import {
@@ -185,6 +185,7 @@ host.connect({
     if (state === "failed") online.halt();
   },
   artwork: new ArtworkCache(),
+  artSlots: LUA_ART_SLOTS,
   mailboxes: MAILBOXES,
 });
 // Ask who is signed in while the runtime downloads; Lua's navigation refreshes reuse the answer.

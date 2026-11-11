@@ -7,6 +7,7 @@ import { loadSimulatorSave } from "../game/simulatorSave";
 import { LuaSandbox } from "./sandbox";
 import { launchSandbox } from "./sandboxLaunch";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
+import { fullStorage, memoryStorage } from "../test/storageStub";
 
 const SAVED = "2026-10-01T00:00:00.000Z";
 const EDITED = "2026-10-02T00:00:00.000Z";
@@ -70,12 +71,7 @@ async function setup() {
   return { sandbox, publish, launch };
 }
 beforeEach(() => {
-  const values = new Map<string, string>();
-  vi.stubGlobal("localStorage", {
-    getItem: (key: string) => values.get(key) ?? null,
-    setItem: (key: string, value: string) => values.set(key, value),
-    removeItem: (key: string) => values.delete(key),
-  });
+  vi.stubGlobal("localStorage", memoryStorage());
 });
 afterEach(() => {
   clearCardPoolCache();
@@ -294,12 +290,7 @@ describe("Lua sandbox setup", () => {
     expect(navigate).toHaveBeenCalledOnce();
     expect(loadSimulatorSave()?.game).toEqual(game.state);
     expect(loadSimulatorSave()?.log.length).toBeGreaterThan(0);
-    vi.stubGlobal("localStorage", {
-      getItem: () => null,
-      setItem: () => {
-        throw new Error("quota");
-      },
-    });
+    vi.stubGlobal("localStorage", fullStorage());
     expect(() => launchSandbox(game, navigate)).toThrow("browser storage");
     expect(navigate).toHaveBeenCalledOnce();
   });

@@ -20,6 +20,7 @@ import { SimulatorOrder } from "./simulatorOrder";
 import { LocalTableSource } from "./tableSource";
 import { encodeFields } from "./wire";
 import { type RowKind, WIRE_ROWS, wireColumn } from "./wireFields";
+import { memoryStorage } from "../test/storageStub";
 
 const SIM = WIRE_ROWS.sim;
 const at =
@@ -49,12 +50,7 @@ beforeEach(() => {
     }
     return array;
   });
-  const storage = new Map<string, string>();
-  vi.stubGlobal("localStorage", {
-    getItem: (key: string) => storage.get(key) ?? null,
-    setItem: (key: string, value: string) => storage.set(key, value),
-    removeItem: (key: string) => storage.delete(key),
-  });
+  vi.stubGlobal("localStorage", memoryStorage());
 });
 afterEach(() => {
   vi.unstubAllGlobals();

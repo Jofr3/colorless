@@ -29,16 +29,12 @@ import { SimulatorOrder } from "./simulatorOrder";
 import { loadSimulatorSave } from "../game/simulatorSave";
 import { applyAction, cardOfUid, isBasicPokemon, otherSeat } from "@colorless/engine";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
+import { fullStorage, memoryStorage } from "../test/storageStub";
 
 const SIM_HEADER = WIRE_ROWS.sim.header;
 
 beforeEach(() => {
-  const storage = new Map<string, string>();
-  vi.stubGlobal("localStorage", {
-    getItem: (key: string) => storage.get(key) ?? null,
-    setItem: (key: string, value: string) => storage.set(key, value),
-    removeItem: (key: string) => storage.delete(key),
-  });
+  vi.stubGlobal("localStorage", memoryStorage());
 });
 afterEach(() => vi.unstubAllGlobals());
 function setup(fresh = false) {
@@ -1176,13 +1172,7 @@ describe("LuaSimulator announcements and refusals", () => {
   it("a failing save pops once per failure, and its warning stays", () => {
     const { sim, publish } = setup();
     const storage = localStorage;
-    const full = {
-      getItem: () => null,
-      setItem: () => {
-        throw new Error("full");
-      },
-      removeItem: () => {},
-    };
+    const full = fullStorage();
     const serial = () => field(publish, "messageSerial");
     const endTurn = () => {
       const seat = sim.host?.viewerSeat;

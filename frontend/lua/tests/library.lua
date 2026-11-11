@@ -32,7 +32,7 @@ for _,view in ipairs({{1280,800,12},{480,850,4}}) do
   library:input('1\tname\tZo%C3%AB%09Deck\t0\t0\tinput')
   assert(library.draft=='Zoë\tDeck' and #commands==before,'Typing must not create a deck')
   library:submit()
-  local sent=commands[#commands]; assert(sent[1]=='create' and sent[3]=='Zoë\tDeck')
+  local sent=commands[#commands]; assert(sent[1]=='create' and sent[2]=='Zoë\tDeck')
   library:sync(snapshot(view[1]+1,view[3],'error')); assert(library.modal,'Failed save must keep the dialog')
   library:sync(snapshot(view[1]+2,view[3],'ok')); assert(not library.modal,'Successful save closes the dialog')
   library.inputRaw=nil
@@ -159,13 +159,13 @@ do
   local function press(action) l:activate((find(action))) end
   press('rename'); assert(l.modal.mode=='rename' and l.draft=='Deck 2')
   l:input('9\tname\tRenamed\t0\t0\tenter')
-  local last=sent[#sent]; assert(last[1]=='rename' and last[2]=='deck' and last[3]=='deck2' and last[4]=='Renamed')
+  local last=sent[#sent]; assert(last[1]=='rename' and last[2]=='deck2' and last[3]=='Renamed')
   l:sync(snapshot(7101,3,'ok')); assert(not l.modal,'A saved rename closes the dialog')
   l:activate((find('manage',3))); press('confirm-delete')
   assert(l.modal.mode=='delete' and sent[#sent][1]~='delete','Delete opens a confirmation first')
   assert(spoken[#spoken]=='Delete Deck 3? This deck will be permanently deleted.')
   press('submit')
-  last=sent[#sent]; assert(last[1]=='delete' and last[2]=='deck' and last[3]=='deck3')
+  last=sent[#sent]; assert(last[1]=='delete' and last[2]=='deck3')
   l:sync(snapshot(7102,2,'ok')); assert(not l.modal,'A finished delete closes the dialog')
   -- Hovering a Manage button does not lift its pile.
   l:layout(1280,800); l:sync(snapshot(7103,2)); l:layout(1280,800)

@@ -268,8 +268,8 @@ window.colorlessHost = {
     if (degraded && degraded !== "recovered") connected.onDegraded(degraded);
   },
   writeMailbox,
-  // Wanted lists are in priority order (LUA_ART_SLOTS in artworkCache.ts caps
-  // them at the 96 kept here); touch them lowest first so eviction spares the head.
+  // Wanted lists are in priority order, capped at the bridge's artSlots; touch
+  // them lowest first so eviction spares the head.
   wantArt(cards) {
     wantedArt = cards;
     for (const c of [...wantedArt].reverse()) {
@@ -741,7 +741,7 @@ async function loadArt(card) {
     running.FS_createDataFile("/", path, new Uint8Array(await blob.arrayBuffer()), true, true);
     artCache.set(card.id, path);
     for (const [id, old] of artCache) {
-      if (artCache.size <= 96) break;
+      if (artCache.size <= (bridge?.artSlots ?? artCache.size)) break;
       running.FS_unlink(`/${old}`);
       artCache.delete(id);
     }

@@ -1,17 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { RELOAD_GAP_MS, reloadUnlessRecent } from "./reloadThrottle";
-
-function session() {
-  const values = new Map<string, string>();
-  return {
-    getItem: (key: string) => values.get(key) ?? null,
-    setItem: (key: string, value: string) => void values.set(key, value),
-  };
-}
+import { fullStorage, memoryStorage } from "../test/storageStub";
 
 describe("reloadUnlessRecent", () => {
   it("reloads once, then not again until the gap has passed", () => {
-    const store = session();
+    const store = memoryStorage();
     let reloads = 0;
     const reload = () => reloads++;
     const start = 1_700_000_000_000;
@@ -26,14 +19,8 @@ describe("reloadUnlessRecent", () => {
     const blocked = () => {
       throw new DOMException("blocked", "SecurityError");
     };
-    const full = () => ({
-      getItem: () => null,
-      setItem: () => {
-        throw new DOMException("quota", "QuotaExceededError");
-      },
-    });
     expect(reloadUnlessRecent(blocked, () => reloads++)).toBe(false);
-    expect(reloadUnlessRecent(full, () => reloads++)).toBe(false);
+    expect(reloadUnlessRecent(fullStorage, () => reloads++)).toBe(false);
     expect(reloads).toBe(0);
   });
 });

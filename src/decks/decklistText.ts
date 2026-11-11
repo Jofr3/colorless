@@ -3,7 +3,7 @@
 // stays pure.
 
 import { MAX_DECK_CARD_ENTRIES } from "@colorless/schema";
-import { type BuilderCard, isBasicEnergy, SUPERTYPES } from "./cards";
+import { type BuilderCard, isBuilderBasicEnergy, SUPERTYPES } from "./cards";
 import type { Deck, DeckEntry } from "./deckMath";
 
 /** The most card lines an import resolves: a list with more is refused before any lookup. A deck
@@ -154,8 +154,8 @@ export function parseDecklist(text: string): DecklistLine[] {
     full-art "Basic X Energy" of the same type. Other cards keep the print
     they named: a different print may be a different card. */
 export function preferArt(prints: BuilderCard[], card: BuilderCard): BuilderCard {
-  if (!isBasicEnergy(card) || card.hasImage !== false) return card;
-  return prints.find((print) => isBasicEnergy(print) && print.hasImage === true) ?? card;
+  if (!isBuilderBasicEnergy(card) || card.hasImage !== false) return card;
+  return prints.find((print) => isBuilderBasicEnergy(print) && print.hasImage === true) ?? card;
 }
 
 /** `find`, called once per normalized name. */

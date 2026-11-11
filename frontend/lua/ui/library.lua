@@ -12,6 +12,7 @@ local Display=require('ui.display')
 local HitArea=require('ui.hit_area')
 local Modal=require('ui.modal')
 local Codec=require('ui.codec')
+local TextRecord=require('ui.text_record')
 local Mailbox=require('ui.mailbox')
 local W=require('ui.wire_fields').library
 local Fit=require('ui.text_fit')
@@ -239,27 +240,25 @@ function Library:describe(b)
   return b.label
 end
 function Library:input(raw)
-  if not raw or self.inputRaw==raw then return end
-  self.inputRaw=raw; local f=Codec.fields(raw)
-  if #f<6 then return end
-  local field,action=f[2],f[6]
+  local r=TextRecord.read(self,raw); if not r then return end
+  local field,action=r.field,r.action
   if field=='search' and action~='input' and self.editing~='search' then return end
   self.editing=action=='input' and field or ''
-  self.first,self.last=tonumber(f[4]),tonumber(f[5])
+  self.first,self.last=r.selectionStart,r.selectionEnd
   if field=='search' then
-    self.search=f[3]
+    self.search=r.value
     self.pendingSearch=self.search; self.searchDelay=action=='input' and 0.2 or 0
   elseif field=='name' and self.modal then
-    self.draft=f[3]
+    self.draft=r.value
     if action=='enter' then self:submit() end
   end
 end
 function Library:submit()
   local m=self.modal; if not m or self.busy then return end
   self:command('finish-input')
-  if m.mode=='delete' then self:command('delete',m.item.kind,m.item.id)
-  elseif m.mode=='create' then self:command('create',m.item.kind,self.draft)
-  elseif m.mode=='rename' then self:command('rename',m.item.kind,m.item.id,self.draft)
+  if m.mode=='delete' then self:command('delete',m.item.id)
+  elseif m.mode=='create' then self:command('create',self.draft)
+  elseif m.mode=='rename' then self:command('rename',m.item.id,self.draft)
   else return end
   m.pending=true
   -- The reply is heard even when it repeats the last message.

@@ -9,7 +9,6 @@
 package.path='frontend/lua/?.lua;frontend/lua/tests/?.lua;'..package.path
 local Stub=require('support.draw_stub').install()
 local Card=require('ui.card');Card.rebuild=function(self)self.texture={release=function()end}end
-local Codec=require('ui.codec')
 local Input=require('ui.text_input')
 local Wire=require('ui.wire_fields')
 local function check(ok,message) if not ok then error(message,2) end end
@@ -53,15 +52,7 @@ local function idle(label,screen)
   check(screen:editBox()==nil,label..': no box while no field edits')
 end
 
-local function row(tag,spec,fields)
-  local out={}
-  local width=0
-  for _,column in pairs(spec) do width=math.max(width,column) end
-  for i=1,width do out[i]='' end
-  if tag then out[1]=tag end
-  for name,value in pairs(fields) do out[assert(spec[name],name)]=Codec.encode(value) end
-  return table.concat(out,'\t')
-end
+local row=require('tests.support.snapshots').row
 local VIEWS={{1280,800,'landscape'},{480,850,'portrait'}}
 local function find(list,pred) for i,c in ipairs(list) do if pred(c) then return i,c end end end
 

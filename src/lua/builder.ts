@@ -33,6 +33,7 @@ import {
   suffixOptions,
 } from "../decks/catalog";
 import {
+  basicPokemonCount,
   remainingAllowedFor,
   validateDeck,
   countsBySupertype,
@@ -63,16 +64,17 @@ type Catalog = { query: ReturnType<typeof filtersToCardsQuery>; size: number; ke
 type Command = (a: string, b: string) => void | Promise<void>;
 /** Pages fetched on each side of the visible one, so paging never waits. */
 const PREFETCH_PAGES = 2;
-const SEARCH_DEBOUNCE_MS = 250;
+export const SEARCH_DEBOUNCE_MS = 250;
+/** How long after the last edit the deck saves. */
+export const SAVE_DELAY_MS = 600;
 /** How long a search may take before the results on screen show as busy (Lua dims them). A page
     that lands sooner, as every card-index search does, replaces them in one emit. */
-const SEARCH_BUSY_MS = 150;
+export const SEARCH_BUSY_MS = 150;
 const MAX_IMPORT_COPIES = 99;
 const MAX_CACHED_PAGES = 40;
 /** How soon after the Back press that armed it a second one may leave unsaved: a double click is
     not two decisions (the Leave match lockout, sim_overlay.lua). */
-const LEAVE_LOCKOUT_MS = 350;
-/** Browser data adapter. Lua owns the editor, its dialogs, and card interaction. */
+export const LEAVE_LOCKOUT_MS = 350;
 /** Messages for a failed load, the ones the Retry button answers. */
 const LOAD_FAILED = {
   deck: "Could not open this deck. Try again.",
@@ -182,6 +184,7 @@ function fromIndex(query: CardsQueryParams, page: number): boolean {
     UNCACHED_CATALOG_PARAMS.some((param) => query[param] !== undefined)
   );
 }
+/** Browser data adapter. Lua owns the editor, its dialogs, and card interaction. */
 export class LuaBuilder {
   id = "";
   name = "";
@@ -446,6 +449,7 @@ export class LuaBuilder {
         pokemon: groups.Pokémon,
         trainer: groups.Trainer,
         energy: groups.Energy,
+        basic: basicPokemonCount(deck),
       }),
     );
     for (const o of this.options()) {
@@ -603,6 +607,7 @@ export class LuaBuilder {
         );
       this.saver = createDeckSaver({
         initial,
+        delay: SAVE_DELAY_MS,
         save: async (snapshot) => {
           if (!live() || !this.user || this.deckGone) throw new Error("Session changed");
           const key = JSON.stringify(snapshot);

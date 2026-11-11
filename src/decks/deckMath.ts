@@ -19,8 +19,8 @@ import {
 import {
   type BuilderCard,
   deckRuleCardOf,
-  isBasicEnergy,
-  isBasicPokemon,
+  isBuilderBasicEnergy,
+  isBuilderBasicPokemon,
   type Supertype,
 } from "./cards";
 
@@ -57,7 +57,7 @@ export function copiesByName(deck: Deck): Map<string, number> {
 
 /** Number of Basic Pokémon copies — a legal deck needs at least one. */
 export function basicPokemonCount(deck: Deck): number {
-  return deck.reduce((sum, e) => sum + (isBasicPokemon(e.card) ? e.quantity : 0), 0);
+  return deck.reduce((sum, e) => sum + (isBuilderBasicPokemon(e.card) ? e.quantity : 0), 0);
 }
 
 function ruleEntriesOf(deck: Deck): DeckRuleEntry[] {
@@ -94,7 +94,7 @@ export function remainingAllowedFor(deck: Deck, format: Format): (card: BuilderC
   const aceTotal = copiesWhere(deck, isAceSpec);
   const radiantTotal = copiesWhere(deck, isRadiant);
   return (card) => {
-    if (isBasicEnergy(card)) {
+    if (isBuilderBasicEnergy(card)) {
       return Math.max(0, MAX_COPIES_PER_ENTRY - (names.get(card.name) ?? 0));
     }
     const own = names.get(card.name) ?? 0;

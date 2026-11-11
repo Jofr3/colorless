@@ -16,6 +16,7 @@ local Display=require('ui.display')
 local HitArea=require('ui.hit_area')
 local Modal=require('ui.modal')
 local Codec=require('ui.codec')
+local TextRecord=require('ui.text_record')
 local Mailbox=require('ui.mailbox')
 local W=require('ui.wire_fields').builder
 local Fit=require('ui.text_fit')
@@ -60,7 +61,7 @@ local function caption(text,size,x,y,w,colour,align)
   T.text(text,size,x,y,w,colour,align)
 end
 function Builder.new(callbacks)
-  local self=setmetatable({callbacks=callbacks,phase='loading',time=0,hover=0,focus=0,controls={},cards={},deckCards={},deckView='list',items={},deck={},options={},fields={},art={},pageText=PageText.new(),deckPageText=PageText.new(),page=1,pages=1,total=0,count=0,name='',format='standard',message='',saveStatus='',details='',transfer='',deckPage=1,deckType='all',tab='catalog',filterPage=1,editing='',values={},validation='',groups={0,0,0},choices={},optionKey='',optionLabel='',optionPage=1,optionPages=1},Builder)
+  local self=setmetatable({callbacks=callbacks,phase='loading',time=0,hover=0,focus=0,controls={},cards={},deckCards={},deckView='list',items={},deck={},options={},fields={},art={},pageText=PageText.new(),deckPageText=PageText.new(),page=1,pages=1,total=0,count=0,name='',format='standard',message='',saveStatus='',details='',transfer='',deckPage=1,deckType='all',tab='catalog',filterPage=1,editing='',values={},validation='',groups={0,0,0},basic=0,choices={},optionKey='',optionLabel='',optionPage=1,optionPages=1},Builder)
   self.transferArea=TextArea.new('Paste a decklist here...')
   return self
 end
@@ -229,7 +230,7 @@ function Builder:sync(raw)
     elseif r[1]=='L' then local l=W.pending
       self.deck[#self.deck+1]={id=r[l.cardId],name=r[l.name],kind='',subtype='',quantity=tonumber(r[l.quantity]) or 0,remaining=0,
         hp='',mark='',number='',copyLimit=0,illegal=false,gaps='',pending=true}
-    elseif r[1]=='V' then local v=W.validation;self.validation=r[v.message];self.groups={r[v.pokemon],r[v.trainer],r[v.energy]}
+    elseif r[1]=='V' then local v=W.validation;self.validation=r[v.message];self.groups={r[v.pokemon],r[v.trainer],r[v.energy]};self.basic=tonumber(r[v.basic]) or 0
     elseif r[1]=='O' then local o=W.option
       self.options[#self.options+1]={key=r[o.key],label=r[o.label],value=r[o.value],count=tonumber(r[o.count]) or 0,index=tonumber(r[o.index]) or 1,selected=r[o.selected]}
     elseif r[1]=='P' then local p=W.picker
@@ -567,8 +568,9 @@ function Builder:update(dt,time,mx,my,reduced)
     local raw=Mailbox.read(file)
     if raw then
       if file=='builder' then self:sync(raw)
-      elseif file=='builderInput' and raw~=self.inputRaw then
-        self.inputRaw=raw;local f=Codec.fields(raw);self.editing=f[6]=='input' and f[2] or '';self.values[f[2]]=f[3];self.first,self.last=tonumber(f[4]),tonumber(f[5]);if f[2]=='transfer'then self.transfer=f[3];self.clipboard=nil end
+      elseif file=='builderInput' then
+        local r=TextRecord.read(self,raw)
+        if r then self.editing=r.action=='input' and r.field or '';self.values[r.field]=r.value;self.first,self.last=r.selectionStart,r.selectionEnd;if r.field=='transfer'then self.transfer=r.value;self.clipboard=nil end end
       elseif file=='art' and raw~=self.artRaw then
         self.artRaw=raw;local old=self.art;self.art=Mailbox.artMap(raw)
         for _,c in ipairs(self.cards)do if self.art[c.item.id] and old[c.item.id]~=self.art[c.item.id]then c:rebuild()end end

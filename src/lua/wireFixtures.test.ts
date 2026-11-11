@@ -23,6 +23,7 @@ import { LobbyClient } from "../online/lobbyClient";
 import { fakeLobbyChannel, testSeatId } from "../test/fakeLobbyChannel";
 import { json, stubFetch } from "../test/fetchStub";
 import { USER } from "../test/fixtures";
+import { type AuthField, createAuthProxy, createTextProxy } from "../host/textProxy";
 import { LuaAccount } from "./account";
 import { LuaBuilder } from "./builder";
 import { LuaLibrary } from "./library";
@@ -30,6 +31,7 @@ import { LuaOnline } from "./online";
 import { LuaSandbox } from "./sandbox";
 import { LuaSimulator } from "./simulator";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
+import { memoryStorage } from "../test/storageStub";
 
 const SIM = WIRE_ROWS.sim;
 const GAME_PHASE = wireColumn(SIM.header, "gamePhase");
@@ -43,14 +45,6 @@ const pin = (name: string, raw: string) =>
 
 const parse = (raw: string) => raw.split("\n").map((r) => r.split("\t").map(decodeURIComponent));
 
-const memoryStorage = () => {
-  const storage = new Map<string, string>();
-  return {
-    getItem: (key: string) => storage.get(key) ?? null,
-    setItem: (key: string, value: string) => storage.set(key, value),
-    removeItem: (key: string) => storage.delete(key),
-  };
-};
 beforeEach(() => {
   vi.stubGlobal("localStorage", memoryStorage());
   vi.stubGlobal("sessionStorage", memoryStorage());
@@ -61,6 +55,22 @@ afterEach(() => {
 });
 
 const NEST_BALL = "nest-ball";
+
+/** The slice of a text field the proxies touch. */
+class FakeField extends EventTarget {
+  value = "";
+  hidden = true;
+  selectionStart = 0;
+  selectionEnd = 0;
+  focus() {}
+  select() {
+    this.setSelectionRange(0, this.value.length);
+  }
+  setSelectionRange(start: number, end: number) {
+    this.selectionStart = start;
+    this.selectionEnd = end;
+  }
+}
 
 /** Turn 1, p1 to act: an armed Active under a Stadium, a damaged opponent, a
     Nest Ball in hand. */
@@ -158,6 +168,31 @@ describe("Lua wire fixtures", () => {
     library.result = "ok";
     library.emit();
     await pin("library_snapshot.txt", published.at(-1) ?? "");
+  });
+
+  it("a text field's record and the sign-in form's", async () => {
+    const records: string[] = [];
+    const keyTarget = new EventTarget();
+    const write = (record: string) => records.push(record);
+    const text = createTextProxy({
+      element: new FakeField() as unknown as HTMLInputElement,
+      write,
+      release: () => {},
+      keyTarget,
+    });
+    text.open("search", "Éclair", true);
+    await pin("text_record.txt", records.at(-1) ?? "");
+    const inputs = { email: new FakeField(), password: new FakeField(), name: new FakeField() };
+    inputs.email.value = "ash@example.com";
+    inputs.password.value = "pikachu";
+    const auth = createAuthProxy({
+      inputs: inputs as unknown as Record<AuthField, HTMLInputElement>,
+      write,
+      release: () => {},
+      keyTarget,
+    });
+    auth.edit("password");
+    await pin("auth_record.txt", records.at(-1) ?? "");
   });
 
   it("the deck builder", async () => {

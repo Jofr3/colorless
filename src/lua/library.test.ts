@@ -6,6 +6,7 @@ import { deckStore } from "../decks/deckStore";
 import { decodeFields, encodeFields } from "./wire";
 import { LuaLibrary } from "./library";
 import { WIRE_ROWS, wireColumn } from "./wireFields";
+import { memoryStorage } from "../test/storageStub";
 
 const decks = [
   {
@@ -46,11 +47,7 @@ const setup = async () => {
   return { library, publish, open };
 };
 beforeEach(() => {
-  const values = new Map<string, string>();
-  vi.stubGlobal("localStorage", {
-    getItem: (key: string) => values.get(key) ?? null,
-    setItem: (key: string, value: string) => values.set(key, value),
-  });
+  vi.stubGlobal("localStorage", memoryStorage());
 });
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -182,13 +179,12 @@ describe("Lua deck library", () => {
     await library.command("page\t1");
     expect(library.page).toBe(1);
   });
-  it("ignores stale folder commands without reading or mutating folders", async () => {
+  it("ignores a command it has no action for, and a rename or delete of no deck", async () => {
     const { calls } = stubFetch(reads);
     const { library } = await setup();
-    await library.command("move\tfolder\tf\tchild");
-    await library.command("move\tfolder\tf\tf");
-    await library.command("create\tfolder\tHidden");
-    await library.command("delete\tfolder\tf");
+    await library.command("move\tf\tchild");
+    await library.command("rename\tmissing\tName");
+    await library.command("delete\tmissing");
     expect(calls).toEqual(["GET /decks"]);
   });
   it("creates root decks and validates names", async () => {
@@ -197,13 +193,13 @@ describe("Lua deck library", () => {
       "POST /decks": () => json(saved("n", "A new deck", -1), 201),
     });
     const { library } = await setup();
-    await library.command("create\tdeck\t%20%20");
+    await library.command("create\t%20%20");
     expect(library.message).toContain("1 to 100");
     library.message = "";
-    await library.command(encodeFields(["create", "deck", "x".repeat(101)]));
+    await library.command(encodeFields(["create", "x".repeat(101)]));
     expect(library.message).toContain("1 to 100");
     expect(impl.mock.calls.some(([, i]) => i?.method === "POST")).toBe(false);
-    await library.command(encodeFields(["create", "deck", "  A new deck  "]));
+    await library.command(encodeFields(["create", "  A new deck  "]));
     const call = impl.mock.calls.find(([, i]) => i?.method === "POST");
     expect(JSON.parse(String(call?.[1]?.body))).toMatchObject({
       name: "A new deck",
@@ -219,17 +215,17 @@ describe("Lua deck library", () => {
       "DELETE /decks/a": () => new Response(null, { status: 204 }),
     });
     const { library } = await setup();
-    await library.command(encodeFields(["rename", "deck", "b", " Renamed "]));
+    await library.command(encodeFields(["rename", "b", " Renamed "]));
     const patch = impl.mock.calls.find(([, i]) => i?.method === "PATCH");
     expect(JSON.parse(String(patch?.[1]?.body))).toEqual({ name: "Renamed" });
-    await library.command("delete\tdeck\ta");
+    await library.command("delete\ta");
     expect(impl.mock.calls.filter(([, i]) => i?.method === "DELETE")).toHaveLength(1);
     expect(library.result).toBe("ok");
   });
   it("reconciles a failed deck write and keeps the error visible", async () => {
     const { calls } = stubFetch({ ...reads, "PATCH /decks/b": () => json({}, 503) });
     const { library } = await setup();
-    await library.command("rename\tdeck\tb\tRenamed");
+    await library.command("rename\tb\tRenamed");
     expect(calls.filter((c) => c === "GET /decks")).toHaveLength(2);
     expect(library.result).toBe("error");
     expect(library.message).toContain("Could not save");
@@ -249,7 +245,7 @@ describe("Lua deck library", () => {
     });
     const { library, publish } = await setup();
     named = "Renamed";
-    const rename = library.command(encodeFields(["rename", "deck", "b", "Renamed"]));
+    const rename = library.command(encodeFields(["rename", "b", "Renamed"]));
     await vi.waitFor(() => expect(header(publish.mock.lastCall?.[0])("result")).toBe("ok"));
     expect(header(publish.mock.lastCall?.[0])("busy")).toBe("0");
     expect(library.decks.find((d) => d.id === "b")?.name).toBe("Renamed");
@@ -270,10 +266,10 @@ describe("Lua deck library", () => {
       if (this.result === "ok" && shown.length === 0) shown = this.decks.map((d) => d.id);
       return LuaLibrary.prototype.emit.call(this);
     });
-    await library.command(encodeFields(["create", "deck", "Fresh"]));
+    await library.command(encodeFields(["create", "Fresh"]));
     expect(shown).toEqual(["n", "a", "b", "c"]);
     shown = [];
-    await library.command("delete\tdeck\ta");
+    await library.command("delete\ta");
     expect(shown).not.toContain("a");
     watch.mockRestore();
   });
@@ -303,7 +299,7 @@ describe("Lua deck library", () => {
       "POST /decks": () => json({ error: "deck limit reached", limit: 500 }, 409),
     });
     const { library } = await setup();
-    await library.command(encodeFields(["create", "deck", "One more"]));
+    await library.command(encodeFields(["create", "One more"]));
     expect(library.result).toBe("error");
     expect(library.message).toBe("Your library is full (500 decks). Delete one to make room.");
   });
@@ -314,10 +310,10 @@ describe("Lua deck library", () => {
       "DELETE /decks/a": () => json({ error: "deck not found" }, 404),
     });
     const { library } = await setup();
-    await library.command("rename\tdeck\tb\tRenamed");
+    await library.command("rename\tb\tRenamed");
     expect(library.result).toBe("error");
     expect(library.message).toBe("Too many changes. Wait a minute.");
-    await library.command("delete\tdeck\ta");
+    await library.command("delete\ta");
     expect(library.message).toBe("Could not save the change. Please try again.");
   });
   it("falls back from saved Manual and ignores stale manual sort/reorder commands", async () => {

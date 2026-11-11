@@ -193,7 +193,7 @@ export const WIRE_ROWS = {
     },
     /** A deck entry whose card details are still on their way: no card fields, no controls. */
     pending: { tags: ["L"], fields: ["cardId", "name", "quantity"] },
-    validation: { tags: ["V"], fields: ["message", "pokemon", "trainer", "energy"] },
+    validation: { tags: ["V"], fields: ["message", "pokemon", "trainer", "energy", "basic"] },
     option: {
       tags: ["O"],
       fields: ["key", "label", "value", "count", "index", "selected"],
@@ -248,6 +248,26 @@ export const WIRE_ROWS = {
         "namePrompt",
         "invalid",
         "failures",
+      ],
+    },
+  },
+  /** The text proxies' records (src/host/textProxy.ts): `text` for one field, `auth` for the
+   * sign-in form, its password masked. */
+  input: {
+    text: {
+      fields: ["revision", "field", "value", "selectionStart", "selectionEnd", "action"],
+    },
+    auth: {
+      fields: [
+        "revision",
+        "editing",
+        "email",
+        "password",
+        "name",
+        "selectionStart",
+        "selectionEnd",
+        "action",
+        "field",
       ],
     },
   },

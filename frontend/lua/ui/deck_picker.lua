@@ -10,13 +10,30 @@ local DeckPicker={}
 -- The pager, anchored at the room's centre.
 DeckPicker.PAGER={face=-119,w=238,arrow=32,h=36,textScale=0.4}
 local TRAY_EMBOSS={T.panel[1]*0.7,T.panel[2]*0.7,T.panel[3]*0.7,1}
+-- A capital in Latin-1 or Latin Extended-A to its small letter, as JavaScript's toLowerCase maps
+-- it; any other code point as it is. İ, whose small form is two code points, stays.
+local function smallLetter(cp)
+  if cp>=0xC0 and cp<=0xDE and cp~=0xD7 then return cp+32 end
+  if cp==0x178 then return 0xFF end
+  if cp%2==0 and (cp>=0x100 and cp<=0x136 and cp~=0x130 or cp>=0x14A and cp<=0x176) then return cp+1 end
+  if cp%2==1 and (cp>=0x139 and cp<=0x147 or cp>=0x179 and cp<=0x17D) then return cp+1 end
+  return cp
+end
+-- `text` in small letters for a search, as the deck library's (src/lua/library.ts) folds it for
+-- ASCII, Latin-1 and Latin Extended-A; Lua's lower() alone leaves É as it is.
+function DeckPicker.fold(text)
+  return (text:lower():gsub('([\195-\197])([\128-\191])',function(lead,tail)
+    local cp=smallLetter((lead:byte()-192)*64+tail:byte()-128)
+    return string.char(192+math.floor(cp/64),128+cp%64)
+  end))
+end
 -- The decks whose names hold the query, trimmed, ignoring case and taken literally, and that
 -- `keep` (when given) keeps.
 function DeckPicker.matches(decks,query,keep)
   local out={}
-  local q=query:lower():match('^%s*(.-)%s*$')
+  local q=DeckPicker.fold(query):match('^%s*(.-)%s*$')
   for _,d in ipairs(decks) do
-    if (not keep or keep(d)) and (q=='' or d.name:lower():find(q,1,true)) then out[#out+1]=d end
+    if (not keep or keep(d)) and (q=='' or DeckPicker.fold(d.name):find(q,1,true)) then out[#out+1]=d end
   end
   return out
 end

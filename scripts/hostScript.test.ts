@@ -260,8 +260,11 @@ function boot({
     connect(bridge: {
       onDegraded(state: string): void;
       onPrint(): void;
-      mailboxes?: typeof MAILBOXES;
+      mailboxes?: Record<string, string>;
+      artwork?: { get(id: string): Promise<Blob | null> };
+      artSlots?: number;
     }): void;
+    wantArt(cards: readonly { id: string; url: string }[]): void;
   };
   const degraded: string[] = [];
   host.connect({
@@ -839,6 +842,43 @@ describe("host.js menu music (BT8)", () => {
     await settle();
     expect(musicFetches(page)).toHaveLength(2);
     expect(page.written.has("/assets/sounds/music1.ogg")).toBe(false);
+  });
+});
+
+describe("host.js card art", () => {
+  const cards = (from: number, to: number) =>
+    Array.from({ length: to - from }, (_, i) => ({ id: `c${from + i}`, url: `/art/c${from + i}` }));
+  const staged = (page: ReturnType<typeof boot>) =>
+    [...page.written.keys()].filter((path) => path.startsWith("/__card_art_"));
+
+  it("keeps as many cards as the bridge's artSlots, and evicts one for the next", async () => {
+    const slots = 5;
+    const page = boot();
+    page.start();
+    // Each card is in the store once; an evicted one Lua still wants goes to the network, which
+    // never answers here, so a list over the host's limit stalls rather than reloading forever.
+    const stored = new Set<string>();
+    page.host.connect({
+      onDegraded() {},
+      onPrint() {},
+      mailboxes: { ...MAILBOXES, art: "__art.txt" },
+      artSlots: slots,
+      artwork: {
+        get: async (id) => {
+          if (stored.has(id)) return null;
+          stored.add(id);
+          return new Blob([new Uint8Array(3)]);
+        },
+      },
+    });
+    page.host.wantArt(cards(0, slots));
+    for (let i = 0; i < slots; i++) await settle();
+    expect(staged(page)).toHaveLength(slots);
+    const before = staged(page);
+    page.host.wantArt(cards(slots, slots + 1));
+    for (let i = 0; i < 4; i++) await settle();
+    expect(staged(page)).toHaveLength(slots);
+    expect(before.filter((path) => !page.written.has(path))).toHaveLength(1);
   });
 });
 
