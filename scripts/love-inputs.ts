@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
-// The Lua build's two inputs from outside the repo (dependency audit VER10, decision 14): the
-// love.js package installed in the Balatro source tree, and that tree's resources. love.js stays
-// on 11.4.1 (LÖVE 11.4), its final npm release; `LOVE_JS` pins its version and the sha256 of the
-// four files the build runs or copies, so a reinstall that changes any of them stops the build
-// with the file named instead of shipping a different runtime. The source tree is recorded, not
-// pinned: its git commit and whether its resources differ from it, beside the copied files'
-// hashes (build.mjs writes both into public/love/asset-manifest.json).
+// The Lua build's two inputs from outside the repo: the love.js package installed in the Balatro
+// source tree, and that tree's resources. love.js stays on 11.4.1 (LÖVE 11.4), its final npm
+// release; `LOVE_JS` pins its version and the sha256 of the four files the build runs or copies, so
+// a reinstall that changes any of them stops the build with the file named instead of shipping a
+// different runtime. The source tree is recorded, not pinned: its git commit and whether its
+// resources differ from it, beside the copied files' hashes (build.mjs writes both into
+// public/love/asset-manifest.json).
 //
 //   bun scripts/love-inputs.ts <balatro-source>
 //

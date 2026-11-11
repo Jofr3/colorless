@@ -10,7 +10,7 @@
  * The seed defaults to GITHUB_SHA, then HEAD, so a re-run of one commit picks the same rows. An
  * unknown base (a first push, a force-push) is reported and the run continues with the draw. A
  * known base whose diff still fails stops the run: without it the job would stay green while
- * running no targeted row (build audit CI8).
+ * running no targeted row.
  */
 
 import { spawnSync } from "node:child_process";
@@ -70,7 +70,7 @@ type Git = (...args: string[]) => string | undefined;
 
 /** The files changed since `base`, or why there are none. `--no-renames` lists both sides of a
     rename and reads no file contents: rename detection would fetch blobs, which CI's blob:none
-    checkout lacks and, with no credentials kept, cannot fetch (build audit CI8). */
+    checkout lacks and, with no credentials kept, cannot fetch. */
 export function changedSince(
   base: string,
   run: Git = git,

@@ -1,12 +1,12 @@
 #!/usr/bin/env bun
-// The site's third-party notices (dependency audit TRN4, DEP-P4): one plain-text file, written by
-// the Lua build (frontend/lua/build.mjs) into public/love/, which Vite copies to
+// The site's third-party notices: one plain-text file, written by the Lua build
+// (frontend/lua/build.mjs) into public/love/, which Vite copies to
 // dist/love/THIRD-PARTY-NOTICES.txt; index.html's Credits link and Settings' Credits button open
 // it. It holds the fan-project disclaimer, Colorless's own LICENSE, the credits for the Balatro
-// assets and the m6x11plus font the build copies, the TCGdex and Pokémon notices, the licence
-// text of every npm package the web page and the API Worker may ship, love.js, and LÖVE with the
-// libraries love.wasm carries. Package texts come from node_modules; texts a package does not
-// ship, and the ones from outside npm, are kept in scripts/notices/ (`VENDORED`).
+// assets and the m6x11plus font the build copies, the TCGdex and Pokémon notices, the licence text
+// of every npm package the web page and the API Worker may ship, love.js, and LÖVE with the
+// libraries love.wasm carries. Package texts come from node_modules; texts a package does not ship,
+// and the ones from outside npm, are kept in scripts/notices/ (`VENDORED`).
 //
 //   bun scripts/third-party-notices.ts --love-js <dir> --out <file> [--balatro <resource>]...
 

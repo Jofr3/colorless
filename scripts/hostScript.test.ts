@@ -15,7 +15,7 @@ const SOURCE = readFileSync(repoPath("frontend/lua/web/host.js"), "utf8").replac
 );
 /** The two mailboxes host.js writes itself before Lua's first frame (src/host/mailboxes.ts). */
 const MAILBOXES = { viewport: "__viewport.txt", revisions: "__mailbox_revisions.txt" };
-/** build.mjs's versions for the deferred transition scans (audit BT9). */
+/** build.mjs's versions for the deferred transition scans. */
 const CARD_VERSIONS = {
   "transition_cards/sv01-030.png": "aaa111",
   "transition_cards/sv01-033.png": "bbb222",

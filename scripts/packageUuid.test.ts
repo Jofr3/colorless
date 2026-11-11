@@ -1,6 +1,6 @@
-// frontend/lua/packageUuid.mjs (build audit BLD1): the Lua build's game.js names its package by a
-// uuid derived from game.data, which love.js's loader compares with the one stored beside its
-// IndexedDB copy. It lives here for the Node types.
+// frontend/lua/packageUuid.mjs: the Lua build's game.js names its package by a uuid derived from
+// game.data, which love.js's loader compares with the one stored beside its IndexedDB copy. It
+// lives here for the Node types.
 
 import { describe, expect, it } from "vitest";
 import { repoPath } from "./lib/repo";

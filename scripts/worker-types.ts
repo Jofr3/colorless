@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 /**
  * Fails when apps/api/worker-configuration.d.ts is not what the apps/api `types` script would
- * generate now (dependency audit VER8). That file holds the bindings `wrangler types` reads from
- * wrangler.jsonc and the Workers runtime types for its compatibility_date and the installed
- * workerd; apps/api/src/env.ts types every binding from it. Two checks, offline:
+ * generate now. That file holds the bindings `wrangler types` reads from wrangler.jsonc and the
+ * Workers runtime types for its compatibility_date and the installed workerd; apps/api/src/env.ts
+ * types every binding from it. Two checks, offline:
  *
  * - The header records the command that generated the file. It must be the `types` script's
  *   `wrangler types` step. A plain `wrangler types` reads apps/api/.dev.vars, so it would put a

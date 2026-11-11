@@ -3,8 +3,7 @@
  * Fails when shipped Lua could write to stdout outside `frontend/lua/ui/bridge.lua`. love.js hands
  * the page one stdout line per byte 10 and `src/host/shell.ts` runs every line that starts with
  * `COLORLESS:` as a command, so a print of unencoded data, such as an opponent's name holding a
- * newline, can forge commands (security audit WC1). The bridge encodes every payload; everything
- * else sends through it.
+ * newline, can forge commands. The bridge encodes every payload; everything else sends through it.
  */
 
 import { readdirSync, readFileSync } from "node:fs";

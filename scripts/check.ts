@@ -20,9 +20,9 @@ import { localBin, REPO_ROOT, repoPath } from "./lib/repo";
 const OVERRIDE = "CHECK_DURING_MUTATION";
 
 /**
- * Why a check now would read mutated source, if it would. `scripts/mutation/run.ts` keeps its
+ * Why a check would read mutated source at this moment, if it would. `scripts/mutation/run.ts` keeps its
  * journal on disk exactly while a mutant is written: a live writer is mid-sweep, and a dead one
- * left its files unrestored. Either way the steps would go red for nothing (D411).
+ * left its files unrestored. Either way the steps would go red for nothing.
  */
 function mutationJournalProblem(): string | undefined {
   if (process.env[OVERRIDE] === "1") return undefined;

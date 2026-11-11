@@ -4,7 +4,7 @@
  * list in scripts/audit-ignore.txt. CI's static job and the release's `audit` gate
  * (apps/api/scripts/release-gate.ts) both run this script, so an advisory ignored for CI is
  * ignored for a release too, and an urgent release is never blocked by an advisory CI already
- * accepts (build audit CI1). Exits with bun audit's status.
+ * accepts. Exits with bun audit's status.
  *
  *   bun scripts/audit.ts
  */

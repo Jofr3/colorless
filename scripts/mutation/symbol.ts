@@ -2,7 +2,7 @@
 // can refuse to move it onto an identical fragment in some other function.
 
 // TypeScript 7 (the Go compiler) has no stable compiler API yet, so the parser comes from
-// TypeScript 6 under its own name; port to TS 7.1's API when it is stable (DEP-P5).
+// TypeScript 6 under its own name; port to TS 7.1's API when it is stable.
 import ts from "@typescript/typescript6";
 
 const parsed = new Map<string, { text: string; sf: ts.SourceFile }>();

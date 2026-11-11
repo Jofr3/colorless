@@ -1,11 +1,11 @@
 #!/usr/bin/env bun
 /**
- * The monthly dependency report (docs/conventions.md, "Dependencies"; dependency audit PRC8). It
+ * The monthly dependency report (docs/conventions.md, "Dependencies"). It
  * prints, in order: `bun outdated -r`; the full `bun audit` and CI's `--prod` gate; lock-check's
  * verdict; every bun.lock package the registry marks deprecated; the toolchain pins against the
  * local bun and node; dependencies declared in two workspaces with different specs; the two
  * `compatibility_date`s and their age; and the advisories and release-notes pages of the packages
- * that ship in the Worker, which GitHub's database can lag (hono's of 2026-11-01).
+ * that ship in the Worker, which GitHub's advisory database can lag by days.
  *
  * A report, never a gate: it exits 0 whatever it finds, and needs the network, so it is not in
  * `check:static` and `release` does not run it.
@@ -25,7 +25,7 @@ const REGISTRY = "https://registry.npmjs.org";
 /** Every workspace manifest, root first (the root's `workspaces` are these three). */
 const MANIFESTS = ["package.json", ...SHIPPED.map(manifest)];
 
-/** Both Workers' configs; their `compatibility_date`s move together (PRC11). */
+/** Both Workers' configs; their `compatibility_date`s move together. */
 const WRANGLER_CONFIGS = ["wrangler.jsonc", "apps/api/wrangler.jsonc"];
 
 /** A `compatibility_date` older than this is due a move, as the quarterly floor says. */
@@ -78,9 +78,9 @@ export function deprecations(
 }
 
 /**
- * Names declared in more than one manifest with different specs (PRC7: a dependency declared in
- * two workspaces carries the same spec), each with every `manifest: spec` pair. Workspace links
- * are skipped.
+ * Names declared in more than one manifest with different specs (a dependency declared in two
+ * workspaces carries the same spec), each with every `manifest: spec` pair. Workspace links are
+ * skipped.
  */
 export function specConflicts(
   manifests: readonly { path: string; manifest: unknown }[],

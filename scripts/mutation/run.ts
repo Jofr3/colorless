@@ -650,7 +650,7 @@ async function main(): Promise<void> {
     console.log(
       allowDirty
         ? `⚠️  --allow-dirty: mutating ${dirty.length} file(s) with uncommitted changes:\n${dirty.map((f) => `      ${f}`).join("\n")}\n`
-        : `⚠️  ${dirty.length} target file(s) have uncommitted changes and will be SKIPPED\n    (another agent may be editing them — see the D215 block in this file):\n${dirty.map((f) => `      ${f}`).join("\n")}\n`,
+        : `⚠️  ${dirty.length} target file(s) have uncommitted changes and will be SKIPPED\n    (another agent may be editing them — see the concurrency gate in scripts/mutation/run.ts):\n${dirty.map((f) => `      ${f}`).join("\n")}\n`,
     );
   }
 
@@ -693,7 +693,7 @@ async function main(): Promise<void> {
   );
 
   // Timeouts are counted in their verdict above; the summary line's format is quoted verbatim in
-  // docs/conventions.md (D503), so they are listed here instead.
+  // docs/conventions.md, so they are listed here instead.
   for (const row of timedOut) {
     console.log(`  ⏱  ${row.verdict} TIMEOUT  ${row.mutant.id} — ${row.note}`);
   }
