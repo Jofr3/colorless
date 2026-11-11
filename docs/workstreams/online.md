@@ -26,6 +26,7 @@ Durable Object.
   rewritten.
 - User decisions: the deck picker has a view-only regulation filter (All / Standard legal / Not
   Standard / Expanded legal / Not Expanded); spectating is not offered in Lua ("Lobby is full");
+  MNT-P3 removed kick and the DO's spectator broadcast, so a seatless socket is answered "full";
   the in-match Leave asks to be pressed again. Browser Back from the table goes Home, which forfeits
   a live match; closing the tab starts the 90 s abandonment.
 - Verified at the time in two headless browsers (create, link and typed join, kick, sign-in
@@ -56,7 +57,8 @@ The lobby DO now bounds what one client can cost (details in `backend-data.md` Â
 - **Frames:** a per-socket token bucket (burst 40, 5 a second) and a 16K-character frame cap;
   over either the socket is closed (1008 / 1009) and its seat takes the usual grace. The client
   reconnects as after any drop.
-- **Sockets:** 12 per lobby (2 seats, 8 spectators, 2 reload slack). Past that a joiner's hello is
+- **Sockets:** 12 per lobby (2 seats, 8 spectators, 2 reload slack; since MNT-P3 the 8 are refused
+  tabs, as spectating is gone). Past that a joiner's hello is
   answered `reject full` ("Lobby is full") and the socket closed with 1013; an account holding a
   seat still gets back in (up to 16), so watchers cannot lock a player out of their match.
 - **Inactivity:** no commit, accepted action or seated hello for an hour closes every socket with
@@ -89,11 +91,13 @@ Wire change, shipped with the web client in one release (the deploy drops every 
 - **Old clients.** A hello whose `from` is not a secret (a pre-split client's UUID) is answered
   `reject full` to that `from`, logged `hello_refused cause=credential`, and seats nothing: an old
   cached tab shows "Lobby is full" until reloaded. An identity saved by an old client is ignored,
-  so a reloaded tab joins as a fresh guest.
+  so a reloaded tab joins as a fresh guest. Removed in MNT-P3: such a hello is now dropped like an
+  invalid frame, and `cause=credential` is gone.
 - **Stored lobbies.** A lobby stored before the split (a seat id that is not a public id) cannot
   be carried over: its ids were public, and no client holds a secret that hashes to them. The DO
   wipes it, on the next `/ws` (closed at once with 4004, "Lobby not found") or on its next alarm (live sockets
-  closed with 4000), logging `lobby_wiped cause=legacy`. Players create a new lobby.
+  closed with 4000), logging `lobby_wiped cause=legacy`. Players create a new lobby. Removed in
+  MNT-P3: such a snapshot reads as none, and the lobby is wiped as inactive.
 
 ## Build log (history)
 
