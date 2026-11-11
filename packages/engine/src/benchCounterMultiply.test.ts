@@ -27,7 +27,7 @@ import {
 const RAGING_CRASH =
   "This attack does 10 damage for each damage counter on all of your Benched Pokémon.";
 const BALLOON_BLAST = "This attack does 30 damage for each damage counter on this Pokémon.";
-/** The self-side ADDITIVE twin, read since M2 (Paldean Tauros sv02-028). */
+/** The self-side ADDITIVE twin, already read (Paldean Tauros sv02-028). */
 const RAGING_HORNS = "This attack does 10 more damage for each damage counter on this Pokémon.";
 const BURNING_VOICE = "This attack does 10 less damage for each damage counter on this Pokémon.";
 const SECOND_BITE =

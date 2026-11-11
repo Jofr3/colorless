@@ -661,7 +661,7 @@ describe("D532 §4 — the park offers EXACTLY the opponent's in-play Pokémon, 
       expect(ids(a.state, a.state.players[defender].discard)).toEqual([R_ENERGY, SPECIAL, ITEM]);
       expect(a.state.players[attacker].discard).toEqual(before.players[attacker].discard);
       expect(pokemonPrompt(a.state).candidates).toEqual(refs); // the offer is re-derived and identical
-      // Park 2 → bench 0 (B01: {R} and the Special are still unlike, so the card is asked again).
+      // Park 2 → bench 0 ({R} and the Special are still unlike, so the card is asked again).
       const b = pickCard(pick(a.state, attacker, second).state, attacker, pile[1] as string);
       expect(types(b.events)).toEqual(["ENERGY_ATTACHED", "EFFECT_PENDING"]);
       expect(attachedRows(b.events)).toEqual([

@@ -22,9 +22,9 @@ import { clearedAttackEffects, clearedSideInstalls, freshAllowances, makeInPlay 
 // A persisted state is read back as-is only when its version matches, so any change to its shape
 // must come with a version bump. This pins a key-and-type skeleton of that shape, together with the
 // version it was taken at, in `persistShape.snap`. A fresh game holds every install field empty and
-// no parked op, so the skeleton also takes fixed samples (reliability audit EN5): a body and a side
-// with every install field set by the op that installs it, and one program parked on each prompt
-// kind, some after a first answer. A new field inside an install record or a parked op then
+// no parked op, so the skeleton also takes fixed samples: a body and a side with every install
+// field set by the op that installs it, and one program parked on each prompt kind, some after a
+// first answer. A new field inside an install record or a parked op then
 // changes the skeleton too.
 
 const STALE = `the persisted state shape or GAME_STATE_VERSION no longer matches persistShape.snap. A shape change needs a version bump in persist.ts (with a migration step if old states can be carried forward); then rewrite the snapshot with "bunx vitest run packages/engine/src/persistShape.test.ts -u"`;

@@ -165,7 +165,8 @@ function junkChoice(rng: Rng, seat: Seat): Record<string, unknown> {
   return { type: "resolveEffect", seat, choice };
 }
 
-/** The turn-1 crafted attack MI3 names, aimed at whichever seat is acting. */
+/** The turn-1 crafted attacks whose index names an inherited array member ("__proto__", …),
+    aimed at whichever seat is acting. */
 function prototypeAttacks(state: GameState): Record<string, unknown>[] {
   if (state.phase.kind !== "turn:action") return [];
   const seat = state.phase.seat;

@@ -565,7 +565,9 @@ describe("§7 — the bump, and the corruption it refuses", () => {
       InPlayPokemon["conditions"],
       "confusionDamage"
     > & { confusionDamage?: number };
-    // The key must be genuinely ABSENT. `= undefined` leaves it PRESENT, which is the exact distinction D124's rule turns on and the one this case exists to drive.
+    // The key must be genuinely ABSENT: an absent key, not one set to undefined, is what an
+    // older record looks like. `= undefined` leaves it PRESENT, and that distinction is the one
+    // this case exists to drive.
     delete body.confusionDamage;
     expect("confusionDamage" in body).toBe(false);
 

@@ -322,7 +322,7 @@ describe("§3 — the empty board asks nothing at all", () => {
 
   it("ONE offered Tool still ASKS — `parkOrForce`'s ceiling rule (D359)", () => {
     // There is no forced pick when 0 is always legal, so an offer of ONE is a real
-    // question and NOT the M1 "a choice with no choice in it" case. This is the rung
+    // question and NOT the "a choice with no choice in it" case. This is the rung
     // that separates this op from every mandatory discard beside it.
     const start = ready({ tools: ["d543-tool-a", null], benched: false });
     const { state } = attack(start, STRIP);

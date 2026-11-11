@@ -112,7 +112,7 @@ describe("attack costs (§6.4, §8.2)", () => {
     const { events } = mustApply(matchup("fix-wall", { fire: 0 }), {
       type: "attack",
       seat: "p1",
-      index: 2, // Yawn — no cost, no damage, a derived sleep effect (M3)
+      index: 2, // Yawn — no cost, no damage, a derived sleep effect
     });
     expect(types(events)).not.toContain("DAMAGE_DEALT");
     // The text derives (effects.ts), so nothing is skipped — the defender
@@ -456,7 +456,7 @@ describe("promotion (§8.1)", () => {
   });
 
   it("rejects a promotion onto an occupied Active spot (crafted)", () => {
-    // Unreachable through M2 actions (nothing refills the spot while
+    // Unreachable through legal actions (nothing refills the spot while
     // parked) — resolving anyway would overwrite the occupant's whole stack
     // with no event, so the handler mirrors advance's occupied guard.
     const { state } = parkedOnPromotion();
@@ -506,7 +506,7 @@ describe("promotion (§8.1)", () => {
 
 describe("win conditions (§14)", () => {
   it("wins by taking the last prize — auto-resolved, before any promotion", () => {
-    // One prize from victory: the forced last pick never parks (M1 doctrine),
+    // One prize from victory: the forced last pick never parks (no-choice rule),
     // and the game ends before p2's promotion is ever prompted.
     const state = setPrizes(matchup("fix-weak", { bench: 1 }), "p1", 1);
     const { state: done, events } = bite(state);
@@ -550,9 +550,9 @@ describe("win conditions (§14)", () => {
   });
 
   it("surfaces a TIE when both seats meet a condition at once", () => {
-    // Unreachable through M2 actions (attacks never KO the attacker's own
-    // side) — evaluateWin still has to resolve it per §14 for M3's checkup
-    // damage. Crafted board: p1 out of prizes AND out of Pokémon.
+    // Unreachable through a plain attack (attacks never KO the attacker's own
+    // side) — evaluateWin still has to resolve it per §14 for checkup damage.
+    // Crafted board: p1 out of prizes AND out of Pokémon.
     const base = matchup("fix-wall");
     const crafted: GameState = {
       ...base,

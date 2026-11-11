@@ -36,7 +36,7 @@ const BOARD_COUNTERS =
 const ACTIVE_COUNTERS =
   "This attack does 10 more damage for each damage counter on your opponent's Active Pokémon.";
 
-/** The shipped SELF-side sibling (M2) — the same resource off the attacking body.
+/** The shipped SELF-side sibling — the same resource off the attacking body.
     It is what makes §4's zero-match board distinguishable from a dead reader: on
     the very board where `BOARD_COUNTERS` adds nothing, this one adds 40. */
 const SELF_COUNTERS = "This attack does 10 more damage for each damage counter on this Pokémon.";

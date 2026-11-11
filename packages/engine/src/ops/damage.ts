@@ -1404,7 +1404,7 @@ export function anyWayDestinations(
 }
 
 /** A round's SOURCES: damaged, unshielded opponent bodies in the zone that have at least one
-    destination to move to (a source with nowhere to go is not offered — the M1 rule). */
+    destination to move to (a source with nowhere to go is not offered — the no-choice rule). */
 export function anyWaySources(
   state: GameState,
   ctx: EffectContext,

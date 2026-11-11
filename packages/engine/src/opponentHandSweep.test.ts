@@ -235,7 +235,7 @@ describe("§3 — the derived program", () => {
   });
 
   it("neither near-miss spelling is claimed — the anchor is the WHOLE sentence", () => {
-    // The head alone still derives to the bare reveal it has derived to since M5…
+    // The head alone still derives to the bare reveal…
     expect(deriveAttackEffect(SWEEP_HEAD)).toEqual([{ op: "revealOpponentHand" }]);
     // …and the TAIL alone is claimed by NOBODY, which is §7's whole subject.
     expect(deriveAttackEffect(SWEEP_TAIL)).toBeNull();

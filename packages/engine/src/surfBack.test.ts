@@ -260,7 +260,7 @@ describe("D312 §3 — THE SEAM AT ITS SECOND SITE, and the ORDER that makes it 
       must(applyAction(board({ bench: 1, defender: FILLER }), SURF_BACK)),
       YES,
     );
-    // The M1 no-choice doctrine: no prompt, and the tail drained straight through.
+    // The no-choice rule: no prompt, and the tail drained straight through.
     expect(events.map((e) => e.type)).not.toContain("PROMOTION_REQUIRED");
     expect(events.map((e) => e.type)).toContain("TURN_ENDED");
     expect(done.players.p1.active).not.toBeNull();

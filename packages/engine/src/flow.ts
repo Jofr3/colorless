@@ -82,7 +82,7 @@ import {
 // inside it: turn start with its deck-out check, the Pokémon Checkup (§13),
 // KO prize/promotion resolution and the §14 win evaluation. endTurn and
 // attack both funnel through `advance`, which is what lets a KO stop the
-// tail mid-sequence for a player decision — M1's fused endTurn could not.
+// tail mid-sequence for a player decision.
 
 /** Advance to `seat`'s turn: fresh allowances, TURN_STARTED, the mandatory
     draw with its deck-out loss check (§5.1, §14.3). The first player DOES
@@ -1894,8 +1894,7 @@ function resolvePromotion(
 // resolve → pop → win-check → resume sequence cannot drift between them.
 // The §14 evaluation sits at this one defined point: taking the last prize
 // ends the game before any promotion is prompted (§14.1), and the promote
-// path is covered too (unobservable until M3 — M2 promotions cannot create
-// wins, except the empty-bench §14.2 loss resolved right here).
+// path is covered too (the empty-bench §14.2 loss resolves right here).
 
 /** Move the picked prizes to hand, pop the stage, win-check, resume (§8.1). */
 export function resolvePrizesAndResume(
@@ -1998,7 +1997,7 @@ function discardEndOfTurnTools(state: GameState, seat: Seat, events: GameEvent[]
     the matching ko:* interrupt phase, announce it with a prompt event so an
     event-only client is never left hanging, and return with the stage still
     at the head — or auto-resolve when exactly one legal resolution exists
-    (the M1 doctrine: a choice with no choice in it is not a choice). The
+    (a choice with no choice in it is not a choice). The
     recursion is bounded by the queue length (a handful of stages). */
 export function advance(stateIn: GameState, events: GameEvent[]): ApplyResult {
   const state = postStepChecks(stateIn, "stage", events);

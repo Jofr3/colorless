@@ -356,7 +356,7 @@ describe("D620 §1 — the prints, the registry rows and the readings", () => {
       },
     });
     expect(programFor(BOMB[1])).toBe(programFor(BOMB[0]));
-    // WP10's attack texts are reader rows: no registry key.
+    // Their attack texts are reader rows: no registry key.
     for (const id of [...MAWILE, LUXRAY, ...FUECOCO]) expect(programFor(id), id).toBeUndefined();
   });
 

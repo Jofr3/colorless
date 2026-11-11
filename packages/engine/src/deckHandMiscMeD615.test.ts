@@ -51,7 +51,7 @@ const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [COLD_CYCLONE, ["me02.5-053"]],
 ];
 
-/** WP31's rest (WP31b / WP31c): [text, ids]. Each needs vocabulary beyond this brief's shipped programs. */
+/** The family's rest: [text, ids]. Each needs vocabulary beyond the programs shipped here. */
 const WP31_REST: readonly (readonly [string, readonly string[]])[] = [
   [
     "Choose Basic {L} Energy cards from your discard pile up to the amount of Energy attached to all of your opponent's Pokémon and attach them to your {L} Pokémon in any way you like.",
@@ -357,7 +357,7 @@ const LOCAL: Record<string, Card> = {
   [R]: typedEnergy(R, "Fire"),
   [P]: typedEnergy(P, "Psychic"),
 };
-/** Ludicolo `sv09-037` off the LOCAL D1 (2026-10-09): Vibrant Dance's +40 HP to its own side — the
+/** Ludicolo `sv09-037` off the LOCAL D1: Vibrant Dance's +40 HP to its own side — the
     seat-wide HP aura §8's KO-cause case needs. Off the deck and the pool: `relabel` puts it in. */
 const AURA = "sv09-037";
 const LUDICOLO: Card = battler(AURA, {

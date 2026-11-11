@@ -46,7 +46,7 @@ export type CreateErrorCode = Extract<
 export interface CreateGameOptions {
   /** Where the game's randomness starts. Every real game passes `freshRngState()` (a ChaCha20
       key). A number seeds the legacy mulberry32 generator, for tests, fixtures and the benchmark
-      only: its 32 bits are recoverable from the opening hand (security audit MI1). */
+      only: its 32 bits are recoverable from the opening hand. */
   seed: RngState;
   /** Exactly 60 catalog card ids per seat, in any order. */
   decks: Record<Seat, string[]>;
@@ -293,7 +293,7 @@ function explosivenessPlacement(state: GameState, seat: Seat, uid: string): bool
 }
 
 /** §3.6 — the mandatory face-down Active. "Face-down" only shapes the event
-    stream: M1 events are full-information (hidden-info filtering is P4). */
+    stream: engine events are full-information (the online server redacts hidden info). */
 export function setupPlaceActive(state: GameState, action: SetupPlaceActiveAction): ApplyResult {
   const phase = state.phase;
   if (phase.kind !== "setup:place") {

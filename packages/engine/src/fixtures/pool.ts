@@ -24,7 +24,7 @@ function stage1Pokemon(id: string): Card {
   };
 }
 
-/** A Stage 2 that evolves from `fix-stage1` — the top of the M4 evolution
+/** A Stage 2 that evolves from `fix-stage1` — the top of the evolution
     chain (fix-basic-1 → fix-stage1 → fix-stage2). */
 function stage2Pokemon(id: string): Card {
   return {
@@ -50,7 +50,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
   "fix-item": itemTrainer("fix-item"),
   "fix-fire-energy": typedEnergy("fix-fire-energy", "Fire"),
   "fix-water-energy": typedEnergy("fix-water-energy", "Water"),
-  // The M2 cast: one Fire attacker with a spread of printed-attack shapes,
+  // The attack cast: one Fire attacker with a spread of printed-attack shapes,
   // and defenders that exercise each §8.5 damage-pipeline branch.
   "fix-attacker": battler("fix-attacker", {
     types: ["Fire"],
@@ -58,7 +58,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
     attacks: [
       { cost: ["Colorless"], name: "Bite", damage: 30 },
       { cost: ["Fire", "Colorless"], name: "Flame", damage: 60 },
-      // The canonical modern print — effects.ts derives it (M3), so Yawn
+      // The canonical modern print — effects.ts derives it, so Yawn
       // actually puts the defender to sleep.
       { name: "Yawn", effect: "Your opponent's Active Pokémon is now Asleep." },
       {
@@ -80,7 +80,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
       },
     ],
   }),
-  /** The M3 cast: one derivable status sentence (effects.ts) per attack, on
+  /** The status cast: one derivable status sentence (effects.ts) per attack, on
       a tanky costless body so self-inflicted conditions don't KO it. */
   "fix-statuser": battler("fix-statuser", {
     hp: 120,
@@ -1072,7 +1072,7 @@ export const FIXTURE_POOL: Record<string, Card> = {
   "fix-onko": battler("fix-onko", { name: "fix-onko", hp: 30 }),
   "fix-koprize": battler("fix-koprize", { name: "fix-koprize", hp: 30 }),
 
-  // — M5 coverage pass #1: cards authored from existing ops (real catalog ids so
+  // — Cards authored from existing ops (real catalog ids so
   //   the registry finds the programs; the effect/ability text is cosmetic). —
   /** Poké Ball (Item) — coin-gated search a Pokémon → hand. */
   "sv01-185": trainerCard(

@@ -245,7 +245,7 @@ describe("purity", () => {
   });
 
   it("never throws on a wire-decoded action outside the typed union", () => {
-    // P4's Worker decodes actions from a client; the never-throw contract has
+    // The API Worker decodes actions from a client; the never-throw contract has
     // to survive a bogus type or seat, not just an illegal-but-typed action.
     const state = driveSetup(TURN_SEED, TURN_DECKS, { first: "p1" });
     const bogusType = applyAction(state, { type: "attackWithMove", seat: "p1" } as never);
@@ -364,14 +364,14 @@ describe("scripted end-to-end game", () => {
       (e) => e.type === "CARDS_DRAWN" && e.reason === "turnStart",
     ).length;
     expect(turnDraws).toBe(state.turn - 1);
-    // Prizes stayed populated (they are taken from M2 on).
+    // Prizes stayed populated: no prize was taken before the deck-out.
     expect(state.players.p1.prizes).toHaveLength(6);
     expect(state.players.p2.prizes).toHaveLength(6);
     expect(events.at(-1)?.type).toBe("GAME_OVER");
   });
 });
 
-// Concede (P4 3c-ii) — the only non-§14 way a game ends. One action serves two
+// Concede — the only non-§14 way a game ends. One action serves two
 // triggers: a player giving up, and the online server acting for one who
 // abandoned the match, so it must work from ANY phase a stuck match can be in.
 describe("concede — giving the game up", () => {

@@ -439,7 +439,7 @@ describe("D559 §1 — the seven registry rows: 15 printings, 7 objects, NO `att
     it(`${row.name}: every printing maps to ONE object whose key set is exactly ["passive"]`, () => {
       const first = programFor(row.ids[0] as string);
       for (const id of row.ids) {
-        expect(programFor(id), id).toBe(first); // the reprint idiom (D190b) — one object
+        expect(programFor(id), id).toBe(first); // reprints share one program object
         expect(Object.keys(programFor(id) ?? {}), id).toEqual(["passive"]); // attacks keep deriving
         expect(programFor(id)?.passive, id).toEqual(row.passive);
       }

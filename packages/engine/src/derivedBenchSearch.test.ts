@@ -297,8 +297,8 @@ describe("the anchor — nine printed nouns, ONE sentence", () => {
       expect(Object.keys(search as object).sort()).toEqual(["dest", "filter", "max", "op"]);
       expect(Object.keys(shuffle as object)).toEqual(["op"]);
     }
-    // …and the same two ops, in the same order, are what Nest Ball has authored
-    // since M4 — the sentence read off a Trainer instead of an attack.
+    // …and the same two ops, in the same order, are what Nest Ball authors — the
+    // sentence read off a Trainer instead of an attack.
     expect(programFor("sv01-181")?.trainer).toEqual(CLAUSES[ONE].program);
   });
 

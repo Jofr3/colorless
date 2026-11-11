@@ -733,7 +733,9 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
     const victim = body(legacy.players.p2.active) as Omit<InPlayPokemon, "scheduledEffect"> & {
       scheduledEffect?: { turn: number; amount: number };
     };
-    // The key must be genuinely ABSENT. `= undefined` leaves it PRESENT, which is the exact distinction D124's rule turns on and the one this case exists to drive.
+    // The key must be genuinely ABSENT: an absent key, not one set to undefined, is what an
+    // older record looks like. `= undefined` leaves it PRESENT, and that distinction is the one
+    // this case exists to drive.
     delete victim.scheduledEffect;
     expect("scheduledEffect" in victim).toBe(false);
 
@@ -799,7 +801,9 @@ describe("§8 — the bump, and the soft landing it refuses", () => {
       InPlayPokemon,
       "scheduledEffect"
     > & { scheduledEffect?: { turn: number; amount: number } };
-    // The key must be genuinely ABSENT. `= undefined` leaves it PRESENT, which is the exact distinction D124's rule turns on and the one this case exists to drive.
+    // The key must be genuinely ABSENT: an absent key, not one set to undefined, is what an
+    // older record looks like. `= undefined` leaves it PRESENT, and that distinction is the one
+    // this case exists to drive.
     delete stripped.scheduledEffect;
     expect(tolerant(body(withKey.players.p2.active), 3)).toBe(90);
     expect(tolerant(stripped as unknown as InPlayPokemon, 3)).toBeNull();

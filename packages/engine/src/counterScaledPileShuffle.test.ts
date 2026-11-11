@@ -633,7 +633,7 @@ describe("D538 §5 — forced and parked resolve the same sentence to the same b
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// §6 — THE `basicEnergy` GUARD, AND ITS LOUD SKIP (D190b).
+// §6 — THE `basicEnergy` GUARD, AND ITS LOUD SKIP.
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("D538 §6 — a head noun the tail cannot be about falls to the LOUD skip path", () => {

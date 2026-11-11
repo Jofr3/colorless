@@ -448,7 +448,7 @@ const KEYED_AT_D610 = [
 /** The five `me` Tera reprints banners.ts carries (each printed face checked on tcgdex's image). */
 const ME_TERA = ["me02.5-038", "me02.5-057", "me02.5-160", "me02.5-179", "me02.5-277"] as const;
 
-/** The Ability NAMES each aliased `me` Pokémon prints (LOCAL D1 `abilities_json`, 2026-10-07).
+/** The Ability NAMES each aliased `me` Pokémon prints (LOCAL D1 `abilities_json`).
     Terapagos `me02.5-178` / Terapagos ex `me02.5-179` print none. */
 const PRINTED_ABILITY: Readonly<Record<string, readonly string[]>> = {
   "me02.5-019": ["Charging Up"],

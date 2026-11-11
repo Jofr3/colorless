@@ -26,8 +26,7 @@ import {
   findEvent,
 } from "./testFixtures";
 
-/** The two printed sentences, byte-for-byte off the local D1 rows (2026-08-03,
-    978 rows / 6 sets). */
+/** The two printed sentences, byte-for-byte off the local D1 rows. */
 const BURNING_VOICE = "This attack does 10 less damage for each damage counter on this Pokémon.";
 const SWEEPING_TACKLE = "This attack does 20 less damage for each damage counter on this Pokémon.";
 const RAGING_HORNS = "This attack does 10 more damage for each damage counter on this Pokémon.";

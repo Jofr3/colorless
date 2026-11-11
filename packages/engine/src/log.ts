@@ -222,7 +222,7 @@ const STATUS_LABELS: Record<StatusName, string> = {
     error instead. Phrased from the WINNER's side, which is how the row reads
     ("<winner> wins — …"). `conceded` says "forfeited" rather than "conceded"
     because the same reason covers a player pressing concede AND an online player
-    abandoning the match (P4 3c-ii) — forfeit is true of both. */
+    abandoning the match — forfeit is true of both. */
 const GAME_OVER_REASONS: Record<GameOverReason, string> = {
   prizesTaken: "all prizes taken",
   noPokemon: "the opponent has no Pokémon left",
@@ -431,9 +431,9 @@ function formatGameFlowEvent(
       // Counts only — never card identity (see module header).
       const n = event.uids.length;
       // Hoisted for the default arm: with every DrawReason handled below,
-      // TS narrows `event` to never inside it (`reason` became a GameEvent
-      // discriminant when M3 events started carrying one) — the arm stays,
-      // per the doctrine above, for whatever reason ships next.
+      // TS narrows `event` to never inside it (`reason` is a GameEvent
+      // discriminant) — the arm stays, per the doctrine above, for whatever
+      // reason ships next.
       const seat = event.seat;
       switch (event.reason) {
         case "opening":

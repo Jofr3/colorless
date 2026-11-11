@@ -170,7 +170,7 @@ describe("§1 — the near-misses: what an over-wide anchor would eat", () => {
   it("refuses a printed ZERO — the guard every sibling numeric arm carries", () => {
     // Unwrapped this would file a no-op. WRAPPED it is worse: it parks a real
     // decision whose YES leaves the identical board, which is exactly the prompt
-    // the M1 no-choice rule exists to refuse.
+    // the no-choice rule exists to refuse.
     expect(deriveAttackEffect(TWO.replace(" 2 ", " 0 "))).toBeNull();
     expect(deriveAttackEffect(TWO_STAGE2.replace(" 2 Energy", " 0 Energy"))).toBeNull();
   });

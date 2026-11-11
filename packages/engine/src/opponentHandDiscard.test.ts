@@ -725,8 +725,8 @@ describe("§8 — the structural answers", () => {
     expect(pending.op).toBe("opponentDiscardsFromHand");
     expect(pending.count).toBe(2);
     // …and the phase's own key set, because `answerer` is the OTHER thing this
-    // park writes into the record. It is an OPTIONAL key that Ortega has been
-    // writing since M5 — a shipped shape, not a new one.
+    // park writes into the record. It is an OPTIONAL key that Ortega already
+    // writes — a shipped shape, not a new one.
     expect(Object.keys(roundTrip.phase).sort()).toEqual([
       "answerer",
       "cont",

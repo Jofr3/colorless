@@ -389,7 +389,7 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
   });
 
   it("attributes an attack's own recoil to the attacker, not the system", () => {
-    // M5 — "This Pokémon also does N damage to itself" (Skeledirge "Blazing
+    // "This Pokémon also does N damage to itself" (Skeledirge "Blazing
     // Shout"). Unlike the confusion self-hit, the attacker CHOSE this attack, so
     // it reads in their own voice (their seat) and echoes the printed sentence.
     const { uid, name } = settled;
@@ -471,7 +471,7 @@ describe("logFromEvents — special conditions and the Checkup (M3)", () => {
       text: `${name} is Confused — flip: tails`,
       who: "p1",
     });
-    // seat = the actor on the effect gate flip (attack OR Trainer, M5).
+    // seat = the actor on the effect gate flip (attack OR Trainer).
     expect(line({ type: "ATTACK_EFFECT_COIN_FLIP", seat: "p1", result: "heads" })).toEqual({
       text: "flipped heads for the effect",
       who: "p1",

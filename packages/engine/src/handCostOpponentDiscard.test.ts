@@ -427,8 +427,8 @@ describe("D515 §3 — the BOARD: two parks, two seats, and the gate between the
     expect(empty.phase.kind).not.toBe("effect:choose");
     expect([empty.players.p1.discard.length, empty.players.p2.discard.length]).toEqual([0, 0]);
     expect(hands(empty)).toEqual([0, 4]);
-    // …the CONTROL, one axis away: a hand of ONE is FORCED rather than parked (the M1
-    // doctrine) and the opponent DOES lose a card — so the rung above is about the
+    // …the CONTROL, one axis away: a hand of ONE is FORCED rather than parked (the
+    // no-choice rule) and the opponent DOES lose a card — so the rung above is about the
     // EMPTY hand and not about the absence of a park.
     const forced = mustStep(
       handOfIds(handOfIds(fielded(13), "p1", [ENERGY]), "p2", [ITEM]),

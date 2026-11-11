@@ -273,8 +273,8 @@ export interface PassiveEffects {
       evolving the holder ends it, the Tool staying attached notwithstanding.
       This is the one effect that can LOWER effective max HP on evolution: a
       charmed Basic damaged into the window is Knocked Out the instant it
-      evolves (§8.1), which `evolve` now checks via the mid-turn KO flow (M4
-      slice 4 — turn.ts evolve → flow.ts resolveMidTurnKnockOuts). */
+      evolves (§8.1), which `evolve` checks via the mid-turn KO flow
+      (turn.ts evolve → flow.ts resolveMidTurnKnockOuts). */
   basicHpBonus?: number;
   /**
    * §8.1 flat max-HP bonus with no stage clause, optionally gated on an owner prefix (Hero's Cape,

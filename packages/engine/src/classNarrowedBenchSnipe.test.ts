@@ -70,7 +70,7 @@ const CLASS_CARDS: Record<string, Card> = {
   /** Bench 2 — no rule box at all. */
   "d483-foe": battler("d483-foe", { name: "D483 Foe", types: ["Colorless"], hp: 310 }),
   /** Bench 3 — the SECOND `ex`, so the narrowed set is 2 and the pick is a real
-      decision rather than the M1 auto-take. */
+      decision rather than the no-choice auto-take. */
   "d483-other-ex": battler("d483-other-ex", {
     name: "D483 Other ex",
     types: ["Colorless"],

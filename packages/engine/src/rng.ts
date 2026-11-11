@@ -2,7 +2,7 @@
 // coin flip is a pure function of that stored state, so the same starting state + the same actions
 // replays to identical states and events (docs/workstreams/simulator.md, "Deterministic core").
 //
-// Two generators share one interface (security audit MI1):
+// Two generators share one interface:
 //
 // - A ChaCha20 keystream (`DrbgState`): a 256-bit secret key and a word counter. Every real game
 //   starts from `freshRngState()`, the lobby's online matches and the local simulator's new games

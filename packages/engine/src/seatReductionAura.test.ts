@@ -218,7 +218,7 @@ describe("D321 §1 — the three registry rows", () => {
         noStack: "Curly Wall",
       });
     }
-    // The reprint is the SAME program object, not a copy — D190b's exact-map rule.
+    // The reprint is the SAME program object, not a copy.
     expect(programFor(BOUFFALANT)).toBe(programFor(BOUFFALANT_REPRINT));
   });
 

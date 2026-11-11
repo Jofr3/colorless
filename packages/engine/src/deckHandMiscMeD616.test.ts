@@ -56,7 +56,7 @@ const SENTENCES: readonly (readonly [string, readonly string[]])[] = [
   [FETCH_AND_HIDE, ["30th-116"]],
 ];
 
-/** WP31's rest (WP31c): [text, ids, the vocabulary it needs beyond this brief]. */
+/** The family's rest: [text, ids, the vocabulary it needs beyond the programs shipped here]. */
 const WP31_REST: readonly (readonly [string, readonly string[], string])[] = [
   [
     "Choose Basic {L} Energy cards from your discard pile up to the amount of Energy attached to all of your opponent's Pokémon and attach them to your {L} Pokémon in any way you like.",

@@ -19,7 +19,7 @@ import {
   types,
 } from "./testFixtures";
 
-// Printed text verified against tcgdex and the Pokémon card database, 2026-10-09.
+// Printed text verified against tcgdex and the Pokémon card database.
 const ARVEN_IDS = ["sv01-166", "sv01-235", "sv01-249", "sv03-186", "sv04.5-235"];
 const MIRAIDON_IDS = ["sv01-081", "sv01-227", "sv01-244", "sv01-253", "sv04.5-243", "svp-028"];
 const ARVEN_TEXT =

@@ -96,7 +96,7 @@ describe("D405 §1 — the sentence, measured live over the legal column", () =>
     );
     expect(family.map(([, s]) => s).sort()).toEqual([ALL_FOR_DAMAGE, TAKEN].sort());
     expect(units(family)).toBe(6);
-    // …so a numeric spelling would resolve a sentence nobody prints (D190b).
+    // …so a numeric spelling would resolve a sentence nobody prints.
     expect(deriveAttackEffect("Put 2 Energy attached to this Pokémon into your hand.")).toBeNull();
   });
 
@@ -219,7 +219,7 @@ describe("D405 §4 — the FORCED board: one Energy, no prompt, and the card lan
 
     const { state: done, events } = mustApply(state, attack);
 
-    // The op asked NOTHING — one candidate is no decision (the M1 rule), so the whole
+    // The op asked NOTHING — one candidate is no decision (the no-choice rule), so the whole
     // program resolved inside the attack and the turn is already over.
     expect(done.phase.kind).not.toBe("effect:choose");
     expect(types(events)).toContain("ENERGY_DISCARDED");

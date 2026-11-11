@@ -26,7 +26,7 @@ const unchanged: MigrationStep = (state) => state;
  * runs its own version's step and every later one, so each version takes only the keys it lacks; an
  * earlier step would clobber live values it already holds. Version 41, the last that refreshed its
  * Trainer faces from the catalog and could hold a setup from before the bonus Bench step, is
- * retired (reliability audit, user decision 14).
+ * retired.
  */
 const MIGRATION_STEPS: ReadonlyMap<number, MigrationStep> = new Map([
   [42, withDefaultKeys],
@@ -37,7 +37,7 @@ const MIGRATION_STEPS: ReadonlyMap<number, MigrationStep> = new Map([
   [47, unchanged],
   [48, unchanged],
   [49, withGateOpsKey],
-  // 51 widened `rngState` to a ChaCha20 state (security audit MI1). A v50 state keeps its
+  // 51 holds `rngState` as a ChaCha20 state. A v50 state keeps its
   // mulberry32 number, which every reader still accepts; the bump is so a deploy before 51, which
   // would read a ChaCha20 state as a number, retires a v51 state instead of misreading it.
   [50, unchanged],

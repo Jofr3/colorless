@@ -534,7 +534,7 @@ describe("end to end — D125's tail: the 150, then the pick, then the placement
   });
 
   it("FORCES a single benched body — one action, no prompt at all", () => {
-    // §8.6 "do as much as you can", and the M1 no-choice doctrine: a mandatory pick
+    // §8.6 "do as much as you can", and the no-choice rule: a mandatory pick
     // over exactly `count` candidates has no decision left in it, so it auto-takes.
     // The whole declaration is then ONE event batch.
     let state = tingLuActive(board(), "p1");

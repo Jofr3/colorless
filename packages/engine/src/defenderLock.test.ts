@@ -365,7 +365,7 @@ describe("the opponent-side lock — it installs BEHIND a park", () => {
 
   it("does NOT park when the pick has no pick in it, and still installs", () => {
     // Three identical {W} attached collapses the offer to one distinct choice, so
-    // the M1 no-choice rule auto-resolves it and the whole attack settles inline.
+    // the no-choice rule auto-resolves it and the whole attack settles inline.
     // The lock must land either way — the park is procedure, not effect.
     const state = armed("sv03-042", "sv03-134");
     const { state: after, events } = mustApply(state, {

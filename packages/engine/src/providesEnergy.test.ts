@@ -155,7 +155,7 @@ describe("M5 op-slice — the providesEnergy filter: the deriver", () => {
 describe("M5 op-slice — the providesEnergy filter: provision on a board", () => {
   it("takes the {L} Energy and never offers the Fire one — no prompt at all", () => {
     // The base case, and it auto-resolves: only ONE attached Energy provides {L},
-    // so there is no question to ask (the M1 no-choice doctrine). The Fire Energy
+    // so there is no question to ask (the no-choice rule). The Fire Energy
     // is not merely unpicked — it was never a candidate.
     const state = fielded(3, "sv01-079", [
       { id: "fix-lightning-energy", count: 1 },

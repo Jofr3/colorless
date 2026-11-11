@@ -160,7 +160,7 @@ const FILLER = "d612-filler";
 const WATER = "d612-water";
 
 const LOCAL: Record<string, Card> = {
-  // Kyogre `30th-019` as tcgdex served it before the re-ingest (LOCAL D1 2026-10-08).
+  // Kyogre `30th-019` as tcgdex served it before the re-ingest (off the local D1).
   [KYOGRE]: battler(KYOGRE, {
     name: "Kyogre",
     hp: 140,

@@ -365,8 +365,8 @@ describe("D578 Scovillain §5 — a §9 Ability lock hands back the printed {R}"
 });
 
 describe("D578 Scovillain §6 — R-WT1: the Watchtower's {C} read stays PRINTED and stays exact", () => {
-  // The printed types of every `typesInPlay` holder, from the audit card JSON (tcgdex,
-  // 2026-09-25). A new holder must be added here — with its printed types — before it lands.
+  // The printed types of every `typesInPlay` holder, from the audit card JSON (tcgdex).
+  // A new holder must be added here — with its printed types — before it lands.
   const HOLDER_PRINTED_TYPES: Record<string, readonly string[]> = {
     "sv08-037": ["Fire"],
     "sv08-216": ["Fire"],

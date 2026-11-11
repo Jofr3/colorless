@@ -274,7 +274,7 @@ describe("§2 — deriveAttackDamageMultiplier gains ONE arm on an OLD count sou
       // a real Pokémon with a lookalike é would fall off the path silently
       DAMAGE_BEAT.replace("Pokémon", "Pokemon"),
       // the "less" spelling of THIS count source — ZERO rows in all three columns
-      // of the remote D1 (2026-08-24), so it is an absence, and it is refused
+      // of the remote D1, so it is an absence, and it is refused
       // because a SIGN is a FOLD and this reader owns only one
       UNPRINTED_PENALTY,
       // the BENCH-wide neighbour — the opponent's Bench counted as COUNTERS is

@@ -553,7 +553,7 @@ describe("§11 — the v33 bytes round-trip, and a v32-shaped state is why the v
   it("a v32-shaped BODY (the key genuinely ABSENT) reads the tax as 0 — the silent soft landing", () => {
     const revived = roundTrip(installed().state);
     const target = body(revived.players.p2.active) as Partial<InPlayPokemon>;
-    // The key must be genuinely ABSENT, which is what a v32 record looks like (D124).
+    // The key must be genuinely ABSENT, not set to undefined: that is what a v32 record looks like.
     delete target.costTaxTurn;
     expect("costTaxTurn" in target).toBe(false);
     expect(installedCostTaxOf(revived, body(revived.players.p2.active))).toBe(0);
@@ -563,7 +563,7 @@ describe("§11 — the v33 bytes round-trip, and a v32-shaped state is why the v
     const revived = roundTrip(installed().state);
     for (const seat of ["p1", "p2"] as const) {
       const side = revived.players[seat] as Partial<PlayerSide>;
-      // The key must be genuinely ABSENT (D124).
+      // The key must be genuinely ABSENT, not set to undefined, as on an older record.
       delete side.sideAttackLock;
     }
     expect(() => applyAction(revived, { type: "attack", seat: "p2", index: JAB })).toThrow(

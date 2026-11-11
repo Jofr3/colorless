@@ -671,8 +671,8 @@ describe("§9 — nothing persisted moves, and it is DRIVEN rather than argued",
       "usedAttack",
       "weaknessRetype",
     ]);
-    // …and the Paralysis lands in the `rotation` slot that has held it since M2, not
-    // in a new one.
+    // …and the Paralysis lands in the `rotation` slot that already holds it, not in a
+    // new one.
     let tooled = board();
     tooled = attachToolFromDeck(tooled, "p2", "active", CHESTPLATE);
     const paralyzed = swing(tooled, IDX.lock).state.players.p2.active?.conditions;

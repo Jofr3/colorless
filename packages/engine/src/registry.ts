@@ -24,8 +24,7 @@ export type {
 // `programFor(id)?.attack ?? deriveAttackEffect(text)`, and Trainers/Abilities have no deriver, so
 // unauthored ones can't be played.
 
-// ── The programs, authored from the printed text (verified vs the live
-//    catalog, 2026-07-17) — see docs/archive/simulator-history.md "M4 slice 2". ──
+// ── The programs, authored from the printed text. ──
 
 /** "Discard your hand and draw 7 cards." (Supporter) */
 const PROFESSORS_RESEARCH: CardProgram = {
@@ -488,7 +487,7 @@ const QUAKING_ZONE: CardProgram = { passive: { opponentActiveAttackCostSurcharge
  */
 const EXCITED_HEART: CardProgram = { passive: { attackCostDiscountPerOpponentPrize: 1 } };
 
-// ── M4 slice 3: the persistent-zone Trainers (Stadium §7.3, Tool §7.4). ──
+// ── The persistent-zone Trainers (Stadium §7.3, Tool §7.4). ──
 
 /** Beach Court — "The Retreat Cost of each Basic Pokémon in play (both yours
     and your opponent's) is {C} less." (Stadium) */
@@ -677,7 +676,7 @@ const EXP_SHARE: CardProgram = {
   ],
 };
 
-// ── M4 slice 5: Special Energy (§6.1). ──
+// ── Special Energy (§6.1). ──
 
 /** Jet Energy — "provides {C} Energy. When you attach this card from your hand
     to 1 of your Benched Pokémon, switch that Pokémon with your Active Pokémon." */
@@ -707,7 +706,7 @@ const THERAPEUTIC_ENERGY: CardProgram = {
   },
 };
 
-// ── M4 slice 6: triggered Abilities (§9) — fire on a game event. ──
+// ── Triggered Abilities (§9) — fire on a game event. ──
 
 /** Flamigo — "Insta-Flock": "When you play this Pokémon from your hand onto
     your Bench during your turn, you may search your deck for up to 3 Flamigo,
@@ -825,7 +824,7 @@ const COUNTERATTACKING_PINCER: CardProgram = {
   ],
 };
 
-// ── M4 slice 8: the mid-turn-damage snipe (§9). ──
+// ── The mid-turn-damage snipe (§9). ──
 
 /**
  * Hawlucha — "Flying Entry". The trigger auto-fires, so the printed "you may" survives as the op's
@@ -1318,7 +1317,7 @@ const SKWOVET: CardProgram = {
   ],
 };
 
-// ── M4 slice 9: on-KO triggered Abilities (§9) — fire when Knocked Out. ──
+// ── On-KO triggered Abilities (§9) — fire when Knocked Out. ──
 
 /** Glimmora — "Shattering Crystal": "When this Pokémon is Knocked Out, flip a
     coin. If heads, your opponent can't take any Prize cards for it." A TRIGGERED
@@ -1351,7 +1350,7 @@ const MUNKIDORI_EX: CardProgram = {
   ],
 };
 
-// ── M4 slice 7: Rare Candy (§7.1) — the Basic→Stage 2 evolve-skip Item. ──
+// ── Rare Candy (§7.1) — the Basic→Stage 2 evolve-skip Item. ──
 
 /** Rare Candy — "Choose 1 of your Basic Pokémon in play. If you have a Stage 2
     card in your hand that evolves from that Pokémon, put that card onto the
@@ -1360,10 +1359,8 @@ const MUNKIDORI_EX: CardProgram = {
     turn." (Item) — a marker, not a program (see CardProgram.rareCandy). */
 const RARE_CANDY: CardProgram = { rareCandy: true };
 
-// ── M5 coverage pass #1 (2026-07-19): the cards across the SV01–03 pool whose
-//    printed text maps EXACTLY onto the existing op vocabulary — authored from a
-//    classify→verify Workflow fan-out (the 5 authorable of 140; the other 113
-//    need new ops, tracked in docs/reference/coverage-backlog.md). ──
+// ── Cards whose printed text maps EXACTLY onto the existing op vocabulary, with no op of
+//    their own. ──
 
 /** Poké Ball — "Flip a coin. If heads, search your deck for a Pokémon, reveal it,
     and put it into your hand. Then, shuffle your deck." (Item) — the search AND
@@ -1585,9 +1582,8 @@ const METALLIC_SIGNAL: CardProgram = {
   ],
 };
 
-// ── M5 op-slice: attachEnergyFrom (§6 energy acceleration) — the top backlog
-//    unlock; this slice covers the clean single-attach-from-hand core, the
-//    discard/deck/multi/rider variants layer later ops on top. ──
+// ── attachEnergyFrom (§6 energy acceleration) — the clean single-attach-from-hand core;
+//    the discard/deck/multi/rider variants layer further ops on top. ──
 
 /** Quaquaval — "Energy Carnival": "Once during your turn, you may attach a Basic
     Energy card from your hand to 1 of your Pokémon." (activated, once/turn) */
@@ -1681,9 +1677,7 @@ const BLISSEY: CardProgram = {
   ],
 };
 
-// ── M5 op-slice: discardPileRetrieval (§7.1 recovery Items) — the discard-pile
-//    mirror of searchDeck; the next-biggest new-op unlock after attachEnergyFrom.
-//    (verified vs the local catalog 2026-07-20). ──
+// ── discardPileRetrieval (§7.1 recovery Items) — the discard-pile mirror of searchDeck. ──
 
 /** Energy Retrieval — "Put up to 2 Basic Energy cards from your discard pile
     into your hand." (Item) — a single retrieval to hand, no shuffle. */
@@ -1712,11 +1706,10 @@ const SUPER_ROD: CardProgram = {
   ],
 };
 
-// ── M5 op-slice: §9.2 op→op data flow — the clause that refers back to what an
-//    earlier clause of the SAME card actually did. Three printed wordings, one
-//    running record: Miriam's "in this way", Superior Energy Retrieval's "with
-//    the effect of this card", Dendra's "if you do" (above).
-//    (verified vs the local catalog 2026-07-22). ──
+// ── §9.2 op→op data flow — the clause that refers back to what an earlier clause of the
+//    SAME card actually did. Three printed wordings, one running record: Miriam's "in this
+//    way", Superior Energy Retrieval's "with the effect of this card", Dendra's "if you do"
+//    (above). ──
 
 /**
  * Miriam. The shuffle must run before the draw, so the gate reads a named record two ops upstream.
@@ -1769,11 +1762,9 @@ const SUPERIOR_ENERGY_RETRIEVAL: CardProgram = {
   ],
 };
 
-// ── M5 op-slice: lookAtTopN (§15.E deck-top look) — the top-of-deck twin of
-//    searchDeck; candidates are only the top-N matches, then shuffle. The clean
-//    "reveal → hand" cards land now; the from-the-top ATTACH variants (Electric
-//    Generator, Hydreigon) layer a later op. (verified vs the local catalog
-//    2026-07-20). ──
+// ── lookAtTopN (§15.E deck-top look) — the top-of-deck twin of searchDeck; candidates are
+//    only the top-N matches, then shuffle. The clean "reveal → hand" cards; the from-the-top
+//    ATTACH variants (Electric Generator, Hydreigon) use attachFromTop below. ──
 
 /** Great Ball — "Look at the top 7 cards of your deck. You may reveal a Pokémon
     you find there and put it into your hand. Shuffle the other cards back into
@@ -1797,11 +1788,10 @@ const POKEGEAR: CardProgram = {
   ],
 };
 
-// ── M5 op-slice: attachFromTop (§15.E + §6) — the from-the-top ATTACH variant
-//    the lookAtTopN slice deferred: look at the deck top and attach the Energy
-//    you find there onto your own Pokémon, "in any way you like". Two consumers,
-//    an Item and an activated Ability, differing in every rider the op has.
-//    (verified vs the local catalog 2026-07-21). ──
+// ── attachFromTop (§15.E + §6) — the from-the-top ATTACH variant of lookAtTopN: look at
+//    the deck top and attach the Energy you find there onto your own Pokémon, "in any way you
+//    like". Two consumers, an Item and an activated Ability, differing in every rider the op
+//    has. ──
 
 /**
  * Electric Generator. Uses the printed Basic {L} filter, not `providesEnergy`, because deck cards
@@ -1871,10 +1861,9 @@ const NS_PLAN: CardProgram = {
   ],
 };
 
-// ── M5 op-slice: the providesEnergy filter — "an Energy that PROVIDES {X}".
-//    Its second consumer (the first is the typed self-discard family, which is
-//    DERIVED and so has no rows here): the moveEnergy fixed-endpoint route the
-//    row above deferred. (verified vs the local catalog 2026-07-21). ──
+// ── The providesEnergy filter — "an Energy that PROVIDES {X}". Its second consumer (the
+//    first is the typed self-discard family, which is DERIVED and so has no rows here): the
+//    moveEnergy fixed-endpoint route. ──
 
 /**
  * Armarouge — "Fire Off". No once-per-turn limit; usable from the Bench. "a {R} Energy" is
@@ -1898,11 +1887,9 @@ const ARMAROUGE: CardProgram = {
   ],
 };
 
-// ── M5 op-slice: handRefresh (the Iono/Judge hand-refresh Supporter family) —
-//    put your hand back into your deck, then draw. The reshuffle-and-draw
-//    Supporters landed first; Iono (the bottom-of-deck placement + the
-//    prize-count draw + the any-moved draw gate) closes the family — the SV-era
-//    catalog holds no Marnie. (verified vs the local catalog 2026-07-20/21). ──
+// ── handRefresh (the Iono/Judge hand-refresh Supporter family) — put your hand back into
+//    your deck, then draw: the reshuffle-and-draw Supporters, and Iono (the bottom-of-deck
+//    placement + the prize-count draw + the any-moved draw gate). ──
 
 /** Youngster — "Shuffle your hand into your deck. Then, draw 5 cards."
     (Supporter) — the self-only fixed refresh. */
@@ -1951,7 +1938,7 @@ const IONO: CardProgram = {
   ],
 };
 
-// ── M5 op-slice: board conditions (2026-07-21) — one BoardCondition vocabulary
+// ── Board conditions — one BoardCondition vocabulary
 //    with two consumers: the printed PLAY GATE (`trainerPlayableIf`, checked before the
 //    card leaves hand) and the mid-program `conditionGate` branch. ──
 
@@ -2132,12 +2119,10 @@ const GRUSHA: CardProgram = {
   ],
 };
 
-// ── M5 op-slice: discardEnergy (the §15 energy-removal "hammer" family) —
-//    discard Energy off the OPPONENT's Pokémon. All three `from` arms land with a
-//    real printed card. The SELF-discard attacks ("Discard an Energy from this
-//    Pokémon") landed with the attackEpilogue slice (engine 0.22.0) and need NO
-//    registry row at all — effects.ts derives them from the printed sentence.
-//    (verified vs the local catalog 2026-07-21). ──
+// ── discardEnergy (the §15 energy-removal "hammer" family) — discard Energy off the
+//    OPPONENT's Pokémon. Each of the three `from` arms has a real printed card. The
+//    SELF-discard attacks ("Discard an Energy from this Pokémon") need NO registry row at
+//    all — effects.ts derives them from the printed sentence. ──
 
 /** Crushing Hammer — "Flip a coin. If heads, discard an Energy from 1 of your
     opponent's Pokémon." (Item) — the coin-gated hammer, and the `opponentChosen`
@@ -5686,8 +5671,8 @@ const SMOOTH_COAT: CardProgram = {
 
 /** Turtonator `me03-017` — "Shell Spikes": Klawf ex `sv03-120` "Counterattacking Pincer"'s
     sentence word for word; `COUNTERATTACKING_PINCER`'s trigger under the printed name (`from:
-    "attacker"` since card revision B21: the Energy comes off the Attacking Pokémon, not the
-    Pokémon an attack's own switch promoted). */
+    "attacker"`: the Energy comes off the Attacking Pokémon, not the Pokémon an attack's own
+    switch promoted). */
 const SHELL_SPIKES: CardProgram = {
   triggered: [
     {
@@ -7906,7 +7891,7 @@ const REGISTRY: Readonly<Record<string, CardProgram>> = {
   "swsh10.5-031": MEWTWO_VSTAR,
   // Bouffalant — Bouffer (passive)
   "sv03-174": REDUCE_20_AFTER_WR,
-  // — M4 slice 3: Stadiums + Tools (verified vs local D1 2026-07-18). —
+  // — Stadiums + Tools. —
   // Beach Court (Stadium)
   "sv01-167": BEACH_COURT,
   // Pokémon League Headquarters (Stadium)
@@ -7933,13 +7918,13 @@ const REGISTRY: Readonly<Record<string, CardProgram>> = {
   // Exp. Share runs as a triggered program because its bearer is a surviving Pokémon; the KO'd one
   // is only the Energy's source.
   "sv01-174": EXP_SHARE,
-  // — M4 slice 5: Special Energy (verified vs local D1 2026-07-18). —
+  // — Special Energy. —
   // Jet Energy — {C} + switch-on-bench-attach
   "sv02-190": JET_ENERGY,
   // Luminous Energy — wildcard (any 1 type), {C} if another Special attached
   "sv02-191": LUMINOUS_ENERGY,
   "sv02-193": THERAPEUTIC_ENERGY,
-  // — M4 slice 6: triggered Abilities (verified vs local D1 2026-07-18). —
+  // — Triggered Abilities. —
   // Flamigo — Insta-Flock (on-play-to-Bench: search up to 3 Flamigo)
   "sv02-170": FLAMIGO,
   // Arboliva — Enriching Oil (on-evolve: heal all from 1 of your Pokémon)
@@ -7948,15 +7933,15 @@ const REGISTRY: Readonly<Record<string, CardProgram>> = {
   "sv02-123": GARGANACL,
   // Trevenant — Forest Miasma (between-turns, Active-only: 1 counter on opp Active)
   "sv03-012": TREVENANT,
-  // — M4 slice 7: Rare Candy (verified vs local D1 2026-07-18). —
+  // — Rare Candy. —
   // Rare Candy — Basic→Stage 2 evolve-skip Item
   "sv01-191": RARE_CANDY,
-  // — M4 slice 8: the mid-turn-damage snipe (verified vs the live api 2026-07-19). —
+  // — The mid-turn-damage snipe. —
   // Hawlucha — Flying Entry (onPlayToBench: choose 2 opp Benched, 1 counter each)
   "sv01-118": HAWLUCHA,
   // Meowscarada ex — Bouquet Magic (activated, {G}-discard cost: 3 counters on 1 opp Benched)
   "sv02-015": MEOWSCARADA,
-  // — M4 slice 9: on-KO triggered Abilities (verified vs the live catalog 2026-07-19). —
+  // — On-KO triggered Abilities. —
   // Glimmora — Shattering Crystal (on-KO: flip; heads → opponent takes no prize for it)
   "sv02-126": GLIMMORA,
   // Munkidori ex — Oh No You Don't: 1 fewer Prize on a KO while a Pecharunt ex is in play.
@@ -7965,33 +7950,33 @@ const REGISTRY: Readonly<Record<string, CardProgram>> = {
   "sv06.5-039": SUBJUGATING_CHAINS,
   "sv07-118": FAN_CALL,
   "sv10.5w-064": LOOK_FOR_PREY,
-  // — M5 coverage pass #1: existing-op cards (verified vs the local catalog 2026-07-19). —
+  // — Cards built from existing ops. —
   "sv01-185": POKE_BALL, // Poké Ball — coin-gated search a Pokémon → hand
   "sv01-187": POKEMON_CATCHER, // Pokémon Catcher — coin-gated gust
   "sv01-180": NEMONA, // Nemona — draw 3 (Supporter)
   "sv02-150": REDUCE_30_AFTER_WR, // Copperajah ex — Bronze Body (−30 after W/R)
   "sv01-121": REDUCE_20_AFTER_WR, // Stonjourner — Exoskeleton (−20 after W/R)
-  // — M5 op-slice: damageAttacker reactive recoil (verified vs the live D1 2026-07-27). —
+  // — damageAttacker reactive recoil. —
   "sv01-005": COUNTERATTACK_QUILLS, // Cacnea — Counterattack Quills (3 counters on the attacker)
   "sv01-006": COUNTERATTACK_QUILLS, // Cacturne — Counterattack Quills (same program)
   "sv03-112": STUNFISK, // Stunfisk — Custom Trap (5 counters, only while a Tool is attached)
   "sv03-044": SCORCHING_ARMOR, // Armarouge — Scorching Armor (onDamagedByAttack → Burn the attacker)
   "sv03-120": COUNTERATTACKING_PINCER, // Klawf ex — Counterattacking Pincer (onDamagedByAttack → PARKING discard from the attacker)
-  // — M5 op-slice: disableAbilities continuous Ability-lock auras (verified vs the live D1 2026-07-27). —
+  // — disableAbilities continuous Ability-lock auras. —
   "sv01-096": MISCHIEVOUS_LOCK, // Klefki — Mischievous Lock (Basic, both sides, Active-only, except itself)
   "sv02-089": FETTERED_IN_MISFORTUNE, // Spiritomb — Fettered in Misfortune (Basic V, both sides)
   "sv02-127": CURSED_LAND, // Ting-Lu ex — Cursed Land (opponent's damaged non-ex, Active-only)
-  // — M5 op-slice: removeWeakness continuous own-board aura (verified vs the live D1 2026-07-28). —
+  // — removeWeakness continuous own-board aura. —
   "sv01-093": BLOOMING_GARDEN, // Florges — Blooming Garden ("Your Pokémon in play have no Weakness")
-  // — M5 long-tail: preventDamageFromExV holder passive (verified vs the live D1 2026-07-28). —
+  // — preventDamageFromExV holder passive. —
   "sv02-097": SAFEGUARD, // Mimikyu — Safeguard ("Prevent all damage from opponent's Pokémon ex/V")
-  // — M5 long-tail: noRetreatCostAura continuous own-board aura (verified vs the live D1 2026-07-31). —
+  // — noRetreatCostAura continuous own-board aura. —
   "sv03-082": LUNAR_ZONE, // Clefable ex — Lunar Zone ("All of your Pokémon that have {P} Energy attached have no Retreat Cost")
-  // — M5 long-tail: opponentActiveRetreatSurcharge, the last retreat-cost modifier (verified vs the live D1 2026-07-31). —
+  // — opponentActiveRetreatSurcharge, the opponent's-Active retreat-cost modifier. —
   "sv01-019": TRAP_TERRITORY, // Spidops ex — Trap Territory ("Your opponent's Active Pokémon's Retreat Cost is {C} more")
-  // — M5 long-tail: preventOpponentActiveRetreat, the L3 shape of the retreat-lock seam (verified vs the local D1 2026-08-01). —
+  // — preventOpponentActiveRetreat: the opponent's Active can't retreat. —
   "swsh10.5-055": BLOCK, // Snorlax — Block ("As long as this Pokémon is in the Active Spot, your opponent's Active Pokémon can't retreat")
-  // — M5 long-tail: noRetreatCostSelf, the LAST print on the retreat-cost seam, closing it at 10/10 (verified vs the local D1 2026-08-01). —
+  // — noRetreatCostSelf, then the other passive Abilities. —
   "swsh10.5-025": PUNK_OUT, // Wimpod — Punk Out
   "sv03-030": PRESSURE, // Entei — Pressure
   "sv05-050": AZURE_SEAS, // Walking Wake ex — Azure Seas
@@ -8002,17 +7987,14 @@ const REGISTRY: Readonly<Record<string, CardProgram>> = {
   "sv03-070": ADVERSE_WEATHER, // Thundurus — Adverse Weather (the Active shields the Bench)
   "sv01-068": ELECTRICITY_POUCHES, // Pachirisu — Electricity Pouches ("This Pokémon can't be Paralyzed")
   "sv01-145": BLISSEY, // Blissey — Busybody Nurse ("Your Active Pokémon recovers from all Special Conditions")
-  // — M5 long-tail: the ATTACK-COST ± family, both signs in one slice. Censused as
-  //   its own question against the local D1 (978 cards / 6 sets, 2026-08-03, all
-  //   three text columns): "cost {C} more"/"cost Colorless less" prints on THREE
-  //   rows over THREE distinct sentences — Pokémon League Headquarters sv03-192
-  //   (a Stadium, `StadiumEffects.basicAttackCostSurcharge`, built since M4) and
-  //   these two. `attacks_json` contributes nothing; both of these are ABILITIES. —
+  // — The ATTACK-COST ± family, both signs. "cost {C} more" / "cost Colorless less" is printed
+  //   in three distinct sentences: Pokémon League Headquarters sv03-192 (a Stadium,
+  //   `StadiumEffects.basicAttackCostSurcharge`) and these two, both ABILITIES. —
   "sv03-052": QUAKING_ZONE, // Seismitoad — Quaking Zone ("As long as this Pokémon is in the Active Spot, attacks used by your opponent's Active Pokémon cost {C} more")
   "swsh10.5-011": EXCITED_HEART, // Radiant Charizard — Excited Heart ("This Pokémon's attacks cost Colorless less for each Prize card your opponent has taken")
-  // — M5 long-tail: the evolutionPokemon CardFilter (verified vs the live D1 2026-07-28). —
+  // — The evolutionPokemon CardFilter. —
   "sv01-175": JACQ, // Jacq — search up to 2 Evolution Pokémon → hand, then shuffle (Supporter)
-  // — M5 op-slice: attachEnergyFrom (verified vs the local catalog 2026-07-19). —
+  // — attachEnergyFrom. —
   "sv01-054": QUAQUAVAL, // Quaquaval — Energy Carnival (attach a Basic Energy from hand)
   "sv02-060": BAXCALIBUR, // Baxcalibur — Super Cold (attach a Basic {W} from hand, repeatable)
   // — attachEnergyFrom riders: Gardevoir ex (targetType + bonusCounters + notIfKO). —
@@ -8020,49 +8002,45 @@ const REGISTRY: Readonly<Record<string, CardProgram>> = {
   // — attachEnergyFrom multi + endsTurn: Koraidon ex "Dino Cry" (the sv01 prints
   //   carry the ability; sv03-124 is a different Koraidon ex without it). —
   "sv01-125": KORAIDON_EX,
-  // — M5 op-slice: discardPileRetrieval (verified vs the local catalog 2026-07-20). —
+  // — discardPileRetrieval. —
   "sv01-171": ENERGY_RETRIEVAL, // Energy Retrieval — 2 Basic Energy from discard → hand
   "sv01-182": PAL_PAD, // Pal Pad — 2 Supporters from discard → deck (shuffle)
   "sv02-188": SUPER_ROD, // Super Rod — 3 Pokémon/Basic Energy from discard → deck (shuffle)
-  // — M5 op-slice: §9.2 op→op data flow — a clause that reads what an earlier
-  //   clause of the same card DID (verified vs the local catalog 2026-07-22).
-  //   Both are also discardPileRetrieval rows: this is the op the mechanism was
-  //   missing at both ends, recording for Miriam and reading for SER. —
+  // — §9.2 op→op data flow — a clause that reads what an earlier clause of the same card DID.
+  //   Miriam and SER are also discardPileRetrieval rows: the op records the moved cards for
+  //   Miriam and reads them back for SER. —
   "sv01-179": MIRIAM, // Miriam — up to 5 Pokémon discard → deck, shuffle, "in this way" → draw 3
   "sv03-190": ORTEGA, // Ortega — reveal opponent's hand, bottom a chosen card, "in this way" → they may draw
   "sv02-189": SUPERIOR_ENERGY_RETRIEVAL, // Superior Energy Retrieval — pay 2, then up to 4 Basic Energy back, minus the 2 just paid
-  // — M5 op-slice: lookAtTopN (verified vs the local catalog 2026-07-20). —
+  // — lookAtTopN. —
   "sv02-183": GREAT_BALL, // Great Ball — look at top 7, reveal a Pokémon → hand (shuffle)
   "sv01-186": POKEGEAR, // Pokégear 3.0 — look at top 7, reveal a Supporter → hand (shuffle)
-  // — M5 op-slice: moveEnergy (verified vs the local catalog 2026-07-20). —
+  // — moveEnergy. —
   "sv01-173": ENERGY_SWITCH, // Energy Switch — move a Basic Energy, own → own
   "sv03-193": POPPY, // Poppy — move up to 2 any Energy, own → own (Supporter)
-  // — M5 op-slice: handRefresh (the hand-refresh Supporter family; verified vs
-  //   the local catalog 2026-07-20). —
+  // — handRefresh (the hand-refresh Supporter family). —
   "sv01-198": YOUNGSTER, // Youngster — shuffle hand into deck, draw 5
   "sv01-176": JUDGE, // Judge — each player shuffles hand into deck, draws 4
   "sv03-187": BRASSIUS, // Brassius — shuffle hand into deck, draw (hand size + 1)
   "sv01-177": KATY, // Katy — shuffle hand into deck, draw 8, your turn ends
   "sv02-185": IONO, // Iono — each player's hand to the BOTTOM, draw their Prize count
-  // — M5 op-slice: board conditions (verified vs the local catalog 2026-07-21). —
+  // — Board conditions. —
   "sv02-181": FIGHTING_AU_LAIT, // Fighting Au Lait — play gate: more Prizes left; heal 60
   "sv02-180": FALKNER, // Falkner — draw 2, +2 more if YOUR Stadium is in play
   "sv02-184": GRUSHA, // Grusha — draw until 5 in hand, until 7 if no Energy on your board
-  // — M5 op-slice: discardEnergy (verified vs the local catalog 2026-07-21). —
+  // — discardEnergy. —
   "sv01-168": CRUSHING_HAMMER, // Crushing Hammer — coin-gated: an Energy off 1 opp Pokémon
   "sv02-182": GIACOMO, // Giacomo — a Special Energy off EACH of the opponent's Pokémon
   "sv03-143": MAWILE, // Mawile — Special Eater (on-bench: a Special Energy off their Active)
-  // — M5 op-slice: the providesEnergy filter (verified vs the local catalog
-  //   2026-07-21). The typed self-discard family it also lands is DERIVED from
-  //   printed text (Kilowattrel, Arcanine ex ×2, Charmeleon, Charizard), so it
-  //   adds no rows here — these two are the filter's SECOND consumer. —
+  // — The providesEnergy filter. Its typed self-discard family is DERIVED from printed text
+  //   (Kilowattrel, Arcanine ex ×2, Charmeleon, Charizard), so it adds no rows here — the rows
+  //   below are the filter's SECOND consumer. —
   "sv01-041": ARMAROUGE, // Armarouge — Fire Off ({R} benched→Active, as often as you like)
-  // — M5 op-slice: attachFromTop (verified vs the local catalog 2026-07-21). —
+  // — attachFromTop. —
   "sv01-170": ELECTRIC_GENERATOR, // Electric Generator — top 5, up to 2 Basic {L} → Benched {L}
   "sv02-140": HYDREIGON, // Hydreigon — Tri Howl (top 3, any Energy → your Pokémon, discard rest)
-  // — M5 op-slice: payFromHand (verified vs the local catalog
-  //   2026-07-21). Meowscarada ex is ABOVE (M4 slice 8) and migrated onto this
-  //   op in place — the two printed wordings, "you must discard … in order to
+  // — payFromHand. Meowscarada ex (ABOVE, with the mid-turn-damage snipe) runs on this
+  //   op too — the two printed wordings, "you must discard … in order to
   //   use this Ability" and "you can use this card only if you discard … other
   //   cards", are one mechanism. —
   "sv01-196": ULTRA_BALL, // Ultra Ball — discard 2 other cards, search a Pokémon → hand
@@ -8076,20 +8054,19 @@ const REGISTRY: Readonly<Record<string, CardProgram>> = {
   "sv01-142": REVAVROOM, // Revavroom — Rumbling Engine (discard an Energy card, draw to 6)
   "sv02-105": TINKATON, // Tinkaton — Gather Materials (discard a card, draw 3)
   "swsh10.5-018": RADIANT_BLASTOISE, // Radiant Blastoise — Pump Shot (discard a {W}, 2 counters)
-  // — M5 op-slice: the hand cost that is NOT a discard (verified vs the local
-  //   catalog 2026-07-21). Dendra pays to the BOTTOM OF THE DECK — the same op,
-  //   one field wider; Skwovet reaches the same destination with the WHOLE hand
-  //   and needed no new op at all (Iono's handRefresh riders). —
+  // — The hand cost that is NOT a discard. Dendra pays to the BOTTOM OF THE DECK — the same
+  //   op, one field wider; Skwovet reaches the same destination with the WHOLE hand and needs
+  //   no op of its own (Iono's handRefresh riders). —
   "sv02-179": DENDRA, // Dendra — a card from hand → deck bottom, then draw to 5
   "sv01-151": SKWOVET, // Skwovet — Nest Stash (hand → deck bottom, draw 1 if any moved)
-  // — M5 op-slice: attachFromDeck (verified vs the local catalog 2026-07-22).
+  // — attachFromDeck.
   //   Search the deck for Energy and attach it; the two printed target rules are
   //   "in any way you like" (Charizard) and "for each of those" (Janine). —
   "sv03-125": CHARIZARD_EX, // Charizard ex — Infernal Reign (onEvolve: up to 3 Basic {R} → your Pokémon)
   "sv06.5-059": JANINES_SECRET_ART, // Janine's Secret Art — up to 2 Basic {D}, one per {D} Pokémon, Active → Poisoned
-  // — M5 op-slice: EffectContext.sourceUid (verified vs the local catalog 2026-07-22). —
+  // — EffectContext.sourceUid. —
   "sv01-076": PAWMOT, // Pawmot — Electrogenesis (search a Basic {L} → THIS Pokémon)
-  // — M5 op-slice: healChosen "up to N" (verified vs the local catalog 2026-07-22). —
+  // — healChosen "up to N". —
   "sv02-187": SAGUARO, // Saguaro — heal 50 from up to 2 of your Pokémon
   "sv01-192": ROCK_CHESTPLATE, // Rock Chestplate (Tool) — 30 less, gated on the HOLDER's {F}
   "sv02-113": HARIYAMA, // Hariyama — Arm Thrust Practice (10 less, SEAT-WIDE)
@@ -8278,7 +8255,7 @@ const REGISTRY: Readonly<Record<string, CardProgram>> = {
   "me02.5-258": NEMONA, // Cheren — twin `sv01-180` (Nemona, same text)
   // The three `30th` Items, `legal_standard = 1`, whose catalog row has `effect = NULL` (tcgdex
   // prints no text, so their print_key matches no twin). Keyed by NAME on the shipped object: each is
-  // the reprint of that card. The missing face text is catalog debt (card-revision.md B04).
+  // the reprint of that card. The missing face text is catalog debt (see card-revision.md).
   "30th-126": POKE_PAD, // Poké Pad — twin `me02.5-198`
   "30th-127": SWITCH, // Switch — twin `sv01-194`
   "30th-128": ULTRA_BALL, // Ultra Ball — twin `sv01-196`

@@ -25,9 +25,9 @@ const HEADS_THEN_TAILS = 6;
 
 /** Attackless 120 HP walls + energy — the surgery-conditioned checkup boards. */
 const WALL_DECK = deckOf({ "fix-wall": 40, "fix-energy": 20 });
-/** The M2 attacker (Bite = index 0) — status-gate and confusion boards. */
+/** The attacker (Bite = index 0) — status-gate and confusion boards. */
 const ATTACKER_DECK = deckOf({ "fix-attacker": 30, "fix-fire-energy": 30 });
-/** The M3 statuser — one derivable effect sentence per attack. */
+/** The statuser — one derivable effect sentence per attack. */
 const STATUSER_DECK = deckOf({ "fix-statuser": 40, "fix-energy": 20 });
 
 /** Two walls facing off on p1's turn 1; each test surgically applies its

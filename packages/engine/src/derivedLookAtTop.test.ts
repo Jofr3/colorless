@@ -42,7 +42,7 @@ const BENCH_10: Clause = {
   legalPrintings: 2,
   ids: ["sv08-142", "sv08-226"], // Tatsugiri ex "Cinnabar Lure"
 };
-/** `attachFromTop`, an op that has run since M5 — the arm buys a READER and
+/** `attachFromTop`, an existing op — the arm buys a READER and
     nothing else. Its window of 20 is what forced `MAX_PRINTED_LOOK_WINDOW` to be
     its own constant rather than `MAX_PRINTED_ATTACH_COUNT`. */
 const ATTACH_20: Clause = {

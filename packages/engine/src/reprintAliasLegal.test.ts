@@ -250,7 +250,7 @@ const PRINTING_ALIAS_CENSUS = [
   { card: "Hawlucha", authored: "sv01-118", unauthored: ["svp-007", "sv04.5-175"] },
   { card: "Iono", authored: "sv02-185", unauthored: ["svp-124", "sv04.5-080", "sv04.5-237"] },
   { card: "Jet Energy", authored: "sv02-190", unauthored: ["sv08-252"] },
-  // Judge (sv01-176; sv04.5-228 / sv10-167 / sv10-222) LEFT THIS TABLE at card revision B01 — see
+  // Judge (sv01-176; sv04.5-228 / sv10-167 / sv10-222) is not in this table — see
   // `LANDED_SINCE_EFFECTIVE_LEGALITY` below.
   { card: "Klefki", authored: "sv01-096", unauthored: ["sv04.5-159"] },
   { card: "Koraidon ex", authored: "sv01-125", unauthored: ["svp-029", "sv04.5-245"] },
@@ -263,7 +263,7 @@ const PRINTING_ALIAS_CENSUS = [
   { card: "Ortega", authored: "sv03-190", unauthored: ["sv08.5-141"] },
   { card: "Pachirisu", authored: "sv01-068", unauthored: ["sv04.5-138"] },
   { card: "Pawmot", authored: "sv01-076", unauthored: ["svp-006", "sv04.5-144"] },
-  // Potion (sv01-188; mfb-33) LEFT THIS TABLE at card revision B05.
+  // Potion (sv01-188; mfb-33) is in `LANDED_SINCE_EFFECTIVE_LEGALITY` below.
   {
     card: "Professor's Research",
     authored: "sv01-189",
@@ -285,11 +285,11 @@ const PRINTING_ALIAS_CENSUS = [
   { card: "Revavroom", authored: "sv01-142", unauthored: ["svp-008", "sv04.5-065", "sv04.5-193"] },
   { card: "Skwovet", authored: "sv01-151", unauthored: ["sv04.5-205"] },
   { card: "Spiritomb", authored: "sv02-089", unauthored: ["sv04.5-158"] },
-  // Switch (sv01-194; sv03.5-206 / mfb-34) LEFT THIS TABLE at card revision B04.
+  // Switch (sv01-194; sv03.5-206 / mfb-34) is in `LANDED_SINCE_EFFECTIVE_LEGALITY` below.
   { card: "Thundurus", authored: "sv03-070", unauthored: ["sv04.5-139"] },
   { card: "Ting-Lu ex", authored: "sv02-127", unauthored: ["sv04.5-244"] },
   { card: "Tinkaton", authored: "sv02-105", unauthored: ["svp-020", "sv04.5-167"] },
-  // Ultra Ball (sv01-196; sv04.5-091) LEFT THIS TABLE at card revision B04.
+  // Ultra Ball (sv01-196; sv04.5-091) is in `LANDED_SINCE_EFFECTIVE_LEGALITY` below.
 ] as const;
 
 const LANDED_SINCE_EFFECTIVE_LEGALITY = [

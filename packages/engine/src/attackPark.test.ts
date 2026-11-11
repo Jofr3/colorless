@@ -218,7 +218,7 @@ describe("M5 op-slice — attack effect programs can PARK", () => {
   });
 
   it("three copies of ONE Energy print are interchangeable — no prompt", () => {
-    // The M1 doctrine, applied to card identity: discarding any of three
+    // The no-choice rule, applied to card identity: discarding any of three
     // identical Fire Energy leaves the identical board and the identical pile.
     const state = matchup(5, "sv02-028", "fix-bigbody", [{ id: "fix-fire-energy", count: 3 }]);
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: 1 });

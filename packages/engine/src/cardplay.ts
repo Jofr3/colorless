@@ -1207,7 +1207,7 @@ function resolveOwnPokemon(
   return { pokemon, uid };
 }
 
-/** Wire-check a resolveEffect choice against the parked prompt (a P4 client
+/** Wire-check a resolveEffect choice against the parked prompt (a remote client
     controls it): the right kind, and every uid/ref among the legal options. */
 function validateChoice(prompt: EffectPrompt, choice: EffectChoice): Rejection | null {
   if (typeof choice !== "object" || choice === null) {
@@ -1593,7 +1593,7 @@ function validateGuessHpChoice(choice: EffectChoice): Rejection | null {
 }
 
 function validateMayDrawChoice(choice: EffectChoice): Rejection | null {
-  // A plain boolean, and CHECKED to be one: a P4 client's truthy string
+  // A plain boolean, and CHECKED to be one: a remote client's truthy string
   // ("yes", 1) must not read as consent to draw — the wire rule every
   // index and count in this file already lives by.
   if (choice.kind !== "mayDraw" || typeof choice.draw !== "boolean") {
@@ -1607,7 +1607,7 @@ function validateConfirmChoice(
   choice: EffectChoice,
 ): Rejection | null {
   // The printed "you may", answered by the controller. The `mayDraw` check
-  // VERBATIM, and deliberately so: a P4 client's truthy string ("yes", 1)
+  // VERBATIM, and deliberately so: a remote client's truthy string ("yes", 1)
   // must not read as consent — and here consent runs a whole op branch
   // rather than a draw, so the belt matters more, not less. Nothing else to
   // check: the prompt offers no candidates, so `yes` is the entire answer.

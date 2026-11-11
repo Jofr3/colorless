@@ -1122,7 +1122,7 @@ export function discardStadium(state: GameState, events: GameEvent[]): GameState
     ...ownerSide,
     discard: [...ownerSide.discard, stadium.uid],
   });
-  // Card revision B22 — `cause: "effect"`: nothing replaced it, the zone is now empty.
+  // `cause: "effect"`: nothing replaced it, so the zone is left empty.
   events.push({
     type: "STADIUM_DISCARDED",
     seat: stadium.owner,

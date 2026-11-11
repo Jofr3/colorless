@@ -452,7 +452,7 @@ export function playBasicToBench(state: GameState, action: PlayBasicToBenchActio
     );
   }
 
-  // makeInPlay records turnPlayed — M4's evolution timing ("not the turn it
+  // makeInPlay records turnPlayed — the evolution timing ("not the turn it
   // came into play", §10) reads it.
   const benched = withSide(state, action.seat, {
     ...side,
@@ -775,7 +775,7 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
   }
 
   // The array-ness and the cheap bound check come FIRST: discardEnergy is
-  // caller-supplied (a P4 client controls it), so a non-array must never
+  // caller-supplied (a remote client controls it), so a non-array must never
   // reach `new Set` below — a length-faking object throws there — and the
   // O(n) membership scans must never run on an unbounded list. The cost is
   // the CONTINUOUS one (§7.3 — Beach Court discounts Basics).

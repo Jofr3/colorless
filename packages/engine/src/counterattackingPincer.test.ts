@@ -193,7 +193,7 @@ describe("Counterattacking Pincer — the read-site gate (only when actually dam
 
 describe("Counterattacking Pincer — a single Energy is a forced discard (no park)", () => {
   it("fires and discards without a decision when the attacker holds ONE Energy", () => {
-    // One candidate ⇒ the discard is forced (M1: a choice with no choice is not a
+    // One candidate ⇒ the discard is forced (a choice with no choice is not a
     // choice), so the staged trigger runs non-parking — advance drains it straight
     // into the epilogue.
     let state = setActiveFromDeck(board(7), "p1", "fix-attacker");

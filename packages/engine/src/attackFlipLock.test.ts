@@ -618,7 +618,7 @@ describe("§12 — the v31 bytes round-trip, and a v30-shaped body is why the ve
   it("v30-SHAPED body (the key genuinely ABSENT): the gate silently never flips", () => {
     const revived = roundTrip(installed().state);
     const target = body(revived.players.p2.active) as Partial<InPlayPokemon>;
-    // The key must be genuinely ABSENT, which is what a v30 record looks like (D124).
+    // The key must be genuinely ABSENT, not set to undefined: that is what a v30 record looks like.
     delete target.attackFlipLockTurn;
     expect("attackFlipLockTurn" in target).toBe(false);
     const legacy = withFaces(revived, ["tails"]);

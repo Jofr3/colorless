@@ -75,7 +75,7 @@ export type GameEvent =
   /** `retreated`/`promoted` are the top uids of the two stacks that swapped.
       The bench stays dense: the retreater fills the promoted Pokémon's
       `promotedFrom` slot at `benchedTo`. Both indices are in the payload so an
-      animator — or a P4 client addressing the bench positionally — never has
+      animator — or a remote client addressing the bench positionally — never has
       to re-derive the reducer's placement rule. `discardedEnergy` lists the
       cost payment in the order the discard pile gained it (§2 — pile order,
       i.e. attachment order), NOT the order the action named them — the same
@@ -104,10 +104,9 @@ export type GameEvent =
    */
   | { type: "ATTACK_COPY_RESOLVED"; seat: Seat; uid: string; attack: string; as: string }
   /** The declared attack carries text (or a damage modifier like "60+") the
-      engine does not simulate yet — that is M4's effect-op system. The
+      engine does not simulate (no effect-op program covers it). The
       numeric base damage still applied; consumers surface the skipped text
-      rather than let it be silently guessed (simulator.md coverage
-      strategy). */
+      rather than let it be silently guessed (simulator.md, "Coverage"). */
   | {
       type: "ATTACK_EFFECT_SKIPPED";
       seat: Seat;

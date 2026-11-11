@@ -60,7 +60,7 @@ export function specialEnergy(id: string, name: string, effect?: string): Card {
   };
 }
 
-/** A Trainer of a given type. Used with the REAL catalog ids the M4 registry
+/** A Trainer of a given type. Used with the REAL catalog ids the registry
     authors (sv01-189, …) so `programFor(id)` finds the program — the `effect`
     text is cosmetic here (the registry keys on the id, not the text). */
 export function trainerCard(id: string, trainerType: string, effect: string): Card {

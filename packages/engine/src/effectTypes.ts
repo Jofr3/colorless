@@ -672,7 +672,7 @@ export const ENGINE_ONLY_OPS = [
     seat playing the card — resolved by the interpreter). The whole union is
     JSON-safe so a parked program (interpreter.ts) serializes into the phase. */
 export type EffectOp =
-  // — Attack ops (M3), attacker-relative. —
+  // — Attack ops, attacker-relative. —
   | {
       op: "applyStatus";
       /**
@@ -1119,7 +1119,7 @@ export type EffectOp =
       from: "bench" | "any";
       /** The counters this op may still move. Engine-written only. */
       budget?: number;
-      /** This round's SOURCE, once Q1 is answered. Engine-written only. */
+      /** This round's SOURCE, once the source question is answered. Engine-written only. */
       source?: PokemonTarget;
       /** This round's count, clamped. Engine-written only. */
       take?: number;

@@ -1917,7 +1917,7 @@ export function attackGateOf(
 ): AttackTimingGate | undefined {
   // `firstTurnAttackBanned` reaches here with the wire index before `attack` validates it, and an
   // array indexed by "__proto__", "constructor" or "length" yields an inherited member whose
-  // `card` is undefined (MI3), so only an integer may index the menu.
+  // `card` is undefined, so only an integer may index the menu.
   if (!Number.isInteger(index)) return undefined;
   // `index` is the flat menu index; the gate is looked up on the card the attack is printed on, at
   // its own index there. A body not in play has no seat, so its menu is its printed attacks.

@@ -52,7 +52,7 @@ const INCOMPLETE: Record<
     attacks: ["Wondrous Moon"],
     why: "Clefable ex — registry passive 'Lunar Zone' (the `noRetreatCostAura` source); a retreat test, never an attack one.",
   },
-  // — the activated / triggered Ability cast (M4 slices 6–9): real ids so
+  // — the activated / triggered Ability cast: real ids so
   //   `programFor` finds the program, simplified bodies so surgery can place them.
   "sv01-023": {
     attacks: ["Solar Beam"],

@@ -228,7 +228,7 @@ const KINDS = [
   "main phase",
 ];
 
-/** Each walk runs on the legacy generator and on ChaCha20, which every real game uses (MI1). */
+/** Each walk runs on the legacy generator and on ChaCha20, which every real game uses. */
 const RUNS = WALKS.flatMap(([name, deck, pool]) => [
   [name, deck, pool, 7],
   [`${name} (ChaCha20)`, deck, pool, drbgSeed(7)],

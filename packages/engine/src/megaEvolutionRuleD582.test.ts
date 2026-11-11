@@ -34,7 +34,7 @@ const HITTER = "d582-hitter";
 const PLAIN_EX = "d582-plain-ex";
 const FILLER = "d582-filler";
 
-/** The printed faces (LOCAL D1, 2026-10-07). */
+/** The printed faces (LOCAL D1). */
 const LOCAL_CARDS: Record<string, Card> = {
   [MEGA_VENUSAUR]: battler(MEGA_VENUSAUR, {
     name: "Mega Venusaur ex",
