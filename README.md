@@ -81,7 +81,7 @@ bun run dev         # build the Lua app, serve it on :5175 (127.0.0.1 or localho
 bun run dev:all     # frontend (5175) + API (8787); Ctrl+C stops both
 bun run dev:tailnet # both servers over Tailnet HTTPS; selects available ports
 bun run dev:local   # both servers on free 127.0.0.1 ports, no Tailscale; prints both URLs
-bun run build:lua   # rebuild the Lua app into public/love/ (refresh the page)
+bun run build:lua   # rebuild the Lua app into public/love/ (an open dev page reloads)
 bun run build       # tsc -b, build:lua, vite build → dist/
 bun run deploy      # web Worker only: production build + publish dist/ (partial; see Deployment)
 bun run api:deploy  # API Worker only (partial; see Deployment)
@@ -102,10 +102,10 @@ hook in `.claude/settings.json` (`scripts/format-hook.ts`).
 
 The toolchain upgrade routine is in `docs/conventions.md` ("Dependencies").
 
-`dev` (and so `dev:all` and `dev:tailnet`) runs Vite under
+`dev` (and so `dev:all`, `dev:tailnet` and `dev:local`) runs Vite under
 `frontend/lua/watch.mjs`, which reruns `build:lua` 200 ms after the last change
-to `frontend/lua/{main.lua,conf.lua,ui,assets,web}`. Refresh the page once
-"Colorless Lua frontend built" prints. A failed rebuild is reported and the
+to `frontend/lua/{main.lua,conf.lua,ui,assets,web}`. The page reloads by itself
+once "Colorless Lua frontend built" prints. A failed rebuild is reported and the
 watch goes on. Edits under `tests/` and `tools/` are not packed and rebuild
 nothing.
 
