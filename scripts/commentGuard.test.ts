@@ -31,6 +31,25 @@ describe("comment-guard", () => {
     ["a numbered phase", "// Phase 0 baselines.", "program phase"],
     ["a milestone", "// The M1 no-choice rule.", "milestone"],
     ["a dated check", "// (verified vs the local catalog 2026-07-20).", "date"],
+    ["a line number", "// The holder of file line 586 is a Stage 1.", "line number"],
+    [
+      "an upper-case line number",
+      "/** index 0 — FILE LINES 294 and 295 verbatim. */",
+      "line number",
+    ],
+    [
+      "a file and line",
+      "// It cannot be answered with a repeat (cardplay.ts:1419).",
+      "line number",
+    ],
+    ["a Lua file and line", "// The overlay draws first (overlay.lua:12).", "line number"],
+    ["a bare line reference", "// {C}, 10 — the installer (:171)", "line number"],
+    [
+      "a quoted bare line reference",
+      "/** The `:76` installer, plus a plain attack. */",
+      "line number",
+    ],
+    ["a leading bare line reference", "// :343", "line number"],
   ])("fails %s", (_label, comment, form) => {
     expect(hits("packages/engine/src/a.ts", `const a = 1;\n${comment}\n`)).toEqual([
       `packages/engine/src/a.ts:2: (${form}) ${comment}`,
@@ -48,8 +67,27 @@ describe("comment-guard", () => {
     ].join("\n");
     expect(report("apps/api/src/a.ts", text)).toEqual({
       ok: true,
-      lines: ["1 files' comments carry no id or date"],
+      lines: ["1 files' comments carry no id, date or line number"],
     });
+  });
+
+  it("passes clock times, ratios, object literals and Balatro-source citations", () => {
+    const text = [
+      '// Elapsed 65s reads "+01:05"; reads reset at 00:00 UTC.',
+      "// The 8:11 scans, about 5:1 contrast, ({x:0.5, y:0.2}); one line per row.",
+      "-- Balatro Card:start_dissolve (card.lua:2130), at line 2130 of Balatro's card.lua.",
+    ];
+    expect(report("a.ts", text.slice(0, 2).join("\n")).ok).toBe(true);
+    expect(report("frontend/lua/ui/a.lua", text[2] ?? "").ok).toBe(true);
+    expect(hits("frontend/lua/ui/a.lua", "-- Card:start_dissolve (card.lua:2130)")).toEqual([
+      "frontend/lua/ui/a.lua:1: (line number) -- Card:start_dissolve (card.lua:2130)",
+    ]);
+  });
+
+  it("still fails an id on a line that cites Balatro", () => {
+    expect(hits("a.lua", "-- Balatro's card.lua:2130 (D190)")).toEqual([
+      "a.lua:1: (decision number) -- Balatro's card.lua:2130 (D190)",
+    ]);
   });
 
   it("reads comments only: strings, templates, regexes and test titles are data", () => {
@@ -60,6 +98,7 @@ describe("comment-guard", () => {
       "const t = `a $" + "{ { k: 1 }.k } // D123 $" + "{`inner // OBS-P1`} tail // AU3`;",
       "const r = /a\\/*D123 */;",
       "const q = /'/.test(x) ? 1 : 2; // ok",
+      'const at = "effects.ts:5438 (:171) line 214";',
     ].join("\n");
     expect(report("scripts/a.test.ts", text).ok).toBe(true);
   });
@@ -117,7 +156,9 @@ describe("comment-guard", () => {
   it("says how to fix a failure", () => {
     const result = report("a.ts", "// (D203)\n");
     expect(result.ok).toBe(false);
-    expect(result.lines[0]).toBe("comment-guard: FAIL — 1 comment line(s) carry an id or a date:");
+    expect(result.lines[0]).toBe(
+      "comment-guard: FAIL — 1 comment line(s) carry an id, a date or a line number:",
+    );
     expect(result.lines.at(-2)).toContain("Keep the reason and drop the id");
   });
 });

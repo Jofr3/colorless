@@ -1,8 +1,9 @@
 #!/usr/bin/env bun
 /**
- * Fails when a code comment carries a decision, audit, phase or milestone id or a date, which the
- * minimal-comments rule (conventions.md "Code & quality") keeps out of code and tests: that record
- * belongs in docs/decisions.md and git, and the reason a comment gives must stand without it.
+ * Fails when a code comment carries a decision, audit, phase or milestone id, a date or a line
+ * number, which the minimal-comments rule (conventions.md "Code & quality") keeps out of code and
+ * tests: that record belongs in docs/decisions.md and git, a line number goes stale with the next
+ * edit, and the reason a comment gives must stand without it.
  * It reads comments only (TypeScript and JavaScript through the TypeScript scanner, Lua `--` and
  * `--[[ ]]`, YAML `#`), never strings: a test title, a mutant row's `id` and `decision` and a log
  * line are data, and the coverage tests' titles name the decision whose sections they pin.
@@ -39,6 +40,24 @@ export const ID_FORMS: readonly { name: string; re: RegExp }[] = [
   { name: "milestone", re: /\b(?:milestone|increment) [0-9]+\b/i },
   { name: "date", re: /\b20[0-9]{2}-[01][0-9]-[0-3][0-9]\b/ },
 ];
+
+/** A reference to a line of a file: a `line N`, a `file.ts:N` or a bare `:N`. */
+export const LINE_FORMS: readonly { name: string; re: RegExp }[] = [
+  { name: "line number", re: /\blines? [0-9]+\b/i },
+  { name: "line number", re: /\.(?:[cm]?[jt]sx?|lua|md|json|toml|ya?ml):[0-9]+\b/ },
+  { name: "line number", re: /(?:^|[\s(`[]):[0-9]+\b/ },
+];
+
+/** Balatro's source does not change under this repo, so a line cited in it stays put. */
+const BALATRO = /\bBalatro\b/;
+
+/** The form a comment line breaks, if any. */
+function formOf(text: string): string | undefined {
+  const id = ID_FORMS.find(({ re }) => re.test(text));
+  if (id) return id.name;
+  if (BALATRO.test(text)) return undefined;
+  return LINE_FORMS.find(({ re }) => re.test(text))?.name;
+}
 
 /** Line number (from 1) of each offset, from the offsets where lines start. */
 function lineIndex(text: string): (offset: number) => number {
@@ -208,22 +227,22 @@ export function commentGuardReport(files: readonly SourceFile[]): Report {
   const problems: string[] = [];
   for (const { path, text } of files) {
     for (const comment of commentsOf(path, text)) {
-      const form = ID_FORMS.find(({ re }) => re.test(comment.text));
-      if (form) problems.push(`  ${path}:${comment.line}: (${form.name}) ${comment.text.trim()}`);
+      const form = formOf(comment.text);
+      if (form) problems.push(`  ${path}:${comment.line}: (${form}) ${comment.text.trim()}`);
     }
   }
   if (problems.length > 0) {
     return {
       ok: false,
       lines: [
-        `comment-guard: FAIL — ${problems.length} comment line(s) carry an id or a date:`,
+        `comment-guard: FAIL — ${problems.length} comment line(s) carry an id, a date or a line number:`,
         ...problems,
-        "Keep the reason and drop the id, date or history: that record belongs in docs/decisions.md",
-        'and git (conventions.md "Code & quality").',
+        "Keep the reason and drop the id, date or history, which belong in docs/decisions.md and git;",
+        'name a function or a sentence instead of a line (conventions.md "Code & quality").',
       ],
     };
   }
-  return { ok: true, lines: [`${files.length} files' comments carry no id or date`] };
+  return { ok: true, lines: [`${files.length} files' comments carry no id, date or line number`] };
 }
 
 /** Generated files whose comments come from elsewhere: wrangler's runtime types quote Cloudflare's
