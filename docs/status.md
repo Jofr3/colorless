@@ -1,7 +1,7 @@
 # Status — start here
 
 A Pokémon TCG deck builder and simulator: build decks from the real catalog, play them locally in
-a sandbox, or play them online against another account. Updated 2026-11-10.
+a sandbox, or play them online against another account. Updated 2026-11-11.
 
 ## Where things are
 
@@ -10,20 +10,20 @@ a sandbox, or play them online against another account. Updated 2026-11-10.
 | `packages/engine` | The rules engine: a pure, seeded state machine. Runs in the browser (local play) and in the LobbyDO (online). |
 | `packages/schema` | Zod schemas for everything on the wire: cards, decks, the redacted game, the lobby. |
 | `apps/api` | Hono Worker (`colorless-api`) on D1 and R2: catalog, auth, decks, and the `LobbyDO` that runs online matches. |
-| `src/` | The TypeScript bridge between the browser, the engine and the Lua UI (`src/lua`, `src/game`, `src/decks`, `src/online`, `src/lib`). |
+| `src/` | The TypeScript bridge between the browser, the engine and the Lua UI (`src/host`, `src/lua`, `src/game`, `src/decks`, `src/online`, `src/lib`, and `src/seam`, the client-to-API and client-to-lobby tests). |
 | `frontend/lua` | The UI, a LÖVE app run by love.js; `frontend/lua/README.md` covers its structure and the mailbox protocol. |
 | `scripts/` | Dev tooling: catalog ingest, generators with `--check` gates, the mutation corpus (`scripts/mutation`). |
 
 ## Working on it
 
-- `bun run check` is the gate, and CI runs the same steps. It needs `BALATRO_SOURCE` pointing at a Balatro source checkout for the Lua tests and build.
+- `bun run check` is the gate, and CI runs the same steps. It needs Balatro's source at `../balatro-source` or `BALATRO_SOURCE` for the Lua tests and build.
 - `bun run dev:all` starts the web app and the API. The local D1 catalog setup is in `workstreams/backend-data.md`.
-- `bun run release` checks, migrates the remote D1, deploys the API, then the web app, checks both, and tags the release `release-YYYYMMDD-HHMM`. First diff local and remote `print_key` as `conventions.md` describes, because the reprint alias table is generated from the local catalog.
+- `bun run release` checks, migrates the remote D1, deploys the API, then the web app, checks both, and tags the release `release-YYYYMMDD-HHMM`. `release:gate` refuses when local and remote `print_key` differ, because the reprint alias table is generated from the local catalog: re-ingest locally and rerun `bun scripts/registry-aliases.ts`.
 - After adding a `decisions.md` entry, run `bun run docs:index`.
 
 ## Current state
 
-- **Deployed:** the 2026-11-09 release (`be8cf9b0`). Commits on `main` after it ship with the next release. From the build audit's Phase 1 on, the live commit is in `GET /health` (`version.tag`, the API) and the page's `<meta name="build">` (the web app), and each release has a `release-*` git tag (`workstreams/backend-data.md` §3.7.2).
+- **Deployed:** what is live is the newest `release-*` tag (`git describe --tags --abbrev=0 --match 'release-*'`); not yet live: `git log --oneline <tag>..origin/main`. `GET /health` (`version.tag`, the API) and the page's `<meta name="build">` (the web app) confirm it (`workstreams/backend-data.md` §3.7.2).
 - **Card coverage:** the coverage program finished in October. `simulationGaps` lists text the engine still can't run, and the builder shows it on the card.
 - **Architecture audit:** Phases 0–4 are done (`decisions.md`, 2026-10-24 to 2026-10-26). Left out on purpose: H5 (explicit card-pool cache) and the host art-loader slice.
 - **Performance:** the 2026-10-27 work in `decisions.md` is deployed. `bun run bench` is the engine benchmark; its fingerprint must not change in a pure performance change.

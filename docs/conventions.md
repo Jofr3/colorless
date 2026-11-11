@@ -45,8 +45,8 @@ only the conclusion.
   numbers in code or tests — that record belongs in `docs/decisions.md` and git.
   Tests must not read source or doc text, and must not pin `engineVersion`.
 - **Biome** for lint/format; **Vitest** for tests. Run **`bun run check`** before
-  calling work done. It is `check:static` (coverage guards, the import graph,
-  `tsc -b`, `biome ci`, Lua constants, the print_key alias table, the Worker bundle budget, the mutant `precheck`), `check:lua` (the headless Lua tests,
+  calling work done. It is `check:static` (the steps `package.json` lists under
+  that name: guards, generators' `--check`, `tsc -b`, `biome ci`, the mutant `precheck`), `check:lua` (the headless Lua tests,
   requiring Balatro's source) and `check:test` (vitest). `scripts/check.ts` runs
   `check:static` and `check:lua`, and the steps of `check:static`, concurrently,
   printing each step's output when it finishes and then a timing table; a step is

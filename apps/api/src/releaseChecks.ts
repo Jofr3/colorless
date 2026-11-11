@@ -282,7 +282,7 @@ export function assetProblem(
 ): string | undefined {
   if (status !== 200) return `${path} answered ${status}`;
   if (/\.(?:m?js|css|wasm)$/.test(path) && (contentType ?? "").startsWith("text/html"))
-    return `${path} answered text/html: the file is missing and the SPA fallback served index.html`;
+    return `${path} answered text/html: the file is missing and the host page was served in its place`;
   return undefined;
 }
 

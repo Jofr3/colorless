@@ -170,7 +170,16 @@ bun run db:migrate:local                     # tables must exist first
 bun scripts/ingest.ts --sets sve --dry-run   # smallest set (24 cards): SQL only
 bun scripts/ingest.ts --sets sve             # …then really apply it
 bun scripts/ingest.ts --serie sv             # the whole Scarlet & Violet serie
-bun scripts/with-deploy-token.ts bun scripts/ingest.ts --serie sv --remote    # the production backfill
+```
+
+The full catalog is three runs: `--serie sv`, `--serie me` (Mega Evolution,
+since D581) and `--sets swsh10.5` (Pokémon GO, for its reprints). For
+production, run each through the deploy token:
+
+```sh
+bun scripts/with-deploy-token.ts bun scripts/ingest.ts --serie sv --remote
+bun scripts/with-deploy-token.ts bun scripts/ingest.ts --serie me --remote
+bun scripts/with-deploy-token.ts bun scripts/ingest.ts --sets swsh10.5 --remote
 ```
 
 `--dry-run` writes the SQL files under `apps/api/.wrangler/tmp/ingest-<stamp>/`
@@ -605,6 +614,7 @@ and step 1 is therefore unblocked TODAY and should not wait for the backfill.
 
 `bun run release` runs, in order:
 
+0. `bun install --frozen-lockfile`.
 1. `check`.
 2. `release:gate` (apps/api), whose steps are:
    - `pin`: writes HEAD to `tmp/release.json`, so the rest of the release can
@@ -631,7 +641,7 @@ and step 1 is therefore unblocked TODAY and should not wait for the backfill.
      `print_key`, because the engine's `PROGRAM_ALIAS` table is generated from
      the local one.
 3. `build`: the web bundle, before anything remote changes. `build:lua` needs
-   `BALATRO_SOURCE`. Vite writes `dist/build-info.json` (commit, dirty tree,
+   Balatro's source at `../balatro-source` or `BALATRO_SOURCE`. Vite writes `dist/build-info.json` (commit, dirty tree,
    origins, strict `/love/` versions) and puts the commit in the page as
    `<meta name="build">`.
 4. `db:migrate:remote`.
@@ -677,8 +687,9 @@ replaces the tag it waits for, for example after a rollback.
 `web-health`, the last step of `deploy:web`, fetches the site and needs two
 things. The page's `<meta name="build">` must be the released commit. Every
 `/assets/` and `/love/` file the page references must answer 200, and a script
-or style that comes back as `text/html` counts as missing, because the SPA
-fallback serves `index.html` for a missing file.
+or style that comes back as `text/html` counts as missing, because that is the
+host page served in its place; a missing build file otherwise answers 404
+(`src/notFoundWorker.ts`).
 
 `release:finish` does four things:
 
@@ -1222,7 +1233,7 @@ the first six:
 **Production report.** `bun run --cwd apps/api prod:report [--days N] [--release]` is the one-command view of production. It reads only, with the ambient read token, and exits 1 only on a crit. It shows usage against the Free quotas per UTC day, requests by status with CPU and wall time, 5xx by day and version, latency by route, the top D1 queries, the watched lines and the cron, the two SLOs and the match completion share. Run it monthly with `--days 30`, and after a release with `--release`, which compares the new API version with the one it replaced. A `quota` warn or crit names the day: look up that day's `quota: true` lines (§3.7.4 Log queries) and which Worker or database on the account spent it. An `unreadable` line is a refused or failed read; rerun before acting on the rest.
 
 **A player reports…** Ask for the time, to the minute, and for a match the
-lobby code from the address bar (`/?lobby=CODE`). Then:
+lobby code from the address bar (`/online/<CODE>`). Then:
 
 | Report | Where to look |
 | --- | --- |

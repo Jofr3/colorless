@@ -250,7 +250,7 @@ describe("web-health", () => {
     ]);
   });
 
-  it("takes a script or style served as text/html for the SPA fallback of a missing file", () => {
+  it("takes a script or style served as text/html, the host page in place of a missing file", () => {
     expect(assetProblem("/assets/a.js", 200, "text/javascript")).toBeUndefined();
     expect(assetProblem("/assets/a.js", 200, "text/html")).toMatch(/missing/);
     expect(assetProblem("/love/host.css", 200, "text/html; charset=utf-8")).toMatch(/missing/);

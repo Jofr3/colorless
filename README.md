@@ -33,9 +33,9 @@ detail.
 | Pages (`index.html` on every route) | browser | revalidated on each load, so a deploy shows up immediately |
 | `game.data` | IndexedDB | love.js preload cache, reused while game.data's bytes are unchanged (its uuid is their sha256, `frontend/lua/packageUuid.mjs`) |
 | Card artwork | IndexedDB (`ArtworkCache`), memory | 128 MB LRU of resized PNGs |
-| Catalog reads (`/cards`, `/sets`, `/series`, `/facets`) | KV + browser | KV 1 h; browser 5 min fresh + 1 h stale-while-revalidate, ETag/304 |
+| Catalog reads (`/cards`, `/sets`, `/series`, `/facets`) | KV + browser | KV 1 day (of `/cards`, pages 1-3 only), retired by the catalog epoch on ingest; free-text searches skip KV; browser 5 min fresh + 1 h stale-while-revalidate, ETag/304 |
 | Card images (`/assets/cards/…` on the API) | R2 + browser | mirrored once from tcgdex; immutable |
-| `/decks`, `/folders`, `/auth/me` | browser | ETag with `private, no-cache`: always revalidated, 304 when unchanged |
+| `/decks`, `/auth/me` | browser | ETag with `private, no-cache`: always revalidated, 304 when unchanged |
 | CORS preflights | browser | `Access-Control-Max-Age` one day (Chromium caps at 2 h) |
 
 `workers.dev` has no edge Cache API, so nothing is cached at Cloudflare's edge
@@ -60,8 +60,11 @@ bun run format      # biome --write
 bun run test:run    # vitest (src, apps, packages)
 bun run check       # check:static + check:lua + check:test (the full gate, as in CI)
 bun run release     # check, remote D1 migrations, API deploy, then web deploy
+bun run e2e         # browser smoke of the real page against a local API (opt-in; run before a release)
 bun run deps:check  # the monthly dependency report (needs the network, never fails)
 ```
+
+Other scripts: `package.json`; operations: `docs/workstreams/backend-data.md` §3.7.
 
 The toolchain is pinned: bun in `.bun-version` and Node (22 LTS) in
 `.node-version`. The build and test tools run under Node. The upgrade routine is
@@ -75,8 +78,9 @@ watch goes on. Edits under `tests/` and `tools/` are not packed and rebuild
 nothing.
 
 `build:lua` needs the sibling `../balatro-source` checkout (or
-`BALATRO_SOURCE`) with its installed `love.js` package. The Lua unit checks run
-with plain Lua from the repository root: `lua frontend/lua/tests/<name>.lua`.
+`BALATRO_SOURCE`) with its installed `love.js` package. One Lua unit check runs
+from the repository root with `lua frontend/lua/tests/<name>.lua`; `check:lua`
+needs Lua 5.1 (see `frontend/lua/README.md`).
 Checks that compare against Balatro's source skip themselves when it is missing
 (as in CI); `bun run check` requires it.
 
@@ -96,8 +100,9 @@ themselves, and any other write goes through
 | `colorless-api` (`apps/api/wrangler.jsonc`) | <https://colorless-api.jofrescari.workers.dev> | `bun run api:deploy` |
 
 `bun run deploy` builds in production mode, so the bundle and its CSP point at
-`VITE_API_ORIGIN` from `.env.production`. The frontend Worker has no script; unknown
-paths (such as old React URLs) fall back to the host page. The API's `APP_ORIGIN` must equal the
+`VITE_API_ORIGIN` from `.env.production`. The frontend Worker's only script
+(`src/notFoundWorker.ts`) answers a missing `/assets/` or `/love/` file with an
+uncached 404; other unknown paths (such as old React URLs) get the host page. The API's `APP_ORIGIN` must equal the
 frontend's origin (CORS and the post-login redirect), so redeploy the API after
 changing it. The public suffix is `workers.dev` itself, so both Workers are on the
 same site (`jofrescari.workers.dev`): the `SameSite=Lax` session cookie is first-party
@@ -184,12 +189,15 @@ ports fail if occupied. Google credentials still come from `apps/api/.dev.vars`.
 index.html               # love.js host page (canvas, loading bar, accessible links)
 frontend/lua/            # the LÖVE app: main.lua, ui/, web/ (host.js, host.css), tests/
 src/
+  host/                  # page routes, the shell around the canvas, text proxies, mailboxes
   lua/                   # adapters between the Lua app and the browser; bridge.ts wires them
   game/                  # local game host, board projection, game log, sandbox decks
   decks/                 # card catalog, deck math, decklist text, deck saving
   online/                # lobby WebSocket client and channel
   lib/                   # API client, API origin, OAuth start, persisted state
+  seam/                  # tests joining the web client to the real API and lobby
   test/                  # fixtures and fakes shared by the tests
+  notFoundWorker.ts      # the web Worker's script: a 404 for a missing build file
 packages/engine          # the rules engine (shared with the API)
 packages/schema          # wire schemas (shared with the API)
 apps/api                 # Cloudflare Worker API

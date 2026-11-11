@@ -41,7 +41,7 @@ to your task.
 > **Code paths in older entries.** The web frontend is the Lua (love.js) app
 > (`frontend/lua/README.md`). The React app is deleted, so `src/features/...` paths in the archive,
 > `conventions.md` and the workstreams are historical; the surviving modules live in
-> `src/{lua,game,decks,online,lib}`.
+> `src/{host,lua,game,decks,online,lib,seam}`.
 
 ## The one rule that keeps this working
 
