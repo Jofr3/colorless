@@ -13,7 +13,7 @@
 
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
-import { expandedCheckScript, fail, isRecord, parseJson } from "./lib/cli";
+import { expandedCheckScript, fail, flags, isRecord, parseJson } from "./lib/cli";
 import { REPO_ROOT, repoPath, repoSourceFiles } from "./lib/repo";
 
 const SELF_PATH = "scripts/import-graph.ts";
@@ -471,7 +471,9 @@ function checkRunsThisGuard(): string[] {
 }
 
 function main(): void {
-  const check = process.argv.includes("--check");
+  const check = flags("bun scripts/import-graph.ts", process.argv.slice(2), {
+    booleans: ["--check"],
+  }).given.has("--check");
   const t0 = performance.now();
   const files = repoSourceFiles(EXTENSIONS);
   const graph = buildGraph(files, (f) => readFileSync(repoPath(f), "utf8"));
