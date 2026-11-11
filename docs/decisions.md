@@ -1562,3 +1562,31 @@ The six phases ran as parallel worktrees on the DOC-P0 tip, each owning disjoint
 - **Comments (DOC-P6; REF3, OPSX1, DES2; decision 5a).** 568 comment lines in 279 files lose their decision, audit, phase and milestone ids, dates and history phrases, keeping each reason; changed TS/JS files have the same token stream as before and changed Lua files match once comments are dropped. `scripts/comment-guard.ts` in `check:static` reads comments only (TS/JS through the TypeScript scanner, Lua, `.github` YAML) and fails on those forms (12 DOC-P6 mutants killed). Strings are data: about 2,450 test titles name the decision whose sections they pin, and conventions.md "Code & quality" now says a test title may. A bare `P4` and brief labels such as `C7` are left to review.
 - **Merge.** The pointers between phases were fixed by hand (roadmap.md, the doc map's `archive/backend-data-plan.md` row, status.md's `R-…` rulings now in the numbered archive, README's §3.7.1), and decision-index.ts's header lost its D-ranges to pass the new guard.
 - **Left open.** A general docs path-check (OLD10, only if script renames recur), `--help` for scripts (REF8), the unsent lobby `kick` (REF7, a code question), and a schema-reference generator (REF1, not worth it).
+
+### 2026-11-11 — Developer experience audit decisions and Phase 0: the printed dev URL works, and the docs stop sending agents down wrong paths (DX-P0)
+- **The audit.** A read-only audit of the developer experience against the user's 17-point checklist (main 166f36fa7; the report, `tmp/dx/dx-audit.md`, is untracked). 31 findings: 0 high, 3 medium (SET1, SET2, CHK2), 15 low, 13 info, in four areas: setup and environment, the inner loop, checks and conventions, tooling and scripts. The loop itself is fast; the cost is at the edges: worktrees, the dev server's host name, and formatting.
+- **The user's decisions (all recommendations accepted).**
+  1. (a) No Nix flake, shell.nix or .envrc; the in-script nix fallbacks stay.
+  2. The user enables the pre-push hook on their clone (`git config core.hooksPath .githooks`); agents never write git config. It stays opt-in (build audit decision 4). No git pre-commit hook.
+  3. (a) A format-only PostToolUse hook in a tracked `.claude/settings.json`, with `.gitignore` reading `.claude/*` and `!.claude/settings.json` so `.claude/worktrees` stays ignored.
+  4. No bootstrap or doctor script.
+  5. (a) releases.log and d1-bookmarks.log move to an ignored `.local/`; tmp/ is disposable, and the user prunes it once by hand. No clean script.
+  6. No stylua, `.luarc.json`, `.editorconfig` or `.vscode`.
+  7. Delete `format:check`, `lua-constants:check`, apps/api `typecheck` and `preview` (with its README row); `lint` matches the gate.
+  8. (a) `dev-tailnet.ts --local`, exposed as `dev:local`; `dev:all` stays on 5175/8787.
+  9. Remove build.mjs's 0.5 s unlink-and-pause (re-opens BLD-P3), proven by the temp-dir copy and a 20-rebuild fetch loop; reload the page after each successful Lua build.
+  10. comment-guard also refuses line-number references in comments; Balatro-source citations are exempt.
+- **The plan.** Phase 0 runs alone and merges first. Phases 1-5 then run as worktrees on its tip, with disjoint files: 1 worktree inputs and the Lua build (SET1, SETX1, LOOP2 a, LOOP4), 2 dev server and debugging (LOOP1, LOOP5, LOOP7, LOOP8), 3 checks (CHK1, CHK5), 4 scripts, hooks and formatting (CHK2, TOOL5), 5 durable records out of tmp/ (TOOL4).
+- **Phase 0, what changed.**
+  - **The dev API host (SET2).** `src/lib/apiOrigin.ts`: without `VITE_API_ORIGIN`, a dev page on `127.0.0.1` or `localhost` calls port 8787 on that same name. Before, the API was always `localhost:8787`, so from the URL Vite prints the CSRF guard saw `Sec-Fetch-Site: cross-site` and refused every write. Production, e2e and `dev:tailnet` set `VITE_API_ORIGIN`, and a non-dev build keeps the localhost default, so nothing else changes. In nixpkgs Chromium against a fresh API and Vite on free ports (wrangler's port swapped in by a QA-only Vite config), register then `/auth/me` gave 201 and 200 from both `http://127.0.0.1:<port>` and `http://localhost:<port>`; a 127.0.0.1 page posting to the old localhost default still got 403 `cross_site_refused`. README and frontend/lua/README.md say either host works and Google sign-in needs localhost, where its callback is registered.
+  - **.dev.vars (SET4).** `.dev.vars.example` drops `APP_ORIGIN`, which the dev script's `--var` always sets. README marks the copy optional and says the local `pepper_missing` error is expected.
+  - **Test and typecheck docs (CHK4).** conventions.md measures suites with `bun run test:run` (the `--pool=forks` advice was stale) and says `scripts/**`, `apps/api/scripts/**` and `packages/schema/scripts/**` are typechecked by `tsconfig.scripts.json`, with `scripts/` tests in the app projects; validate-live.ts's header agrees. docs/README.md gives `-t`, `--project` and `vitest related`. `scripts/test-lua.ts` accepts a path as well as a name, so `bun run test:lua frontend/lua/tests/account.lua` runs under Lua 5.1; the recipes in README, docs/README.md and frontend/lua/README.md use it instead of plain `lua` (5.2 here).
+  - **Formatting only your files (CHKX1).** conventions.md and README give `bunx biome format --write <paths>`: `bun run format` rewrites the whole tree even with a path.
+  - **Lua errors (LOOP2 b).** `frontend/lua/web/host.js` sends `Error:` and `stack traceback:` lines to `console.error`, so devtools' error filter and e2e's console errors carry the Lua file:line.
+  - **The hook (CHK3).** Left to the user, as decision 2 says; README's first-run block and conventions.md "Pre-push hook" already give the command.
+  - host.js and apiOrigin.ts are web code: they ride along with the next release.
+- **Mutants.** 5 DX-P0 rows, all killed (`bun run mutants --decision DX-P0`):
+  - the loopback branch outside dev, the dev branch returning localhost, any page host accepted, and the page's host winning over `VITE_API_ORIGIN`, killed by `apiOrigin.test.ts`;
+  - test-lua comparing a named path as given, killed by `bun scripts/test-lua.ts frontend/lua/tests/account.lua`.
+  - The host.js change has no row: no suite loads host.js.
+- `bun run check` green: 756 files, 17,493 tests, 76 Lua files under Lua 5.1 (with `BALATRO_SOURCE`).
