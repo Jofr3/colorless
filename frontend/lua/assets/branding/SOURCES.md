@@ -56,8 +56,8 @@ This removes the graphics-dependent path that could leave the menu logo blank.
 CRT scanlines and fringing are applied live by the game.
 
 The earlier rounded lettering (`colorless.png`, from imagegen pass 3) and its Lua
-bake tools (`tools/logo_bake.lua`, `tools/logo_shapes.lua`), which the Refinement
-list below describes, were deleted; git history keeps them.
+bake tools (`tools/logo_bake.lua`, `tools/logo_shapes.lua`, `ui/logo_mask.lua`), which the
+Refinement list below describes, were deleted; git history keeps them.
 
 To rebuild the current finished asset, run `node frontend/lua/tools/build-logo.mjs`,
 serve the printed directory with a local HTTP server, then open its page in a
@@ -163,8 +163,6 @@ same credit with the Balatro files the build copies.
     zero changed face pixels against the previous sprite. Previous asset and
     baker: `13-before-deeper-ledge*`; comparison: `depth-comparison.png`.
 
-`lua frontend/lua/tests/logo_mask.lua` checks repaired pinholes, discarded
-fragments, preserved letter counters, and separation between adjacent faces.
 `lua frontend/lua/tests/menu_logo.lua` guards against reintroducing GPU baking
 or readback into startup.
 
