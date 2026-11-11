@@ -172,7 +172,7 @@ function noticedPackagesPlugin(): Plugin {
 
 // `build:lua` writes public/love/versions.json last, so its rewrite means a Lua build finished: the
 // page reloads, as it does for a TS edit.
-export function loveReloadPlugin(): Plugin {
+function loveReloadPlugin(): Plugin {
   return {
     name: "love-reload",
     apply: "serve",

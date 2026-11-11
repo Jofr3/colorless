@@ -1,11 +1,20 @@
 import { EventEmitter } from "node:events";
 import { join } from "node:path";
-import { resolveConfig, type ViteDevServer } from "vite";
+import { type ResolvedConfig, resolveConfig, type ViteDevServer } from "vite";
 import { describe, expect, it } from "vitest";
-import { loveReloadPlugin } from "../vite.config";
 import { REPO_ROOT } from "./lib/repo";
 
-function devServer() {
+/** vite.config.ts as the dev server resolves it. */
+const devConfig = (): Promise<ResolvedConfig> =>
+  resolveConfig(
+    { root: REPO_ROOT, configFile: join(REPO_ROOT, "vite.config.ts"), logLevel: "silent" },
+    "serve",
+  );
+
+async function devServer() {
+  const plugin = (await devConfig()).plugins.find((p) => p.name === "love-reload");
+  const hook = plugin?.configureServer;
+  if (typeof hook !== "function") throw new Error("no love-reload plugin with a configureServer");
   const sent: unknown[] = [];
   const watcher = new EventEmitter();
   const server = {
@@ -13,22 +22,20 @@ function devServer() {
     ws: { send: (payload: unknown) => sent.push(payload) },
     watcher,
   };
-  const hook = loveReloadPlugin().configureServer;
-  if (typeof hook !== "function") throw new Error("love-reload has no configureServer function");
-  hook.call({} as never, server as unknown as ViteDevServer);
+  await hook.call({} as never, server as unknown as ViteDevServer);
   return { sent, watcher };
 }
 
 describe("love-reload", () => {
-  it("reloads the page when a Lua build writes versions.json, created or rewritten", () => {
-    const { sent, watcher } = devServer();
+  it("reloads the page when a Lua build writes versions.json, created or rewritten", async () => {
+    const { sent, watcher } = await devServer();
     watcher.emit("add", "/repo/public/love/versions.json");
     watcher.emit("change", "/repo/public/love/versions.json");
     expect(sent).toEqual([{ type: "full-reload" }, { type: "full-reload" }]);
   });
 
-  it("ignores the other files a build writes, so one build reloads once", () => {
-    const { sent, watcher } = devServer();
+  it("ignores the other files a build writes, so one build reloads once", async () => {
+    const { sent, watcher } = await devServer();
     for (const file of [
       "/repo/public/love/game.data",
       "/repo/public/love/host.js",
@@ -45,13 +52,9 @@ describe("love-reload", () => {
 describe("the dev server's fs.deny", () => {
   /** Vite's own matcher over the configured deny list, as it checks every file it serves. */
   async function denied() {
-    const config = await resolveConfig(
-      { root: REPO_ROOT, configFile: join(REPO_ROOT, "vite.config.ts"), logLevel: "silent" },
-      "serve",
-    );
-    const glob = (config as unknown as { fsDenyGlob?: (path: string) => boolean }).fsDenyGlob;
-    if (!glob) throw new Error("Vite's resolved config has no fsDenyGlob any more");
-    return glob;
+    const config = (await devConfig()) as unknown as { fsDenyGlob?: (path: string) => boolean };
+    if (!config.fsDenyGlob) throw new Error("Vite's resolved config has no fsDenyGlob any more");
+    return config.fsDenyGlob;
   }
 
   it("refuses the API's secrets, its sources and every local D1 state", async () => {
