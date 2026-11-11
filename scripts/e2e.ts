@@ -37,7 +37,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
-import { type AddressInfo, createServer as createNetServer } from "node:net";
+import type { AddressInfo } from "node:net";
 import { tmpdir } from "node:os";
 import { delimiter, extname, join, normalize } from "node:path";
 import { FIXTURE_DECK, fixtureCatalogStatements } from "@colorless/api/testing/fixtureCatalog";
@@ -51,6 +51,7 @@ import {
   type PageOptions,
 } from "./lib/browser";
 import { fail } from "./lib/cli";
+import { systemPort } from "./lib/ports";
 import { localBin, REPO_ROOT, repoPath } from "./lib/repo";
 
 const keep = process.argv.includes("--keep");
@@ -154,17 +155,6 @@ function run(command: string, args: string[], cwd = REPO_ROOT, env: Record<strin
   if (result.status !== 0)
     throw new Error(`${command} ${args.join(" ")} failed:\n${result.stdout}${result.stderr}`);
   return result.stdout;
-}
-
-function freePort(): Promise<number> {
-  return new Promise((done, reject) => {
-    const probe = createNetServer();
-    probe.once("error", reject);
-    probe.listen(0, "127.0.0.1", () => {
-      const { port } = probe.address() as AddressInfo;
-      probe.close(() => done(port));
-    });
-  });
 }
 
 // ---------- the site ----------
@@ -335,7 +325,7 @@ async function launchBrowser() {
   const options = {
     binary,
     profile: join(root, "profile"),
-    port: await freePort(),
+    port: await systemPort(),
     start: (command: string, args: string[]) => start(command, args, { env }),
     headless: !firefox,
     hook: HOOK,
@@ -714,8 +704,8 @@ const pages: Page[] = [];
 let apiLog = "";
 
 async function smoke() {
-  const apiPort = await freePort();
-  const inspectorPort = await freePort();
+  const apiPort = await systemPort();
+  const inspectorPort = await systemPort();
   const dist = join(root, "dist");
   const sitePort = await serve(dist);
   site = `http://127.0.0.1:${sitePort}`;

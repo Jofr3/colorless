@@ -1,8 +1,12 @@
+// `bun run dev:tailnet` runs the web and API dev servers on free local ports behind Tailscale Serve
+// HTTPS, each told the other's origin. With --local it skips Tailscale: both listen on 127.0.0.1 on
+// ports the system picks, and once both answer it prints one `web=… api=… inspector=…` line.
+// Ctrl+C stops everything it started.
 import { spawn, execFileSync, type ChildProcess } from "node:child_process";
-import { createServer } from "node:net";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { isRecord, parseJson } from "./lib/cli";
+import { freePort, reservePorts, systemPort } from "./lib/ports";
 
 /** Preferred local ports; the first free port at or above each is used. */
 const WEB_PORT = 5175;
@@ -10,6 +14,20 @@ const API_PORT = 8787;
 const INSPECTOR_PORT = 9229;
 /** Preferred Tailnet HTTPS port for the frontend; the API takes the next free one. */
 const WEB_HTTPS_PORT = 8446;
+/** How long --local waits for both servers; a fresh worktree migrates its D1 first. */
+const LOCAL_READY_MS = 120_000;
+
+export function parseMode(args: string[]): "tailnet" | "local" {
+  const unknown = args.filter((arg) => arg !== "--local");
+  if (unknown.length > 0) throw new Error(`Unknown argument: ${unknown.join(" ")} (only --local)`);
+  return args.includes("--local") ? "local" : "tailnet";
+}
+
+/** Vite binds 127.0.0.1, and the page and the API must share that name to be same-site. */
+export const loopbackOrigin = (port: number) => `http://127.0.0.1:${port}`;
+
+export const pairLine = (web: string, api: string, inspector: number) =>
+  `web=${web} api=${api} inspector=${inspector}`;
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const children: ChildProcess[] = [];
@@ -44,24 +62,11 @@ function start(command: string, args: string[], env = process.env, cwd = root) {
   });
   child.on("exit", (code) => {
     if (!stopping) {
-      console.error(`${command} exited; stopping the Tailnet dev session.`);
+      console.error(`${command} exited; stopping the dev session.`);
       stop(code ?? 1);
     }
   });
 }
-
-async function portAvailable(host: string, port: number): Promise<boolean> {
-  return new Promise((resolve, reject) => {
-    const server = createServer();
-    server.once("error", (error: NodeJS.ErrnoException) => {
-      if (error.code === "EADDRINUSE" || error.code === "EACCES") resolve(false);
-      else reject(error);
-    });
-    server.listen({ host, port, exclusive: true }, () => server.close(() => resolve(true)));
-  });
-}
-
-const selected = new Set<number>();
 
 type ServeConfig = {
   TCP?: Record<string, unknown>;
@@ -120,52 +125,19 @@ async function startServe(port: number, target: number) {
   }
   if (!stopping) throw new Error(`Tailscale Serve did not start on port ${port}.`);
 }
-async function freePort(host: string, preferred: number, override?: string): Promise<number> {
-  const first = override === undefined ? preferred : Number(override);
-  if (!Number.isInteger(first) || first < 1024 || first > 65535) {
-    throw new Error(`Invalid port: ${override}`);
-  }
-  const last = override === undefined ? Math.min(first + 100, 65535) : first;
-  for (let port = first; port <= last; port++) {
-    if (!selected.has(port) && (await portAvailable(host, port))) {
-      selected.add(port);
-      return port;
-    }
-  }
-  throw new Error(`No available port on ${host} in ${first}–${last}.`);
-}
 
-async function main() {
-  const status = tailscaleJson(["status", "--json"], isTailscaleStatus);
-  const hostname = status.Self?.DNSName?.replace(/\.$/, "");
-  const ip = status.TailscaleIPs?.find((address) => !address.includes(":"));
-  if (status.BackendState !== "Running" || !hostname || !ip) {
-    throw new Error("Connect Tailscale with MagicDNS enabled before starting Tailnet development.");
-  }
+type Ports = { web: number; api: number; inspector: number };
 
-  // Skip configured Serve ports, including foreground sessions from other apps.
-  for (const port of servePorts()) selected.add(port);
-
-  const webPort = await freePort("127.0.0.1", WEB_PORT);
-  const apiPort = await freePort("127.0.0.1", API_PORT);
-  const inspectorPort = await freePort("127.0.0.1", INSPECTOR_PORT);
-  const webHttpsPort = await freePort(ip, WEB_HTTPS_PORT, process.env.TAILNET_WEB_PORT);
-  const apiHttpsPort = await freePort(ip, webHttpsPort + 1, process.env.TAILNET_API_PORT);
-  const webOrigin = `https://${hostname}:${webHttpsPort}`;
-  const apiOrigin = `https://${hostname}:${apiHttpsPort}`;
-
-  process.on("SIGINT", () => stop(130));
-  process.on("SIGTERM", () => stop(143));
-
-  console.log(`\nFrontend: ${webOrigin}/ (local port ${webPort})`);
-  console.log(`API:      ${apiOrigin} (local port ${apiPort})`);
-  console.log(`Google authorized redirect URI: ${apiOrigin}/auth/oauth/google/callback`);
-  console.log("Ctrl+C stops both servers and this session's Tailnet proxies.\n");
-
-  start(process.execPath, ["run", "dev", "--port", String(webPort)], {
+function startServers(
+  ports: Ports,
+  webOrigin: string,
+  apiOrigin: string,
+  webEnv: Record<string, string> = {},
+) {
+  start(process.execPath, ["run", "dev", "--port", String(ports.web)], {
     ...process.env,
     VITE_API_ORIGIN: apiOrigin,
-    __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS: hostname,
+    ...webEnv,
   });
   start(
     process.execPath,
@@ -175,9 +147,9 @@ async function main() {
       "--ip",
       "127.0.0.1",
       "--port",
-      String(apiPort),
+      String(ports.api),
       "--inspector-port",
-      String(inspectorPort),
+      String(ports.inspector),
       "--var",
       `APP_ORIGIN:${webOrigin}`,
       "--var",
@@ -186,11 +158,71 @@ async function main() {
     process.env,
     `${root}apps/api`,
   );
-  await startServe(webHttpsPort, webPort);
-  if (!stopping) await startServe(apiHttpsPort, apiPort);
 }
 
-main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : error);
-  stop(1);
-});
+async function answers(url: string): Promise<boolean> {
+  return fetch(url)
+    .then((response) => response.ok)
+    .catch(() => false);
+}
+
+async function local() {
+  const ports = { web: await systemPort(), api: await systemPort(), inspector: await systemPort() };
+  const webOrigin = loopbackOrigin(ports.web);
+  const apiOrigin = loopbackOrigin(ports.api);
+  console.log(`\nFrontend: ${webOrigin}/`);
+  console.log(`API:      ${apiOrigin} (inspector on port ${ports.inspector})`);
+  console.log("Ctrl+C stops both servers.\n");
+  startServers(ports, webOrigin, apiOrigin);
+  const until = Date.now() + LOCAL_READY_MS;
+  while (!stopping) {
+    if ((await answers(`${webOrigin}/`)) && (await answers(`${apiOrigin}/health`))) {
+      console.log(pairLine(webOrigin, apiOrigin, ports.inspector));
+      return;
+    }
+    if (Date.now() > until) throw new Error(`The servers did not answer in ${LOCAL_READY_MS} ms.`);
+    await delay(250);
+  }
+}
+
+async function tailnet() {
+  const status = tailscaleJson(["status", "--json"], isTailscaleStatus);
+  const hostname = status.Self?.DNSName?.replace(/\.$/, "");
+  const ip = status.TailscaleIPs?.find((address) => !address.includes(":"));
+  if (status.BackendState !== "Running" || !hostname || !ip) {
+    throw new Error("Connect Tailscale with MagicDNS enabled before starting Tailnet development.");
+  }
+
+  // Skip configured Serve ports, including foreground sessions from other apps.
+  reservePorts(servePorts());
+
+  const ports = {
+    web: await freePort("127.0.0.1", WEB_PORT),
+    api: await freePort("127.0.0.1", API_PORT),
+    inspector: await freePort("127.0.0.1", INSPECTOR_PORT),
+  };
+  const webHttpsPort = await freePort(ip, WEB_HTTPS_PORT, process.env.TAILNET_WEB_PORT);
+  const apiHttpsPort = await freePort(ip, webHttpsPort + 1, process.env.TAILNET_API_PORT);
+  const webOrigin = `https://${hostname}:${webHttpsPort}`;
+  const apiOrigin = `https://${hostname}:${apiHttpsPort}`;
+
+  console.log(`\nFrontend: ${webOrigin}/ (local port ${ports.web})`);
+  console.log(`API:      ${apiOrigin} (local port ${ports.api})`);
+  console.log(`Google authorized redirect URI: ${apiOrigin}/auth/oauth/google/callback`);
+  console.log("Ctrl+C stops both servers and this session's Tailnet proxies.\n");
+
+  startServers(ports, webOrigin, apiOrigin, { __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS: hostname });
+  await startServe(webHttpsPort, ports.web);
+  if (!stopping) await startServe(apiHttpsPort, ports.api);
+}
+
+if (import.meta.main) {
+  process.on("SIGINT", () => stop(130));
+  process.on("SIGTERM", () => stop(143));
+  Promise.resolve()
+    .then(() => (parseMode(process.argv.slice(2)) === "local" ? local() : tailnet()))
+    .catch((error: unknown) => {
+      console.error(error instanceof Error ? error.message : error);
+      stop(1);
+    });
+}
