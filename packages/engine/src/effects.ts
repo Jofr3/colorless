@@ -1067,6 +1067,30 @@ export type AttackCoinFlip =
       ops: EffectOp[];
     };
 
+/**
+ * What each coin kind does to the printed damage box, read by `attack.ts` instead of hand-kept lists
+ * of kinds. `explainsModifier`: the flip folds damage, so it accounts for a printed +/× marker.
+ * `dropsBase`: the printed number is the per-unit of a count, so the base does not also land.
+ */
+export const COIN_TRAITS: {
+  readonly [K in AttackCoinFlip["kind"]]: {
+    readonly explainsModifier: boolean;
+    readonly dropsBase: boolean;
+  };
+} = {
+  bonusOnHeads: { explainsModifier: true, dropsBase: false },
+  cancelOnTails: { explainsModifier: false, dropsBase: false },
+  cancelOnTailsElseProgram: { explainsModifier: false, dropsBase: false },
+  perHeads: { explainsModifier: true, dropsBase: true },
+  programPerHeads: { explainsModifier: false, dropsBase: false },
+  retrievalUpToHeads: { explainsModifier: false, dropsBase: false },
+  bonusLadder: { explainsModifier: true, dropsBase: false },
+  opponentPerTails: { explainsModifier: true, dropsBase: true },
+  bonusOnAllHeads: { explainsModifier: true, dropsBase: false },
+  deckUpToHeads: { explainsModifier: false, dropsBase: false },
+  perHeadsThenThreshold: { explainsModifier: true, dropsBase: true },
+};
+
 // "Flip a coin. If heads, this attack does N more damage." and "Flip a coin. If tails, this attack
 // does nothing." are one flip taken before the §8.5 damage pipeline, read from either face.
 const ATTACK_COIN_BONUS = /^Flip a coin\. If heads, this attack does (\d+) more damage\.$/;
@@ -8397,34 +8421,100 @@ export function timingGateFromAttackText(text: string | undefined): AttackTiming
 }
 
 /**
- * Every whole-sentence attack reader this module exports, in the order `attack.ts` calls them. Used
- * by `splitAttackTrailingClause`; a reader missing from this list would let the splitter claim a
- * compound that reader already reads whole, so a test pins it against the module's `deriveAttack`
- * exports.
+ * What a reader's claim means. `effect`: a non-null result plays the text. `requirement`: it reads
+ * the "this attack does nothing" condition, which plays the text only when no clause was split off.
+ * `copy`: it replaces the attack, and returns no program, so the trailing-clause splitter must not
+ * admit a head it claims; a copy head would go to `deriveAttackEffect` and the copy would be lost.
  */
-const ATTACK_WHOLE_SENTENCE_READERS: readonly ((text: string) => unknown)[] = [
-  deriveAttackEffect,
-  deriveAttackDamageBonus,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageMultiplier,
-  deriveAttackCoinFlip,
-  deriveAttackRequirement,
-  deriveAttackDamageSuppression,
-  deriveAttackOptionalBoost,
-  deriveAttackBonusConsequent,
-  deriveAttackOptionalCostBoost,
-  deriveAttackDiscardScaledBoost,
-  deriveAttackCancelRequirement,
-  deriveAttackPreDamage,
+export type AttackReaderRole = "effect" | "requirement" | "copy";
+
+export interface AttackReader {
+  readonly name: string;
+  readonly read: (text: string) => unknown;
+  readonly role: AttackReaderRole;
+}
+
+/**
+ * Every `deriveAttack…` reader this module exports, in the order `attack.ts` calls them. The
+ * splitter, `simulationGaps` and the census read this table; a test pins it against the module's
+ * `deriveAttack` exports.
+ */
+export const ATTACK_READERS: readonly AttackReader[] = [
+  { name: "deriveAttackEffect", read: deriveAttackEffect, role: "effect" },
+  { name: "deriveAttackDamageBonus", read: deriveAttackDamageBonus, role: "effect" },
+  { name: "deriveAttackDamagePenalty", read: deriveAttackDamagePenalty, role: "effect" },
+  { name: "deriveAttackDamageMultiplier", read: deriveAttackDamageMultiplier, role: "effect" },
+  { name: "deriveAttackCoinFlip", read: deriveAttackCoinFlip, role: "effect" },
+  { name: "deriveAttackRequirement", read: deriveAttackRequirement, role: "requirement" },
+  { name: "deriveAttackDamageSuppression", read: deriveAttackDamageSuppression, role: "effect" },
+  { name: "deriveAttackOptionalBoost", read: deriveAttackOptionalBoost, role: "effect" },
+  { name: "deriveAttackBonusConsequent", read: deriveAttackBonusConsequent, role: "effect" },
+  { name: "deriveAttackOptionalCostBoost", read: deriveAttackOptionalCostBoost, role: "effect" },
+  { name: "deriveAttackDiscardScaledBoost", read: deriveAttackDiscardScaledBoost, role: "effect" },
+  {
+    name: "deriveAttackCancelRequirement",
+    read: deriveAttackCancelRequirement,
+    role: "requirement",
+  },
+  { name: "deriveAttackPreDamage", read: deriveAttackPreDamage, role: "effect" },
+  { name: "deriveAttackCopy", read: deriveAttackCopy, role: "copy" },
 ];
 
-// `deriveAttackCopy` is deliberately absent: it returns no program, so admitting a compound whose
-// head is a copy sentence would hand the head to `deriveAttackEffect` and silently drop the copy.
+/** The readers the splitter asks whether they claim a string whole: every role but `copy`. */
+const ATTACK_WHOLE_SENTENCE_READERS = ATTACK_READERS.filter(({ role }) => role !== "copy").map(
+  ({ read }) => read,
+);
 
 /** Does ANY whole-sentence reader claim this string? The splitter's refusal and
     its admission are the same question asked of two different strings. */
 function claimedByAnyReader(text: string): boolean {
   return ATTACK_WHOLE_SENTENCE_READERS.some((read) => read(text) !== null);
+}
+
+/** An attack's text after its gate, requirement, cancel and trailing clauses are split off. */
+export interface AttackTextSplit {
+  /** The text the readers run over; `""` means no text remains. */
+  effect: string;
+  /** The printed "this attack does nothing" requirement, or null. */
+  requirement: BoardCondition | null;
+  /** A requirement or cancel clause was split off, so `effect` is a different sentence. */
+  requirementSplit: boolean;
+  /** The trailing effect clause `deriveAttackEffect` reads after the head, or null. */
+  tail: string | null;
+}
+
+/**
+ * Splits a printed attack's text the one way `attack.ts` and `simulationGaps` both read it. `gated`
+ * says the attack's gate clause is already enforced, so it is stripped first. The order matters:
+ * gate before requirement (on a string carrying both, the reverse resolves neither), requirement
+ * before cancel, and the trailing clause last, above every damage reader, because some compounds
+ * put a damage-bonus clause in the head.
+ */
+export function splitAttackText(text: string, gated: boolean): AttackTextSplit {
+  const gateSplit = gated ? splitAttackGateClause(text) : null;
+  // A clause-only printing leaves an empty body, which every reader treats as no text.
+  const body = gateSplit === null ? text : gateSplit.body;
+  // Fires only when the leading clause maps to an `ATTACK_REQUIREMENT_CLAUSES` row.
+  const requirementSplit = body === "" ? null : splitAttackRequirementClause(body);
+  // Read off `body`, since `effect` is only the trailing companion once a split fires.
+  const leadingRequirement = body === "" ? null : deriveAttackRequirement(body);
+  const composed = requirementSplit === null ? body : requirementSplit.body;
+  // A trailing "If you can't, this attack does nothing." is a requirement rather than an effect op,
+  // because effect programs run after damage, where nothing can retract it. Fires only when the head
+  // maps to an `ATTACK_CANCEL_HEADS` row.
+  const cancelSplit = composed === "" ? null : splitAttackCancelClause(composed);
+  const cancelRequirement = composed === "" ? null : deriveAttackCancelRequirement(composed);
+  const uncancelled = cancelSplit === null ? composed : cancelSplit.head;
+  // Fires only when no reader claims the whole string and both halves are claimed.
+  const compoundSplit = uncancelled === "" ? null : splitAttackTrailingClause(uncancelled);
+  return {
+    effect: compoundSplit === null ? uncancelled : compoundSplit.head,
+    // The two requirement readers are mutually exclusive by their anchors, so `??` is a join, not a
+    // precedence.
+    requirement: leadingRequirement ?? cancelRequirement,
+    requirementSplit: requirementSplit !== null || cancelSplit !== null,
+    tail: compoundSplit === null ? null : compoundSplit.tail,
+  };
 }
 
 /**

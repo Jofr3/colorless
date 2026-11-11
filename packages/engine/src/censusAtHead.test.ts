@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { attackReaderSurface, legalAttackCorpus, resolvedByAnyReader } from "./censusAttackCorpus";
 import { meAttackCorpus } from "./censusAttackCorpusMe";
+import * as effects from "./effects";
 import {
+  ATTACK_READERS,
   deriveAttackBonusConsequent,
   deriveAttackCancelRequirement,
   deriveAttackCoinFlip,
@@ -2798,9 +2800,14 @@ const RAW_UNBUILT_ATTACK_UNITS = 69;
 const COMPOUND_ATTACK_UNITS = 22;
 
 describe("D274 — BUILT.attack, derived from the LIVE readers over the committed corpus", () => {
-  it("U0001f195U0001f195 D417 — the hand-kept READERS list IS the module's reader surface", () => {
+  it("ATTACK_READERS is every `deriveAttack` export, each under its own name", () => {
+    const exported = Object.entries(effects)
+      .filter(([name, value]) => name.startsWith("deriveAttack") && typeof value === "function")
+      .map(([name]) => name)
+      .sort();
+    expect(attackReaderSurface()).toEqual(exported);
+    for (const { name, read } of ATTACK_READERS) expect(read.name).toBe(name);
     expect(READERS.map((read) => read.name).sort()).toEqual(attackReaderSurface());
-    expect(attackReaderSurface()).toHaveLength(14);
   });
 
   it("the corpus IS the legal attack column, to the digit D233 has quoted since", () => {

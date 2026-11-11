@@ -68,6 +68,7 @@ import { landAttackHit } from "./damageCalc";
 import { COPY_FAMILY_MARKER } from "./deriver/vocabulary";
 import {
   bonusConsequentProgram,
+  COIN_TRAITS,
   deriveAttackBonusConsequent,
   deriveAttackCopy,
   deriveAttackCoinFlip,
@@ -79,18 +80,13 @@ import {
   deriveAttackOptionalBoost,
   deriveAttackDiscardScaledBoost,
   deriveAttackOptionalCostBoost,
-  deriveAttackCancelRequirement,
   deriveAttackPreDamage,
-  deriveAttackRequirement,
   isInPlayAttackCopy,
   isResolvedAttackCopy,
   optionalBoostProgram,
   discardScaledBoostProgram,
   optionalCostBoostProgram,
-  splitAttackCancelClause,
-  splitAttackGateClause,
-  splitAttackTrailingClause,
-  splitAttackRequirementClause,
+  splitAttackText,
 } from "./effects";
 import type {
   AttackCopyOverride,
@@ -1266,42 +1262,14 @@ function readAttackText(
   // effect readers run, but only when `attackGateOf` confirms a gate at this index; otherwise the
   // whole string stays and is reported as skipped.
   const printedEffect = (copiedFrom?.attack ?? declared).effect ?? null;
-  const gateSplit =
-    printedEffect === null ||
-    attackGateOf(state, copiedFrom?.body ?? active, copiedFrom?.index ?? index) === undefined
+  const split =
+    printedEffect === null
       ? null
-      : splitAttackGateClause(printedEffect);
-  // A clause-only printing leaves an empty body, which every reader below treats as no text.
-  const gated = gateSplit === null ? printedEffect : gateSplit.body;
-  // The requirement split reads the requirement off the unsplit string before only the body is
-  // passed on. It fires only when the leading clause maps to an `ATTACK_REQUIREMENT_CLAUSES` row.
-  // Gate split must come before requirement split: on a string carrying both, the reverse order
-  // resolves neither.
-  const requirementSplit =
-    gated === null || gated === "" ? null : splitAttackRequirementClause(gated);
-  // The printed "If <clause>, this attack does nothing." requirement, or null. Read off `gated`,
-  // since `effect` is only the trailing companion once a split fires.
-  const leadingRequirement = gated === null || gated === "" ? null : deriveAttackRequirement(gated);
-  const composed = requirementSplit === null ? gated : requirementSplit.body;
-  // Strips a trailing "If you can't, this attack does nothing." after reading it as a requirement
-  // off the unsplit string. It is a requirement rather than an effect op because effect programs
-  // run after damage, where nothing can retract it. Fires only when the head maps to an
-  // `ATTACK_CANCEL_HEADS` row.
-  const cancelSplit =
-    composed === null || composed === "" ? null : splitAttackCancelClause(composed);
-  const cancelRequirement =
-    composed === null || composed === "" ? null : deriveAttackCancelRequirement(composed);
-  // The two requirement readers are mutually exclusive by their anchors, so `??` is a join, not a
-  // precedence.
-  const requirement = leadingRequirement ?? cancelRequirement;
-  const uncancelled = cancelSplit === null ? composed : cancelSplit.head;
-  // Splits off a trailing effect clause that still has to be read, appended to the program as
-  // `derivedTail`. It fires only when no reader claims the whole string and both halves are
-  // claimed. It sits above all damage readers because some compounds put a damage-bonus clause in
-  // the head.
-  const compoundSplit =
-    uncancelled === null || uncancelled === "" ? null : splitAttackTrailingClause(uncancelled);
-  const effect = compoundSplit === null ? uncancelled : compoundSplit.head;
+      : splitAttackText(
+          printedEffect,
+          attackGateOf(state, copiedFrom?.body ?? active, copiedFrom?.index ?? index) !== undefined,
+        );
+  const effect = split === null ? null : split.effect;
   const read = <T>(reader: (text: string) => T | null): T | null =>
     effect === null || effect === "" ? null : reader(effect);
   // An authored registry program wins over the text deriver, else null (unsimulated). Programs are
@@ -1313,7 +1281,7 @@ function readAttackText(
     ] ?? null;
   const derivedHead = read(deriveAttackEffect);
   // Head program first, then the trailing clause's ops, in printed order.
-  const derivedTail = compoundSplit === null ? null : deriveAttackEffect(compoundSplit.tail);
+  const derivedTail = split === null || split.tail === null ? null : deriveAttackEffect(split.tail);
   const derived = derivedTail === null ? derivedHead : [...(derivedHead ?? []), ...derivedTail];
   // Count-scaling folds into the damage before §8.5. "more" adds `per × count` to the printed base,
   // no adjective replaces the base with `per × count`, and "less" subtracts it. The regexes are
@@ -1324,8 +1292,8 @@ function readAttackText(
     printedBase,
     modifier,
     effect,
-    requirement,
-    requirementSplit: requirementSplit !== null || cancelSplit !== null,
+    requirement: split?.requirement ?? null,
+    requirementSplit: split?.requirementSplit ?? false,
     program: resolveDeclarationGates(authored ?? derived, provided.length - cost.length),
     // "Before doing damage, discard all Pokémon Tools from your opponent's Active Pokémon." Kept
     // separate from `program` because it runs before §8.5, while `program` runs at the tail.
@@ -1380,8 +1348,7 @@ function baseDamageTerms(text: AttackText, base: number): BaseDamageTerms {
   // The multiply family's printed "N×" is the per-unit already counted in `scaled`, so the base is
   // dropped; additive families keep it. Readers whose hit is dealt inside a nested gate or appended
   // program also drop it here, since `programDamage` only sees top-level ops of the registry or
-  // derived program. `opponentPerTails` drops the printed base like `perHeads`, since its marker is
-  // read as "N×".
+  // derived program.
   const scaledBase =
     text.damageMultiplier !== null ||
     programDamage ||
@@ -1389,9 +1356,7 @@ function baseDamageTerms(text: AttackText, base: number): BaseDamageTerms {
     text.bonusConsequent !== null ||
     costBoostOwnsTheBase ||
     text.discardScaledBoost !== null ||
-    coinFlip?.kind === "perHeads" ||
-    coinFlip?.kind === "opponentPerTails" ||
-    coinFlip?.kind === "perHeadsThenThreshold"
+    (coinFlip !== null && COIN_TRAITS[coinFlip.kind].dropsBase)
       ? 0
       : base;
   return { programDamage, costBoostOwnsTheBase, scaledBase };
@@ -1422,15 +1387,7 @@ function simulatedParts(
     text.optionalCostBoost !== null ||
     text.discardScaledBoost !== null ||
     text.damageSuppression !== null;
-  // Coin members that fold no damage explain no printed damage marker, so they are listed as
-  // exceptions rather than testing `coinFlip !== null`.
-  const coinExplainsModifier =
-    coinFlip !== null &&
-    coinFlip.kind !== "cancelOnTails" &&
-    coinFlip.kind !== "cancelOnTailsElseProgram" &&
-    coinFlip.kind !== "deckUpToHeads" &&
-    coinFlip.kind !== "programPerHeads" &&
-    coinFlip.kind !== "retrievalUpToHeads";
+  const coinExplainsModifier = coinFlip !== null && COIN_TRAITS[coinFlip.kind].explainsModifier;
   // Only the `moreDamage` payoff explains a printed "+"; `benchSnipe` is a second hit and explains
   // none.
   const modifier =

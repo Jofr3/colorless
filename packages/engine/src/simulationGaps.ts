@@ -2,24 +2,10 @@ import type { Card } from "@colorless/schema";
 import { isSpecialEnergy } from "./cardClasses";
 import { toolCardSimulated } from "./continuous";
 import {
-  deriveAttackBonusConsequent,
-  deriveAttackCancelRequirement,
-  deriveAttackCoinFlip,
+  ATTACK_READERS,
   deriveAttackCopy,
-  deriveAttackDamageBonus,
-  deriveAttackDamageMultiplier,
-  deriveAttackDamagePenalty,
-  deriveAttackDamageSuppression,
-  deriveAttackDiscardScaledBoost,
   deriveAttackEffect,
-  deriveAttackOptionalBoost,
-  deriveAttackOptionalCostBoost,
-  deriveAttackPreDamage,
-  deriveAttackRequirement,
-  splitAttackCancelClause,
-  splitAttackGateClause,
-  splitAttackRequirementClause,
-  splitAttackTrailingClause,
+  splitAttackText,
   timingGateFromAttackText,
 } from "./effects";
 import type { CardProgram } from "./programTypes";
@@ -75,10 +61,15 @@ function programsBeyondAttacks(program: CardProgram | undefined): boolean {
   return Object.keys(program ?? {}).some((key) => key !== "attack" && key !== "attackGate");
 }
 
+/** The readers whose claim plays the text; requirements and copies are read separately. */
+const EFFECT_READERS = ATTACK_READERS.filter(({ role }) => role === "effect").map(
+  ({ read }) => read,
+);
+
 /**
  * Whether the attack at `index` resolves its effect text, read off the printed card the way
  * `readAttackText` reads a printed attack: an authored program, a copy of another attack, or the
- * text after its gate, requirement, cancel and trailing clauses are split off, claimed by a reader.
+ * text `splitAttackText` leaves, claimed by a reader.
  */
 function attackEffectSimulated(
   text: string | undefined,
@@ -88,32 +79,9 @@ function attackEffectSimulated(
   if (text === undefined || text === "") return true;
   if (program?.attack?.[index] !== undefined || deriveAttackCopy(text) !== null) return true;
   const gate = program?.attackGate?.[index] ?? timingGateFromAttackText(text);
-  const gated = gate === undefined ? text : (splitAttackGateClause(text)?.body ?? text);
-  if (gated === "") return true;
-  const requirementSplit = splitAttackRequirementClause(gated);
-  const composed = requirementSplit === null ? gated : requirementSplit.body;
-  const cancelSplit = composed === "" ? null : splitAttackCancelClause(composed);
-  const requirement =
-    deriveAttackRequirement(gated) ??
-    (composed === "" ? null : deriveAttackCancelRequirement(composed));
-  const uncancelled = cancelSplit === null ? composed : cancelSplit.head;
-  const compoundSplit = uncancelled === "" ? null : splitAttackTrailingClause(uncancelled);
-  const effect = compoundSplit === null ? uncancelled : compoundSplit.head;
+  const { effect, requirement, requirementSplit, tail } = splitAttackText(text, gate !== undefined);
   if (effect === "") return true;
-  if (requirement !== null && requirementSplit === null && cancelSplit === null) return true;
-  const readers = [
-    deriveAttackEffect,
-    deriveAttackPreDamage,
-    deriveAttackDamageBonus,
-    deriveAttackDamageMultiplier,
-    deriveAttackDamagePenalty,
-    deriveAttackDamageSuppression,
-    deriveAttackCoinFlip,
-    deriveAttackOptionalBoost,
-    deriveAttackBonusConsequent,
-    deriveAttackOptionalCostBoost,
-    deriveAttackDiscardScaledBoost,
-  ];
-  if (readers.some((read) => read(effect) !== null)) return true;
-  return compoundSplit !== null && deriveAttackEffect(compoundSplit.tail) !== null;
+  if (requirement !== null && !requirementSplit) return true;
+  if (EFFECT_READERS.some((read) => read(effect) !== null)) return true;
+  return tail !== null && deriveAttackEffect(tail) !== null;
 }

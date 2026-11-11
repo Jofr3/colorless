@@ -34,6 +34,13 @@ const UNSIMULATED_ATTACKS = [
   "This attack does 10 damage for each {P} Pokémon in your discard pile.",
 ];
 
+/** A requirement split off, leaving a sentence no effect reader claims; the second is itself a
+    requirement, which plays nothing once a clause was split. */
+const SPLIT_UNSIMULATED = [
+  "If this Pokémon didn't move from the Bench to the Active Spot this turn, this attack does nothing. Both Active Pokémon are now Poisoned.",
+  "If this Pokémon didn't move from the Bench to the Active Spot this turn, this attack does nothing. If your opponent's Active Pokémon has no damage counters on it before this attack does damage, this attack does nothing.",
+];
+
 const probe = (effect?: string): Card =>
   battler("gap-probe", {
     hp: 300,
@@ -88,7 +95,7 @@ describe("simulationGaps — what a card prints that the engine cannot play", ()
   it("flags an attack whose text no reader claims, and passes an authored or derived one", () => {
     expect(simulationGaps(probe())).toEqual([]);
     expect(simulationGaps(probe("Draw a card."))).toEqual([]);
-    for (const text of UNSIMULATED_ATTACKS)
+    for (const text of [...UNSIMULATED_ATTACKS, ...SPLIT_UNSIMULATED])
       expect(simulationGaps(probe(text)), text).toEqual(["attack"]);
     const authoredId = programmedCardIds().find((id) => programFor(id)?.attack?.[0] !== undefined);
     expect(authoredId).toBeDefined();
