@@ -220,8 +220,35 @@ export function appOriginOf(config: string): string | undefined {
   return /^\s*"APP_ORIGIN"\s*:\s*"([^"]+)"/m.exec(config)?.[1]?.replace(/\/+$/, "");
 }
 
+/** Suffixes under which each subdomain is its own site, as in the Public Suffix List. */
+const PUBLIC_SUFFIXES = ["workers.dev", "pages.dev"];
+
+/** An origin's scheme and registrable domain: the label before a `PUBLIC_SUFFIXES` entry, else the
+    last two labels. Without the full list a suffix such as co.uk reads as one site, too wide. */
+export function siteOf(origin: string): string | undefined {
+  let url: URL;
+  try {
+    url = new URL(origin);
+  } catch {
+    return undefined;
+  }
+  const host = url.hostname;
+  if (/^[\d.]+$/.test(host) || host.startsWith("[")) return `${url.protocol}//${host}`;
+  const suffix = PUBLIC_SUFFIXES.find((s) => host.endsWith(`.${s}`));
+  const labels = suffix === undefined ? 2 : suffix.split(".").length + 1;
+  return `${url.protocol}//${host.split(".").slice(-labels).join(".")}`;
+}
+
+/** Whether two origins are one site, as a SameSite cookie and `Sec-Fetch-Site` judge it. */
+export function sameSite(a: string, b: string): boolean {
+  const site = siteOf(a);
+  return site !== undefined && site === siteOf(b);
+}
+
 /** Why dist/ is not a build of `head` for production: another commit or a dirty tree, a lenient
-    Lua build, or origins other than .env.production's, whose site is not the API's APP_ORIGIN. */
+    Lua build, origins other than .env.production's, a site that is not the API's APP_ORIGIN, or an
+    API on another site than the page, where the session cookie is not sent and every write is
+    refused as cross-site. */
 export function webDistProblems(
   info: BuildInfo | undefined,
   expected: { head: string; apiOrigin?: string; siteOrigin?: string; appOrigin?: string },
@@ -250,6 +277,11 @@ export function webDistProblems(
       ? []
       : [
           `dist/ names the site ${info.siteOrigin}, not .env.production's ${siteOrigin ?? "(unset)"}`,
+        ]),
+    ...(apiOrigin === undefined || siteOrigin === undefined || sameSite(apiOrigin, siteOrigin)
+      ? []
+      : [
+          `.env.production's VITE_API_ORIGIN ${apiOrigin} and VITE_SITE_ORIGIN ${siteOrigin} are different sites`,
         ]),
     ...(appOrigin !== undefined && appOrigin === siteOrigin
       ? []
