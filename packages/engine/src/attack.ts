@@ -10,7 +10,7 @@ import type {
 import { err, ok } from "./actions";
 import {
   activeTop,
-  applyDamageModifier,
+  afterWeaknessResistance,
   attacksOf,
   cardOfUid,
   costMet,
@@ -1688,10 +1688,7 @@ function dealAttackDamage(
   // Clamped at this step, not only at the end, because an attack never does negative damage; with
   // additive old-era Weakness the two placements differ.
   const preWR = Math.max(0, scaledBase + scaledTotal + bonus - debuff);
-  const afterWR = Math.max(
-    0,
-    applyDamageModifier(applyDamageModifier(preWR, weakness), resistance),
-  );
+  const afterWR = afterWeaknessResistance(preWR, weakness, resistance);
   // The fold plus the watched-Active recoil (Spiteful Swirl, Counterattack Grouping), read only
   // by the recoil below.
   const defenderPassives = withWatchedRecoil(

@@ -2,7 +2,7 @@ import type { BasicEnergyType } from "@colorless/schema";
 import { attackerPreWRBonus, countCardsInDiscardPile, countPokemonInPlay } from "../boardCondition";
 import {
   activeTop,
-  applyDamageModifier,
+  afterWeaknessResistance,
   cardOfUid,
   matchesFilter,
   resistanceOf,
@@ -560,10 +560,7 @@ export function snipeActive(
   // The pre-W/R clamp is attack.ts's, for its reason verbatim: an attack does not
   // do negative damage, and the printed parenthetical puts the subtraction here.
   const preWR = Math.max(0, amount + bonus - debuff);
-  const afterWR = Math.max(
-    0,
-    applyDamageModifier(applyDamageModifier(preWR, weakness), resistance),
-  );
+  const afterWR = afterWeaknessResistance(preWR, weakness, resistance);
   const landed = landAttackHit(
     state,
     {

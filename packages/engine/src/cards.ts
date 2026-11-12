@@ -647,6 +647,19 @@ export function applyDamageModifier(damage: number, modifier: DamageModifier | n
   }
 }
 
+/**
+ * §8.5 Weakness then Resistance on the pre-W/R amount, floored at 0. An attack that does 0 damage
+ * before Weakness does none after it, so an additive (+N) Weakness never lifts it.
+ */
+export function afterWeaknessResistance(
+  preWR: number,
+  weakness: DamageModifier | null,
+  resistance: DamageModifier | null,
+): number {
+  if (preWR === 0) return 0;
+  return Math.max(0, applyDamageModifier(applyDamageModifier(preWR, weakness), resistance));
+}
+
 /** The top of the stack defines the Pokémon's identity (§1.2). Stacks are
     never empty, but indexing has to admit undefined. */
 export function topUid(pokemon: InPlayPokemon): string | undefined {
