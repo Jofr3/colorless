@@ -596,11 +596,16 @@ export function switchTargetNoun(op: OpOf<"switchActive">): string {
 /**
  * The attachCards prompt string (Electric Generator, Hydreigon "Tri Howl"), built from the op. "You
  * find there" tells the player the rows are the window, and "in any way you like" signals that
- * several Energy may go on one Pokémon.
+ * several Energy may go on one Pokémon. `toSelf` prints "to this Pokémon" (Mega Rayquaza ex "Ruler's
+ * Roar").
  */
 export function attachNote(op: OpOf<"attachFromTop">): string {
-  const { plural } = retrieveNoun(op.filter);
+  const { singular, plural } = retrieveNoun(op.filter);
   const how = op.max === "any" ? "any number of" : `up to ${op.max}`;
+  if (op.toSelf === true) {
+    const what = op.max === 1 ? singular : `${how} ${plural}`;
+    return `Look at the top ${op.n} cards of your deck and attach ${what} you find there to this Pokémon.`;
+  }
   const where = attachTargetNoun(op);
   return `Look at the top ${op.n} cards of your deck and attach ${how} ${plural} you find there to your ${where} in any way you like.`;
 }

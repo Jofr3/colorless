@@ -2073,7 +2073,7 @@ function stepOp(
       // Look at the top n and attach the Energy among them "in any way you like": parks on the
       // compound attachCards prompt. Every non-parking path goes through the same apply so the
       // leftovers clause fires. There is no play gate, so the no-target case is reachable.
-      const { candidates, targets, max } = attachFromTopOffer(state, ctx.seat, op);
+      const { candidates, targets, max } = attachFromTopOffer(state, ctx, op);
       if (candidates.length === 0 || targets.length === 0 || max <= 0) {
         return { done: attachFromTopApply(state, [], op, ctx, events) };
       }

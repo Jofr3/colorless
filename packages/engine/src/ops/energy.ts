@@ -325,14 +325,15 @@ export function opponentInPlayNameFilter(state: GameState, ctx: EffectContext): 
  */
 export function attachFromTopOffer(
   state: GameState,
-  seat: Seat,
+  ctx: EffectContext,
   op: OpOf<"attachFromTop">,
 ): { candidates: string[]; targets: PokemonRef[]; max: number } {
+  const seat = ctx.seat;
   const top = state.players[seat].deck.slice(0, Math.max(0, op.n));
   const candidates = top.filter((uid) => matchesFilter(cardOfUid(state, uid), op.filter));
   return {
     candidates,
-    targets: attachEnergyTargets(state, seat, op),
+    targets: op.toSelf === true ? sourceRef(state, ctx) : attachEnergyTargets(state, seat, op),
     max: Math.min(op.max === "any" ? candidates.length : op.max, candidates.length),
   };
 }

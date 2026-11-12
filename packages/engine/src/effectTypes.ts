@@ -1901,6 +1901,8 @@ export type EffectOp =
       benchOnly?: true;
       /** Owner-prefixed subgroup the attach may land on. */
       ownerPokemon?: string;
+      /** The printed "to this Pokémon": the source Pokémon is the only target; riders are ignored. */
+      toSelf?: true;
       /** Where the cards not attached go. */
       restTo?: "discard" | "shuffledBottom";
     }
