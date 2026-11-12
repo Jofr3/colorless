@@ -79,7 +79,7 @@ when `engineVersion` changes.
 **Module map.** `packages/engine/src` is flat, plus `ops/`, `deriver/` and `fixtures/`. Test
 helpers are in `fixtures/`, exported through `testFixtures.ts` as `@colorless/engine/testing`; deck
 rules and card classes without the interpreter are `@colorless/engine/rules`. Test-only tables
-(`bannerPool.ts`, `paradoxPool.ts`, `refusedPrintings.ts`, `censusAttackCorpus*.ts`,
+(`bannerPool.ts`, `paradoxPool.ts`, `bannerCatalogPool.ts`, `refusedPrintings.ts`, `censusAttackCorpus*.ts`,
 `catalogManifest.ts`) are not exported from the package.
 
 | Area | Modules |

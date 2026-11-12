@@ -1,6 +1,7 @@
 import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { BANNER_BY_ID, bannerOf } from "./banners";
+import { EXPANDED_ONLY_IDS } from "./bannerCatalogPool";
 import { LEGAL_EX_POOL } from "./bannerPool";
 import { isTeraPokemon, matchesFilter } from "./cards";
 import { benchShieldedFromDamage, disabledAbilityUids, seatPreWRDamageBonus } from "./continuous";
@@ -580,8 +581,9 @@ const dealt = (events: readonly GameEvent[]): number | undefined =>
 const card = (id: string): Card => POOL[id] as Card;
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§1 — the datum: `banners.ts`' 86 Paradox ids, two sources plus the printed face", () => {
-  const paradox = Object.keys(BANNER_BY_ID).filter((id) => BANNER_BY_ID[id] !== "Tera");
+describe("§1 — the datum: `banners.ts`' 86 Standard-legal Paradox ids, two sources plus the printed face", () => {
+  const standard = Object.keys(BANNER_BY_ID).filter((id) => !EXPANDED_ONLY_IDS.has(id));
+  const paradox = standard.filter((id) => BANNER_BY_ID[id] !== "Tera");
   const exPool = new Map(LEGAL_EX_POOL.map((row) => [row[0], row] as const));
   const pool = new Map(PARADOX_POOL.map((row) => [row[0], row] as const));
 
@@ -655,11 +657,11 @@ describe("§1 — the datum: `banners.ts`' 86 Paradox ids, two sources plus the 
     expect(BANNER_BY_ID[MIRAIDON]).toBe("Future");
   });
 
-  it("the `sv` Tera rows are untouched: 98 of 103, and no id carries two banners (a Record cannot)", () => {
-    const tera = Object.keys(BANNER_BY_ID).filter((id) => BANNER_BY_ID[id] === "Tera");
+  it("the Standard-legal `sv` Tera rows are 98 of 105, and no id carries two banners (a Record cannot)", () => {
+    const tera = standard.filter((id) => BANNER_BY_ID[id] === "Tera");
     expect(tera.filter((id) => !id.startsWith("me"))).toHaveLength(98);
-    expect(tera).toHaveLength(103);
-    expect(Object.keys(BANNER_BY_ID)).toHaveLength(189);
+    expect(tera).toHaveLength(105);
+    expect(standard).toHaveLength(191);
   });
 });
 

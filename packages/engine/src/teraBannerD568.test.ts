@@ -2,6 +2,7 @@ import type { Card } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { attackCostAt } from "./attack";
 import { BANNER_BY_ID, bannerOf } from "./banners";
+import { EXPANDED_ONLY_IDS } from "./bannerCatalogPool";
 import { LEGAL_EX_POOL } from "./bannerPool";
 import { costMet, isTeraPokemon, matchesFilter, preventsAttackerBanner } from "./cards";
 import {
@@ -672,14 +673,15 @@ function playRejected(state: GameState, id: string): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-describe("§1 — the datum: `banners.ts`' 103 Tera ids, two sources plus the printed face", () => {
-  const ids = Object.keys(BANNER_BY_ID).filter((id) => BANNER_BY_ID[id] === "Tera");
+describe("§1 — the datum: `banners.ts`' 105 Standard-legal Tera ids, two sources plus the printed face", () => {
+  const standard = Object.keys(BANNER_BY_ID).filter((id) => !EXPANDED_ONLY_IDS.has(id));
+  const ids = standard.filter((id) => BANNER_BY_ID[id] === "Tera");
   const pool = new Map(LEGAL_EX_POOL.map((row) => [row[0], row] as const));
 
-  it("103 Tera ids (98 `sv` + 5 `me`), beside 86 Ancient/Future ids", () => {
+  it("105 Standard-legal Tera ids (98 `sv` + 7 `me`), beside 86 Ancient/Future ids", () => {
     expect(ids.filter((id) => !id.startsWith("me"))).toHaveLength(98);
-    expect(ids).toHaveLength(103);
-    expect(Object.keys(BANNER_BY_ID)).toHaveLength(189);
+    expect(ids).toHaveLength(105);
+    expect(standard).toHaveLength(191);
     expect(new Set(Object.values(BANNER_BY_ID))).toEqual(new Set(["Tera", "Ancient", "Future"]));
   });
 

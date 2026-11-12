@@ -114,6 +114,54 @@ export const BANNER_BY_ID: Readonly<Record<string, Banner>> = {
   "me02.5-160": "Tera", // Dragapult ex (= sv06-130)
   "me02.5-179": "Tera", // Terapagos ex, reprint of sv07-128
   "me02.5-277": "Tera", // Pikachu ex, reprint of sv08-057
+  "sv01-032": "Tera", // Arcanine ex
+  "sv01-045": "Tera", // Gyarados ex
+  "sv01-224": "Tera", // Arcanine ex
+  "sv01-225": "Tera", // Gyarados ex
+  "sv02-005": "Tera", // Forretress ex
+  "sv02-086": "Tera", // Slowking ex
+  "sv02-093": "Tera", // Dedenne ex
+  "sv02-230": "Tera", // Forretress ex
+  "sv02-238": "Tera", // Slowking ex
+  "sv02-239": "Tera", // Dedenne ex
+  "sv03-042": "Tera", // Eiscue ex
+  "sv03-066": "Tera", // Tyranitar ex
+  "sv03-096": "Tera", // Vespiquen ex
+  "sv03-125": "Tera", // Charizard ex
+  "sv03-159": "Tera", // Dragonite ex
+  "sv03-179": "Tera", // Greedent ex
+  "sv03-210": "Tera", // Eiscue ex
+  "sv03-211": "Tera", // Tyranitar ex
+  "sv03-212": "Tera", // Vespiquen ex
+  "sv03-215": "Tera", // Charizard ex
+  "sv03-222": "Tera", // Eiscue ex
+  "sv03-223": "Tera", // Charizard ex
+  "sv03-228": "Tera", // Charizard ex
+  "sv04-003": "Tera", // Froslass ex
+  "sv04-038": "Tera", // Garchomp ex
+  "sv04-046": "Tera", // Tsareena ex
+  "sv04-058": "Tera", // Mewtwo ex
+  "sv04-098": "Tera", // Hoopa ex
+  "sv04-100": "Tera", // Toxtricity ex
+  "sv04-137": "Tera", // Skeledirge ex
+  "sv04-217": "Tera", // Froslass ex
+  "sv04-219": "Tera", // Garchomp ex
+  "sv04-220": "Tera", // Tsareena ex
+  "sv04-226": "Tera", // Hoopa ex
+  "sv04-227": "Tera", // Toxtricity ex
+  "sv04-245": "Tera", // Garchomp ex
+  "sv04-260": "Tera", // Garchomp ex
+  "sv04.5-002": "Tera", // Forretress ex
+  "sv04.5-006": "Tera", // Espathra ex
+  "sv04.5-054": "Tera", // Charizard ex
+  "sv04.5-212": "Tera", // Forretress ex
+  "sv04.5-214": "Tera", // Espathra ex
+  "sv04.5-234": "Tera", // Charizard ex
+  "svp-056": "Tera", // Charizard ex
+  "svp-074": "Tera", // Charizard ex
+  "svp-196": "Tera", // Charizard ex
+  "me02.5-073": "Tera", // Miraidon ex
+  "me02.5-121": "Tera", // Koraidon ex
   "sv05-038": "Ancient", // Gouging Fire ex
   "sv05-050": "Ancient", // Walking Wake ex
   "sv05-077": "Ancient", // Scream Tail
@@ -158,7 +206,35 @@ export const BANNER_BY_ID: Readonly<Record<string, Banner>> = {
   "svp-144": "Ancient", // Gouging Fire ex
   "svp-145": "Ancient", // Raging Bolt ex
   "svp-151": "Ancient", // Gouging Fire
-  // Future — 42 (38 Pokémon, 4 Trainers)
+  "sv04-086": "Ancient", // Scream Tail
+  "sv04-107": "Ancient", // Slither Wing
+  "sv04-108": "Ancient", // Sandy Shocks ex
+  "sv04-123": "Ancient", // Brute Bonnet
+  "sv04-124": "Ancient", // Roaring Moon ex
+  "sv04-159": "Ancient", // Ancient Booster Energy Capsule (Trainer)
+  "sv04-163": "Ancient", // Earthen Vessel (Trainer)
+  "sv04-170": "Ancient", // Professor Sada's Vitality (Trainer)
+  "sv04-203": "Ancient", // Slither Wing
+  "sv04-207": "Ancient", // Brute Bonnet
+  "sv04-228": "Ancient", // Sandy Shocks ex
+  "sv04-229": "Ancient", // Roaring Moon ex
+  "sv04-239": "Ancient", // Professor Sada's Vitality (Trainer)
+  "sv04-250": "Ancient", // Sandy Shocks ex
+  "sv04-251": "Ancient", // Roaring Moon ex
+  "sv04-256": "Ancient", // Professor Sada's Vitality (Trainer)
+  "sv04-262": "Ancient", // Roaring Moon ex
+  "sv04.5-053": "Ancient", // Great Tusk ex
+  "sv05-140": "Ancient", // Ancient Booster Energy Capsule (Trainer)
+  "sv06.5-096": "Ancient", // Earthen Vessel (Trainer)
+  "sv08.5-042": "Ancient", // Scream Tail
+  "sv08.5-056": "Ancient", // Sandy Shocks ex
+  "sv08.5-106": "Ancient", // Earthen Vessel (Trainer)
+  "sv08.5-120": "Ancient", // Professor Sada's Vitality (Trainer)
+  "sv08.5-159": "Ancient", // Sandy Shocks ex
+  "sv08.5-162": "Ancient", // Roaring Moon ex
+  "svp-065": "Ancient", // Scream Tail
+  "svp-067": "Ancient", // Roaring Moon ex
+  "svp-072": "Ancient", // Great Tusk ex
   "sv05-025": "Future", // Iron Leaves ex
   "sv05-061": "Future", // Iron Hands
   "sv05-062": "Future", // Iron Thorns
@@ -201,6 +277,34 @@ export const BANNER_BY_ID: Readonly<Record<string, Banner>> = {
   "svp-128": "Future", // Iron Leaves ex
   "svp-146": "Future", // Iron Crown ex
   "svp-147": "Future", // Iron Boulder ex
+  "sv04-028": "Future", // Iron Moth
+  "sv04-056": "Future", // Iron Bundle
+  "sv04-070": "Future", // Iron Hands ex
+  "sv04-089": "Future", // Iron Valiant ex
+  "sv04-158": "Future", // Iron Jugulis
+  "sv04-164": "Future", // Future Booster Energy Capsule (Trainer)
+  "sv04-171": "Future", // Professor Turo's Scenario (Trainer)
+  "sv04-180": "Future", // Techno Radar (Trainer)
+  "sv04-187": "Future", // Iron Moth
+  "sv04-216": "Future", // Iron Jugulis
+  "sv04-223": "Future", // Iron Hands ex
+  "sv04-225": "Future", // Iron Valiant ex
+  "sv04-240": "Future", // Professor Turo's Scenario (Trainer)
+  "sv04-248": "Future", // Iron Hands ex
+  "sv04-249": "Future", // Iron Valiant ex
+  "sv04-257": "Future", // Professor Turo's Scenario (Trainer)
+  "sv04-261": "Future", // Iron Valiant ex
+  "sv04.5-066": "Future", // Iron Treads ex
+  "sv05-149": "Future", // Future Booster Energy Capsule (Trainer)
+  "sv08.5-031": "Future", // Iron Hands ex
+  "sv08.5-121": "Future", // Professor Turo's Scenario (Trainer)
+  "sv08.5-130": "Future", // Techno Radar (Trainer)
+  "sv08.5-154": "Future", // Iron Hands ex
+  "sv08.5-157": "Future", // Iron Valiant ex
+  "svp-058": "Future", // Iron Bundle
+  "svp-066": "Future", // Iron Bundle
+  "svp-068": "Future", // Iron Valiant ex
+  "svp-073": "Future", // Iron Treads ex
 };
 
 /**
