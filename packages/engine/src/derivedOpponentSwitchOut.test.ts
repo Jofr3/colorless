@@ -570,7 +570,7 @@ describe("end to end — Iron Bundle's compound, and the gate that is not decora
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("the seam — the gates and surfaces this op deliberately does not touch", () => {
-  it("`programPlayable` refuses `opponentSwitchOut` on an empty Bench; Repel `me01-126` produces it top-level, the other two behind `switchActive`'s gate", () => {
+  it("`programPlayable` refuses `opponentSwitchOut` on an empty Bench; Repel `me01-126` and Arboliva `me06-017` produce it top-level, the other two behind `switchActive`'s gate", () => {
     const state = ready(71, 1, 0);
     expect(state.players.p2.bench).toHaveLength(0);
     expect(programPlayable(state, [{ op: "gust" }], "p1")).toBe(false);
@@ -589,8 +589,9 @@ describe("the seam — the gates and surfaces this op deliberately does not touc
       ];
       return programs.some((ops) => walkProgram(ops).some((op) => op.op === "opponentSwitchOut"));
     });
-    expect([...authored].sort()).toEqual(["me01-126", "sv10.5w-023", "sv10.5w-107"]);
+    expect([...authored].sort()).toEqual(["me01-126", "me06-017", "sv10.5w-023", "sv10.5w-107"]);
     expect(programFor("me01-126")?.trainer).toEqual([{ op: "opponentSwitchOut" }]);
+    expect(programFor("me06-017")?.abilities?.[0]?.program).toEqual([{ op: "opponentSwitchOut" }]);
     for (const id of ["sv10.5w-023", "sv10.5w-107"]) {
       const program = programFor(id)?.abilities?.[0]?.program ?? [];
       // Never at the top level: behind the gate, after the gated switch.

@@ -270,6 +270,10 @@ const REVEALING: readonly [id: string, printed: string][] = [
   ["sv01-186", "Pokégear 3.0 (lookAtTopN) — 'You may reveal a Supporter card …'"],
   ["svp-118", "Tatsugiri 'Attract Customers' (Ability, lookAtTopN) — 'reveal a Supporter card'"],
   [
+    "me06-079",
+    "Delibird 'Energizing Present' (Ability, lookAtTopN, rest to the bottom) — 'reveal an Energy card you find there'",
+  ],
+  [
     "fix-metallicsignal",
     "Genesect ex 'Metallic Signal' (Ability, FIXTURE of sv10.5b-067) — 'reveal them'",
   ],
@@ -475,7 +479,7 @@ describe("D225 — which registry rows carry the rider", () => {
       expect(ops, `${id} (${printed}) has no search op`).toHaveLength(1);
       expect(ops[0], `${id} (${printed}) lost its printed reveal`).toMatchObject({ reveal: true });
     }
-    expect(REVEALING).toHaveLength(62);
+    expect(REVEALING).toHaveLength(63);
   });
 
   it("D556 — Team Rocket's Great Ball's TAILS arm (the `otherwise` `searchOps` does not descend) reveals too", () => {
@@ -508,7 +512,7 @@ describe("D225 — which registry rows carry the rider", () => {
       if (!classified.has(program)) unclassified.add(id);
     }
     expect([...unclassified].sort(), "a deck search nobody decided the reveal for").toEqual([]);
-    expect(classified.size).toBe(94);
-    expect(swept.size).toBe(226);
+    expect(classified.size).toBe(95);
+    expect(swept.size).toBe(227);
   });
 });

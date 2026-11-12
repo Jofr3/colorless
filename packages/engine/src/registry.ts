@@ -1323,6 +1323,25 @@ const SKWOVET: CardProgram = {
   ],
 };
 
+/** Jellicent — "Deep Sea Draw": "Once during your turn, you may use this Ability. Draw a card. If
+    you do, you may put a card from your hand on the bottom of your deck." The catalog row carries
+    two tab characters between the sentences. */
+const DEEP_SEA_DRAW: CardProgram = {
+  abilities: [
+    activated({
+      name: "Deep Sea Draw",
+      program: [
+        { op: "drawCards", count: 1, recordAs: "moved" },
+        {
+          op: "recordGate",
+          slot: "moved",
+          ops: [{ op: "payFromHand", count: "any", cap: 1, to: "deckBottom" }],
+        },
+      ],
+    }),
+  ],
+};
+
 // ── On-KO triggered Abilities (§9) — fire when Knocked Out. ──
 
 /** Glimmora — "Shattering Crystal": "When this Pokémon is Knocked Out, flip a
@@ -2382,6 +2401,30 @@ const ATTRACT_CUSTOMERS: CardProgram = {
   ],
 };
 
+/** Delibird — "Energizing Present": "Once during your turn, if this Pokémon is in the Active Spot,
+    you may use this Ability. Look at the top 6 cards of your deck, reveal an Energy card you find
+    there, and put it into your hand. Shuffle the other cards and put them on the bottom of your
+    deck." */
+const ENERGIZING_PRESENT: CardProgram = {
+  abilities: [
+    {
+      name: "Energizing Present",
+      oncePerTurn: true,
+      activeOnly: true,
+      program: [
+        {
+          op: "lookAtTopN",
+          n: 6,
+          filter: { kind: "anyEnergy" },
+          max: 1,
+          reveal: true,
+          restTo: "shuffledBottom",
+        },
+      ],
+    },
+  ],
+};
+
 /** Volcanion ex — "Scalding Steam". */
 const SCALDING_STEAM: CardProgram = {
   abilities: [
@@ -2566,6 +2609,17 @@ const SEETHING_SPIRIT: CardProgram = {
     activated({
       name: "Seething Spirit",
       program: [{ op: "attachEnergyFrom", source: "discard" }],
+    }),
+  ],
+};
+
+/** Pawmot — "Generator's Touch": "Once during your turn, you may use this Ability. Attach a Basic
+    {L} Energy card from your discard pile to 1 of your Pokémon." */
+const GENERATORS_TOUCH: CardProgram = {
+  abilities: [
+    activated({
+      name: "Generator's Touch",
+      program: [{ op: "attachEnergyFrom", source: "discard", energyType: "Lightning" }],
     }),
   ],
 };
@@ -2795,6 +2849,35 @@ const PYRO_DANCE: CardProgram = {
           op: "attachEnergyFrom",
           source: "hand",
           energyType: "Fighting",
+          recordAs: "moved",
+          atLeastOne: true,
+        },
+      ],
+    }),
+  ],
+};
+
+/** Magmortar — "Buddy Boost": "Once during your turn, you may use this Ability. Attach a Basic {R}
+    Energy card, a Basic {L} Energy card, or 1 of each from your hand to your Electivire and
+    Magmortar in any way you like." */
+const BUDDY_BOOST: CardProgram = {
+  abilities: [
+    activated({
+      name: "Buddy Boost",
+      program: [
+        {
+          op: "attachEnergyFrom",
+          source: "hand",
+          energyType: "Fire",
+          targetNames: ["Electivire", "Magmortar"],
+          recordAs: "moved",
+          atLeastOne: true,
+        },
+        {
+          op: "attachEnergyFrom",
+          source: "hand",
+          energyType: "Lightning",
+          targetNames: ["Electivire", "Magmortar"],
           recordAs: "moved",
           atLeastOne: true,
         },
@@ -3811,6 +3894,17 @@ const CAPTIVATING_INVITATION: CardProgram = {
   ],
 };
 
+/** Nidoqueen — "Maternal Call": "Once during your turn, you may use this Ability. Flip a coin. If
+    heads, switch in 1 of your opponent's Benched Pokémon to the Active Spot." */
+const MATERNAL_CALL: CardProgram = {
+  abilities: [
+    activated({
+      name: "Maternal Call",
+      program: [{ op: "coinFlipGate", ops: [{ op: "gust" }] }],
+    }),
+  ],
+};
+
 /**
  * Lisia's Appeal: "Switch in 1 of your opponent's Benched Basic Pokémon to the Active Spot. If you
  * do, the new Active Pokémon is now Confused."
@@ -4190,6 +4284,20 @@ const HEALING_LEAVES: CardProgram = {
   ],
 };
 
+/** Wishiwashi ex — "Oceanic Gain": "Once during your turn, if this Pokémon is in the Active Spot,
+    you may use this Ability. Heal 50 damage from this Pokémon." `activeOnly` makes the healed
+    Active this Pokémon. */
+const OCEANIC_GAIN: CardProgram = {
+  abilities: [
+    {
+      name: "Oceanic Gain",
+      oncePerTurn: true,
+      activeOnly: true,
+      program: [{ op: "heal", target: "self", amount: 50 }],
+    },
+  ],
+};
+
 /** Mamoswine ex — "Mammoth Hauler". */
 const MAMMOTH_HAULER: CardProgram = {
   abilities: [
@@ -4302,6 +4410,12 @@ const TORRENTIAL_WHIRLPOOL: CardProgram = {
       ],
     }),
   ],
+};
+
+/** Arboliva — "Slippery Oil": "Once during your turn, you may use this Ability. Switch out your
+    opponent's Active Pokémon to the Bench. (Your opponent chooses the new Active Pokémon.)" */
+const SLIPPERY_OIL: CardProgram = {
+  abilities: [activated({ name: "Slippery Oil", program: [{ op: "opponentSwitchOut" }] })],
 };
 
 /** Team Rocket's Tyranitar — "Sand Stream". */
@@ -6300,6 +6414,27 @@ const ENERGIZED_STEPS: CardProgram = {
         { op: "shuffleDeck" },
       ],
     },
+  ],
+};
+
+/** Kommo-o — "Beat Scales": "Once during your turn, you may use this Ability. Look at the top 6
+    cards of your deck and attach any number of Basic Energy cards you find there to your {N}
+    Pokémon in any way you like. Shuffle the other cards back into your deck." */
+const BEAT_SCALES: CardProgram = {
+  abilities: [
+    activated({
+      name: "Beat Scales",
+      program: [
+        {
+          op: "attachFromTop",
+          n: 6,
+          filter: { kind: "basicEnergy" },
+          max: "any",
+          targetType: "Dragon",
+        },
+        { op: "shuffleDeck" },
+      ],
+    }),
   ],
 };
 
@@ -8389,6 +8524,14 @@ const REGISTRY: Readonly<Record<string, CardProgram>> = {
   "me06-047": RESTRICTED_ACTIVATION, // Mega Golurk ex "Restricted Activation"
   "me06-050": COUNTERATTACK_QUILLS, // Sandslash "Counterattack Quills" — Hop's Pincurchin ex's "place" sentence
   "me06-052": HIGH_DENSITY_ARMOR, // Steelix "High Density Armor"
+  "me06-017": SLIPPERY_OIL, // Arboliva "Slippery Oil"
+  "me06-021": BUDDY_BOOST, // Magmortar "Buddy Boost" — Pyro Dance's disjunction onto two names
+  "me06-028": DEEP_SEA_DRAW, // Jellicent "Deep Sea Draw"
+  "me06-029": OCEANIC_GAIN, // Wishiwashi ex "Oceanic Gain"
+  "me06-039": GENERATORS_TOUCH, // Pawmot "Generator's Touch" — Seething Spirit narrowed to {L}
+  "me06-057": MATERNAL_CALL, // Nidoqueen "Maternal Call" — Captivating Invitation without the Confusion
+  "me06-075": BEAT_SCALES, // Kommo-o "Beat Scales" — Energized Steps' window at 6 onto {N}
+  "me06-079": ENERGIZING_PRESENT, // Delibird "Energizing Present"
   "me03-027": FIGHTING_ROAR, // Luxio "Fighting Roar" — evolve early if the opponent's Active is a Pokémon ex
   "me04-007": NEEDLY_ARMOR, // Chesnaught "Needly Armor" — 3 counters per {G} Energy on the Attacking Pokémon
   "me02-056": SHADOWY_CONCEALMENT, // Mega Gengar ex — 1 fewer Prize for a {D} body KO'd by an ex's attack

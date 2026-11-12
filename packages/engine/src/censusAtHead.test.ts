@@ -1062,6 +1062,7 @@ describe("the non-attack columns, partitioned over the live registry (D273)", ()
       ...CENSUS_ME_TRAINER_D646,
       ...CENSUS_ME_TRAINER_B04,
       ...CENSUS_ME_POKEMON_ME06_B3,
+      ...CENSUS_ME_POKEMON_ME06_B4,
     ];
     // No id classified twice — otherwise a column could borrow from another and
     // the sizes would still add up.
@@ -2030,6 +2031,13 @@ const CENSUS_ME_POKEMON_ME06_B3: readonly string[] = [
   ...["me06-085", "me06-047", "me06-122", "me06-137", "me06-050", "me06-052"],
 ];
 
+/** The me06 activated Ability keys: Slippery Oil, Buddy Boost ×2, Deep Sea Draw, Oceanic Gain ×2,
+    Generator's Touch, Maternal Call, Beat Scales, Energizing Present. */
+const CENSUS_ME_POKEMON_ME06_B4: readonly string[] = [
+  ...["me06-017", "me06-021", "me06-107", "me06-028", "me06-029", "me06-120", "me06-039"],
+  ...["me06-057", "me06-075", "me06-079"],
+];
+
 /** The 3 text-less `30th` Item ids keyed below. */
 const CENSUS_ME_TRAINER_B04: readonly string[] = ["30th-126", "30th-127", "30th-128"];
 
@@ -2260,6 +2268,7 @@ describe("the census at HEAD", () => {
         ...CENSUS_ME_TRAINER_B04,
         ...CENSUS_ME_POKEMON_ME06_B2,
         ...CENSUS_ME_POKEMON_ME06_B3,
+        ...CENSUS_ME_POKEMON_ME06_B4,
       ]
         .filter((id) => !RETIRED_ATTACK_KEYS_D612.includes(id))
         .sort(),

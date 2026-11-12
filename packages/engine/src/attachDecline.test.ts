@@ -724,14 +724,14 @@ describe("D360 §7 — no `anyWay` spread in EITHER producer is still an exact N
     }
   });
 
-  it("the REGISTRY half: every multi-op `anyWay` program is flagged, Infernape excepted", () => {
-    const INFERNAPE = ["svp-116", "sv06-033", "sv06-173"];
+  it("the REGISTRY half: every multi-op `anyWay` program is flagged, the `atLeastOne` pairs (Infernape, Magmortar) excepted", () => {
+    const AT_LEAST_ONE = ["svp-116", "sv06-033", "sv06-173", "me06-021", "me06-107"];
     for (const [id, ops] of attachOpsByCardId()) {
       if (ops.length <= 1) continue;
       expect(
         ops.every((op) => op.declinable === true),
         id,
-      ).toBe(!INFERNAPE.includes(id));
+      ).toBe(!AT_LEAST_ONE.includes(id));
     }
     for (const [id, ops] of attachOpsByCardId()) {
       if ((POWERGLASS_IDS as readonly string[]).includes(id)) {

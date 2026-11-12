@@ -364,6 +364,11 @@ const KEYED_AT_ME06_B3 = [
   ...["me06-085", "me06-047", "me06-122", "me06-137", "me06-050", "me06-052"],
 ];
 
+const KEYED_AT_ME06_B4 = [
+  ...["me06-017", "me06-021", "me06-107", "me06-028", "me06-029", "me06-120", "me06-039"],
+  ...["me06-057", "me06-075", "me06-079"],
+];
+
 const KEYED_AT_D621 = [
   ...["me05-077", "me05-108", "me05-118", "me01-124", "me01-174", "me02.5-199"],
   ...["me01-113", "me01-165", "me01-183", "me02.5-180", "me04-081", "me04-112", "me04-121"],
@@ -581,6 +586,7 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
     expect(KEYED_AT_B04).toHaveLength(3);
     expect(KEYED_AT_ME06_B2).toHaveLength(1);
     expect(KEYED_AT_ME06_B3).toHaveLength(13);
+    expect(KEYED_AT_ME06_B4).toHaveLength(10);
     expect(me.sort()).toEqual(
       [
         ...ALIASES.map(([id]) => id),
@@ -631,6 +637,7 @@ describe("D582 — the `me` reprint-alias tier: 99 printings on 66 existing prog
         ...KEYED_AT_B04,
         ...KEYED_AT_ME06_B2,
         ...KEYED_AT_ME06_B3,
+        ...KEYED_AT_ME06_B4,
       ]
         .filter((id) => !RETIRED_AT_D612.includes(id))
         .sort(),
