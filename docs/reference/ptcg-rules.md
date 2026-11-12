@@ -243,6 +243,8 @@ Trainer cards are played from hand, take effect, then go to the **discard pile**
   one already in play (no self-replacing to reset it, unless a card says otherwise).
 - Stadium effects are **continuous** and apply to **both players** while in play.
 - Limit: **one Stadium play per turn**.
+- A Stadium's "once during each player's turn" ability belongs to that Stadium: a
+  Stadium played over one whose ability was used this turn brings its own use.
 
 ### 7.4 Pokémon Tool — attach to a Pokémon
 - A Tool is attached to **one of your Pokémon** and **stays in play** as long as that
@@ -346,10 +348,15 @@ Order of operations for a declared attack:
   - **Rule-box Pokémon give extra prizes** — the KO'd Pokémon's printed rule box
     determines it: **Pokémon ex / V / VSTAR / GX → 2 prizes**, **VMAX → 3 prizes**
     (historically). Model as a per-Pokémon `prizeValue` (default 1) read from the
-    **top card** of the stack. **[current: ex = 2]**
+    **top card** of the stack. **[current: ex = 2]** The older Rule Boxes in the
+    Expanded pool: a **Pokémon-EX** (an M Pokémon-EX too) → 2, a **TAG TEAM** → 3, a
+    **LEGEND** → 2; a **BREAK** has a Rule Box and gives 1. Each is read from the name.
   - If **multiple Pokémon are KO'd simultaneously** (e.g. self + defender), the
     attacking player takes prizes for the opponent's KO'd Pokémon; each player then
     resolves their own between-turns. Prizes are taken for each KO.
+- A Knock Out is a state check over **both** boards: an action on one board that lowers
+  a Pokémon's HP on the other (an Ability turned off by an evolution or a retreat) Knocks
+  it Out at once.
 - Taking a prize = pick one of **your own** face-down prize cards into your hand.
 - If a KO empties a player's Active spot, that player must **promote** a Benched
   Pokémon to Active — this is done **during the Between-turns / after damage
@@ -495,7 +502,11 @@ read so far by `attachFromDeck.toSelf`.
   do not follow it. *Engine note (latent):* nothing in the current op
   vocabulary can return an in-play card to the board mid-program, so the
   resolver has never had to distinguish "still there" from "came back"; the
-  first revival/self-recovery op must make it.
+  first revival/self-recovery op must make it. Its once-per-turn Ability uses do not
+  follow it either: a use is dropped once none of the Pokémon's cards is in play
+  (`clearDepartedAbilityUses`), so a Pokémon bounced and played again the same turn
+  may use its Ability again. A card that leaves and returns within one action keeps
+  its uses.
 
 ### 9.4 A card can put a decision on the player who did not play it
 
@@ -678,6 +689,13 @@ and after promotion.
 both empty their Bench from one attack, or both take their last prize), the official
 tournament rule breaks the tie via a **sudden-death game** (in casual play, treat as a
 draw). Engine: surface a `TIE` / `SUDDEN_DEATH` outcome rather than silently picking.
+A tie takes every Prize the Knock Outs owed before the game ends, so the final board
+shows them taken.
+
+**A game already decided ends at once:** when a win condition holds as a Knock Out
+batch settles (the opponent has no Pokémon in play), the engine ends the game before
+parking a Prize pick or a promotion, so the winner is not left a pick to walk away
+from (correctness audit decision 3 (a), 2026-11-12).
 
 ---
 

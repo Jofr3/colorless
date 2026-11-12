@@ -49,7 +49,9 @@ or `?` marker that the effect text resolves (`parseAttackDamage`, `cards.ts`).
 
 **Coverage.** What the engine cannot run is reported, never guessed. An unprogrammed Trainer is
 refused (`TRAINER_NOT_SIMULATED`), an attack text no reader takes still deals its base damage and
-emits `ATTACK_EFFECT_SKIPPED`, and a Special Energy with no program plays as {C}.
+emits `ATTACK_EFFECT_SKIPPED`, and a Special Energy with no program (any Energy that is not
+Basic) plays as {C}. A Pokémon the engine cannot put into play as printed (an evolution naming
+no card, a LEGEND half, an M Pokémon-EX stored as a Basic) is reported as `play`.
 `simulationGaps(card)` lists these per card; the deck builder shows it.
 
 **Effects, choices and prompts.** `interpreter.ts` is the one place an op program changes state.

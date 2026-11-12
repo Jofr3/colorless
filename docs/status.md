@@ -32,7 +32,7 @@ a sandbox, or play them online against another account. Updated 2026-11-12.
 
 Each names where it is written up (`decisions.md` entries by date and title).
 
-- **`me06` cards waiting on tcgdex data:** every `me06` card simulates (engine 0.556.0) except 14 print groups (26 printings) whose text is missing or garbled: twelve text-less Trainers, Mega Rayquaza Cap and Azurill. `me06` is Expanded-only, so Standard is unaffected (`reference/card-revision.md` "Deferred" item 12; 2026-11-12 "Delta Reign (me06) card programs (ME06-REG, ME06-B1..B5)").
+- **`me06` cards waiting on tcgdex data:** every `me06` card simulates (engine 0.557.0) except 17 print groups (29 printings) whose text or Energy type is missing or garbled: twelve text-less Trainers, three Special Energies with neither type nor text (-132 / -133 / -134), Mega Rayquaza Cap and Azurill. `me06` is Expanded-only, so Standard is unaffected (`reference/card-revision.md` "Deferred" item 12; 2026-11-12 "Delta Reign (me06) card programs (ME06-REG, ME06-B1..B5)").
 - **2026-12-01, Cloudflare's Workers Logs pricing change:** recheck the free Workers Logs allowance, and whether Workers Issues stays free (2026-11-09 "Backend and API audit safety nets, and what production says"; 2026-11-10 "Observability audit Phase 1"; 2026-11-11 "No email alert for a new Workers issue").
 - **Latency SLO:** revisit after a month of `prod:report` runs (2026-11-10 "Observability audit Phase 3", "For the user"; "Observability audit released").
 - **The old `agents` Cloudflare token:** revoke or narrow it when the user says so (2026-11-10 "The web Worker's 404 script, a web rollback rehearsal, …", "Still open").
@@ -44,7 +44,7 @@ Each names where it is written up (`decisions.md` entries by date and title).
 
 ## Known limitations
 
-- **Cards:** `simulationGaps` marks card text the engine does not run (none in Standard), and the builder shows it on the card. Data and design gaps are in `reference/card-revision.md` "Deferred"; readings left for a rulings review are the `R-…` entries in `archive/decisions-numbered.md` (look them up through `decision-index.md`) and card-revision.md's "Ruling notes".
+- **Cards:** `simulationGaps` marks card text the engine does not run, and Pokémon it cannot put into play as printed (none in Standard; the five Expanded `30th-c` ones are `reference/card-revision.md` "Deferred" item 14), and the builder shows it on the card. Data and design gaps are in `reference/card-revision.md` "Deferred"; readings left for a rulings review are the `R-…` entries in `archive/decisions-numbered.md` (look them up through `decision-index.md`) and card-revision.md's "Ruling notes".
 - **Local play** does not enforce deck legality (online does), and a saved local game is dropped on any engine version change (2026-10-26 "Engine↔client contract").
 - **No spectating** in the Lua client: a full lobby says so (`frontend/lua/README.md`, Online).
 - **No email:** password reset and email verification answer 501 until an email provider is chosen (`workstreams/backend-data.md` §3.5).
