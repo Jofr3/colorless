@@ -317,6 +317,15 @@ describe("Mega Rayquaza ex me06-084 / -138 / -141 Ruler's Roar", () => {
     });
   });
 
+  it("an empty deck: yes looks at nothing, attaches nothing and moves nothing", () => {
+    const empty = patchSide(ready(), "p1", { deck: [] });
+    const played = mustApply(empty, benchIt(empty, RAYQUAZA.id));
+    const done = mustApply(played.state, resolve({ kind: "confirm", yes: true }));
+    expect(done.state.phase.kind).toBe("turn:action");
+    expect(done.state.players.p1.deck).toEqual([]);
+    expect(energyOn(done.state, benchRef(0))).toEqual([]);
+  });
+
   it("reading: each Mega Rayquaza ex played from the hand gets its own Ruler's Roar the same turn", () => {
     let state = stackTop(hand(hand(board(WALL), [RAYQUAZA.id]), [RAYQUAZA.id]), [FIRE, LIGHTNING]);
     for (const index of [0, 1]) {
@@ -418,6 +427,25 @@ describe("Talonflame ex me06-088 / -124 Excited Dive", () => {
     }
   });
 
+  it("reading: the catalog's Basic face is benched as one with Mega Rayquaza ex in play too, and no Ability is spent", () => {
+    const state = withHand(POOL, "active");
+    const uid = handUidOf(state, TALONFLAME.id);
+    const done = mustApply(state, benchIt(state, TALONFLAME.id));
+    expect(done.events).toEqual([{ type: "POKEMON_BENCHED", seat: "p1", uid }]);
+    expect(done.state.allowances.abilitiesUsed).not.toContain(`${uid}:Excited Dive`);
+  });
+
+  it("your opponent's Mega Rayquaza ex, Active or Benched, does not open it: the printed 'you have'", () => {
+    const foeActive = clearBench(
+      setActiveFromDeck(withHand(POOL_STAGE2, null), "p2", RAYQUAZA.id),
+      "p2",
+    );
+    const foeBench = bench(withHand(POOL_STAGE2, null), "p2", [RAYQUAZA.id]);
+    for (const state of [foeActive, foeBench]) {
+      expectErr(state, benchIt(state, TALONFLAME.id), "ABILITY_CONDITION_NOT_MET");
+    }
+  });
+
   it("with Mega Rayquaza ex in play, Active or Benched, it is put onto the Bench and the Ability is spent", () => {
     for (const megaAt of ["active", "bench"] as const) {
       const state = withHand(POOL_STAGE2, megaAt);
@@ -462,5 +490,18 @@ describe("Talonflame ex me06-088 / -124 Excited Dive", () => {
     const done = mustApply(parked.state, resolve({ kind: "cards", uids: picks }));
     expect([...done.state.players.p1.hand].sort()).toEqual([...picks].sort());
     expect(done.events.some((e) => e.type === "SHUFFLE")).toBe(true);
+  });
+
+  it("Talon Hunt: 'you may … up to 2' takes none, and a third card is refused", () => {
+    const state = attachFromDeck(board(TALONFLAME.id), "p1", "fix-energy", 2);
+    const parked = mustApply(state, { type: "attack", seat: "p1", index: 0 });
+    expectErr(
+      roundTrip(parked.state),
+      resolve({ kind: "cards", uids: state.players.p1.deck.slice(0, 3) }),
+      "BAD_EFFECT_CHOICE",
+    );
+    const none = mustApply(roundTrip(parked.state), resolve({ kind: "cards", uids: [] }));
+    expect(none.state.players.p1.hand).toEqual([]);
+    expect(none.state.players.p1.deck).toHaveLength(state.players.p1.deck.length);
   });
 });
