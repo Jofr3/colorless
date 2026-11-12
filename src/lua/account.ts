@@ -144,7 +144,7 @@ export class LuaAccount {
    * status or the user changed. */
   refresh(maxAgeMs = 0): Promise<void> {
     if (this.checking) return this.checking;
-    if (this.busy || Date.now() - this.checkedAt < maxAgeMs) return Promise.resolve();
+    if (this.busy || performance.now() - this.checkedAt < maxAgeMs) return Promise.resolve();
     const visible = this.status === "loading" || this.status === "error";
     const check = this.check(visible).finally(() => {
       if (this.checking === check) this.checking = undefined;
@@ -172,7 +172,7 @@ export class LuaAccount {
       if (op !== this.operation) return;
       this.user = user;
       this.status = "authenticated";
-      this.checkedAt = Date.now();
+      this.checkedAt = performance.now();
     } catch (error) {
       if (op !== this.operation) return;
       const gone = error instanceof ApiError && error.status === 401;
@@ -180,7 +180,7 @@ export class LuaAccount {
       if (!visible && !gone) return;
       this.user = null;
       this.status = gone ? "anonymous" : "error";
-      this.checkedAt = gone ? Date.now() : Number.NEGATIVE_INFINITY;
+      this.checkedAt = gone ? performance.now() : Number.NEGATIVE_INFINITY;
       if (visible) {
         this.message =
           this.status === "error" ? "Could not reach the server. Try again." : this.authNotice;
@@ -239,7 +239,7 @@ export class LuaAccount {
       if (error instanceof ApiError && error.status === 401) {
         this.user = null;
         this.status = "anonymous";
-        this.checkedAt = Date.now();
+        this.checkedAt = performance.now();
         this.message = "Your session expired. Sign in again.";
       } else {
         this.message =
@@ -275,7 +275,7 @@ export class LuaAccount {
       if (op !== this.operation) return;
       this.user = null;
       this.status = "anonymous";
-      this.checkedAt = Date.now();
+      this.checkedAt = performance.now();
       this.message = !everywhere ? "" : expired ? SESSION_EXPIRED : SIGNED_OUT_EVERYWHERE;
     } catch {
       if (op === this.operation) {
@@ -319,7 +319,7 @@ export class LuaAccount {
       if (op !== this.operation) return;
       this.user = null;
       this.status = "anonymous";
-      this.checkedAt = Date.now();
+      this.checkedAt = performance.now();
       this.message = "Account deleted.";
     } catch (error) {
       if (op !== this.operation) return;
@@ -328,7 +328,7 @@ export class LuaAccount {
       if (status === 401 && error instanceof ApiError && error.message === "unauthorized") {
         this.user = null;
         this.status = "anonymous";
-        this.checkedAt = Date.now();
+        this.checkedAt = performance.now();
         this.message = "Your session expired. Sign in again.";
       } else {
         this.message =
@@ -388,7 +388,7 @@ export class LuaAccount {
       if (op !== this.operation) return;
       this.user = user;
       this.status = "authenticated";
-      this.checkedAt = Date.now();
+      this.checkedAt = performance.now();
       this.message = "";
     } catch (error) {
       if (op !== this.operation) return;

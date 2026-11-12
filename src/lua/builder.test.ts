@@ -332,6 +332,17 @@ describe("Lua deck builder", () => {
     expect(navigated).toHaveBeenCalledTimes(1);
     expect(back).not.toHaveBeenCalled();
   });
+  it("times the Back lockout on a monotonic clock, so a wall clock stepped back cannot hold it", async () => {
+    vi.mocked(api.patchDeck).mockRejectedValue(new api.ApiError(500, { error: "internal" }));
+    const { b, back } = await setup();
+    await b.command("add\ta");
+    await tick();
+    await b.command("leave");
+    vi.setSystemTime(Date.now() - 10 * 60_000);
+    await vi.advanceTimersByTimeAsync(LEAVE_LOCKOUT_MS);
+    await b.command("leave");
+    expect(back).toHaveBeenCalledTimes(1);
+  });
   it("arms no leave without saving until a save has failed, and disarms once one lands", async () => {
     let fail = true;
     vi.mocked(api.patchDeck).mockImplementation(async () => {
@@ -1313,6 +1324,41 @@ describe("Lua deck builder", () => {
     await importing;
     expect([...b.entries]).toEqual([["a", 1]]);
     expect(b.message).toContain("cancelled");
+  });
+  it("ends an import that a conflict reload overtakes, so the next import runs", async () => {
+    vi.mocked(api.getDeck).mockResolvedValue({ ...deck(), version: 1 });
+    const theirs: Deck = {
+      ...deck([{ cardId: "b", count: 2 }]),
+      name: "Theirs",
+      tint: 22,
+      folderId: null,
+      position: 0,
+      updated: "2026-10-27T10:00:00.000Z",
+      version: 2,
+    };
+    vi.mocked(api.patchDeck).mockRejectedValueOnce(
+      new api.ApiError(409, { error: "deck changed since this version", deck: theirs }),
+    );
+    const { b, publish } = await setup();
+    await b.command("add\ta");
+    forgetCardIndex();
+    let resolve!: (value: CardIndexPayload) => void;
+    vi.mocked(api.getCardIndex).mockImplementationOnce(
+      () =>
+        new Promise((r) => {
+          resolve = r;
+        }),
+    );
+    const importing = b.command(encodeFields(["import", "2 Abra"]));
+    await tick();
+    expect(b.name).toBe("Theirs");
+    resolve(ABRA_INDEX);
+    await importing;
+    const header = decodeFields(String(publish.mock.lastCall?.[0]).split("\n")[0] ?? "") ?? [];
+    expect(header[wireColumn(WIRE_ROWS.builder.header, "importing")]).toBe("0");
+    expect([...b.entries]).toEqual([["b", 2]]);
+    await b.command(encodeFields(["import", "2 Abra"]));
+    expect([...b.entries]).toEqual([["c0", 2]]);
   });
 });
 

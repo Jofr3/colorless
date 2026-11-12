@@ -140,6 +140,12 @@ class DeckStore {
     this.replace(user, decks);
   }
 
+  /** A write that got no answer and may have landed: a fetch sent before it no longer answers for
+   * the list, so the next revalidate asks again. */
+  unconfirmedWrite() {
+    this.writes++;
+  }
+
   /** A deck the server just deleted, dropped from `user`'s list. */
   remove(user: string, id: string) {
     const list = this.peek(user);

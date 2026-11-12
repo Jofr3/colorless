@@ -230,6 +230,64 @@ describe("Lua deck library", () => {
     expect(library.result).toBe("error");
     expect(library.message).toContain("Could not save");
   });
+  it("shows a create that landed without an answer, from a list fetched after the create", async () => {
+    let listed = decks;
+    let heldOld: (() => void) | undefined;
+    const { calls } = stubFetch({
+      "GET /decks": () => {
+        const list = listed;
+        if (calls.filter((c) => c === "GET /decks").length !== 2) return json(list);
+        return new Promise<Response>((done) => {
+          heldOld = () => done(json(list));
+        });
+      },
+      "POST /decks": () => {
+        listed = [
+          ...decks,
+          {
+            id: "n",
+            name: "Fresh",
+            folderId: null,
+            cardCount: 0,
+            tint: 0,
+            coverCardId: null,
+            position: 3,
+          },
+        ];
+        throw new TypeError("Failed to fetch");
+      },
+    });
+    const { library } = await setup();
+    const elsewhere = deckStore.revalidate("user");
+    const create = library.command(encodeFields(["create", "Fresh"]));
+    await vi.waitFor(() => expect(calls.filter((c) => c === "GET /decks")).toHaveLength(3));
+    heldOld?.();
+    await create;
+    await elsewhere;
+    expect(library.result).toBe("error");
+    expect(library.decks.map((d) => d.id)).toContain("n");
+    expect(deckStore.peek("user")?.decks.map((d) => d.id)).toContain("n");
+  });
+  it("keeps a write that answers after another account signs in out of that account's decks", async () => {
+    let answer: (() => void) | undefined;
+    stubFetch({
+      "GET /decks": () => json(decks),
+      "POST /decks": () =>
+        new Promise<Response>((done) => {
+          answer = () => done(json(saved("n", "Fresh", -1), 201));
+        }),
+    });
+    const { library } = await setup();
+    const create = library.command(encodeFields(["create", "Fresh"]));
+    await vi.waitFor(() => expect(answer).toBeDefined());
+    deckStore.session("other");
+    library.session("authenticated", "other");
+    await vi.waitFor(() => expect(library.phase).toBe("ready"));
+    answer?.();
+    await create;
+    expect(library.decks.map((d) => d.id)).not.toContain("n");
+    expect(deckStore.peek("other")?.decks.map((d) => d.id)).not.toContain("n");
+  });
   it("shows a rename's answer at once and fetches the list again behind it", async () => {
     let held: (() => void) | undefined;
     let named = "Árbol\t%";

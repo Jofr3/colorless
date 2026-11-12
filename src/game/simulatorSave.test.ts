@@ -234,7 +234,7 @@ describe("the simulator save", () => {
   it("reports a write that did not stick", () => {
     const { src } = playSimulatorGame(11, { maxMoves: 5 });
     vi.stubGlobal("localStorage", fullStorage());
-    expect(saveSimulator(src.host)).toBe(false);
+    expect(saveSimulator(src.host)).toBe("failed");
   });
 
   it("drops the last match's save when a new match's write does not stick", () => {
@@ -258,7 +258,7 @@ describe("the simulator save", () => {
     localStorage.setItem = () => {
       throw new DOMException("quota", "QuotaExceededError");
     };
-    expect(saveSimulator({ ...src.host, actions: [...src.host.actions] })).toBe(false);
+    expect(saveSimulator({ ...src.host, actions: [...src.host.actions] })).toBe("failed");
     expect(storage.get(SAVE_KEY)).toBe(before);
     expect(loadSimulatorSave()?.startedAt).toBe(src.host.startedAt);
   });

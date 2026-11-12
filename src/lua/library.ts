@@ -4,6 +4,7 @@ import type { Deck } from "../decks/data";
 import { legalityFrom } from "../game/sandboxDecks";
 import { deckNameOrNull } from "../decks/deckSnapshot";
 import { type DeckList, deckStore } from "../decks/deckStore";
+import { outcomeUnknown } from "../decks/deckSaver";
 import { decodeFields, encodeFields } from "./wire";
 import { WIRE_ROWS, wireRow } from "./wireFields";
 import { reportError } from "../lib/reportError";
@@ -159,18 +160,21 @@ export class LuaLibrary {
 
   /** Runs a deck write, puts the server's answer on the piles and says how it went at once, then
    * reconciles with the server's list behind it, even when the write failed. */
-  private async mutate(work: () => Promise<void>) {
+  private async mutate(work: (user: string, live: () => boolean) => Promise<void>) {
     const live = this.epoch.next();
+    const user = this.user;
     this.busy = true;
     this.message = "";
     this.result = "";
     this.emit();
     let failure = "";
     try {
-      await work();
-      const list = deckStore.peek(this.user);
+      await work(user, live);
+      const list = deckStore.peek(user);
       if (live() && list) this.show(list);
     } catch (error) {
+      // A write that may have landed: the list shown next is one fetched after it.
+      if (outcomeUnknown(error)) deckStore.unconfirmedWrite();
       const status = error instanceof api.ApiError ? error.status : 0;
       // Only a create answers 409 here: renames send no version, so they never conflict.
       failure =
@@ -261,7 +265,7 @@ export class LuaLibrary {
         this.emit();
         return;
       }
-      await this.mutate(async () => {
+      await this.mutate(async (user, live) => {
         const deck =
           action === "create"
             ? await api.createDeck({
@@ -271,14 +275,14 @@ export class LuaLibrary {
                 cards: [],
               })
             : await api.patchDeck(a, { name });
-        deckStore.put(this.user, deck);
+        if (live()) deckStore.put(user, deck);
       });
       return;
     }
     if (action === "delete" && item) {
-      await this.mutate(async () => {
+      await this.mutate(async (user, live) => {
         await api.deleteDeck(a);
-        deckStore.remove(this.user, a);
+        if (live()) deckStore.remove(user, a);
       });
       return;
     }

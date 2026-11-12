@@ -400,6 +400,18 @@ describe("the spacing between save starts", () => {
     expect(save.mock.calls).toEqual([[{ v: 1 }], [{ v: 3 }]]);
   });
 
+  it("measures the spacing on a monotonic clock, so a wall clock stepped back holds nothing", async () => {
+    const save = vi.fn(async (_: Snap) => {});
+    const saver = createDeckSaver<Snap>({ save, delay: 600 });
+    saver.schedule({ v: 1 });
+    await vi.advanceTimersByTimeAsync(600);
+    vi.setSystemTime(Date.now() - 10 * 60_000);
+    saver.schedule({ v: 2 });
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(save.mock.calls).toEqual([[{ v: 1 }], [{ v: 2 }]]);
+    expect(saver.idle()).toBe(true);
+  });
+
   it("does not hold a flush, which the page leaving or hiding sends", async () => {
     const save = vi.fn(async (_: Snap) => {});
     const saver = createDeckSaver<Snap>({ save, delay: 600 });
@@ -530,6 +542,20 @@ describe("a rate-limited save", () => {
     expect(save).toHaveBeenCalledTimes(2);
     expect(save).toHaveBeenLastCalledWith({ v: 1 });
     expect(recorder.statuses).toEqual(["saving", "retrying", "saved"]);
+  });
+
+  it("waits out a Retry-After on a monotonic clock, whatever the wall clock does", async () => {
+    const save = vi.fn(async (_: Snap) => {});
+    save.mockRejectedValueOnce(limited(3));
+    const saver = createDeckSaver<Snap>({ save, delay: 600 });
+    saver.schedule({ v: 1 });
+    await vi.advanceTimersByTimeAsync(600);
+    vi.setSystemTime(Date.now() - 10 * 60_000);
+    saver.schedule({ v: 2 });
+    saver.flush();
+    await vi.advanceTimersByTimeAsync(3_000);
+    expect(save).toHaveBeenCalledTimes(2);
+    expect(save).toHaveBeenLastCalledWith({ v: 2 });
   });
 
   it("folds edits made while waiting into the one retry, which a flush cannot hurry", async () => {
