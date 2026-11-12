@@ -254,12 +254,12 @@ function lethalRefs(state: GameState, seats: readonly Seat[]): { seat: Seat; uid
   const refs: { seat: Seat; uid: string }[] = [];
   for (const seat of seats) {
     const side = state.players[seat];
-    if (side.active !== null && isLethallyDamaged(state, side.active)) {
+    if (side.active !== null && dueForKnockOut(state, side.active)) {
       const uid = topUid(side.active);
       if (uid !== undefined) refs.push({ seat, uid });
     }
     for (const pokemon of side.bench) {
-      if (!isLethallyDamaged(state, pokemon)) continue;
+      if (!dueForKnockOut(state, pokemon)) continue;
       const uid = topUid(pokemon);
       if (uid !== undefined) refs.push({ seat, uid });
     }
@@ -284,6 +284,14 @@ export function lethalBodyIn(state: GameState, seats: readonly Seat[]): boolean 
 /** Whether this body was made lethal by an effect (a knock-out marker) rather than by damage. */
 function lethalByEffect(body: InPlayPokemon, turn: number): boolean {
   return body.markers.includes(koByEffectMarker(turn));
+}
+
+/**
+ * Whether the §8.1 sweep Knocks this body Out: lethal damage, or an effect's Knock Out this turn.
+ * The effect's Knock Out is not damage, so a heal before the sweep cannot cancel it.
+ */
+function dueForKnockOut(state: GameState, body: InPlayPokemon): boolean {
+  return isLethallyDamaged(state, body) || lethalByEffect(body, state.turn);
 }
 
 function koRecoilOf(
@@ -1522,9 +1530,9 @@ function runCheckup(state: GameState, endedSeat: Seat, events: GameEvent[]): App
   // `endedSeat`'s Active can carry a schedule. The stamp expires by arithmetic, so nothing is
   // cleared after firing. Payloads: damage counters; a discard of the body and its attached cards,
   // which is not a Knock Out and pays no Prize but still owes a promotion; and a Knock Out, which
-  // only marks the body so the §8.1 sweep below resolves it (a Checkup heal in between can save
-  // it). The Knock Out payload is stamped `koByEffect` unless the body was already lethally
-  // damaged.
+  // only marks the body so the §8.1 sweep below resolves it. The Knock Out payload is stamped
+  // `koByEffect` unless the body was already lethally damaged; the stamp Knocks it Out even if a
+  // Checkup heal in between removes the damage.
   {
     const spot = activeTop(next, endedSeat);
     const due = spot === null ? null : scheduledEffectDue(spot.active, next.turn);
