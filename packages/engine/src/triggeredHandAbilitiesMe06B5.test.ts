@@ -427,7 +427,7 @@ describe("Talonflame ex me06-088 / -124 Excited Dive", () => {
     }
   });
 
-  it("reading: the catalog's Basic face is benched as one with Mega Rayquaza ex in play too, and no Ability is spent", () => {
+  it("reading: a face typed Basic is benched as one with Mega Rayquaza ex in play too, and no Ability is spent", () => {
     const state = withHand(POOL, "active");
     const uid = handUidOf(state, TALONFLAME.id);
     const done = mustApply(state, benchIt(state, TALONFLAME.id));

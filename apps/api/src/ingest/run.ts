@@ -97,6 +97,7 @@ export function legalityDrift(
 export interface RunSummary {
   failedSets: readonly string[];
   weakless: readonly string[];
+  evolutionless: readonly string[];
   epochStamped: boolean;
   postPassFailed: boolean;
 }
@@ -106,6 +107,7 @@ export interface RunSummary {
 export function exitCode(summary: RunSummary): 0 | 1 {
   return summary.failedSets.length > 0 ||
     summary.weakless.length > 0 ||
+    summary.evolutionless.length > 0 ||
     !summary.epochStamped ||
     summary.postPassFailed
     ? 1

@@ -8,6 +8,7 @@ import type { TcgdexCard, TcgdexSerie, TcgdexSet } from "@colorless/schema";
 import { isAssetOriginUrl } from "../assets/files";
 import type { cards, series, sets } from "../db/schema";
 import { normalizeSentinel } from "../sentinel";
+import { EVOLUTION_SUPPLEMENT } from "./evolutionSupplement";
 import { WEAK_RES_SUPPLEMENT } from "./weakResSupplement";
 
 export type SeriesRow = Required<typeof series.$inferInsert>;
@@ -147,12 +148,15 @@ function mapCardFields(card: TcgdexCard): CardRow {
         card.weaknesses === undefined && card.resistances === undefined
           ? WEAK_RES_SUPPLEMENT[card.id]
           : undefined;
+      const evolveFrom = normalizeSentinel(card.evolveFrom);
+      // Upstream wins once it sends an evolution (./evolutionSupplement.ts).
+      const evolution = evolveFrom === null ? EVOLUTION_SUPPLEMENT[card.id] : undefined;
       return {
         ...base,
         hp: card.hp ?? null,
-        stage: normalizeSentinel(card.stage),
+        stage: evolution?.stage ?? normalizeSentinel(card.stage),
         suffix: suffixOf(card.name, normalizeSentinel(card.suffix)),
-        evolveFrom: normalizeSentinel(card.evolveFrom),
+        evolveFrom: evolveFrom ?? evolution?.evolveFrom ?? null,
         typesJson: card.types ?? null,
         retreat: card.retreat ?? null,
         abilitiesJson: textBlocks(card.abilities),
@@ -198,22 +202,42 @@ export function weaklessLegalPokemon(rows: readonly CardRow[]): string[] {
     .map((row) => row.id);
 }
 
+/** The rows nothing can evolve into: a Stage 1 or Stage 2 Pokémon with no `evolveFrom`. Written
+    anyway, and the ingest exits non-zero naming them. */
+export function evolutionlessPokemon(rows: readonly CardRow[]): string[] {
+  return rows
+    .filter(
+      (row) =>
+        row.category === "Pokemon" &&
+        (row.stage === "Stage1" || row.stage === "Stage2") &&
+        row.evolveFrom === null,
+    )
+    .map((row) => row.id);
+}
+
 /** tcgdex spells some sets' Pokémon ex suffix "EX"; the name's own " ex" decides, so a
     Pokémon-EX keeps "EX". */
 export function suffixOf(name: string, suffix: string | null): string | null {
   return suffix === "EX" && name.endsWith(" ex") ? "ex" : suffix;
 }
 
+/** A tab run, with the spaces around it, is one space; before a comma, none. */
+export function tidyWhitespace(text: string): string {
+  return text.replace(/[ \t]*\t[ \t]*(,?)/g, (_run, comma: string) => comma || " ");
+}
+
 /** A Trainer's or Energy's rules text, normalised; null when not printed. */
 function rulesText(effect: string | undefined): string | null {
-  return effect === undefined ? null : normalizeCardText(effect);
+  return effect === undefined ? null : normalizeCardText(tidyWhitespace(effect));
 }
 
 /** Printed attacks or Abilities with each `effect` normalised; null when not printed. */
 function textBlocks<T extends { effect?: string }>(blocks: T[] | undefined): T[] | null {
   if (blocks === undefined) return null;
   return blocks.map((block) =>
-    block.effect === undefined ? block : { ...block, effect: normalizeCardText(block.effect) },
+    block.effect === undefined
+      ? block
+      : { ...block, effect: normalizeCardText(tidyWhitespace(block.effect)) },
   );
 }
 

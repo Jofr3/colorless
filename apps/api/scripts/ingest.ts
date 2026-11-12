@@ -27,6 +27,7 @@ import {
   reprintLegalitySql,
   seriesUpsertSql,
   setsUpsertSql,
+  evolutionlessPokemon,
   weaklessLegalPokemon,
 } from "../src/ingest";
 import { createPayloadCache, type PayloadKind } from "../src/ingest/payloadCache";
@@ -264,6 +265,7 @@ applySqlCommand(writeSqlFile("series", seriesSql), seriesSql);
 // row and its card chunks to one file and apply it.
 const outcomes: SetOutcome[] = [];
 const weakless: string[] = [];
+const evolutionless: string[] = [];
 for (const setId of setIds) {
   const setStartedAt = Date.now();
   console.log(`\nset ${setId}:`);
@@ -326,6 +328,7 @@ for (const setId of setIds) {
 
     const rows = cardPayloads.map(mapCard);
     weakless.push(...weaklessLegalPokemon(rows));
+    evolutionless.push(...evolutionlessPokemon(rows));
     const chunks = cardsUpsertStatements(rows);
     // The set-scoped reprint pass rides in the same file, so the import that upserts the set's
     // cards also settles their effective legality.
@@ -397,6 +400,13 @@ if (weakless.length > 0) {
       `src/ingest/weakResSupplement.ts: ${weakless.join(", ")}`,
   );
 }
+if (evolutionless.length > 0) {
+  // Written anyway; see evolutionlessPokemon.
+  console.error(
+    `${evolutionless.length} Stage 1 / Stage 2 Pokémon have no evolveFrom — add them to ` +
+      `src/ingest/evolutionSupplement.ts: ${evolutionless.join(", ")}`,
+  );
+}
 if (failedSets.length > 0) {
   const ids = failedSets.map((o) => o.setId);
   console.error(`${failedSets.length} set(s) failed: ${ids.join(", ")}`);
@@ -418,7 +428,13 @@ if (!epochStamped) {
   );
 }
 if (
-  exitCode({ failedSets: failedSets.map((o) => o.setId), weakless, epochStamped, postPassFailed })
+  exitCode({
+    failedSets: failedSets.map((o) => o.setId),
+    weakless,
+    evolutionless,
+    epochStamped,
+    postPassFailed,
+  })
 ) {
   process.exit(1);
 }

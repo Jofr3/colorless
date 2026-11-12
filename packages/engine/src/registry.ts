@@ -1324,8 +1324,7 @@ const SKWOVET: CardProgram = {
 };
 
 /** Jellicent — "Deep Sea Draw": "Once during your turn, you may use this Ability. Draw a card. If
-    you do, you may put a card from your hand on the bottom of your deck." The catalog row carries
-    two tab characters between the sentences. */
+    you do, you may put a card from your hand on the bottom of your deck." */
 const DEEP_SEA_DRAW: CardProgram = {
   abilities: [
     activated({

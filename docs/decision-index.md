@@ -82,6 +82,7 @@ fails when it is stale, so rerun the script after adding a decision.
 | 2026-11-11 | Maintainability audit Phases 1-6 and their merge: one reader table, the catalog regenerates from one command,… | decisions.md:1653 |
 | 2026-11-12 | Catalog re-ingest 2026-11-12: Delta Reign (me06) and tcgdex data fixes | decisions.md:1702 |
 | 2026-11-12 | Delta Reign (me06) card programs (ME06-REG, ME06-B1..B5) | decisions.md:1717 |
+| 2026-11-12 | Evolution backfill and tab-free card text (ME06-EVO) | decisions.md:1761 |
 
 ## Numbered decisions
 

@@ -11,13 +11,16 @@ import serieFull from "@colorless/schema/tcgdex-fixtures/serie-full-sv.json";
 import setFull from "@colorless/schema/tcgdex-fixtures/set-full-sv01.json";
 import {
   energyTypeOf,
+  evolutionlessPokemon,
   mapCard,
   mapSerie,
   mapSet,
   printKey,
   suffixOf,
+  tidyWhitespace,
   weaklessLegalPokemon,
 } from "./map";
+import { EVOLUTION_SUPPLEMENT } from "./evolutionSupplement";
 import { WEAK_RES_SUPPLEMENT } from "./weakResSupplement";
 
 describe("mapSerie", () => {
@@ -478,5 +481,80 @@ describe("Weakness / Resistance supplement (card revision B39)", () => {
       }
       expect(entry.from, id).toMatch(/^[PTJMXS]+$/);
     }
+  });
+});
+
+describe("evolution supplement (card revision Deferred 2 and 13)", () => {
+  function evolving(
+    id: string,
+    name: string,
+    stage: string,
+    overrides: Record<string, unknown> = {},
+  ) {
+    const { evolveFrom: _e, ...rest } = cardPokemonAbility as Record<string, unknown>;
+    return tcgdexCardSchema.parse({ ...rest, id, name, stage, ...overrides });
+  }
+
+  it("fills the evolution tcgdex leaves out, and the stage only where the table gives one", () => {
+    const cacturne = mapCard(evolving("me06-005", "Cacturne", "Stage1"));
+    expect([cacturne.stage, cacturne.evolveFrom]).toEqual(["Stage1", "Cacnea"]);
+    const talonflame = mapCard(evolving("me06-088", "Talonflame ex", "Basic"));
+    expect([talonflame.stage, talonflame.evolveFrom]).toEqual(["Stage2", "Fletchinder"]);
+  });
+
+  it("lets upstream win once tcgdex sends an evolution", () => {
+    const sent = mapCard(
+      evolving("me06-088", "Talonflame ex", "Basic", { evolveFrom: "Fletchling" }),
+    );
+    expect([sent.stage, sent.evolveFrom]).toEqual(["Basic", "Fletchling"]);
+  });
+
+  it("feeds the print key", () => {
+    const row = mapCard(evolving("me06-005", "Cacturne", "Stage1"));
+    expect(row.printKey).not.toBe(printKey({ ...row, evolveFrom: null }));
+  });
+
+  it("flags a Stage 1 or Stage 2 with no evolution, and nothing else", () => {
+    const flagged = mapCard(evolving("x-001", "Cacturne", "Stage1"));
+    const stage2 = { ...flagged, id: "x-002", stage: "Stage2" };
+    const basic = { ...flagged, id: "x-003", stage: "Basic" };
+    const patched = mapCard(evolving("me06-005", "Cacturne", "Stage1"));
+    const trainer = mapCard(tcgdexCardSchema.parse(cardTrainer));
+    expect(evolutionlessPokemon([flagged, stage2, basic, patched, trainer])).toEqual([
+      "x-001",
+      "x-002",
+    ]);
+  });
+
+  it("holds only well-formed entries", () => {
+    const entries = Object.entries(EVOLUTION_SUPPLEMENT);
+    expect(entries).toHaveLength(83);
+    for (const [id, entry] of entries) {
+      expect(id, id).toMatch(/^(30th|30th-c|me06|mfb)-\d+$/);
+      expect(entry.evolveFrom, id).not.toBe("");
+      expect(entry.from, id).toMatch(/^(M|B|T [a-z0-9.]+-\d+)$/);
+    }
+  });
+});
+
+describe("tidyWhitespace", () => {
+  it("turns a tab run into one space, and drops it before a comma", () => {
+    expect(tidyWhitespace("use this Ability.\t\tDraw a card.")).toBe(
+      "use this Ability. Draw a card.",
+    );
+    expect(tidyWhitespace("(before your attack)\t   , if")).toBe("(before your attack), if");
+    expect(tidyWhitespace("no tabs here")).toBe("no tabs here");
+  });
+
+  it("is applied to Ability, attack and rules text", () => {
+    const row = mapCard(
+      tcgdexCardSchema.parse({
+        ...(cardPokemonAbility as Record<string, unknown>),
+        abilities: [
+          { type: "Ability", name: "Deep Sea Draw", effect: "use this Ability.\t\tDraw a card." },
+        ],
+      }),
+    );
+    expect(row.abilitiesJson?.[0]?.effect).toBe("use this Ability. Draw a card.");
   });
 });

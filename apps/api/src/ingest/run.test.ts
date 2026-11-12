@@ -140,12 +140,19 @@ describe("createRowsTally and shouldStampEpoch", () => {
 });
 
 describe("exitCode", () => {
-  const clean = { failedSets: [], weakless: [], epochStamped: true, postPassFailed: false };
+  const clean = {
+    failedSets: [],
+    weakless: [],
+    evolutionless: [],
+    epochStamped: true,
+    postPassFailed: false,
+  };
 
   it("is 0 only when nothing needs a person", () => {
     expect(exitCode(clean)).toBe(0);
     expect(exitCode({ ...clean, failedSets: ["sv01"] })).toBe(1);
     expect(exitCode({ ...clean, weakless: ["sv01-001"] })).toBe(1);
+    expect(exitCode({ ...clean, evolutionless: ["me06-005"] })).toBe(1);
     expect(exitCode({ ...clean, epochStamped: false })).toBe(1);
     expect(exitCode({ ...clean, postPassFailed: true })).toBe(1);
   });
