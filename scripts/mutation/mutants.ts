@@ -18260,17 +18260,15 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D435-ko-marker-not-stamped",
     decision: "D435",
-    what: "D414's `koByEffect:<turn>` marker is not stamped on a body this appointment made lethal WITHOUT damage \u2014 the marker's exact subject. The stamp is semantically owed (D433's rule for a marker's second producer, re-derived rather than inherited from D434, whose payload does place damage) and is DECLARED to survive because no reader can see it on this path today",
+    what: "D414's `koByEffect:<turn>` marker is not stamped on a body this appointment made lethal WITHOUT damage \u2014 the marker's exact subject. The stamp is semantically owed (D433's rule for a marker's second producer, re-derived rather than inherited from D434, whose payload does place damage) and was declared to survive while no reader could see it on this path. The §8.1 sweep reads it since COR-P1 (`dueForKnockOut`: a marked body is Knocked Out whatever its damage), so a Checkup heal between the mark and the sweep tells the builds apart (Good Sleep saves an unstamped Snorlax)",
     file: "packages/engine/src/flow.ts",
     symbol: "runCheckup",
     find: "          const marker = isLethallyDamaged(next, active) ? undefined : koByEffectMarker(next.turn);",
     replace: "          const marker = undefined;",
-    expectKilledBy: ["packages/engine/src/delayedCounters.test.ts"],
-    survives: {
-      kind: "equivalent",
-      reason:
-        "\ud83d\uded1 **DECLARED BEFORE THE SWEEP AND MEASURED RATHER THAN ASSUMED, AND IT IS SELF-INVALIDATING BY CONSTRUCTION (D427).** The `koByEffect:<turn>` marker has EXACTLY TWO readers, both in `flow.ts`: `byAttackFor`, which returns `false` outright when `attackerSeat` is `undefined`, and `koRecoilOf`, which is called by `finishAttack` alone. The Checkup's `collectKnockOuts` call passes NO `attackerSeat` and this path never reaches `finishAttack`, so both readers answer identically with and without the stamp and NO BOARD distinguishes the two builds today. \u26a0\ufe0f **IT IS STAMPED ANYWAY, AND THE REASON IS STATED AS A REASON RATHER THAN AS AN OBSERVATION (D414's rule about a justification that rots):** the alternative is a body whose lethality is an effect's doing carrying \u2014 BY ABSENCE \u2014 the mark that says it was damage's, which is the closed-world assumption D414 was spent removing. \ud83d\uded1 **THE DAY A THIRD READER APPEARS, OR THE DAY THE CHECKUP'S SWEEP GAINS AN `attackerSeat`, THIS ROW IS KILLED AND THE RUN FAILS WITH `STALE-SURVIVOR`** \u2014 which is the whole reason it is declared rather than deleted.",
-    },
+    expectKilledBy: [
+      "packages/engine/src/delayedCounters.test.ts",
+      "packages/engine/src/scheduledKnockOutHeal.test.ts",
+    ],
   },
   {
     id: "D436-counts-cards-not-units",
