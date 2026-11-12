@@ -4,6 +4,8 @@
 
 import type { EffectPrompt, PokemonRef } from "../effectPrompt";
 import type { GameAction, GameEvent, GameState, InPlayPokemon, Seat } from "../index";
+import { isLethallyDamaged } from "../continuous";
+import { evaluateWin } from "../flow";
 import { BENCH_CEILING, PRIZE_COUNT, SEATS, isRngState, logFromEvents, redactGame } from "../index";
 import { candidateActions } from "./walk";
 
@@ -271,8 +273,9 @@ function winConditionMet(state: GameState, seat: Seat, reason: string): boolean 
 
 /** Board rules every accepted action keeps (beyond `afterAccept`'s card count): no uid in two
     zones, at most six Prizes and the Bench ceiling, damage in whole counters, no empty body, face-up
-    Prizes among the Prizes, the turn never going back, and a game over naming a condition that
-    holds. Returns the broken rules. */
+    Prizes among the Prizes, the turn never going back, a game over naming a condition that holds,
+    and a game back at `turn:action` with nothing queued, both Active Spots filled, no lethally
+    damaged body on either board and no win condition already met. Returns the broken rules. */
 export function boardViolations(before: GameState, after: GameState): string[] {
   const out: string[] = [];
   const uids = zoneUids(after);
@@ -291,6 +294,7 @@ export function boardViolations(before: GameState, after: GameState): string[] {
       if (!side.prizes.includes(uid)) out.push(`${seat} face-up ${uid} is not a Prize`);
   }
   if (after.turn < before.turn) out.push("the turn went back");
+  if (after.phase.kind === "turn:action") out.push(...turnActionViolations(after));
   if (after.phase.kind === "gameOver") {
     const outcome = after.phase.outcome;
     const held =
@@ -299,6 +303,25 @@ export function boardViolations(before: GameState, after: GameState): string[] {
         : SEATS.every((seat) => winConditionMet(after, seat, outcome.reasons[seat]));
     if (!held) out.push(`game over names a condition that does not hold: ${stable(outcome)}`);
   }
+  return out;
+}
+
+/** What a settled `turn:action` state breaks: every Knock Out, Prize, promotion and win is resolved
+    before the turn's player acts again. */
+function turnActionViolations(state: GameState): string[] {
+  const out: string[] = [];
+  if (state.pending.length > 0)
+    out.push(`turn:action with stages queued: ${state.pending.map((stage) => stage.kind).join()}`);
+  for (const seat of SEATS) {
+    const side = state.players[seat];
+    if (side.active === null) out.push(`turn:action with ${seat}'s Active Spot empty`);
+    for (const body of [side.active, ...side.bench]) {
+      if (body !== null && isLethallyDamaged(state, body))
+        out.push(`turn:action with a lethally damaged ${seat} body`);
+    }
+  }
+  const won = evaluateWin(state);
+  if (won !== null) out.push(`turn:action while a win holds: ${stable(won)}`);
   return out;
 }
 
