@@ -232,7 +232,8 @@ describe("write site 1 — attack.ts's main hit", () => {
     const { state: done, events } = mustApply(state, { type: "attack", seat: "p1", index: BLAST });
 
     expect(findEvent(events, "KNOCKED_OUT")).toBeDefined();
-    expect(done.phase.kind).toBe("ko:takePrizes");
+    // The defender's Bench is empty, so the Knock Out ends the game at once.
+    expect(done.phase).toMatchObject({ kind: "gameOver", outcome: { winner: "p1" } });
   });
 
   it("a body with NO Ability at the same HP dies to the same hit", () => {
@@ -282,7 +283,7 @@ describe("the order witness — survival, death, and the two recoils, on ONE boa
     expect(done.players.p1.active?.damage).toBe(HELMET_HP);
   });
 
-  it("ONE damage counter on the SAME body: dies, Prize owed, and BOTH recoils pay", () => {
+  it("ONE damage counter on the SAME body: dies, the game is won, and BOTH recoils pay", () => {
     // The discriminating half, and the only thing that changed is the defender's
     // starting damage. RED if the clamp fires on a damaged body — the survivor would
     // reappear and Vengeful Punch's 40 would vanish with the KO.
@@ -293,7 +294,7 @@ describe("the order witness — survival, death, and the two recoils, on ONE boa
     expect(findEvent(events, "KNOCKED_OUT")).toBeDefined();
     expect(recoils(events).map((r) => r.amount)).toEqual([HELMET_HP, PUNCH_HP]);
     expect(done.players.p1.active?.damage).toBe(HELMET_HP + PUNCH_HP); // 60
-    expect(done.phase.kind).toBe("ko:takePrizes");
+    expect(done.phase).toMatchObject({ kind: "gameOver", outcome: { winner: "p1" } });
   });
 
   it("the two boards differ in the EVENT STREAM, not just in the numbers", () => {

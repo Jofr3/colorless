@@ -520,6 +520,8 @@ describe("§6 — your own Knock Out, and the Prize goes to your OPPONENT", () =
   it("BOTH boards in ONE batch, and §8.1's Prize ORDER holds", () => {
     let state = bench(board("sv01-117", "fix-fighting-weak"), "p1", ["fix-fighting-weak"]);
     state = setBenchDamage(state, "p1", 0, 190);
+    // A benched defender keeps the game going, so the stages park rather than the game ending.
+    state = bench(state, "p2", ["fix-fighting-weak"]);
     const { state: done, events } = swing(state, QUAKE.krookodile);
     expect(events.flatMap((e) => (e.type === "KNOCKED_OUT" ? [e.seat] : []))).toEqual(["p2", "p1"]);
     expect(done.pending.map((s) => [s.kind, s.seat])).toEqual([

@@ -329,12 +329,11 @@ describe("CAUSE — 'by damage from an attack from your OPPONENT'S Pokémon'", (
     expect(findEvent(events, "ABILITY_COIN_FLIP")).toMatchObject({ ability: "Shattering Crystal" });
     // Whichever way the flip lands, the OTHER field never spoke.
     expect(findEvent(events, "PRIZE_REDUCED")).toBeUndefined();
-    const prevented = findEvent(events, "PRIZE_PREVENTED") !== undefined;
-    expect(done.phase).toEqual(
-      prevented
-        ? { kind: "ko:promote", seat: "p2" }
-        : { kind: "ko:takePrizes", seat: "p1", count: 1 },
-    );
+    // p2 has no Bench, so the Knock Out ends the game whether or not the Prize was denied.
+    expect(done.phase).toEqual({
+      kind: "gameOver",
+      outcome: { result: "win", winner: "p1", reason: "noPokemon" },
+    });
   });
 
   it("a Munkidori ex on the ATTACKER'S OWN board pays nothing — 'from your OPPONENT'S'", () => {

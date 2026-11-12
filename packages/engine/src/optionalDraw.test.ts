@@ -481,8 +481,9 @@ describe("end to end — a printed card asks, and the answer is the effect", () 
     expect(types(events)).not.toContain("CARDS_DRAWN");
     expect(hand(done)).toBe(0);
     expect(types(events)[0]).toBe("KNOCKED_OUT");
-    expect(types(events)).toContain("PRIZES_OWED");
-    expect(done.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
+    // p2's Bench is empty, so the Knock Out the sweep resolves ends the game.
+    expect(types(events)).toContain("GAME_OVER");
+    expect(done.phase).toMatchObject({ kind: "gameOver", outcome: { winner: "p1" } });
   });
 
   it("the ACCEPT twin of the KO case — draw first, then the same sweep", () => {
@@ -499,7 +500,7 @@ describe("end to end — a printed card asks, and the answer is the effect", () 
     // Draw, THEN the Knock Out — the spliced branch runs where the op sat, ahead
     // of the queued epilogue, not after it.
     expect(types(events).slice(0, 2)).toEqual(["CARDS_DRAWN", "KNOCKED_OUT"]);
-    expect(done.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
+    expect(done.phase).toMatchObject({ kind: "gameOver", outcome: { winner: "p1" } });
   });
 
   it("the BARE printing on the same board asks NOTHING and draws immediately", () => {

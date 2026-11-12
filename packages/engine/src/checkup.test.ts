@@ -481,26 +481,18 @@ describe("checkup Knock Outs (§13)", () => {
     });
   });
 
-  it("a checkup KO with an empty bench is the §14.2 loss", () => {
+  it("a checkup KO with an empty bench is the §14.2 loss, with no Prize pick left open (COR-P0E)", () => {
     let state = walls(TAILS);
     state = setConditions(state, "p2", { poisonDamage: 120 });
-    const { state: parked } = mustApply(state, { type: "endTurn", seat: "p1" });
-    // The prize pick still parks first (§8.1)...
-    expect(parked.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
-    const { state: done, events } = mustApply(parked, {
-      type: "takePrizes",
-      seat: "p1",
-      prizeIndices: [3],
-    });
-    // ...and the §14 check right after it sees p2's empty board.
-    expect(types(events)).toEqual(["PRIZES_TAKEN", "GAME_OVER"]);
+    const { state: done, events } = mustApply(state, { type: "endTurn", seat: "p1" });
+    expect(types(events)).toEqual(["TURN_ENDED", "COUNTERS_PLACED", "KNOCKED_OUT", "GAME_OVER"]);
     expect(done.phase).toEqual({
       kind: "gameOver",
       outcome: { result: "win", winner: "p1", reason: "noPokemon" },
     });
   });
 
-  it("double KO, both boards emptying — the §14 tie, decided as one instant", () => {
+  it("double KO, both boards emptying — the §14 tie, decided as one instant, each KO's Prize taken (COR-P0E)", () => {
     let state = walls(TAILS); // no benches on either side
     state = setConditions(state, "p1", { poisonDamage: 120 });
     state = setConditions(state, "p2", { poisonDamage: 120 });
@@ -511,17 +503,18 @@ describe("checkup Knock Outs (§13)", () => {
       "COUNTERS_PLACED",
       "KNOCKED_OUT",
       "KNOCKED_OUT",
+      "PRIZES_TAKEN",
+      "PRIZES_TAKEN",
       "GAME_OVER",
     ]);
     expect(done.phase).toEqual({
       kind: "gameOver",
       outcome: { result: "tie", reasons: { p1: "noPokemon", p2: "noPokemon" } },
     });
-    // Both stacks still left play; no prizes were taken for either KO.
     expect(done.players.p1.active).toBeNull();
     expect(done.players.p2.active).toBeNull();
-    expect(done.players.p1.prizes).toHaveLength(6);
-    expect(done.players.p2.prizes).toHaveLength(6);
+    expect(done.players.p1.prizes).toHaveLength(5);
+    expect(done.players.p2.prizes).toHaveLength(5);
     expect(done.pending).toEqual([]);
   });
 
@@ -556,24 +549,35 @@ describe("checkup Knock Outs (§13)", () => {
     });
   });
 
-  it("double KO where only ONE side would win resolves stage by stage", () => {
-    // p1 has no bench (their board empties); p2 promotes on. Not a tie —
-    // the normal stage path runs, ended seat's KO pair first.
+  it("double KO where only ONE side would win ends at once, before either Prize pick (COR-P0E)", () => {
+    // p1 has no bench (their board empties); p2 promotes on. Not a tie, and p1's empty board
+    // already decides the game, so no Prize stage parks.
     let state = walls(TAILS, { p2: 1 });
     state = setConditions(state, "p1", { poisonDamage: 120 });
     state = setConditions(state, "p2", { poisonDamage: 120 });
-    const { state: parked, events } = mustApply(state, { type: "endTurn", seat: "p1" });
+    const { state: done, events } = mustApply(state, { type: "endTurn", seat: "p1" });
     expect(types(events)).toEqual([
       "TURN_ENDED",
       "COUNTERS_PLACED",
       "COUNTERS_PLACED",
       "KNOCKED_OUT",
       "KNOCKED_OUT",
-      "PRIZES_OWED",
+      "GAME_OVER",
     ]);
-    // The batch's stages are grouped PRIZES-FIRST (§8.1/§13: every prize is
-    // taken before any promotion refills a board), the ended seat's KO first
-    // within each kind — not interleaved per-KO pairs.
+    expect(done.phase).toEqual({
+      kind: "gameOver",
+      outcome: { result: "win", winner: "p2", reason: "noPokemon" },
+    });
+    expect(done.pending).toEqual([]);
+  });
+
+  it("a double KO's stages are grouped Prizes first, then promotions, the ended seat's KO first", () => {
+    // Both boards keep a benched Pokémon, so nothing is decided and the stages park in order
+    // (§8.1/§13: every Prize is taken before any promotion refills a board).
+    let state = walls(TAILS, { p1: 1, p2: 1 });
+    state = setConditions(state, "p1", { poisonDamage: 120 });
+    state = setConditions(state, "p2", { poisonDamage: 120 });
+    const { state: parked } = mustApply(state, { type: "endTurn", seat: "p1" });
     expect(parked.pending.map((stage) => stage.kind)).toEqual([
       "takePrizes",
       "takePrizes",
@@ -581,20 +585,7 @@ describe("checkup Knock Outs (§13)", () => {
       "promote",
       "startTurn",
     ]);
-    // p2 owes the pick for p1's KO (the ended seat's KO is first)...
     expect(parked.phase).toEqual({ kind: "ko:takePrizes", seat: "p2", count: 1 });
-    const { state: done, events: resolved } = mustApply(parked, {
-      type: "takePrizes",
-      seat: "p2",
-      prizeIndices: [0],
-    });
-    // ...and the §14 check right after the pick sees p1's empty board, well
-    // before p1's own stage-pair would have resolved.
-    expect(types(resolved)).toEqual(["PRIZES_TAKEN", "GAME_OVER"]);
-    expect(done.phase).toEqual({
-      kind: "gameOver",
-      outcome: { result: "win", winner: "p2", reason: "noPokemon" },
-    });
   });
 });
 

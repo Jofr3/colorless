@@ -138,7 +138,8 @@ describe("the KO condition — it pays on the Knock Out and on nothing less", ()
   it("the holder is KO'd by Bite, and 40 lands on the Attacking Pokémon", () => {
     // fix-wall is 120 HP pre-damaged to 100; Bite's 30 makes 130 ≥ 120, so it is
     // Knocked Out — and the Tool's 4 counters go onto the attacker.
-    const state = equip(1, { tool: "sv03-197", holderDamage: 100 });
+    // A benched body behind the holder keeps the game going past the Knock Out.
+    const state = equip(1, { tool: "sv03-197", holderDamage: 100, bench: [{ id: "fix-wall" }] });
     const holder = state.players.p2.active?.stack.at(-1) ?? "";
     deepFreeze(state);
 
@@ -329,7 +330,7 @@ describe("two holders, one row — and two SITES, two rows", () => {
 
 describe("ORDER — the recoil is placed BEFORE the sweep reads the board", () => {
   it("the row order is COUNTERS_PLACED then KNOCKED_OUT — this family's existing narration", () => {
-    const state = equip(10, { tool: "sv03-197", holderDamage: 100 });
+    const state = equip(10, { tool: "sv03-197", holderDamage: 100, bench: [{ id: "fix-wall" }] });
     deepFreeze(state);
 
     const { events } = mustApply(state, bite);
@@ -344,7 +345,12 @@ describe("ORDER — the recoil is placed BEFORE the sweep reads the board", () =
   });
 
   it("MUTUAL KO — a LETHAL recoil KOs the attacker in the SAME batch, and both prize", () => {
-    const state = equip(11, { tool: "sv03-197", holderDamage: 100, attackerDamage: 90 });
+    const state = equip(11, {
+      tool: "sv03-197",
+      holderDamage: 100,
+      attackerDamage: 90,
+      bench: [{ id: "fix-wall" }],
+    });
     const holder = state.players.p2.active?.stack.at(-1) ?? "";
     const attacker = state.players.p1.active?.stack.at(-1) ?? "";
     deepFreeze(state);

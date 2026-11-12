@@ -191,7 +191,7 @@ describe("the two-seat sweep — a self-KO the old single-seat sweep would miss"
     expect(next.phase).toEqual({ kind: "turn:action", seat: "p2" });
   });
 
-  it("is a §14 TIE when the double KO takes BOTH players' last prize", () => {
+  it("is a §14 TIE when the double KO takes BOTH players' last prize, and both are taken (COR-P0E)", () => {
     let state = matchup(4, "fix-victim");
     state = setDamage(state, "p1", 150);
     state = setPrizes(state, "p1", 1);
@@ -202,34 +202,34 @@ describe("the two-seat sweep — a self-KO the old single-seat sweep would miss"
       index: BLAZING_SHOUT.index,
     });
 
-    // Both cards still leave play (the KOs are real), and the game ends a TIE —
-    // no prize is taken, since neither win outranks the other. Both sides win by
-    // the SAME reason (their last prize), which is what makes it a tie.
+    // Both cards still leave play (the KOs are real), each player takes their last
+    // Prize, and the game ends a TIE: both sides win by the SAME reason, which is
+    // what makes it a tie.
     expect(events.filter((e) => e.type === "KNOCKED_OUT")).toHaveLength(2);
     expect(findEvent(events, "GAME_OVER")?.outcome).toEqual({
       result: "tie",
       reasons: { p1: "prizesTaken", p2: "prizesTaken" },
     });
     expect(after.phase.kind).toBe("gameOver");
+    expect(after.players.p1.prizes).toEqual([]);
+    expect(after.players.p2.prizes).toEqual([]);
+    expect(events.filter((e) => e.type === "PRIZES_TAKEN").map((e) => e.seat)).toEqual([
+      "p1",
+      "p2",
+    ]);
   });
 
-  it("LOSES the attacker (§14.2) when the recoil KOs its LAST Pokémon", () => {
+  it("LOSES the attacker (§14.2) at once when the recoil KOs its LAST Pokémon (COR-P0E)", () => {
     let state = matchup(6, "fix-bigbody");
     state = { ...state, players: { ...state.players, p1: { ...state.players.p1, bench: [] } } };
     state = setDamage(state, "p1", 150);
-    const { state: after } = mustApply(state, {
+    const { state: over, events } = mustApply(state, {
       type: "attack",
       seat: "p1",
       index: BLAZING_SHOUT.index,
     });
 
-    // p2 first takes its prize for the self-KO, THEN p1's forced promotion fails.
-    expect(after.phase).toEqual({ kind: "ko:takePrizes", seat: "p2", count: 1 });
-    const { state: over, events } = mustApply(after, {
-      type: "takePrizes",
-      seat: "p2",
-      prizeIndices: [0],
-    });
+    // p1's empty board decides the game before p2's Prize pick for the self-KO.
     expect(findEvent(events, "GAME_OVER")?.outcome).toEqual({
       result: "win",
       winner: "p2",

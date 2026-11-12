@@ -525,18 +525,16 @@ describe("win conditions (§14)", () => {
     expect(done.pending).toEqual([]);
   });
 
-  it("wins when the KO'd side has no Pokémon left to promote", () => {
-    const { state } = parkedOnPrizes({ bench: 0 }); // prizes still park first (§8.1)
-    const { state: done, events } = mustApply(state, {
-      type: "takePrizes",
-      seat: "p1",
-      prizeIndices: [0],
-    });
-    expect(types(events)).toEqual(["PRIZES_TAKEN", "GAME_OVER"]);
+  it("wins at once when the KO'd side has no Pokémon left, with no Prize pick left open (COR-P0E)", () => {
+    const { state: done, events } = parkedOnPrizes({ bench: 0 });
+    expect(types(events)).toEqual(["ATTACK_DECLARED", "DAMAGE_DEALT", "KNOCKED_OUT", "GAME_OVER"]);
     expect(done.phase).toEqual({
       kind: "gameOver",
       outcome: { result: "win", winner: "p1", reason: "noPokemon" },
     });
+    expect(done.pending).toEqual([]);
+    // The winner leaving now changes nothing: the game is over, so a concede is refused.
+    expectErr(done, { type: "concede", seat: "p1" }, "GAME_OVER");
   });
 
   it("orders simultaneous conditions: the last prize outranks the empty board", () => {
@@ -569,12 +567,7 @@ describe("win conditions (§14)", () => {
   });
 
   it("hands out a GAME_OVER outcome detached from the state", () => {
-    const { state } = parkedOnPrizes({ bench: 0 });
-    const { state: done, events } = mustApply(state, {
-      type: "takePrizes",
-      seat: "p1",
-      prizeIndices: [0],
-    });
+    const { state: done, events } = parkedOnPrizes({ bench: 0 });
     const over = events.find((e) => e.type === "GAME_OVER");
     if (over?.type !== "GAME_OVER") throw new Error("expected GAME_OVER");
     (over.outcome as { winner: string }).winner = "p2";

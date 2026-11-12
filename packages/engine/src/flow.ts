@@ -267,6 +267,20 @@ function lethalRefs(state: GameState, seats: readonly Seat[]): { seat: Seat; uid
   return refs;
 }
 
+/**
+ * The seats a mid-turn Knock Out sweep covers after `actor`'s own action: both, the opponent first
+ * so the turn player takes Prizes first, since an action on one board can change the other's
+ * maximum HP (an Ability turned off by a newly evolved Pokémon).
+ */
+export function sweepSeats(actor: Seat): readonly Seat[] {
+  return [otherSeat(actor), actor];
+}
+
+/** Whether any body on `seats` is lethally damaged, so a Knock Out sweep is owed. */
+export function lethalBodyIn(state: GameState, seats: readonly Seat[]): boolean {
+  return lethalRefs(state, seats).length > 0;
+}
+
 /** Whether this body was made lethal by an effect (a knock-out marker) rather than by damage. */
 function lethalByEffect(body: InPlayPokemon, turn: number): boolean {
   return body.markers.includes(koByEffectMarker(turn));
@@ -639,27 +653,36 @@ export function collectKnockOuts(
   // emptied board, so the guard runs only then; that is D-era reasoning unchanged,
   // asked of the accumulated refs instead of one pass's.
   const tie = koedSeats.size === 2 ? tiedOverTheBatch(next, stages) : null;
-  if (tie !== null) return { done: tie, state: next };
+  if (tie !== null) {
+    events.push(...tie.events);
+    return { done: tie.outcome, state: tie.state };
+  }
   return { done: null, state: next, stages };
 }
 
 /**
- * The §14 tie check over a settled batch: take the owed prizes on a throwaway state and ask
- * `evaluateWin`. Only the prizes are speculative, since the Knock Outs already happened. Returns an
- * outcome only for a tie; a one-sided win is left to the stage path.
+ * The §14 tie check over a settled batch: take the owed prizes on a speculative state and ask
+ * `evaluateWin`. Only the prizes are speculative, since the Knock Outs already happened. Returns
+ * only a tie, with the state and PRIZES_TAKEN events of the takes, so the game ends with them taken;
+ * a one-sided win is left to the stage path. A take that leaves Prizes behind takes them from the
+ * front of the row, since the game ends before anyone would pick.
  */
-function tiedOverTheBatch(state: GameState, stages: readonly PendingStage[]): GameOutcome | null {
+function tiedOverTheBatch(
+  state: GameState,
+  stages: readonly PendingStage[],
+): { outcome: GameOutcome; state: GameState; events: GameEvent[] } | null {
   let speculative = state;
+  const events: GameEvent[] = [];
   for (const stage of stages) {
     if (stage.kind !== "takePrizes") continue;
-    const side = speculative.players[stage.seat];
-    speculative = withSide(speculative, stage.seat, {
-      ...side,
-      prizes: side.prizes.slice(stage.count),
-    });
+    const count = Math.min(stage.count, speculative.players[stage.seat].prizes.length);
+    if (count === 0) continue;
+    const indices = Array.from({ length: count }, (_, index) => index);
+    speculative = resolveTakePrizes(speculative, stage.seat, indices, events);
   }
   const outcome = evaluateWin(speculative);
-  return outcome !== null && outcome.result === "tie" ? outcome : null;
+  if (outcome === null || outcome.result !== "tie") return null;
+  return { outcome, state: speculative, events };
 }
 
 /**
@@ -1241,7 +1264,10 @@ export function settleProgram(
   const prizes = resumed.pending.filter((stage) => stage.kind === "takePrizes");
   if (prizes.length > 0) {
     const tie = tiedOverTheBatch(resumed, prizes);
-    if (tie !== null) return finishGame(resumed, tie, events);
+    if (tie !== null) {
+      events.push(...tie.events);
+      return finishGame(tie.state, tie.outcome, events);
+    }
     return advance(
       { ...resumed, pending: [...resumed.pending, { kind: "resumeTurn", seat: controller }] },
       events,
@@ -2067,6 +2093,10 @@ function runTakePrizesStage(
   // row mid-KO; the game would already be over otherwise.
   if (count === 0) return advance(popStage(state), events);
   if (count < side.prizes.length) {
+    // §14: a game already won (the opponent has no Pokémon in play) ends here, so no Prize pick
+    // is left open for the winner to walk away from.
+    const decided = evaluateWin(state);
+    if (decided !== null) return finishGame(state, decided, events);
     const next: GameState = {
       ...state,
       phase: { kind: "ko:takePrizes", seat: stage.seat, count },
@@ -2116,6 +2146,8 @@ function runPromoteStage(
     // so a simultaneous condition resolves to a tie per §14 rather than a hardcoded winner.
     return resolvePromotionAndResume(state, stage.seat, 0, events);
   }
+  const decided = evaluateWin(state);
+  if (decided !== null) return finishGame(state, decided, events);
   const next: GameState = { ...state, phase: { kind: "ko:promote", seat: stage.seat } };
   events.push({ type: "PROMOTION_REQUIRED", seat: stage.seat });
   return ok(next, events);

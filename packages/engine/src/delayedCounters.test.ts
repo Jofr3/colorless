@@ -1297,15 +1297,13 @@ describe("§14 — §8.1 in full, Prize included, and the cause re-derived", () 
     expect(count(fired.events, "KNOCKED_OUT")).toBe(1);
   });
 
-  it("…and with an EMPTY Bench the victim LOSES — the Prize is taken FIRST", () => {
+  it("…and with an EMPTY Bench the victim LOSES at once, with no Prize pick left open (COR-P0E)", () => {
     const noBench = clearBench(armed("p1"), "p2");
     const installed = mustApply(noBench, { type: "attack", seat: "p1", index: DOOM }).state;
     const fired = mustApply(installed, { type: "endTurn", seat: "p2" });
-    // §8.1's prize pick comes before the promotion that cannot happen.
-    expect(fired.state.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
-    const taken = mustApply(fired.state, { type: "takePrizes", seat: "p1", prizeIndices: [0] });
-    expect(taken.state.players.p1.prizes).toHaveLength(5);
-    expect(findEvent(taken.events, "GAME_OVER")?.outcome).toEqual({
+    expect(count(fired.events, "KNOCKED_OUT")).toBe(1);
+    expect(fired.state.players.p1.prizes).toHaveLength(6);
+    expect(findEvent(fired.events, "GAME_OVER")?.outcome).toEqual({
       result: "win",
       winner: "p1",
       reason: "noPokemon",

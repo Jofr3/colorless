@@ -575,5 +575,10 @@ describe("D641 §6 — Lt. Surge's Bargain: the opponent answers (R-LSB1)", () =
     const both = setPrizes(setPrizes(table(FILLER, 0), "p1", 1), "p2", 1);
     const done = mustApply(played(both).state, resolve("p2", { kind: "confirm", yes: true }));
     expect(done.state.phase).toMatchObject({ kind: "gameOver", outcome: { result: "tie" } });
+    // Both last Prizes are taken, the controller's first (COR-P0E).
+    expect(done.state.players.p1.prizes).toEqual([]);
+    expect(done.state.players.p2.prizes).toEqual([]);
+    const taken = done.events.filter((event) => event.type === "PRIZES_TAKEN");
+    expect(taken.map((event) => event.seat)).toEqual(["p1", "p2"]);
   });
 });

@@ -625,18 +625,16 @@ describe("§5 — the prevention gate, on the axis the two printed spellings act
 
 describe("§6 — a lethal placement Knocks Out, pays a Prize, and counts as damage", () => {
   it("the placement KOs the Active and the attacker is owed a Prize", () => {
-    const state = setDamage(fielded(9), "p2", 120); // 130 HP at 120 → 20 is exactly lethal
-    const { state: after, events } = mustApply(state, {
-      type: "attack",
+    // A benched body keeps the game going, so the Prize is owed rather than the game won; it also
+    // makes the placement a real pick, answered with the Active.
+    const state = setDamage(fielded(9, { bench: ["fix-lightning-weak"] }), "p2", 120); // 130 HP at 120 → 20 is exactly lethal
+    const { state: parked } = mustApply(state, { type: "attack", seat: "p1", index: IDX.bare });
+    const { state: after, events } = mustApply(parked, {
+      type: "resolveEffect",
       seat: "p1",
-      index: IDX.bare,
+      choice: { kind: "pokemonMulti", refs: [{ seat: "p2", spot: { spot: "active" } }] },
     });
-    expect(types(events)).toEqual([
-      "ATTACK_DECLARED",
-      "COUNTERS_PLACED",
-      "KNOCKED_OUT",
-      "PRIZES_OWED",
-    ]);
+    expect(types(events)).toEqual(["COUNTERS_PLACED", "KNOCKED_OUT", "PRIZES_OWED"]);
     expect(findEvent(events, "KNOCKED_OUT")).toMatchObject({ seat: "p2" });
     expect(findEvent(events, "PRIZES_OWED")).toMatchObject({ seat: "p1", count: 1 });
     // …and the flow really stops on the Prize rather than ending the turn through it

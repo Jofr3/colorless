@@ -337,7 +337,7 @@ describe("Combee me06-006 Fade Out", () => {
     });
   });
 
-  it("the 10 that Knocks Out the Defending Pokémon takes a Prize; both sides promote, and with both Benches empty the game is a tie", () => {
+  it("the 10 that Knocks Out the Defending Pokémon takes a Prize; both sides promote, and with both Benches empty the game is a tie (COR-P0E)", () => {
     let state = benchFromDeck(board(COMBEE.id, [["fix-grass-energy", 1]]), "p1", WALL);
     state = setDamage(benchFromDeck(state, "p2", WALL), "p2", 390);
     const owed = mustApply(state, attack(0)).state;
@@ -349,9 +349,9 @@ describe("Combee me06-006 Fade Out", () => {
     expect(out.state.players.p1.hand).toHaveLength(2 + 1);
 
     const bare = setDamage(board(COMBEE.id, [["fix-grass-energy", 1]]), "p2", 390);
+    // Both boards are empty before the Prize pick, so the tie ends the game with no pick left open.
     const last = mustApply(bare, attack(0)).state;
-    const tie = mustApply(last, { type: "takePrizes", seat: "p1", prizeIndices: [0] });
-    expect(tie.state.phase).toEqual({
+    expect(last.phase).toEqual({
       kind: "gameOver",
       outcome: { result: "tie", reasons: { p1: "noPokemon", p2: "noPokemon" } },
     });

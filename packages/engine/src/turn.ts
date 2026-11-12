@@ -40,9 +40,11 @@ import type { GameEvent } from "./events";
 import {
   advance,
   isLethallyDamaged,
+  lethalBodyIn,
   recoverStatuses,
   resolveMidTurnKnockOuts,
   settleProgram,
+  sweepSeats,
   turnTail,
 } from "./flow";
 import { benchArrivalCounters } from "./ops/cards";
@@ -317,7 +319,7 @@ export function attachEnergy(state: GameState, action: AttachEnergyAction): Appl
       return resolveMidTurnKnockOuts(
         next,
         action.seat,
-        [action.seat],
+        sweepSeats(action.seat),
         endsTurn ? turnTail(action.seat) : undefined,
         undefined,
         events,
@@ -658,7 +660,7 @@ export function placeEvolution(
     events,
   );
   if (isLethallyDamaged(next, evolved)) {
-    return resolveMidTurnKnockOuts(next, seat, [seat], undefined, undefined, events);
+    return resolveMidTurnKnockOuts(next, seat, sweepSeats(seat), undefined, undefined, events);
   }
   // The opponent's watched evolve triggers (Team Rocket's Ampharos "Darkest Impulse", "from their
   // hand"). Only hand routes reach this function, so deck-sourced evolves do not fire it. Runs
@@ -669,22 +671,24 @@ export function placeEvolution(
       ? watched.players[seat].active
       : watched.players[seat].bench[target.index];
   if (subject !== null && subject !== undefined && isLethallyDamaged(watched, subject)) {
-    return resolveMidTurnKnockOuts(watched, seat, [seat], undefined, undefined, events);
+    return resolveMidTurnKnockOuts(watched, seat, sweepSeats(seat), undefined, undefined, events);
   }
   const triggered = runBoardTrigger(watched, seat, target, "onEvolve", events);
   // §7.3: an evolution that removed `seat`'s last Tera Pokémon under Area Zero Underdepths owes the
-  // Bench trim now, if no trigger sweep already handled it.
+  // Bench trim now, if no trigger sweep already handled it. §8.1: so does a body on either board
+  // that the evolution made lethal (Gastrodon "Sticky Bind" turning off an opponent's HP Ability).
   if (
     !triggered.ok ||
     triggered.state.phase.kind !== "turn:action" ||
-    benchTrimStages(triggered.state, seat).length === 0
+    (benchTrimStages(triggered.state, seat).length === 0 &&
+      !lethalBodyIn(triggered.state, sweepSeats(seat)))
   ) {
     return triggered;
   }
   return resolveMidTurnKnockOuts(
     triggered.state,
     seat,
-    [seat],
+    sweepSeats(seat),
     undefined,
     undefined,
     triggered.events,
@@ -878,7 +882,14 @@ export function retreat(state: GameState, action: RetreatAction): ApplyResult {
   // bonus (Conkeldurr "Craftsmanship"); move triggers can also place counters. Only the actor's
   // board can change. The sweep runs after the move triggers so an Ability answering the move fires
   // before the Knock Out.
-  return resolveMidTurnKnockOuts(moved, action.seat, [action.seat], undefined, undefined, events);
+  return resolveMidTurnKnockOuts(
+    moved,
+    action.seat,
+    sweepSeats(action.seat),
+    undefined,
+    undefined,
+    events,
+  );
 }
 
 /** Pass: seed the staged tail (flow.ts turnTail) and drain it. */
@@ -950,5 +961,12 @@ export function discardFromPlay(state: GameState, action: DiscardFromPlayAction)
       ? { ...cleanup.side, active: null }
       : { ...cleanup.side, bench: cleanup.side.bench.filter((_, index) => index !== target.index) },
   );
-  return resolveMidTurnKnockOuts(next, action.seat, [action.seat], undefined, undefined, events);
+  return resolveMidTurnKnockOuts(
+    next,
+    action.seat,
+    sweepSeats(action.seat),
+    undefined,
+    undefined,
+    events,
+  );
 }
