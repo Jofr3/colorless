@@ -228,7 +228,10 @@ export function handCostPhrase(op: OpOf<"payFromHand">, other: boolean): string 
   // "any number of cards".
   if (op.count === "any" && op.cap === "any")
     return `any number of ${other ? "other " : ""}${plural}`;
-  if (op.count === "any") return `up to ${op.cap} ${other ? "other " : ""}${plural}`;
+  if (op.count === "any") {
+    const noun = op.cap === 1 ? singular.replace(/^an? /, "") : plural;
+    return `up to ${op.cap} ${other ? "other " : ""}${noun}`;
+  }
   if (op.count > 1) return `${op.count} ${other ? "other " : ""}${plural}`;
   // "a card" → "another card"; no printed card pairs `other` with a filter, but
   // the article strip keeps it reading correctly if one ever does.
@@ -248,9 +251,9 @@ export function handCostAction(op: OpOf<"payFromHand">, other: boolean): string 
   if (op.swapWithTop === true)
     return `switch ${phrase} from your hand with the top card of your deck`;
   // Academy at Night's "on top of their deck" and Perrin's "put them into your deck" use their own
-  // printed verbs.
+  // printed verbs; Jellicent's unfiltered "a card" keeps the bottom-of-deck verb.
   if (op.to === "deckTop") return `put ${phrase} from your hand on top of your deck`;
-  if (op.count === "any" && op.to === "deckBottom") {
+  if (op.count === "any" && op.to === "deckBottom" && op.filter !== undefined) {
     return `reveal ${phrase} in your hand and put them into your deck`;
   }
   return op.to === "deckBottom"
