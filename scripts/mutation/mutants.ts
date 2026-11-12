@@ -72594,8 +72594,8 @@ export const MUTANTS: Mutant[] = [
     what: "Make Waves keeps Nitpick's opponent-only refresh, so the attacker keeps their hand.",
     file: "packages/engine/src/effects.ts",
     symbol: "deriveAttackEffect",
-    find: "    const who = match[1] === \"Each player\" ? \"both\" : \"opponent\";",
-    replace: "    const who = \"opponent\";",
+    find: '    const who = match[1] === "Each player" ? "both" : "opponent";',
+    replace: '    const who = "opponent";',
     expectKilledBy: ["packages/engine/src/attackEffectsMe06B2.test.ts"],
   },
   {
@@ -72604,8 +72604,9 @@ export const MUTANTS: Mutant[] = [
     what: "Thunder-Clad's bare noun is read as Basic Energy, so a Special Energy cannot be found.",
     file: "packages/engine/src/effects.ts",
     symbol: "deriveAttackEffect",
-    find: "      { op: \"attachFromDeck\", filter: { kind: \"anyEnergy\" }, max: 1, toSelf: true },\n      { op: \"shuffleDeck\" },",
-    replace: "      { op: \"attachFromDeck\", filter: { kind: \"basicEnergy\" }, max: 1, toSelf: true },\n      { op: \"shuffleDeck\" },",
+    find: '      { op: "attachFromDeck", filter: { kind: "anyEnergy" }, max: 1, toSelf: true },\n      { op: "shuffleDeck" },',
+    replace:
+      '      { op: "attachFromDeck", filter: { kind: "basicEnergy" }, max: 1, toSelf: true },\n      { op: "shuffleDeck" },',
     expectKilledBy: ["packages/engine/src/attackEffectsMe06B2.test.ts"],
   },
   {
@@ -72614,8 +72615,9 @@ export const MUTANTS: Mutant[] = [
     what: "Thunder-Clad drops toSelf, so the Energy may go to any of your Pokémon.",
     file: "packages/engine/src/effects.ts",
     symbol: "deriveAttackEffect",
-    find: "      { op: \"attachFromDeck\", filter: { kind: \"anyEnergy\" }, max: 1, toSelf: true },\n      { op: \"shuffleDeck\" },",
-    replace: "      { op: \"attachFromDeck\", filter: { kind: \"anyEnergy\" }, max: 1 },\n      { op: \"shuffleDeck\" },",
+    find: '      { op: "attachFromDeck", filter: { kind: "anyEnergy" }, max: 1, toSelf: true },\n      { op: "shuffleDeck" },',
+    replace:
+      '      { op: "attachFromDeck", filter: { kind: "anyEnergy" }, max: 1 },\n      { op: "shuffleDeck" },',
     expectKilledBy: ["packages/engine/src/attackEffectsMe06B2.test.ts"],
   },
   {
@@ -72624,18 +72626,19 @@ export const MUTANTS: Mutant[] = [
     what: "Thunder-Clad's printed shuffle is dropped.",
     file: "packages/engine/src/effects.ts",
     symbol: "deriveAttackEffect",
-    find: "      { op: \"attachFromDeck\", filter: { kind: \"anyEnergy\" }, max: 1, toSelf: true },\n      { op: \"shuffleDeck\" },",
-    replace: "      { op: \"attachFromDeck\", filter: { kind: \"anyEnergy\" }, max: 1, toSelf: true },",
+    find: '      { op: "attachFromDeck", filter: { kind: "anyEnergy" }, max: 1, toSelf: true },\n      { op: "shuffleDeck" },',
+    replace: '      { op: "attachFromDeck", filter: { kind: "anyEnergy" }, max: 1, toSelf: true },',
     expectKilledBy: ["packages/engine/src/attackEffectsMe06B2.test.ts"],
   },
   {
     id: "ME06-B2-crawler-prevents-effects",
     decision: "ME06-B2",
-    what: "Chaos Crawler prevents the effects of attacks too, as the \"from and effects of\" sentence does.",
+    what: 'Chaos Crawler prevents the effects of attacks too, as the "from and effects of" sentence does.',
     file: "packages/engine/src/effects.ts",
     symbol: "deriveAttackEffect",
-    find: "  if (PREVENT_DAMAGE_FROM_ATTACKS.test(effect)) return [{ op: \"preventDamage\" }];",
-    replace: "  if (PREVENT_DAMAGE_FROM_ATTACKS.test(effect)) return [{ op: \"preventDamage\", effects: true }];",
+    find: '  if (PREVENT_DAMAGE_FROM_ATTACKS.test(effect)) return [{ op: "preventDamage" }];',
+    replace:
+      '  if (PREVENT_DAMAGE_FROM_ATTACKS.test(effect)) return [{ op: "preventDamage", effects: true }];',
     expectKilledBy: ["packages/engine/src/attackEffectsMe06B2.test.ts"],
   },
   {
@@ -72643,9 +72646,10 @@ export const MUTANTS: Mutant[] = [
     decision: "ME06-B2",
     what: "The Chaos Crawler gate copies Rollout's Active-only condition, so a benched user no longer bars another Giratina.",
     file: "packages/engine/src/effects.ts",
-    symbol: "ATTACK_GATE_CLAUSE_GATES.If 1 of your Pokémon used Chaos Crawler during your last turn, this attack can't be used.",
-    find: "    condition: { kind: \"yourPokemonUsedAttackLastTurn\", attack: \"Chaos Crawler\" },",
-    replace: "    condition: { kind: \"yourActiveUsedAttackLastTurn\", attack: \"Chaos Crawler\" },",
+    symbol:
+      "ATTACK_GATE_CLAUSE_GATES.If 1 of your Pokémon used Chaos Crawler during your last turn, this attack can't be used.",
+    find: '    condition: { kind: "yourPokemonUsedAttackLastTurn", attack: "Chaos Crawler" },',
+    replace: '    condition: { kind: "yourActiveUsedAttackLastTurn", attack: "Chaos Crawler" },',
     expectKilledBy: ["packages/engine/src/attackEffectsMe06B2.test.ts"],
   },
   {
@@ -72654,8 +72658,9 @@ export const MUTANTS: Mutant[] = [
     what: "The Chaos Crawler gate takes Rollout's polarity, so the attack can be used only right after it was used.",
     file: "packages/engine/src/effects.ts",
     symbol: "ATTACK_GATE_CLAUSE_GATES",
-    find: "  \"If 1 of your Pokémon used Chaos Crawler during your last turn, this attack can't be used.\": {\n    kind: \"barredIf\",",
-    replace: "  \"If 1 of your Pokémon used Chaos Crawler during your last turn, this attack can't be used.\": {\n    kind: \"onlyIf\",",
+    find: '  "If 1 of your Pokémon used Chaos Crawler during your last turn, this attack can\'t be used.": {\n    kind: "barredIf",',
+    replace:
+      '  "If 1 of your Pokémon used Chaos Crawler during your last turn, this attack can\'t be used.": {\n    kind: "onlyIf",',
     expectKilledBy: ["packages/engine/src/attackEffectsMe06B2.test.ts"],
   },
   {
@@ -72664,8 +72669,8 @@ export const MUTANTS: Mutant[] = [
     what: "Lure Out offers every Pokémon in the window, not only the Basics.",
     file: "packages/engine/src/effects.ts",
     symbol: "deriveAttackEffect",
-    find: "          n: revealed,\n          filter: { kind: \"basicPokemon\" },",
-    replace: "          n: revealed,\n          filter: { kind: \"anyPokemon\" },",
+    find: '          n: revealed,\n          filter: { kind: "basicPokemon" },',
+    replace: '          n: revealed,\n          filter: { kind: "anyPokemon" },',
     expectKilledBy: ["packages/engine/src/attackEffectsMe06B2.test.ts"],
   },
   {
@@ -72674,8 +72679,9 @@ export const MUTANTS: Mutant[] = [
     what: "Lure Out looks at the attacker's own deck.",
     file: "packages/engine/src/effects.ts",
     symbol: "deriveAttackEffect",
-    find: "          reveal: true,\n          whose: \"opponent\",\n        },\n        { op: \"shuffleDeck\", whose: \"opponent\" },",
-    replace: "          reveal: true,\n        },\n        { op: \"shuffleDeck\", whose: \"opponent\" },",
+    find: '          reveal: true,\n          whose: "opponent",\n        },\n        { op: "shuffleDeck", whose: "opponent" },',
+    replace:
+      '          reveal: true,\n        },\n        { op: "shuffleDeck", whose: "opponent" },',
     expectKilledBy: ["packages/engine/src/attackEffectsMe06B2.test.ts"],
   },
   {
@@ -72684,8 +72690,8 @@ export const MUTANTS: Mutant[] = [
     what: "Lure Out shuffles the attacker's deck instead of the opponent's.",
     file: "packages/engine/src/effects.ts",
     symbol: "deriveAttackEffect",
-    find: "          whose: \"opponent\",\n        },\n        { op: \"shuffleDeck\", whose: \"opponent\" },",
-    replace: "          whose: \"opponent\",\n        },\n        { op: \"shuffleDeck\" },",
+    find: '          whose: "opponent",\n        },\n        { op: "shuffleDeck", whose: "opponent" },',
+    replace: '          whose: "opponent",\n        },\n        { op: "shuffleDeck" },',
     expectKilledBy: ["packages/engine/src/attackEffectsMe06B2.test.ts"],
   },
   {
@@ -72694,8 +72700,9 @@ export const MUTANTS: Mutant[] = [
     what: "Fade Out copies Shattering Speed's destination and discards Combee.",
     file: "packages/engine/src/registry.ts",
     symbol: "FADE_OUT",
-    find: "const FADE_OUT: CardProgram = {\n  attack: { 0: [{ op: \"returnSelf\", dest: \"hand\" }] },",
-    replace: "const FADE_OUT: CardProgram = {\n  attack: { 0: [{ op: \"returnSelf\", dest: \"discard\" }] },",
+    find: 'const FADE_OUT: CardProgram = {\n  attack: { 0: [{ op: "returnSelf", dest: "hand" }] },',
+    replace:
+      'const FADE_OUT: CardProgram = {\n  attack: { 0: [{ op: "returnSelf", dest: "discard" }] },',
     expectKilledBy: ["packages/engine/src/attackEffectsMe06B2.test.ts"],
   },
   {
@@ -72704,8 +72711,9 @@ export const MUTANTS: Mutant[] = [
     what: "Fade Out discards the attached cards and returns only Combee.",
     file: "packages/engine/src/registry.ts",
     symbol: "FADE_OUT",
-    find: "const FADE_OUT: CardProgram = {\n  attack: { 0: [{ op: \"returnSelf\", dest: \"hand\" }] },",
-    replace: "const FADE_OUT: CardProgram = {\n  attack: { 0: [{ op: \"returnSelf\", dest: \"hand\", attachmentsTo: \"discard\" }] },",
+    find: 'const FADE_OUT: CardProgram = {\n  attack: { 0: [{ op: "returnSelf", dest: "hand" }] },',
+    replace:
+      'const FADE_OUT: CardProgram = {\n  attack: { 0: [{ op: "returnSelf", dest: "hand", attachmentsTo: "discard" }] },',
     expectKilledBy: ["packages/engine/src/attackEffectsMe06B2.test.ts"],
   },
 ];
