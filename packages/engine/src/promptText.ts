@@ -224,7 +224,7 @@ export function opponentDiscardNote(op: OpOf<"opponentDiscardsFromHand">): strin
 export function handCostPhrase(op: OpOf<"payFromHand">, other: boolean): string {
   const { singular, plural } =
     op.filter === undefined ? { singular: "a card", plural: "cards" } : retrieveNoun(op.filter);
-  // The declinable arm's caption prints its ceiling, always plural; Naveen's uncapped arm prints
+  // The declinable arm's caption prints its ceiling, plural above 1; Naveen's uncapped arm prints
   // "any number of cards".
   if (op.count === "any" && op.cap === "any")
     return `any number of ${other ? "other " : ""}${plural}`;
