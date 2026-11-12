@@ -447,6 +447,12 @@ const PUNK_OUT: CardProgram = {
   passive: { noRetreatCostSelf: { requiresOpponentSuffixInPlay: "V" } },
 };
 
+/** Wimpod (me06-010) — "Punk Out": "If your opponent has any Pokémon ex in play, this Pokémon has
+    no Retreat Cost." */
+const PUNK_OUT_EX: CardProgram = {
+  passive: { noRetreatCostSelf: { requiresOpponentSuffixInPlay: "ex" } },
+};
+
 /** Ethan's Magcargo "Melt Away": no Retreat Cost while it has no Energy attached. */
 const MELT_AWAY: CardProgram = {
   passive: { noRetreatCostSelf: { requiresNoEnergyAttached: true } },
@@ -7481,6 +7487,31 @@ const ANCIENT_BULWARK: CardProgram = {
 /** Decidueye ex — Sniper's Eye: exactly 4 cards in the opponent's hand. */
 const SNIPERS_EYE: CardProgram = { passive: { ignoreColorlessCostIfOpponentHandExactly: 4 } };
 
+/** Thundurus, Enamorus, Landorus and Tornadus — "Incarnate Solidarity": "If you have Tornadus,
+    Thundurus, Landorus, and Enamorus in play, ignore all {C} Energy in the costs of attacks used by
+    this Pokémon." */
+const INCARNATE_SOLIDARITY: CardProgram = {
+  passive: { ignoreColorlessCostIfNamedInPlay: ["Tornadus", "Thundurus", "Landorus", "Enamorus"] },
+};
+
+/** Mega Golurk ex — "Restricted Activation": "This Pokémon can't use attacks unless you have 10 or
+    more cards in your hand." */
+const RESTRICTED_ACTIVATION: CardProgram = {
+  passive: { cantAttackUnless: { kind: "yourHandAtLeast", count: 10 } },
+};
+
+/** Steelix — "High Density Armor": "If this Pokémon has full HP, it takes 60 less damage from
+    attacks from your opponent's Pokémon (after applying Weakness and Resistance)." */
+const HIGH_DENSITY_ARMOR: CardProgram = {
+  passive: {
+    damageReductionAfterWRFromAttacker: {
+      amount: 60,
+      attacker: { kind: "anyPokemon" },
+      holderAtFullHp: true,
+    },
+  },
+};
+
 /** Kingambit — Supreme Overlord: 30 per Prize the opponent has taken. */
 const SUPREME_OVERLORD: CardProgram = { passive: { damageBonusBeforeWRPerOpponentPrize: 30 } };
 
@@ -8349,6 +8380,15 @@ const REGISTRY: Readonly<Record<string, CardProgram>> = {
   "me03-062": TUCK_TAIL, // Meowth ex — "Tuck Tail" (attack 0) and the Ability "Last-Ditch Catch"
   "me04-030": SKY_RETURN, // Emolga "Sky Return" (attack 1)
   "me06-006": FADE_OUT, // Combee "Fade Out" (attack 0)
+  "me06-010": PUNK_OUT_EX, // Wimpod "Punk Out" — Pokémon ex where `swsh10.5-025` prints Pokémon V
+  "me06-082": SKYLINER, // Altaria "Cottony Carrier" — Latias ex's "Skyliner" sentence
+  "me06-035": INCARNATE_SOLIDARITY, // Thundurus "Incarnate Solidarity"
+  "me06-048": INCARNATE_SOLIDARITY, // Enamorus "Incarnate Solidarity"
+  "me06-054": INCARNATE_SOLIDARITY, // Landorus "Incarnate Solidarity"
+  "me06-085": INCARNATE_SOLIDARITY, // Tornadus "Incarnate Solidarity"
+  "me06-047": RESTRICTED_ACTIVATION, // Mega Golurk ex "Restricted Activation"
+  "me06-050": COUNTERATTACK_QUILLS, // Sandslash "Counterattack Quills" — Hop's Pincurchin ex's "place" sentence
+  "me06-052": HIGH_DENSITY_ARMOR, // Steelix "High Density Armor"
   "me03-027": FIGHTING_ROAR, // Luxio "Fighting Roar" — evolve early if the opponent's Active is a Pokémon ex
   "me04-007": NEEDLY_ARMOR, // Chesnaught "Needly Armor" — 3 counters per {G} Energy on the Attacking Pokémon
   "me02-056": SHADOWY_CONCEALMENT, // Mega Gengar ex — 1 fewer Prize for a {D} body KO'd by an ex's attack

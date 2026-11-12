@@ -1061,6 +1061,7 @@ describe("the non-attack columns, partitioned over the live registry (D273)", ()
       ...CENSUS_ME_POKEMON_D645,
       ...CENSUS_ME_TRAINER_D646,
       ...CENSUS_ME_TRAINER_B04,
+      ...CENSUS_ME_POKEMON_ME06_B3,
     ];
     // No id classified twice — otherwise a column could borrow from another and
     // the sizes would still add up.
@@ -2022,6 +2023,13 @@ const CENSUS_ME_TRAINER_D646: readonly string[] = ["me05-074"]; // Backtrack Bad
 
 const CENSUS_ME_POKEMON_ME06_B2: readonly string[] = ["me06-006"]; // Combee "Fade Out"
 
+/** The me06 always-on Ability keys: Punk Out, Cottony Carrier, Incarnate Solidarity ×4, Restricted
+    Activation, Counterattack Quills, High Density Armor. */
+const CENSUS_ME_POKEMON_ME06_B3: readonly string[] = [
+  ...["me06-010", "me06-082", "me06-116", "me06-035", "me06-048", "me06-110", "me06-054"],
+  ...["me06-085", "me06-047", "me06-122", "me06-137", "me06-050", "me06-052"],
+];
+
 /** The 3 text-less `30th` Item ids keyed below. */
 const CENSUS_ME_TRAINER_B04: readonly string[] = ["30th-126", "30th-127", "30th-128"];
 
@@ -2251,6 +2259,7 @@ describe("the census at HEAD", () => {
         ...CENSUS_ME_TRAINER_D646,
         ...CENSUS_ME_TRAINER_B04,
         ...CENSUS_ME_POKEMON_ME06_B2,
+        ...CENSUS_ME_POKEMON_ME06_B3,
       ]
         .filter((id) => !RETIRED_ATTACK_KEYS_D612.includes(id))
         .sort(),
