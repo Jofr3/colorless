@@ -1,7 +1,7 @@
 # Status — start here
 
 A Pokémon TCG deck builder and simulator: build decks from the real catalog, play them locally in
-a sandbox, or play them online against another account. Updated 2026-11-11.
+a sandbox, or play them online against another account. Updated 2026-11-12.
 
 ## Where things are
 
@@ -32,7 +32,8 @@ a sandbox, or play them online against another account. Updated 2026-11-11.
 
 Each names where it is written up (`decisions.md` entries by date and title).
 
-- **Remote catalog ingest owed:** the local D1 has the 2026-11-12 ingest (`me06` and tcgdex fixes) and the remote does not, so `release:gate` refuses the next release until `bun scripts/with-deploy-token.ts bun scripts/ingest.ts --remote` runs. When tcgdex marks `me06` Standard-legal, those of its 141 cards with `simulationGaps` need programs (2026-11-12 "Catalog re-ingest 2026-11-12: Delta Reign (me06) and tcgdex data fixes").
+- **Remote catalog ingest owed:** the local D1 has the 2026-11-12 ingest (`me06` and tcgdex fixes) and the remote does not, so `release:gate` refuses the next release until `bun scripts/with-deploy-token.ts bun scripts/ingest.ts --remote` runs (2026-11-12 "Catalog re-ingest 2026-11-12: Delta Reign (me06) and tcgdex data fixes").
+- **`me06` cards waiting on tcgdex data:** every `me06` card simulates (engine 0.556.0) except 14 print groups (26 printings) whose text is missing or garbled: twelve text-less Trainers, Mega Rayquaza Cap and Azurill. The set's Stage 1 / Stage 2 rows also lack `evolve_from`, and six Evolution-line ex are typed Basic. `me06` is Expanded-only, so Standard is unaffected (`reference/card-revision.md` "Deferred" items 12 and 13; 2026-11-12 "Delta Reign (me06) card programs (ME06-REG, ME06-B1..B5)").
 - **2026-12-01, Cloudflare's Workers Logs pricing change:** recheck the free Workers Logs allowance, and whether Workers Issues stays free (2026-11-09 "Backend and API audit safety nets, and what production says"; 2026-11-10 "Observability audit Phase 1"; 2026-11-11 "No email alert for a new Workers issue").
 - **Latency SLO:** revisit after a month of `prod:report` runs (2026-11-10 "Observability audit Phase 3", "For the user"; "Observability audit released").
 - **The old `agents` Cloudflare token:** revoke or narrow it when the user says so (2026-11-10 "The web Worker's 404 script, a web rollback rehearsal, …", "Still open").
