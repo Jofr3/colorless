@@ -360,6 +360,25 @@ describe("Magmortar me06-021 / -107 Buddy Boost", () => {
     expect(ids(done.state, done.state.players.p1.hand)).toEqual([FIRE]);
   });
 
+  it("one card of each kind at most, and the {L} may be declined once the {R} is attached", () => {
+    const state = hand(bench(board(MAGMORTAR.id), "p1", [ELECTIVIRE]), [
+      FIRE,
+      FIRE,
+      LIGHTNING,
+      LIGHTNING,
+    ]);
+    const parked = mustApply(state, use("Buddy Boost"));
+    const second = mustApply(parked.state, resolve({ kind: "pokemon", ref: ACTIVE }));
+    expect(effectPrompt(second.state)).toMatchObject({ upTo: 1 });
+    const done = mustApply(second.state, resolve({ kind: "pokemon" }));
+    expect(done.state.phase.kind).toBe("turn:action");
+    expect(energyOn(done.state, ACTIVE)).toEqual([FIRE]);
+    expect(energyOn(done.state, benchRef(0))).toEqual([]);
+    expect(ids(done.state, done.state.players.p1.hand).sort()).toEqual(
+      [FIRE, LIGHTNING, LIGHTNING].sort(),
+    );
+  });
+
   it("both onto one body, and from the Bench onto the Bench copy itself", () => {
     const state = hand(bench(board(WALL), "p1", [MAGMORTAR.id]), [FIRE, LIGHTNING]);
     const parked = mustApply(state, use("Buddy Boost", 0));
@@ -487,6 +506,13 @@ describe("Pawmot me06-039 Generator's Touch", () => {
     expect(energyOn(done.state, benchRef(0))).toEqual([LIGHTNING]);
     expect(ids(done.state, done.state.players.p1.discard)).toEqual([FIRE]);
     expectErr(done.state, use("Generator's Touch"), "ABILITY_ALREADY_USED");
+  });
+
+  it("two Basic {L} in the discard pile: only one is attached", () => {
+    const state = discardFromDeck(board(PAWMOT.id), "p1", LIGHTNING, 2);
+    const out = mustApply(state, use("Generator's Touch"));
+    expect(energyOn(out.state, ACTIVE)).toEqual([LIGHTNING]);
+    expect(ids(out.state, out.state.players.p1.discard)).toEqual([LIGHTNING]);
   });
 
   it("from the Bench too; a discard pile with no Basic {L} refuses the Ability", () => {
