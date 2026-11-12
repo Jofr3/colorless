@@ -40,7 +40,7 @@ describe("Lua account adapter", () => {
     expect(account.status).toBe("anonymous");
   });
   it("answers navigation refreshes from a recent session check", async () => {
-    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.useFakeTimers({ toFake: ["performance"] });
     try {
       const { calls } = stubFetch({ ...session, "POST /auth/logout": () => json({}) });
       const { account } = setup();
@@ -550,7 +550,7 @@ describe("Lua session checks", () => {
   const later = () => vi.advanceTimersByTime(SESSION_CHECK_MAX_AGE_MS + 1);
 
   it("a navigation check of an older session publishes nothing when the answer is the same", async () => {
-    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.useFakeTimers({ toFake: ["performance"] });
     try {
       const held = heldChecks();
       const { account, publish } = setup();
@@ -569,7 +569,7 @@ describe("Lua session checks", () => {
     }
   });
   it("a navigation check publishes the change when the session is gone or renamed", async () => {
-    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.useFakeTimers({ toFake: ["performance"] });
     try {
       const held = heldChecks();
       const { account, publish } = setup();
@@ -593,7 +593,7 @@ describe("Lua session checks", () => {
     }
   });
   it("a navigation check that cannot reach the server keeps the session and asks again next time", async () => {
-    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.useFakeTimers({ toFake: ["performance"] });
     try {
       const held = heldChecks();
       const { account, publish } = setup();
@@ -615,7 +615,7 @@ describe("Lua session checks", () => {
     }
   });
   it("a sign-out pressed during a navigation check goes ahead, and the check's answer is dropped", async () => {
-    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.useFakeTimers({ toFake: ["performance"] });
     try {
       const held = heldChecks({ "POST /auth/logout": () => json({}) });
       const { account } = setup();
@@ -634,7 +634,7 @@ describe("Lua session checks", () => {
     }
   });
   it("a save pressed during a navigation check goes ahead", async () => {
-    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.useFakeTimers({ toFake: ["performance"] });
     try {
       const held = heldChecks({ "PATCH /auth/me": () => json({ ...USER, displayName: "Brock" }) });
       const { account } = setup();

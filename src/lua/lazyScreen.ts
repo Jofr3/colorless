@@ -14,12 +14,17 @@ export interface LazyScreenOptions {
 }
 
 /** A screen adapter whose code loads with its first command. Commands that arrive meanwhile run
- * in order once it has loaded; a failed load drops them, and the next command tries again.
+ * in order once it has loaded, each answering its own caller, so one that fails neither stops the
+ * rest nor reaches their callers; a failed load drops them, and the next command tries again.
  * `warm()` starts the load ahead of the first command, for a page that will likely need it. */
 export class LazyScreen<T extends Screen> implements Screen {
   private screen: T | undefined;
   private loading: Promise<void> | undefined;
-  private queued: string[] = [];
+  private queued: {
+    raw: string;
+    done: (result: unknown) => void;
+    fail: (error: unknown) => void;
+  }[] = [];
   private lastSession: [AccountStatus, string] | undefined;
 
   constructor(
@@ -31,8 +36,9 @@ export class LazyScreen<T extends Screen> implements Screen {
   command(raw: string): unknown {
     if (this.options.answer?.(raw)) return true;
     if (this.screen) return this.screen.command(raw);
-    this.queued.push(raw);
-    return this.start();
+    const answered = new Promise((done, fail) => this.queued.push({ raw, done, fail }));
+    void this.start();
+    return answered;
   }
 
   /** Loads the screen's code without a command. A warm-up that fails stays quiet: only a command
@@ -46,11 +52,18 @@ export class LazyScreen<T extends Screen> implements Screen {
       (screen) => {
         this.screen = screen;
         if (this.lastSession) screen.session?.(...this.lastSession);
-        for (const queued of this.queued.splice(0)) void screen.command(queued);
+        for (const { raw, done, fail } of this.queued.splice(0)) {
+          try {
+            done(screen.command(raw));
+          } catch (error) {
+            fail(error);
+          }
+        }
       },
       (error: unknown) => {
         this.loading = undefined;
         const dropped = this.queued.splice(0);
+        for (const { done } of dropped) done(undefined);
         if (dropped.length > 0) this.failed(error);
       },
     );

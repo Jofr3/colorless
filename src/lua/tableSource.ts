@@ -19,7 +19,7 @@ import {
   type AutoPhase,
   type LocalGameSetup,
 } from "../game/localHost";
-import { saveSimulator } from "../game/simulatorSave";
+import { type SaveOutcome, saveSimulator, watchSimulatorSave } from "../game/simulatorSave";
 import {
   autoStepFor,
   counterSourcePicked,
@@ -97,7 +97,11 @@ export interface TableSource {
 }
 type Host = ReturnType<typeof initHost>;
 
-const SAVE_FAILED = "Could not save this game. Browser storage may be full.";
+const SAVE_WARNINGS: Record<SaveOutcome, string | undefined> = {
+  saved: undefined,
+  failed: "Could not save this game. Browser storage may be full.",
+  taken: "Another tab took over the save. This game is no longer saved.",
+};
 
 /** The hot-seat game: the local host, with save, undo and auto-steps. */
 export class LocalTableSource implements TableSource {
@@ -107,10 +111,14 @@ export class LocalTableSource implements TableSource {
   private events = NO_EVENTS;
   private before: GameState | null = null;
   private refused: { reason: string } | null = null;
-  private saved = true;
+  private saved: SaveOutcome = "saved";
+  /** A new match: its next write replaces whatever the save slot holds. */
+  private claiming: boolean;
   private listeners = new Set<() => void>();
+  private unwatch = () => {};
   /** A fresh match from its setup, or a restored one. */
   constructor(setup: LocalGameSetup | Host) {
+    this.claiming = !("origin" in setup);
     this.host = "origin" in setup ? setup : initHost(setup);
     // A match opened on a decision the table takes for the player resumes past it.
     if (this.autoSteps()) this.persist();
@@ -190,12 +198,17 @@ export class LocalTableSource implements TableSource {
       flags: ["undo", "newgame", "choosedecks", "concede", "leave"],
       opponentAway: null,
       error: this.refused,
-      ...(this.saved ? {} : { warning: SAVE_FAILED }),
+      ...(this.saved === "saved" ? {} : { warning: SAVE_WARNINGS[this.saved] }),
     };
   }
   subscribe(onChange: () => void) {
+    if (this.listeners.size === 0)
+      this.unwatch = watchSimulatorSave((removed) => this.elsewhere(removed));
     this.listeners.add(onChange);
-    return () => this.listeners.delete(onChange);
+    return () => {
+      this.listeners.delete(onChange);
+      if (this.listeners.size === 0) this.unwatch();
+    };
   }
   leave() {
     this.persist();
@@ -238,13 +251,22 @@ export class LocalTableSource implements TableSource {
       names: h.names,
       startedAt,
     });
+    this.claiming = true;
     this.fresh();
     return null;
   }
-  /** Writes the save; false when it did not stick (storage full). */
+  /** Writes the save; false when it did not stick (storage full) or another tab holds the slot. */
   persist() {
-    this.saved = saveSimulator(this.host);
-    return this.saved;
+    this.saved = saveSimulator(this.host, this.claiming);
+    if (this.saved === "saved") this.claiming = false;
+    return this.saved === "saved";
+  }
+  /** Another tab wrote the save, or removed it, which frees the slot for this match again. */
+  private elsewhere(removed: boolean) {
+    const before = this.saved;
+    if (removed) this.persist();
+    else this.saved = "taken";
+    if (this.saved !== before) this.notify();
   }
 
   /** A board reached without a `send`: nothing to animate, nothing refused. */

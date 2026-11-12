@@ -35,8 +35,19 @@ interface SaveRecord {
 const heads = new WeakMap<HostState["origin"], string>();
 const fingerprints = new WeakMap<GameState, string>();
 
-/** Writes the save; false when it was not stored. */
-export function saveSimulator(host: HostState): boolean {
+/** How a write of the save went: "taken" when another tab has written the slot since this tab
+    last wrote or read it. */
+export type SaveOutcome = "saved" | "failed" | "taken";
+
+/** The save as this tab last wrote or read it. Every tab shares one slot: the match started or
+    resumed last owns it, and a tab whose match it no longer holds stops writing. */
+let known: string | null = null;
+
+const storedSave = () => readPersisted<string | null>(SIMULATOR_SAVE_KEY, (raw) => raw, null);
+
+/** Writes the save. A move's write is refused once another tab took the slot; a new match's
+    (`claim`) replaces whatever the slot holds. */
+export function saveSimulator(host: HostState, claim = false): SaveOutcome {
   let head = heads.get(host.origin);
   if (head === undefined) {
     const start: Omit<SaveRecord, "actions" | "position" | "fingerprint"> = {
@@ -55,20 +66,43 @@ export function saveSimulator(host: HostState): boolean {
     fingerprint: fingerprintOf(host.latestTurn.game),
   };
   lastLoad = null;
-  const stored = writePersisted(SIMULATOR_SAVE_KEY, `${head},${JSON.stringify(rest).slice(1)}`);
+  const stored = storedSave();
+  if (!claim && stored !== null && stored !== known) return "taken";
+  const value = `${head},${JSON.stringify(rest).slice(1)}`;
+  if (writePersisted(SIMULATOR_SAVE_KEY, value)) {
+    known = value;
+    return "saved";
+  }
   // A write that did not stick leaves the save before it. An earlier point of this match is still
   // worth resuming; another match's is one the player left, which a reload must not bring back.
-  // With two tabs on the simulator, the other tab's match counts as another match.
-  const ownMatch = (raw: string) => raw.startsWith(`${head},`);
-  if (!stored && !readPersisted(SIMULATOR_SAVE_KEY, ownMatch, true)) {
+  if (stored !== null && !stored.startsWith(`${head},`)) {
     removePersisted(SIMULATOR_SAVE_KEY);
+    known = null;
   }
-  return stored;
+  return "failed";
 }
 
+/** Removes the save unless another tab has written it since this tab last wrote or read it. */
 export function clearSimulatorSave(): void {
   lastLoad = null;
+  const stored = storedSave();
+  if (stored !== null && stored !== known) return;
   removePersisted(SIMULATOR_SAVE_KEY);
+  known = null;
+}
+
+/** Calls `changed` when another tab writes the save, or removes it (`removed`), until the
+    returned function is called. */
+export function watchSimulatorSave(changed: (removed: boolean) => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  const listener = (event: StorageEvent) => {
+    if (event.key !== null && event.key !== SIMULATOR_SAVE_KEY) return;
+    const removed = event.key === null || event.newValue === null;
+    if (!removed && event.newValue === known) return;
+    changed(removed);
+  };
+  window.addEventListener("storage", listener);
+  return () => window.removeEventListener("storage", listener);
 }
 
 // Resuming checks for a save and then opens it; the open reuses that replay.
@@ -80,6 +114,7 @@ export function loadSimulatorSave(): HostState | null {
   return readPersisted(
     SIMULATOR_SAVE_KEY,
     (raw) => {
+      known = raw;
       if (lastLoad?.raw !== raw) lastLoad = { raw, host: parseSave(raw) };
       return lastLoad.host;
     },

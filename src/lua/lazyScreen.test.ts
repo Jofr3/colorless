@@ -32,6 +32,30 @@ describe("LazyScreen", () => {
     expect(seen.at(-1)).toBe("session anonymous ");
   });
 
+  it("runs every queued command when one throws, and fails only that command's caller", async () => {
+    const ran: string[] = [];
+    const failed = vi.fn();
+    const lazy = new LazyScreen(
+      async () => ({
+        command(raw: string) {
+          ran.push(raw);
+          if (raw === "a") throw new Error("boom in a");
+          if (raw === "b") return Promise.reject(new Error("boom in b"));
+          return raw;
+        },
+      }),
+      failed,
+    );
+    const answers = await Promise.allSettled(["a", "b", "c"].map((raw) => lazy.command(raw)));
+    expect(ran).toEqual(["a", "b", "c"]);
+    expect(answers.map((answer) => answer.status)).toEqual(["rejected", "rejected", "fulfilled"]);
+    expect(
+      answers.map((answer) => String("reason" in answer ? answer.reason : answer.value)),
+    ).toEqual(["Error: boom in a", "Error: boom in b", "c"]);
+    expect(failed).not.toHaveBeenCalled();
+    expect(lazy.command("d")).toBe("d");
+  });
+
   it("drops the queue when the load fails and tries again on the next command", async () => {
     const { seen, screen } = recorder();
     const failed = vi.fn();

@@ -566,6 +566,8 @@ export class LuaBuilder {
     clearTimeout(this.busyTimer);
     this.searches.invalidate();
     this.busy = false;
+    this.importGeneration++;
+    this.importing = false;
     this.previewIds = [];
     this.results = [];
     const live = this.epoch.next();
@@ -975,7 +977,7 @@ export class LuaBuilder {
       next one to leave without them, so no failure can hold the page. */
   private leaveWhenSaved(done?: () => void) {
     if (this.leaveArmedAt !== undefined) {
-      if (Date.now() - this.leaveArmedAt < LEAVE_LOCKOUT_MS) return;
+      if (performance.now() - this.leaveArmedAt < LEAVE_LOCKOUT_MS) return;
       // Leaving anyway gives the edits up: none is sent later, when the page closes or the
       // network comes back.
       this.dropEdits();
@@ -987,7 +989,7 @@ export class LuaBuilder {
     this.pendingExit = done;
     this.leaving = true;
     if (this.saveFailed) {
-      this.leaveArmedAt = Date.now();
+      this.leaveArmedAt = performance.now();
       this.message = MESSAGE.leaveUnsaved;
       this.emit();
     }

@@ -62,6 +62,9 @@ export function outcomeUnknown(error: unknown): boolean {
 /** The saver's default spacing between save starts: at most 60 a minute. */
 export const MIN_SAVE_SPACING_MS = 1000;
 
+/** Waits are measured on a monotonic clock, which a step of the wall clock cannot stretch. */
+const now = () => performance.now();
+
 export interface DeckSaverOptions<T> {
   /** Perform the save (the PATCH). Rejections surface as status "failed". */
   save: (snapshot: T) => Promise<unknown>;
@@ -139,7 +142,7 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
     clearTimer();
     if (inFlight || pending === null) return;
     // Backing off: a flush or a newer edit waits out the wait rather than being refused again.
-    const wait = Math.max(notBefore, flushed ? 0 : lastStart + spacing) - Date.now();
+    const wait = Math.max(notBefore, flushed ? 0 : lastStart + spacing) - now();
     if (wait > 0) {
       timer = setTimeout(() => fire(), wait);
       return;
@@ -155,7 +158,7 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
       return;
     }
     inFlight = true;
-    lastStart = Date.now();
+    lastStart = now();
     // A retry goes on saying "retrying", which its failed attempt reported.
     if (!disposed && rejections === 0) options.onStatus?.("saving");
     options.save(snapshot).then(
@@ -194,7 +197,7 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
         if (wait !== undefined) {
           // Retried: the edits stay pending and are sent again after the wait, "retrying", with
           // newer edits coalescing into that one retry.
-          notBefore = Date.now() + wait;
+          notBefore = now() + wait;
           clearTimer();
           timer = setTimeout(() => fire(), wait);
           options.onStatus?.("retrying", error);
