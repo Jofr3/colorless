@@ -1,7 +1,7 @@
 {
   "name": "@colorless/engine",
   "private": true,
-  "version": "0.555.0",
+  "version": "0.556.0",
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
