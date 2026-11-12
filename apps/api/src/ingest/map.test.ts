@@ -18,7 +18,9 @@ import {
   mapSet,
   printKey,
   suffixOf,
+  TYPELESS_ENERGY_GAPS,
   tidyWhitespace,
+  typelessEnergies,
   unresolvedEvolutions,
   weaklessLegalPokemon,
 } from "./map";
@@ -599,6 +601,26 @@ describe("evolution supplement (card revision Deferred 2 and 13)", () => {
       expect(id, id).toMatch(/^(30th|30th-c|me06|mfb)-\d+$/);
       expect(entry.evolveFrom, id).not.toBe("");
       expect(entry.from, id).toMatch(/^(M|B|T [a-z0-9.]+-\d+)$/);
+    }
+  });
+});
+
+describe("typelessEnergies (COR-P4)", () => {
+  const special = mapCard(tcgdexCardSchema.parse(cardEnergySpecial));
+  const typeless = (id: string) => ({ ...special, id, energyType: null, effect: null });
+
+  it("flags an Energy tcgdex sent with no energyType, and nothing else", () => {
+    const basic = mapCard(tcgdexCardSchema.parse(cardEnergyBasic));
+    const trainer = mapCard(tcgdexCardSchema.parse(cardTrainer));
+    expect(typelessEnergies([typeless("me07-140"), special, basic, trainer])).toEqual(["me07-140"]);
+  });
+
+  it("lets through the three me06 Energies listed as gaps, each one the engine marks", () => {
+    const listed = ["me06-132", "me06-133", "me06-134"];
+    expect(Object.keys(TYPELESS_ENERGY_GAPS)).toEqual(listed);
+    expect(typelessEnergies(listed.map(typeless))).toEqual([]);
+    for (const id of listed) {
+      expect(simulationGaps(mapCardRow(typeless(id))), id).toContain("specialEnergy");
     }
   });
 });

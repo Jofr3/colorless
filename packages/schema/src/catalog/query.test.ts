@@ -149,6 +149,18 @@ describe("cardsQuerySchema", () => {
     }
   });
 
+  it("refuses a numeric param that is empty, blank or not decimal digits, rather than reading 0 (COR-P4)", () => {
+    for (const name of ["hpMin", "hpMax", "total", "page", "pageSize"]) {
+      for (const value of ["", " ", "0x10", "1e2", " 60", "+5"]) {
+        expect(parseCards({ [name]: value }).success, `${name}=${JSON.stringify(value)}`).toBe(
+          false,
+        );
+      }
+    }
+    const zero = parseCards({ hpMin: "0", hpMax: "0", total: "0" });
+    expect(zero.success && [zero.data.hpMin, zero.data.hpMax, zero.data.total]).toEqual([0, 0, 0]);
+  });
+
   it("caps every string value's length: free text at MAX_SEARCH_TERM_LENGTH, the rest at MAX_PARAM_LENGTH", () => {
     const of = (length: number) => "x".repeat(length);
     for (const name of ["name", "nameExact", "text"]) {

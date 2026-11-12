@@ -30,12 +30,14 @@ import {
   reprintLegalitySql,
   seriesUpsertSql,
   setsUpsertSql,
-  unresolvedEvolutions,
+  typelessEnergies,
   weaklessLegalPokemon,
 } from "../src/ingest";
 import { createPayloadCache, type PayloadKind } from "../src/ingest/payloadCache";
+import { ruleBoxMismatches } from "../src/ingest/ruleBoxes";
 import {
   createRowsTally,
+  evolutionNamesCheck,
   exitCode,
   legalityDrift,
   mapBounded,
@@ -270,6 +272,8 @@ const outcomes: SetOutcome[] = [];
 const weakless: string[] = [];
 const evolutionless: string[] = [];
 const basicsEvolving: string[] = [];
+const energiesTypeless: string[] = [];
+const ruleBoxProblems: string[] = [];
 const evolvers: CardRow[] = [];
 const runNames = new Set<string>();
 for (const setId of setIds) {
@@ -336,6 +340,8 @@ for (const setId of setIds) {
     weakless.push(...weaklessLegalPokemon(rows));
     evolutionless.push(...evolutionlessPokemon(rows));
     basicsEvolving.push(...evolvingBasics(rows));
+    energiesTypeless.push(...typelessEnergies(rows));
+    ruleBoxProblems.push(...ruleBoxMismatches(rows));
     for (const row of rows) {
       runNames.add(row.name);
       if (row.evolveFrom !== null) evolvers.push(row);
@@ -379,18 +385,17 @@ try {
 
 // After every set is written, so an evolution may name a card from any set, this run's or stored.
 console.log("\nevolution names:");
-let unresolved: string[] = [];
-let namesUnread = false;
-try {
-  const names = new Set(runNames);
-  for (const row of d1Query(d1Target, "SELECT DISTINCT name FROM cards")[0] ?? []) {
-    names.add(String(row.name));
-  }
-  unresolved = unresolvedEvolutions(evolvers, names);
-  console.log(`  ${evolvers.length} evolutions checked against ${names.size} card names`);
-} catch (error) {
-  namesUnread = true;
-  console.error(`  failed: ${error instanceof Error ? error.message : String(error)}`);
+const namesChecked = evolutionNamesCheck(
+  evolvers,
+  runNames,
+  () => d1Query(d1Target, "SELECT DISTINCT name FROM cards")[0] ?? [],
+);
+const unresolved = "unresolved" in namesChecked ? namesChecked.unresolved : [];
+const namesUnread = "unread" in namesChecked;
+if ("unread" in namesChecked) {
+  console.error(`  failed: ${namesChecked.unread}`);
+} else {
+  console.log(`  ${evolvers.length} evolutions checked against ${namesChecked.names} card names`);
 }
 
 console.log("\ncatalog cache:");
@@ -450,6 +455,22 @@ if (unresolved.length > 0) {
       `simulation gap: ${unresolved.join(", ")}`,
   );
 }
+if (energiesTypeless.length > 0) {
+  // Written anyway; see typelessEnergies.
+  console.error(
+    `${energiesTypeless.length} Energies have no energyType, so they play as {C}: fix the ` +
+      "mapping, or list them in TYPELESS_ENERGY_GAPS in src/ingest/map.ts with a simulation gap: " +
+      energiesTypeless.join(", "),
+  );
+}
+if (ruleBoxProblems.length > 0) {
+  // Written anyway; see ruleBoxMismatches.
+  console.error(
+    `${ruleBoxProblems.length} legal Pokémon disagree with their printed family: fix the engine's ` +
+      "Prize or suffix rule, or list a catalog mistake in RULE_BOX_EXCEPTIONS in " +
+      `src/ingest/ruleBoxes.ts:\n  ${ruleBoxProblems.join("\n  ")}`,
+  );
+}
 if (namesUnread) {
   console.error(
     "could not read the catalog's card names, so no evolveFrom was checked: rerun the same command",
@@ -483,6 +504,8 @@ if (
     evolvingBasics: basicsEvolving,
     unresolvedEvolutions: unresolved,
     namesUnread,
+    typelessEnergies: energiesTypeless,
+    ruleBoxMismatches: ruleBoxProblems,
     epochStamped,
     postPassFailed,
   })

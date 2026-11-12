@@ -61,9 +61,17 @@ const VOCABULARY_FILTERS = [
   "energyType",
 ] as const;
 
+/** A whole number in a query string: decimal digits only, so an empty, blank or hex value 400s
+    rather than coercing to a number. The input side is typed `number` for the client, whose
+    numbers the URL writes as digits. */
+const decimal = z.preprocess(
+  (raw: number) => (/^\d+$/.test(String(raw)) ? Number(raw) : Number.NaN),
+  z.number().int(),
+);
+
 /**
- * GET /cards query params. Numbers arrive as strings, hence `z.coerce`, typed `<number>` so the
- * input side stays `number` for the client; unknown params are stripped; empty values 400.
+ * GET /cards query params. Numbers arrive as strings and must be decimal digits; unknown params
+ * are stripped; empty values 400.
  */
 export const cardsQuerySchema = z
   .object({
@@ -106,18 +114,18 @@ export const cardsQuerySchema = z
      * Inclusive HP bounds, Pokémon only; some Trainers store a printed HP, so the bound checks the
      * category.
      */
-    hpMin: z.coerce.number<number>().int().min(0).optional(),
-    hpMax: z.coerce.number<number>().int().min(0).optional(),
+    hpMin: decimal.optional(),
+    hpMax: decimal.optional(),
     /** Keep only cards currently legal in the given format. */
     legal: z.enum(["standard", "expanded"]).optional(),
     /** Result order; "set" is collector order. */
     sort: z.enum(["name", "hp-desc", "set"]).default("set"),
     /** 1-based page. */
-    page: z.coerce.number<number>().int().min(1).default(1),
-    pageSize: z.coerce.number<number>().int().min(1).max(100).default(50),
+    page: decimal.pipe(z.number().min(1)).default(1),
+    pageSize: decimal.pipe(z.number().min(1).max(100)).default(50),
     /** The match count an earlier page of the same query reported. When present it is returned as
       `total` instead of counting the matches again. */
-    total: z.coerce.number<number>().int().min(0).optional(),
+    total: decimal.optional(),
   })
   .check((ctx) => {
     const offset = (ctx.value.page - 1) * ctx.value.pageSize;

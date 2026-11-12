@@ -93,6 +93,16 @@ within 10 s is an uncached 502, never stored. An R2 read that throws is logged
 (`r2_get_failed`) and served from the origin as a miss. Rationale: a full SV-era backfill is ~10k images — over Worker
 subrequest limits, slow via CLI puts, and mostly assets nobody views.
 
+**A mirrored image is kept for good (D9, accepted as COR-P4 API4).** The R2 key is
+`cards/{cardId}/{file}`, the response is `immutable` for a year, `image_url` is read only on an
+R2 miss, and the client's art cache (`src/lua/artworkCache.ts`, IndexedDB) is keyed by card id. So
+an ingest that changes or drops a card's image (tcgdex fixes a wrong scan) reaches neither R2 nor
+a browser that has the old one. A corrected scan needs both of these, by hand: delete the object
+through the deploy-token wrapper (`bun scripts/with-deploy-token.ts wrangler r2 object delete
+colorless-assets/cards/<id>/high.webp --remote`, from `apps/api/`), and change the image's cache
+key (its URL and the art cache's key), since browsers and the art cache keep the old bytes under
+the old one. Neither is built; key both by a hash of `image_url` if this is ever needed often.
+
 A future **Cron Trigger** (stretch) will run small incremental data deltas
 in-Worker; the big backfill stays a local script.
 
@@ -158,7 +168,13 @@ that adds or changes printings, from the repo root:
    card in the catalog. Give it its stage and evolution in `EVOLUTION_SUPPLEMENT`
    (`apps/api/src/ingest/evolutionSupplement.ts`) and ingest again, or, when no
    printing can supply them, list it in `UNPLAYABLE_EVOLUTIONS` there and give it
-   a simulation gap. `bun run --cwd apps/api db:check` runs the same three
+   a simulation gap. An Energy with no `energyType` (it plays as {C}) is named
+   too: fix the mapping, or list it in `TYPELESS_ENERGY_GAPS`
+   (`apps/api/src/ingest/map.ts`) with a simulation gap. So is a legal Pokémon
+   whose Prize value or suffix in the engine, or whose catalog suffix, is not
+   what its printed name family has (`apps/api/src/ingest/ruleBoxes.ts`): fix
+   the engine's rule, or list a catalog tag the name contradicts in
+   `RULE_BOX_EXCEPTIONS` there. `bun run --cwd apps/api db:check` runs the same
    checks over the whole table.
 4. A new Antique Fossil joins `FOSSIL_IDS` (`packages/engine/src/fossils.ts`);
    its reprints follow through the alias table.
@@ -625,8 +641,12 @@ After:
 2. `release:gate` (apps/api), whose steps are:
    - `pin`: writes HEAD to `tmp/release.json`, so the rest of the release can
      require that commit. It refuses while another commit's release holds a pin
-     younger than 15 minutes. A pin of the same commit is an earlier, failed
-     run of this release, and it is taken over. It also refuses while `tmp/`
+     that one of its steps refreshed in the last 15 minutes (every release-gate
+     step of a release refreshes it). A pin of the same commit is an earlier,
+     failed run of this release, and it is taken over. HEAD's own pin holds for
+     its steps whatever its age, so a release that runs long (a migration
+     waiting on its confirm) still records its versions and tags; `bookmark` and
+     `versions` fail when no pin is HEAD's (COR-P4 XC3). It also refuses while `tmp/`
      still holds `releases.log` or `d1-bookmarks.log`, and prints the `mv`
      that moves the file to `.local/`.
    - `clean-tree`: no uncommitted changes, and HEAD is the remote's main, read
@@ -747,7 +767,7 @@ The split stops a mistaken write, not a deliberate one: any process running as
 this user can read the file.
 
 **A dead pin.** A release killed before `abort` ran (a closed terminal) leaves
-`tmp/release.json` for 15 minutes. Releasing the same commit again takes it
+`tmp/release.json` for 15 minutes after its last step. Releasing the same commit again takes it
 over. To release another commit sooner, run `bun
 apps/api/scripts/release-gate.ts unlock`, but only when no release is running.
 
@@ -1600,7 +1620,8 @@ GET    /cards            # CardBrief page `{items, page, pageSize, total}`; filt
                          #   name (substring, case-insensitive), nameExact, category,
                          #   type, rarity, stage, suffix, trainerType, energyType, set,
                          #   serie, illustrator, text, regulationMark, hpMin/hpMax
-                         #   (inclusive),
+                         #   (inclusive; hpMin, hpMax, total, page and pageSize take
+                         #   decimal digits only, so an empty or hex value is a 400),
                          #   legal=standard|expanded; type & rarity are REPEATABLE
                          #   (?type=Fire&type=Water — OR within the dimension, M9);
                          #   id is REPEATABLE too (≤100, deck hydration) and is now an
@@ -1724,7 +1745,9 @@ GET    /decks/:id        # full Deck: {id, name, format, tint, folderId, positio
                          #   updated, version, cards: [{cardId, count}],
                          #   chosenCoverCardId} — the owner's cover pick, null for
                          #   automatic (the summary's coverCardId is the face drawn)
-POST   /decks            # {name, tint 0–360, format?, folderId? (null), cards?}
+POST   /decks            # {name, tint 0–360, format? ("standard" | "expanded", the
+                         #   engine's FORMATS ids; any other is a 400, while a read
+                         #   serves a stored one as written), folderId? (null), cards?}
                          #   → 201 Deck (server-minted UUID id, version 0);
                          #   409 {"error":"deck limit reached","limit":500} once
                          #   the account holds MAX_DECKS_PER_USER decks. The

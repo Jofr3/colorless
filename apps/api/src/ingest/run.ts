@@ -4,6 +4,7 @@
 // an ingest.
 
 import type { TcgdexCard } from "@colorless/schema";
+import { type CardRow, unresolvedEvolutions } from "./map";
 
 /** Runs `task` over `items` with at most `limit` running at once; results keep input order. The
     first failure rejects the whole run and stops the other workers from claiming more items. */
@@ -102,13 +103,16 @@ export interface RunSummary {
   unresolvedEvolutions: readonly string[];
   /** The catalog's names could not be read, so unresolvedEvolutions was not checked. */
   namesUnread: boolean;
+  typelessEnergies: readonly string[];
+  ruleBoxMismatches: readonly string[];
   epochStamped: boolean;
   postPassFailed: boolean;
 }
 
 /** Non-zero when anything in the run needs a person: a failed set, a Pokémon owed a supplement
-    entry or with an evolution the engine cannot play, a missing epoch stamp or a failed
-    whole-table reprint pass. */
+    entry or with an evolution the engine cannot play, an Energy with no type, a Prize value or
+    suffix its printed family disagrees with, a missing epoch stamp or a failed whole-table
+    reprint pass. */
 export function exitCode(summary: RunSummary): 0 | 1 {
   return summary.failedSets.length > 0 ||
     summary.weakless.length > 0 ||
@@ -116,6 +120,8 @@ export function exitCode(summary: RunSummary): 0 | 1 {
     summary.evolvingBasics.length > 0 ||
     summary.unresolvedEvolutions.length > 0 ||
     summary.namesUnread ||
+    summary.typelessEnergies.length > 0 ||
+    summary.ruleBoxMismatches.length > 0 ||
     !summary.epochStamped ||
     summary.postPassFailed
     ? 1
@@ -133,4 +139,24 @@ export function rerunCommand(
     ...(options.remote ? ["--remote"] : []),
     ...(options.transport === undefined ? [] : [`--transport ${options.transport}`]),
   ].join(" ");
+}
+
+/** The "evolution names" step, run once every set is written: each of `evolvers`' `evolveFrom`
+    against this run's names and those `readNames` lists from the target, so an evolution may name
+    a card of any set and a dry run still resolves its own. A failed read checks nothing and says
+    so, which exits 1. */
+export function evolutionNamesCheck(
+  evolvers: readonly CardRow[],
+  runNames: ReadonlySet<string>,
+  readNames: () => readonly Record<string, unknown>[],
+): { unresolved: string[]; names: number } | { unread: string } {
+  let stored: readonly Record<string, unknown>[];
+  try {
+    stored = readNames();
+  } catch (error) {
+    return { unread: error instanceof Error ? error.message : String(error) };
+  }
+  const names = new Set(runNames);
+  for (const row of stored) names.add(String(row.name));
+  return { unresolved: unresolvedEvolutions(evolvers, names), names: names.size };
 }

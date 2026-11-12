@@ -26,8 +26,10 @@ import {
   type ReleasePin,
   recordsRoot,
   releaseLogLine,
+  releasePinOf,
   releaseTagName,
   remoteMainOf,
+  updatedPin,
   webDistProblems,
   sameSite,
   siteOf,
@@ -60,8 +62,53 @@ describe("the release pin", () => {
     expect(pinRefusal(undefined, HEAD, NOW)).toBeUndefined();
   });
 
+  it("holds the lock for 15 minutes after a step last refreshed it (COR-P4)", () => {
+    const refreshed = { ...pin(OTHER, 40), refreshedAt: new Date(NOW - 14 * 60_000).toISOString() };
+    expect(activePin(refreshed, NOW)?.commit).toBe(OTHER);
+    expect(pinRefusal(refreshed, HEAD, NOW)).toBe(
+      "a release of 94132127 started 40 min ago and holds tmp/release.json",
+    );
+    expect(activePin(refreshed, NOW + 60_000)).toBeUndefined();
+  });
+
+  it("holds HEAD's own release whatever its age, and no other commit's (COR-P4)", () => {
+    expect(releasePinOf(pin(HEAD, 60), HEAD)?.commit).toBe(HEAD);
+    expect(releasePinOf(pin(OTHER, 1), HEAD)).toBeUndefined();
+    expect(releasePinOf(undefined, HEAD)).toBeUndefined();
+  });
+
+  it("records into HEAD's pin past its TTL and refreshes it, leaving the read pin as it was (COR-P4)", () => {
+    const old = pin(HEAD, 20);
+    const next = updatedPin(old, HEAD, NOW, (p) => {
+      p.deployed["colorless-api"] = "v2";
+    });
+    expect(next).toEqual({
+      ...old,
+      deployed: { "colorless-api": "v2" },
+      refreshedAt: new Date(NOW).toISOString(),
+    });
+    expect(old.deployed).toEqual({});
+    expect(activePin(next, NOW)?.commit).toBe(HEAD);
+  });
+
+  it("fails a release-only step loudly when no pin is HEAD's, and lets a bare deploy pass (COR-P4)", () => {
+    const change = () => {};
+    expect(updatedPin(undefined, HEAD, NOW, change)).toBeUndefined();
+    expect(updatedPin(pin(OTHER, 1), HEAD, NOW, change)).toBeUndefined();
+    expect(() => updatedPin(undefined, HEAD, NOW, change, "versions")).toThrow(
+      "versions: FAIL — tmp/release.json holds no release, not HEAD 3d6b1a12; release again.",
+    );
+    expect(() => updatedPin(pin(OTHER, 1), HEAD, NOW, change, "bookmark")).toThrow(
+      "bookmark: FAIL — tmp/release.json holds the release of 94132127, not HEAD 3d6b1a12",
+    );
+  });
+
   it("reads back what it wrote, and nothing else", () => {
     const written = { ...pin(HEAD, 1), before: { colorless: "v1" }, bookmark: "b" };
+    expect(parsePin(JSON.parse(JSON.stringify({ ...written, refreshedAt: "r" })))).toEqual({
+      ...written,
+      refreshedAt: "r",
+    });
     expect(parsePin(JSON.parse(JSON.stringify(written)))).toEqual(written);
     expect(parsePin({ commit: HEAD })).toBeUndefined();
     expect(parsePin(null)).toBeUndefined();

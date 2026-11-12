@@ -98,20 +98,10 @@ export async function serveMirroredAsset(
     } catch {
       return upstreamFailure();
     }
-    if (origin.status >= 500) {
-      return upstreamFailure();
-    }
-    if (origin.status === 404 || origin.status === 410) {
-      return null;
-    }
-    if (origin.status !== 200) {
-      logEventThrottled("assets", "origin_status", { status: origin.status });
-      return upstreamFailure();
-    }
-    // A constructed Response (tests) has no url; a fetched one names where redirects ended.
-    if (!isAssetOriginUrl(origin.url || originUrl)) return refused("redirect");
-    if (!origin.headers.get("Content-Type")?.toLowerCase().startsWith("image/")) {
-      return refused("content_type");
+    const answer = unreadOrigin(origin, originUrl);
+    if (answer !== undefined) {
+      await origin.body?.cancel().catch(() => {});
+      return answer;
     }
     // Buffer the image (card scans are ~100KB) so one body feeds both the R2
     // put and the response without tee-ing the stream.
@@ -128,6 +118,27 @@ export async function serveMirroredAsset(
   const stored = bytes.slice(0);
   await later(() => env.ASSETS.put(key, stored, { httpMetadata: { contentType } }));
   return assetResponse(bytes, contentType, "miss");
+}
+
+/** The answer for an origin response whose body the mirror will not read, or undefined when it
+    is an image to read. */
+function unreadOrigin(origin: Response, originUrl: string): Response | null | undefined {
+  if (origin.status >= 500) {
+    return upstreamFailure();
+  }
+  if (origin.status === 404 || origin.status === 410) {
+    return null;
+  }
+  if (origin.status !== 200) {
+    logEventThrottled("assets", "origin_status", { status: origin.status });
+    return upstreamFailure();
+  }
+  // A constructed Response (tests) has no url; a fetched one names where redirects ended.
+  if (!isAssetOriginUrl(origin.url || originUrl)) return refused("redirect");
+  if (!origin.headers.get("Content-Type")?.toLowerCase().startsWith("image/")) {
+    return refused("content_type");
+  }
+  return undefined;
 }
 
 /** A response the mirror will not store, logged by why. */

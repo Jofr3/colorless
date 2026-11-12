@@ -248,6 +248,27 @@ export function unresolvedEvolutions(
     .map((row) => row.id);
 }
 
+/** Energies tcgdex sends with no `energyType`, each a known simulation gap, with why. */
+export const TYPELESS_ENERGY_GAPS: Readonly<Record<string, string>> = {
+  "me06-132": "Bubbly Water Energy: no energyType and no text upstream (card-revision Deferred 12)",
+  "me06-133":
+    "Growing Grass Energy: no energyType and no text upstream (card-revision Deferred 12)",
+  "me06-134": "Nitro Fire Energy: no energyType and no text upstream (card-revision Deferred 12)",
+};
+
+/** The Energies with no `energyType` that TYPELESS_ENERGY_GAPS does not list: the engine plays
+    them as plain {C}. Written anyway, and the ingest exits non-zero naming them. */
+export function typelessEnergies(rows: readonly CardRow[]): string[] {
+  return rows
+    .filter(
+      (row) =>
+        row.category === "Energy" &&
+        row.energyType === null &&
+        !Object.hasOwn(TYPELESS_ENERGY_GAPS, row.id),
+    )
+    .map((row) => row.id);
+}
+
 /** tcgdex spells some sets' Pokémon ex suffix "EX"; the name's own " ex" decides, so a
     Pokémon-EX keeps "EX". */
 export function suffixOf(name: string, suffix: string | null): string | null {

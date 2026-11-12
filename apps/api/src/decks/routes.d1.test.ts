@@ -91,6 +91,8 @@ describe("deck body validation, signed in", () => {
     ["/decks/d1", "PATCH", {}],
     ["/decks", "POST", { name: "Charizard ex", tint: 22, folderId: "f1" }],
     ["/decks/d1", "PATCH", { folderId: "f1" }],
+    ["/decks", "POST", { name: "Charizard ex", tint: 22, format: "Expanded" }],
+    ["/decks/d1", "PATCH", { format: "glc" }],
   ];
 
   it.each(invalid)("%s %s %o → 400 invalid body", async (path, method, body) => {
