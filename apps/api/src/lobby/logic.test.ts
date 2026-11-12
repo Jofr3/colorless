@@ -14,6 +14,7 @@ import {
   DISCONNECT_GRACE_MS,
   countdownEndsAt,
   forfeitDeadlines,
+  forfeitWakeups,
   endMatch,
   FIRST_KEEPALIVE_MARGIN_MS,
   NUDGE_AFTER_MS,
@@ -21,6 +22,7 @@ import {
   FRAME_REFILL_PER_SECOND,
   type FrameBudget,
   helloDecision,
+  judgeForfeits,
   parseClientMessage,
   readSnapshot,
   readStored,
@@ -273,6 +275,54 @@ describe("the forfeit deadline on the seat (3c-v)", () => {
     const solo = createLobbyState("ABCD", makeSeat(H1, "Ana"));
     expect(withForfeitAt(solo, "guest", 1)).toBe(solo);
     expect(forfeitDeadlines(solo)).toEqual([]);
+  });
+});
+
+describe("judgeForfeits — only a strictly earliest away deadline (ONLX1)", () => {
+  const inGame = (host: number | null, guest: number | null): LobbyState =>
+    withForfeitAt(
+      withForfeitAt({ ...lobbyWithGuest(), phase: "in-game" }, "host", host),
+      "guest",
+      guest,
+    );
+  const everyoneAway = () => true;
+
+  it("forfeits a lone due deadline and consumes it; one not yet due waits", () => {
+    const judged = judgeForfeits(inGame(null, 5_000), 5_000, everyoneAway);
+    expect(judged.forfeiting).toEqual(["guest"]);
+    expect(forfeitDeadlines(judged.snapshot)).toEqual([]);
+    const early = judgeForfeits(inGame(null, 5_000), 4_999, everyoneAway);
+    expect(early).toEqual({ snapshot: inGame(null, 5_000), forfeiting: [] });
+  });
+
+  it("forfeits neither of two away seats on one deadline, and keeps both deadlines", () => {
+    const tied = inGame(5_000, 5_000);
+    expect(judgeForfeits(tied, 9_000, everyoneAway)).toEqual({ snapshot: tied, forfeiting: [] });
+  });
+
+  it("forfeits the earlier of two due deadlines and consumes both", () => {
+    const judged = judgeForfeits(inGame(6_000, 5_000), 9_000, everyoneAway);
+    expect(judged.forfeiting).toEqual(["guest"]);
+    expect(forfeitDeadlines(judged.snapshot)).toEqual([]);
+  });
+
+  it("forfeits an away seat whose tie partner is back, and consumes the returned seat's deadline", () => {
+    const judged = judgeForfeits(inGame(5_000, 5_000), 5_000, (id) => id === G1);
+    expect(judged.forfeiting).toEqual(["guest"]);
+    expect(forfeitDeadlines(judged.snapshot)).toEqual([]);
+  });
+
+  it("forfeits nobody outside a running match, and consumes the deadlines", () => {
+    const selecting = { ...inGame(5_000, 5_000), phase: "selecting" as const };
+    const judged = judgeForfeits(selecting, 9_000, everyoneAway);
+    expect(judged.forfeiting).toEqual([]);
+    expect(forfeitDeadlines(judged.snapshot)).toEqual([]);
+  });
+
+  it("wakes the alarm for every deadline but a tie", () => {
+    expect(forfeitWakeups(inGame(5_000, 6_000))).toEqual([5_000, 6_000]);
+    expect(forfeitWakeups(inGame(5_000, 5_000))).toEqual([]);
+    expect(forfeitWakeups(inGame(null, 5_000))).toEqual([5_000]);
   });
 });
 

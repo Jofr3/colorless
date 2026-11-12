@@ -1,6 +1,7 @@
 import { type GameState, redactGame } from "@colorless/engine";
 import {
   createSnapshot,
+  LOBBY_FORFEIT_MS,
   type LobbySnapshot,
   makePlayer,
   publicSeatId,
@@ -477,6 +478,12 @@ describe("LuaOnlineMatch", () => {
       snapshot: snap(t.me, { host: { ...opponent, forfeitAt: null } }),
     });
     expect(t.tagged("L")[0]?.[3]).toBe("-1");
+    // A device clock two minutes behind the server's shows no more than the forfeit window (CLI3).
+    t.fake().push({
+      kind: "state",
+      snapshot: snap(t.me, { host: { ...opponent, forfeitAt: 1_000_000 + 210_000 } }),
+    });
+    expect(t.tagged("L")[0]?.[3]).toBe(String(LOBBY_FORFEIT_MS));
   });
 
   it("rematch posts once, flags it, and the next match is a fresh id", async () => {
@@ -671,6 +678,70 @@ describe("an online action in flight", () => {
     t.fake().push({ kind: "reject-action", reason: "Not now" });
     expect(flags(t)).not.toContain("pending");
     endTurn(t);
+    expect(t.actions()).toHaveLength(2);
+  });
+
+  it("an action queued while the link is down waits past the reconnect's full frame for its answer (EFF3)", async () => {
+    const t = await table();
+    t.fake().link.down = true;
+    endTurn(t);
+    t.fake().link.down = false;
+    // The new socket's hello is answered first, with the match as it was before the action.
+    t.push(frame(t.state));
+    expect(flags(t)).toContain("pending");
+    endTurn(t);
+    expect(t.actions()).toHaveLength(1);
+    t.pushDelta(frame(t.state));
+    expect(flags(t)).not.toContain("pending");
+  });
+
+  it("a queued action is answered by a full frame whose log moved on, or by the next hello's (EFF3)", async () => {
+    const t = await table();
+    t.fake().link.down = true;
+    endTurn(t);
+    t.push(frame(t.state), [{ kind: "turn", turn: 2 } as SeatLogEntry]);
+    expect(flags(t)).not.toContain("pending");
+    endTurn(t);
+    t.push(frame(t.state), [{ kind: "turn", turn: 2 } as SeatLogEntry]);
+    expect(flags(t)).toContain("pending");
+    // A second reconnect: the action went out behind the first hello, so it is answered or lost.
+    t.push(frame(t.state), [{ kind: "turn", turn: 2 } as SeatLogEntry]);
+    expect(flags(t)).not.toContain("pending");
+  });
+
+  it("a refusal that finds a player action unanswered is its, though an automatic step went out after (EFF3)", async () => {
+    const t = await table();
+    t.fake().link.down = true;
+    endTurn(t);
+    t.fake().link.down = false;
+    t.push(
+      frame(t.state, (v) => {
+        v.phase = { kind: "ko:takePrizes", count: 1 };
+        v.waitingOn = "you";
+      }),
+    );
+    expect(t.actions().map((a) => a?.type)).toEqual(["endTurn", "takePrizes"]);
+    t.fake().push({ kind: "reject-action", reason: "Not now" });
+    expect(t.rows()[0]?.[6]).toBe("Not now");
+    expect(flags(t)).not.toContain("pending");
+    // The automatic step's own refusal, after it, is not shown.
+    t.fake().push({ kind: "reject-action", reason: "Already taken" });
+    expect(t.rows()[0]?.[6]).toBe("Not now");
+  });
+
+  it("an automatic step queued behind a hello is sent again only after a later one (ONL2)", async () => {
+    const t = await table();
+    const prizes = frame(t.state, (v) => {
+      v.phase = { kind: "ko:takePrizes", count: 1 };
+      v.waitingOn = "you";
+    });
+    t.fake().link.down = true;
+    t.pushDelta(prizes);
+    t.fake().link.down = false;
+    expect(t.actions()).toHaveLength(1);
+    t.push(structuredClone(prizes));
+    expect(t.actions()).toHaveLength(1);
+    t.push(structuredClone(prizes));
     expect(t.actions()).toHaveLength(2);
   });
 

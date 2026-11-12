@@ -178,6 +178,13 @@ assert(sim.away.detail.string=='Forfeits in 0:03')
 tick(200);assert(sim.away.detail.string=='Forfeiting...','Zero reads Forfeiting')
 snapshot({L=row('L','online','Misty',-1,'concede,leave','partial')})
 assert(sim.away.detail.string=='Waiting for them to reconnect...','No clock while unlimited')
+-- A hidden tab draws no frames: the clock runs on love.timer, which keeps time meanwhile (XC2).
+local wall=1000;love.timer={getTime=function() return wall end}
+snapshot({L=row('L','online','Misty',90000,'concede,leave','partial')})
+assert(sim.away.detail.string=='Forfeits in 1:30','Clock from awayMs, got '..sim.away.detail.string)
+wall=wall+60;tick(1)
+assert(sim.away.detail.string=='Forfeits in 0:30','A minute hidden is a minute off the clock, got '..sim.away.detail.string)
+love.timer=nil
 -- Return: pop_out plus a blue "is back" attention text, then gone.
 snapshot()
 assert(sim.away and sim.away.leaving,'Banner pops out')

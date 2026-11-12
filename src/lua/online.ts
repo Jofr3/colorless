@@ -91,6 +91,8 @@ export class LuaOnline {
   private unsubscribe = () => {};
   private ticker: ReturnType<typeof setInterval> | null = null;
   private noticeTimer: ReturnType<typeof setTimeout> | null = null;
+  /** The drop the last released surface armed (see `release`). */
+  private releaseTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private publish: (snapshot: string) => void,
@@ -267,6 +269,11 @@ export class LuaOnline {
     this.client?.dispose({ bye: false });
     this.client = null;
     this.identity = null;
+    this.cancelRelease();
+    if (this.ticker !== null) clearInterval(this.ticker);
+    this.ticker = null;
+    if (this.noticeTimer !== null) clearTimeout(this.noticeTimer);
+    this.noticeTimer = null;
   }
 
   /** Leave the lobby for good: bye, forget the seat. */
@@ -412,8 +419,11 @@ export class LuaOnline {
     this.surface = "none";
     this.op++;
     const handoff = this.routed === "match" && this.client !== null && this.live(this.client);
-    setTimeout(
+    // One drop armed at a time: an earlier release's would fire in a later lobby's own wait.
+    this.cancelRelease();
+    this.releaseTimer = setTimeout(
       () => {
+        this.releaseTimer = null;
         if (this.surface === "none" && this.client) {
           this.drop();
           this.emit();
@@ -421,6 +431,11 @@ export class LuaOnline {
       },
       handoff ? TABLE_CLAIM_MS : 0,
     );
+  }
+
+  private cancelRelease() {
+    if (this.releaseTimer !== null) clearTimeout(this.releaseTimer);
+    this.releaseTimer = null;
   }
 
   private changed() {

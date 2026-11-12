@@ -2,7 +2,7 @@ import { drbgSeed } from "@colorless/engine/testing";
 import type { SeatLogEntry } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
 import { basicCard, FakeStorage, LEGAL_DECK } from "./lobbyHarness";
-import { beginMatch, type MatchRecord, readMatchRecord } from "./match";
+import { beginMatch, capLog, MATCH_LOG_KEPT, type MatchRecord, readMatchRecord } from "./match";
 import { LOG_CHUNK, MATCH_KEY, MATCH_LAYOUT, MatchStore } from "./matchStore";
 
 const POOL = Object.fromEntries(LEGAL_DECK.map((id) => [id, basicCard(id)]));
@@ -65,6 +65,20 @@ describe("MatchStore — the split record", () => {
     const chunks = [...storage.data.keys()].filter((key) => key.startsWith("matchLog:"));
     expect(chunks.sort()).toEqual(["matchLog:0", "matchLog:1"]);
     expect(readMatchRecord(await readBack(storage))).toEqual(trimmed);
+  });
+
+  it("rewrites a trimmed log no shorter than the stored one whole (ONL6)", async () => {
+    const { storage, writes } = recordingStorage();
+    const store = new MatchStore(storage);
+    const stored = appended(begun(), MATCH_LOG_KEPT - 100);
+    await store.put(stored);
+    const { log, trimmed } = capLog(appended(stored, 600).log, "+01:00");
+    expect(trimmed).toBe(true);
+    expect(log.length).toBeGreaterThanOrEqual(stored.log.length);
+    const next = { ...stored, log };
+    await store.put(next);
+    expect(writes.at(-1)).toContain("matchLog:0");
+    expect(readMatchRecord(await readBack(storage))).toEqual(next);
   });
 
   it("reads back exactly the record it wrote, key order included", async () => {

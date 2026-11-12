@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   CONNECT_TIMEOUT_MS,
   createLobbyChannel,
+  DELIVER_MS,
   reconnectDelayMs,
   SOCKET_SILENCE_MS,
   STABLE_OPEN_MS,
@@ -76,6 +77,7 @@ afterEach(() => {
 });
 
 const HELLO: LobbyMessage = { kind: "hello", from: "p1", name: "Ana" };
+const BYE: LobbyMessage = { kind: "bye", from: "p1", slot: "guest" };
 
 describe("reconnectDelayMs", () => {
   it("doubles from 400ms and caps at 8s", () => {
@@ -273,7 +275,8 @@ describe("createLobbyChannel", () => {
       ws.receive("pong");
     }
     // A throttled background tab: the clock moves a minute with no tick in between.
-    vi.setSystemTime(Date.now() + 60_000);
+    const now = performance.now();
+    vi.spyOn(performance, "now").mockImplementation(() => now + 60_000);
     vi.advanceTimersByTime(1500);
     ws.receive("pong");
     vi.advanceTimersByTime(1500);
@@ -386,5 +389,89 @@ describe("createLobbyChannel", () => {
     expect(ws.closedWith).toBe(1000);
     vi.advanceTimersByTime(60_000);
     expect(FakeWebSocket.instances).toHaveLength(1);
+  });
+
+  it("says whether a post went out on an open socket", () => {
+    const channel = createLobbyChannel("ABCD");
+    const ws = FakeWebSocket.last();
+    expect(channel.post(BYE)).toBe(false);
+    ws.open();
+    expect(channel.post(BYE)).toBe(true);
+    channel.close();
+    expect(channel.post(BYE)).toBe(false);
+  });
+
+  it("close({deliver}) sends a bye queued while down on the next socket, behind the hello, then shuts (ONL8)", () => {
+    const channel = createLobbyChannel("ABCD");
+    const first = FakeWebSocket.last();
+    first.open();
+    channel.post(HELLO);
+    first.drop();
+    channel.post(BYE);
+    const seen: LobbyMessage[] = [];
+    channel.subscribe((message) => seen.push(message));
+    channel.close({ deliver: true });
+    expect(channel.post(HELLO)).toBe(false);
+    vi.advanceTimersByTime(reconnectDelayMs(0));
+    const second = FakeWebSocket.last();
+    expect(FakeWebSocket.instances).toHaveLength(2);
+    second.open();
+    expect(second.sent).toEqual([JSON.stringify(HELLO), JSON.stringify(BYE)]);
+    expect(second.closedWith).toBe(1000);
+    second.receive(JSON.stringify({ kind: "reject", to: "p1", reason: "full" }));
+    expect(seen).toEqual([]);
+    vi.advanceTimersByTime(60_000);
+    expect(FakeWebSocket.instances).toHaveLength(2);
+  });
+
+  it("close({deliver}) gives the delivery up when no socket opens in time (ONL8)", () => {
+    const channel = createLobbyChannel("ABCD");
+    channel.post(BYE);
+    channel.close({ deliver: true });
+    vi.advanceTimersByTime(DELIVER_MS);
+    const count = FakeWebSocket.instances.length;
+    vi.advanceTimersByTime(60_000);
+    expect(FakeWebSocket.instances).toHaveLength(count);
+    FakeWebSocket.last().open();
+    expect(FakeWebSocket.last().sent).toEqual([]);
+  });
+
+  it("close({deliver}) with nothing waiting shuts at once", () => {
+    const channel = createLobbyChannel("ABCD");
+    const ws = FakeWebSocket.last();
+    ws.open();
+    channel.post(BYE);
+    channel.close({ deliver: true });
+    expect(ws.closedWith).toBe(1000);
+    vi.advanceTimersByTime(60_000);
+    expect(FakeWebSocket.instances).toHaveLength(1);
+  });
+
+  it("gives up a silent socket on time though the device clock steps back (CLI4)", () => {
+    const channel = createLobbyChannel("ABCD");
+    const ws = FakeWebSocket.last();
+    ws.open();
+    vi.advanceTimersByTime(3000);
+    vi.setSystemTime(Date.now() - 10 * 60_000);
+    vi.advanceTimersByTime(SOCKET_SILENCE_MS + 3000);
+    expect(ws.closedWith).not.toBeNull();
+    channel.close();
+  });
+
+  it("starts the backoff over after a socket that held, though the device clock stepped back (CLI4)", () => {
+    const channel = createLobbyChannel("ABCD");
+    FakeWebSocket.last().drop();
+    vi.advanceTimersByTime(reconnectDelayMs(0));
+    const held = FakeWebSocket.last();
+    held.open();
+    vi.setSystemTime(Date.now() - 10 * 60_000);
+    for (let i = 0; i < STABLE_OPEN_MS / 1500 + 1; i++) {
+      vi.advanceTimersByTime(1500);
+      held.receive("pong");
+    }
+    held.drop();
+    vi.advanceTimersByTime(reconnectDelayMs(0));
+    expect(FakeWebSocket.instances).toHaveLength(3);
+    channel.close();
   });
 });

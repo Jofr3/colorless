@@ -43,8 +43,14 @@ export interface MatchStorage {
   list(options: { prefix: string }): Promise<Map<string, unknown>>;
 }
 
-/** What the split keys hold, enough to write the next action's changes alone. */
-type Written = FixedTables & { seed: string; startedAt: number; logLength: number };
+/** What the split keys hold, enough to write the next action's changes alone. `first` is the
+    log's first entry as the record held it: a trimmed log starts with a new one. */
+type Written = FixedTables & {
+  seed: string;
+  startedAt: number;
+  logLength: number;
+  first: SeatLogEntry | undefined;
+};
 
 /** A record's seed as a comparable value: a ChaCha20 seed is an object, which a read from storage
     copies. Total, since a head read back from storage is not validated. */
@@ -107,7 +113,10 @@ function matchEntries(record: MatchRecord, written: Written | null): Record<stri
     written !== null &&
     written.seed === seedId(record.seed) &&
     written.startedAt === record.startedAt;
-  const continues = sameMatch && record.log.length >= written.logLength;
+  // A length alone is not enough: a log trimmed by one long append can be no shorter than the
+  // one stored. Its first entry is new, and a record read back from anywhere else is rewritten.
+  const continues =
+    sameMatch && record.log.length >= written.logLength && record.log[0] === written.first;
   const entries: Record<string, unknown> = { [MATCH_KEY]: headOf(record) };
   if (!sameMatch || written.cardPool !== cardPool || written.cardIdByUid !== cardIdByUid) {
     entries[TABLES_KEY] = { cardPool, cardIdByUid };
@@ -158,6 +167,7 @@ export class MatchStore implements MatchSlot {
       cardPool: record.state.cardPool,
       cardIdByUid: record.state.cardIdByUid,
       logLength: record.log.length,
+      first: record.log[0],
     };
   }
 
@@ -197,6 +207,7 @@ export class MatchStore implements MatchSlot {
       cardPool: tables.cardPool,
       cardIdByUid: tables.cardIdByUid,
       logLength: head.logLength,
+      first: log[0],
     };
     return {
       ...envelope,

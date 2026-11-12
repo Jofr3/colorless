@@ -374,6 +374,32 @@ describe("LobbyDO — countdown and handoff", () => {
     });
     expect(h.storage.data.has("nextChooser")).toBe(false);
   });
+
+  it("sends a rematch against a new guest back to the coin (ONL4)", async () => {
+    h.world.decks.set("deck-cy", { owner: "cy", ids: DECK });
+    const { host, guest } = await startedMatch();
+    await h.send(host, { kind: "action", action: { type: "concede" } });
+    await h.send(guest, { kind: "bye", from: seatIdOf("g"), slot: "guest" });
+    await h.drop(guest);
+    await h.send(host, { kind: "rematch", from: seatIdOf("h") });
+    expect(h.storage.data.get("nextChooser")).toBe(seatIdOf("h"));
+    const stranger = await h.connect("cy");
+    await h.send(stranger, hello("n"));
+    expect(snapshotOf(host).guest?.id).toBe(seatIdOf("n"));
+    expect(h.storage.data.has("nextChooser")).toBe(false);
+    await readyUp(stranger, "n", "deck-cy");
+    await fireAlarmsUntil(() => snapshotOf(host).phase === "in-game");
+    expect((await storedMatch()).state.phase.kind).not.toBe("setup:chooseFirst");
+  });
+
+  it("keeps the loser's choice of play order while the same guest stays seated (ONL4)", async () => {
+    const { host, guest } = await startedMatch();
+    await h.send(host, { kind: "action", action: { type: "concede" } });
+    await h.send(host, { kind: "rematch", from: seatIdOf("h") });
+    await h.send(guest, hello("g", "Bo again"));
+    await readyUp(guest, "g", "deck-bo");
+    expect(h.storage.data.get("nextChooser")).toBe(seatIdOf("h"));
+  });
 });
 
 describe("LobbyDO — the match RNG (MI1)", () => {
@@ -446,6 +472,57 @@ describe("LobbyDO — match actions", () => {
     const after = await storedMatch();
     expect(after.state.players.p1.bench).toHaveLength(1);
     expect(guest.last("match")?.game).toEqual(matchFrameFor(after, "p2").game);
+  });
+
+  it("retires a match whose accepted action leaves a card in two zones, writing nothing of it (STA6)", async () => {
+    const { host, guest } = await startedMatch();
+    const before = await storedMatch();
+    const p1 = before.state.players.p1;
+    const [active, twice] = p1.hand;
+    if (active === undefined || twice === undefined) throw new Error("a short hand");
+    const broken = { ...p1, discard: [twice] };
+    await new MatchStore(h.storage).put({
+      ...before,
+      state: { ...before.state, players: { ...before.state.players, p1: broken } },
+    });
+    h.hibernate();
+    await h.send(host, { kind: "action", action: { type: "setupPlaceActive", uid: active } });
+    expect(matchKeys()).toEqual([]);
+    expect(snapshotOf(guest).phase).toBe("selecting");
+    for (const ws of [host, guest]) {
+      expect(ws.last("match-error")?.reason).toBe(
+        "This match ended because of a server error. Pick your decks and ready up to play again.",
+      );
+    }
+    expect(logged("match_broken", "error")).toEqual([
+      {
+        evt: "lobby",
+        kind: "match_broken",
+        lobby: "ABCD",
+        type: "setupPlaceActive",
+        violation: "a card is in two zones",
+      },
+    ]);
+  });
+
+  it("retires a match whose forfeit leaves the board broken (STA6)", async () => {
+    const { host, guest } = await startedMatch();
+    const before = await storedMatch();
+    const p2 = before.state.players.p2;
+    await new MatchStore(h.storage).put({
+      ...before,
+      state: {
+        ...before.state,
+        players: { ...before.state.players, p2: { ...p2, discard: p2.deck.slice(0, 1) } },
+      },
+    });
+    h.hibernate();
+    await h.send(guest, { kind: "bye", from: seatIdOf("g"), slot: "guest" });
+    expect(matchKeys()).toEqual([]);
+    expect(snapshotOf(host)).toMatchObject({ phase: "waiting", guest: null });
+    expect(logged("match_broken", "error")).toMatchObject([
+      { type: "concede", violation: "a card is in two zones" },
+    ]);
   });
 
   it("binds an action to the socket's own seat, whatever seat it claims", async () => {
@@ -646,6 +723,48 @@ describe("LobbyDO — disconnects", () => {
     await fireAlarmsUntil(() => snapshotOf(host).guest?.connected === false);
     expect(snapshotOf(host).guest?.forfeitAt).toBe(h.world.now + ABANDON_GRACE_MS);
     expect(logged("seat_orphaned")).toMatchObject([{ seats: 1 }]);
+    await fireAlarmsUntil(async () => (await storedMatch()).state.phase.kind === "gameOver");
+    expect((await storedMatch()).state.phase).toMatchObject({
+      outcome: { result: "win", winner: "p1", reason: "conceded" },
+    });
+  });
+
+  it("forfeits neither seat of two that dropped within one sweep, until one comes back (ONLX1)", async () => {
+    const { host, guest } = await startedMatch();
+    await h.drop(host);
+    await h.drop(guest);
+    await h.fireAlarm();
+    const deadline = (h.storage.data.get("snapshot") as LobbySnapshot).host.forfeitAt;
+    expect(deadline).toBeTypeOf("number");
+    expect((h.storage.data.get("snapshot") as LobbySnapshot).guest?.forfeitAt).toBe(deadline);
+    h.world.now = (deadline ?? 0) + 60_000;
+    expect(h.storage.alarm).not.toBe(deadline);
+    const back = await h.connect("bo");
+    await h.send(back, hello("g"));
+    expect((await storedMatch()).state.phase.kind).not.toBe("gameOver");
+    await fireAlarmsUntil(async () => (await storedMatch()).state.phase.kind === "gameOver");
+    expect((await storedMatch()).state.phase).toMatchObject({
+      outcome: { result: "win", winner: "p2", reason: "conceded" },
+    });
+    expect(logged("forfeit", "info")).toEqual([
+      { evt: "lobby", kind: "forfeit", lobby: "ABCD", seat: "p1", cause: "abandoned" },
+    ]);
+  });
+
+  it("wipes a lobby both of whose players dropped together and never came back (ONLX1)", async () => {
+    const { host, guest } = await startedMatch();
+    await h.drop(host);
+    await h.drop(guest);
+    await fireAlarmsUntil(() => h.storage.data.size === 0);
+    expect(logged("forfeit", "info")).toEqual([]);
+  });
+
+  it("forfeits the earlier of two away seats' deadlines (ONLX1)", async () => {
+    const { host, guest } = await startedMatch();
+    await h.drop(guest);
+    await h.fireAlarm();
+    h.world.now += 1000;
+    await h.drop(host);
     await fireAlarmsUntil(async () => (await storedMatch()).state.phase.kind === "gameOver");
     expect((await storedMatch()).state.phase).toMatchObject({
       outcome: { result: "win", winner: "p1", reason: "conceded" },
@@ -985,6 +1104,34 @@ describe("LobbyDO — a stored lobby whose seats are no public ids (LB6)", () =>
     expect(h.world.now - stored).toBeLessThanOrEqual(INACTIVE_LOBBY_MS + LIVENESS_SWEEP_MS);
     expect(lurker.closed?.code).toBe(LOBBY_WS_CLOSED);
     expect(logged("lobby_wiped", "info")).toMatchObject([{ lobby: "ABCD", cause: "inactive" }]);
+  });
+
+  it("drops the match, graces, bindings and chooser of a lobby it cannot read (ONL5)", async () => {
+    h.world.decks.set("deck-cy", { owner: "cy", ids: DECK });
+    await startedMatch();
+    const before = await storedMatch();
+    h.storage.data.set("nextChooser", seatIdOf("h"));
+    const stored = h.storage.data.get("snapshot") as Record<string, unknown>;
+    h.storage.data.set("snapshot", { ...stored, phase: "in-match" });
+    h.redeploy();
+    const cy = await h.connect("cy");
+    await h.send(cy, hello("x", "Cy"));
+    expect(snapshotOf(cy).host.id).toBe(seatIdOf("x"));
+    expect(matchKeys()).toEqual([]);
+    for (const key of ["pendingDisconnects", "nextChooser"])
+      expect(h.storage.data.has(key)).toBe(false);
+    expect(h.storage.data.get("seatUsers")).toEqual({ [seatIdOf("x")]: "cy" });
+    expect(logged("snapshot_unreadable", "error")).toEqual([
+      { evt: "lobby", kind: "snapshot_unreadable", lobby: "ABCD" },
+    ]);
+    const bo = await h.connect("bo");
+    await h.send(bo, hello("y"));
+    await readyUp(cy, "x", "deck-cy");
+    await readyUp(bo, "y", "deck-bo");
+    await fireAlarmsUntil(() => snapshotOf(cy).phase === "in-game");
+    const after = await storedMatch();
+    expect(before.names).toEqual({ p1: "Ana", p2: "Bo" });
+    expect(after.names).toEqual({ p1: "Cy", p2: "Bo" });
   });
 });
 

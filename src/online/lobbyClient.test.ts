@@ -278,6 +278,8 @@ describe("LobbyClient", () => {
     a.client.dispose();
     expect(a.posts.at(-1)).toEqual({ kind: "bye", from: testSeatId("h"), slot: "host" });
     expect(a.closed()).toBe(true);
+    // A bye still waiting for a socket goes out on the next one (ONL8).
+    expect(a.closedWith()).toEqual({ deliver: true });
     const sent = a.kinds().length;
     vi.advanceTimersByTime(5000);
     expect(a.kinds().length).toBe(sent);
@@ -285,6 +287,35 @@ describe("LobbyClient", () => {
     b.client.dispose({ bye: false });
     expect(b.kinds()).not.toContain("bye");
     expect(b.closed()).toBe(true);
+    expect(b.closedWith()).toEqual({ deliver: false });
+  });
+
+  it("says whether an action went out on an open socket or waits behind the next hello", () => {
+    const { client, link } = make("guest");
+    expect(client.sendAction({ type: "endTurn", seat: "p2" })).toBe(true);
+    link.down = true;
+    expect(client.sendAction({ type: "endTurn", seat: "p2" })).toBe(false);
+  });
+
+  it("adopts the other slot when the server seats its id there (ONL3)", () => {
+    const { client, push, posts } = make("guest");
+    push({ kind: "state", snapshot: createSnapshot(CODE, guest) });
+    expect(client.state.status).toBe("connected");
+    expect(client.role).toBe("host");
+    expect(client.self?.id).toBe(testSeatId("g"));
+    expect(client.opponent).toBeNull();
+    push({ kind: "state", snapshot: { ...createSnapshot(CODE, guest), guest: host } });
+    expect(client.opponent?.id).toBe(testSeatId("h"));
+    client.leave();
+    expect(posts.at(-1)).toEqual({ kind: "bye", from: testSeatId("g"), slot: "host" });
+  });
+
+  it("measures its silences on a clock a device clock step does not move (CLI4)", () => {
+    const { client, push } = make("guest");
+    push({ kind: "state", snapshot: snap() });
+    vi.setSystemTime(Date.now() - 10 * 60_000);
+    vi.advanceTimersByTime(PRESENCE_TIMEOUT_MS + 1400);
+    expect(client.state.status).toBe("connecting");
   });
 
   it("posts intents, rematch and actions for its own seat", () => {
@@ -340,6 +371,9 @@ describe("lobby helpers", () => {
     expect(countdownSeconds(1000, 3500)).toBe(1);
     expect(countdownSeconds(1000, 4000)).toBe(0);
     expect(countdownSeconds(1000, 9000)).toBe(0);
+    // A device clock behind the server's counts from the countdown's length, no more (CLI3).
+    expect(countdownSeconds(1000, 1000 - 60_000)).toBe(3);
+    expect(countdownSeconds(1000, 999)).toBe(3);
   });
 
   it("words the versus status", () => {

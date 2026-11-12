@@ -7,6 +7,7 @@ import {
   COUNTDOWN_MS,
   isPublicSeatId,
   LOBBY_DECK_NAME_MAX,
+  LOBBY_FORFEIT_MS,
   LOBBY_NAME_MAX,
   LOBBY_PING_MS,
   LOBBY_SILENCE_MS,
@@ -34,7 +35,7 @@ export const DISCONNECT_GRACE_MS = 5000;
  * How long a player may be gone from a running match before forfeiting. Much longer than
  * `DISCONNECT_GRACE_MS` so a brief reload or network change does not lose the game.
  */
-export const ABANDON_GRACE_MS = 90_000;
+export const ABANDON_GRACE_MS = LOBBY_FORFEIT_MS;
 
 /** How long a socket may go without answering a keepalive before the lobby gives up on it:
     `LOBBY_SILENCE_MS`, the client's own limit, so a client whose path died has already given the
@@ -287,6 +288,46 @@ export function forfeitDeadlines(snapshot: LobbyState): { slot: LobbySlot; deadl
   return seats.flatMap(({ slot, forfeitAt }) =>
     forfeitAt === null ? [] : [{ slot, deadline: forfeitAt }],
   );
+}
+
+/** The forfeit deadlines worth an alarm: every one but two seats' equal deadlines, which
+    `judgeForfeits` holds until a player returns, and whose hello then schedules the other. */
+export function forfeitWakeups(snapshot: LobbyState): number[] {
+  const deadlines = forfeitDeadlines(snapshot).map(({ deadline }) => deadline);
+  return deadlines.filter(
+    (deadline) => deadlines.indexOf(deadline) === deadlines.lastIndexOf(deadline),
+  );
+}
+
+/**
+ * The forfeits due at `now` in a running match, and the snapshot with each judged deadline
+ * consumed. An away seat forfeits only when its deadline is strictly the earliest of the away
+ * seats'. Two away seats on one deadline (both dropped within one sweep) forfeit neither and keep
+ * their deadlines, so whoever comes back first leaves the other to forfeit. A due deadline whose
+ * player is back, or that a lobby out of the game holds, is consumed with no forfeit.
+ */
+export function judgeForfeits(
+  snapshot: LobbyState,
+  now: number,
+  away: (playerId: string) => boolean,
+): { snapshot: LobbyState; forfeiting: LobbySlot[] } {
+  const inGame = snapshot.phase === "in-game";
+  const awayDeadlines = forfeitDeadlines(snapshot).filter(({ slot }) => {
+    const player = slot === "host" ? snapshot.host : snapshot.guest;
+    return player !== null && away(player.id);
+  });
+  const earliest = Math.min(...awayDeadlines.map(({ deadline }) => deadline));
+  const atEarliest = awayDeadlines.filter(({ deadline }) => deadline === earliest);
+  let next = snapshot;
+  const forfeiting: LobbySlot[] = [];
+  for (const { slot, deadline } of forfeitDeadlines(snapshot)) {
+    if (deadline > now) continue;
+    const isAway = awayDeadlines.some((entry) => entry.slot === slot);
+    if (inGame && isAway && deadline === earliest && atEarliest.length > 1) continue;
+    next = withForfeitAt(next, slot, null);
+    if (inGame && isAway && deadline === earliest) forfeiting.push(slot);
+  }
+  return { snapshot: next, forfeiting };
 }
 
 /** Re-seat a reconnecting host: same semantics as `seatGuest` for a known id —

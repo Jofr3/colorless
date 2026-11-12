@@ -446,13 +446,15 @@ are authoritative.
     (`abandoned`). The lobby stays `in-game` on the result.
   - `rematch`, only on a finished game and after the session re-check below, drops the match,
     returns to `selecting` and readies the asker; the other seat's `rematch` or ready accepts. The
-    last game's loser chooses who goes first (`nextChooser`); a tie goes to the coin.
+    last game's loser chooses who goes first (`nextChooser`); a tie goes to the coin, and so does a
+    new guest: a commit that frees the guest seat or seats a new id in it drops `nextChooser`.
   - Outside a match a guest's `bye` frees its seat; the host's only marks it away. There is no
     kick.
 - **Seats and accounts.** The browser mints a seat secret per lobby (`src/online/session.ts`,
   in sessionStorage). A hello presents it; the DO keeps only its hash, the public seat id that
   snapshots and frames name (`packages/schema/src/lobby/seatId.ts`). The first hello claims the
-  host seat, and the host's id always re-seats as host. Another id takes the guest seat when it is
+  host seat, whichever role the tab joined as (a client adopts whichever slot holds its id), and
+  the host's id always re-seats as host. Another id takes the guest seat when it is
   free, or before a match when its holder is gone. A socket keeps the account its cookie resolved
   to at the upgrade. The first signed-in hello binds its seat to that account (`seatUsers`, never
   broadcast): from then on only that account may hold it, and other sockets on it are closed
@@ -499,8 +501,11 @@ are authoritative.
      `LIVENESS_SWEEP_MS`, or `SEATED_LIVENESS_SWEEP_MS` while both seats are held;
   2. disconnect graces: a seat whose last socket dropped shows away after `DISCONNECT_GRACE_MS`;
   3. the countdown and its handoff;
-  4. match forfeits: a seat away from a running match forfeits after `ABANDON_GRACE_MS`, stored
-     as the seat's `forfeitAt`, so the opponent's countdown and the alarm read one number;
+  4. match forfeits: a seat away from a running match forfeits after `ABANDON_GRACE_MS`
+     (`LOBBY_FORFEIT_MS`), stored as the seat's `forfeitAt`, so the opponent's countdown and the
+     alarm read one number. Only a strictly earliest away deadline forfeits (`judgeForfeits`): two
+     seats that went away in one sweep share a deadline and forfeit neither, with no alarm for it,
+     until one comes back;
   5. empty-lobby expiry: `EMPTY_LOBBY_TTL_MS` after the last socket (after `created` for a lobby
      nobody said hello in), `storage.deleteAll()` frees the code.
 
@@ -510,14 +515,23 @@ are authoritative.
   `packages/schema/src/lobby/protocol.ts`.
 - **Reconnect and the log.** The client reconnects with backoff (400 ms doubling to 8 s), queues
   up to 32 frames while down, repeats its hello until it is answered, and replaces a socket
-  silent for 10 s (`src/online/channel.ts`, `src/online/lobbyClient.ts`). A hello with the seat's
+  silent for 10 s (`src/online/channel.ts`, `src/online/lobbyClient.ts`, timed on
+  `performance.now()`). A client that leaves with its link down keeps reconnecting for up to 10 s
+  to deliver the queued `bye` behind its hello. A hello with the seat's
   secret re-seats it with its deck and ready kept and clears any forfeit; in a match it also gets
   the whole match frame. After an accepted action or a forfeit a seat gets only the new log rows
   (`logFrom`). The handoff, a reconnect, a repeated hello and a trimmed log send the whole log,
   and the client answers a gap with a hello. A
   stored match from an older build is migrated on read (`match_migrated`), or retired when
-  unreadable: the lobby leaves `in-game` and both seats get `match-error`. A rollback across a
-  `MATCH_RECORD_VERSION` change retires the newer matches (§3.7.2).
+  unreadable (a `rngState` that is neither a number nor a ChaCha20 state included): the lobby
+  leaves `in-game` and both seats get `match-error`. A rollback across a
+  `MATCH_RECORD_VERSION` change retires the newer matches (§3.7.2). An accepted action, or a
+  forfeit's concede, that breaks `matchViolation` (`lobby/match.ts`: a uid in two zones, a
+  uid lost or minted, the generator left) retires the match the same way, unwritten, and logs
+  `match_broken`. A stored snapshot this build cannot read takes the match, the graces, the seat
+  bindings and the chooser with it (`snapshot_unreadable`), so new players get a new game. The
+  stored log continues only while its first entry is the one written (`matchStore.ts`): a trim
+  starts the log with a new marker, so the trimmed log is rewritten whole.
 - **Abuse limits (security Phase 3, `lobby/logic.ts`):** every frame spends
   from a per-socket token bucket before it is parsed (burst 40, which covers a
   reconnect's 32 queued frames plus its hello; refill 5 a second); a frame past
@@ -1258,6 +1272,8 @@ the first six:
 | `action_threw` *t* | `type`, `error` | The engine threw on an action, error level; it was refused like any move (MI3). Throttled per action `type`, so a throw on another type still logs (API audit LOB7). |
 | `frame_failed` *t* | `frame`, `error` | Handling a frame threw, error level: most likely a storage write refused (a spent daily DO write quota, or a value too large). `frame` is the frame's kind (`hello`, `intent`, `action`, `reject`, `bye`, `rematch`), and the throttle is per frame kind. The error is rethrown, so the invocation also ends as an exception, and the player gets no reply: the table freezes, and the client's hello retry fails the same way. `lobby` is null when reading the code failed too (ERR3). |
 | `match_migrated`, `match_retired` | `from`, `to` / `cause` | A stored match was migrated to this build's version, or retired as unreadable. |
+| `match_broken` | `type`, `violation` | An accepted action (`type`, or `concede` for a forfeit) broke a rule every action keeps, error level (COR-P2): `violation` is `a card is in two zones`, `a card was lost or minted` or `the game left its generator`. An engine bug: the result was not written and the match was retired, both seats told with `match-error`. |
+| `snapshot_unreadable` | | A stored lobby snapshot this build cannot read, error level (COR-P2): it was discarded with its match, graces, seat bindings and chooser, so the next hello starts a fresh lobby. |
 | `seat_orphaned` | `seats` | An alarm pass found `seats` shown connected that no socket holds (their sockets went in a deploy without a close the DO heard) and gave each the reconnect grace. |
 | `alarm_failed` | `error` | An alarm pass threw, error level; the alarm is re-armed, no sooner than 5 s later until a pass succeeds (LOB1). |
 

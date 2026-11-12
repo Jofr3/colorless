@@ -7,6 +7,7 @@ import type {
   RedactedInPlay,
   SeatLogEntry,
 } from "@colorless/schema";
+import { LOBBY_FORFEIT_MS } from "@colorless/schema";
 import { cardImageUrl } from "../lib/api";
 import type { SimCardAction, SimMenu, SimMenuKind, SimOption } from "./simulatorTypes";
 import type { SimulatorOrder } from "./simulatorOrder";
@@ -369,6 +370,12 @@ export function headerRow(f: EmitFrame, s: EmitState, revision: number, events: 
   });
 }
 
+/** Milliseconds until the server's `forfeitAt`, read on this device's clock at `now`: never below
+    0, nor above the forfeit window a device clock behind the server's would read past. */
+export function forfeitMs(forfeitAt: number, now: number): number {
+  return Math.min(LOBBY_FORFEIT_MS, Math.max(0, forfeitAt - now));
+}
+
 /** `L`: the table's mode and presence; `R`: a pending Rare Candy; `D`: knock-outs. */
 export function tableRows(f: EmitFrame, s: EmitState) {
   const { src } = s;
@@ -376,11 +383,12 @@ export function tableRows(f: EmitFrame, s: EmitState) {
     const life = src.lifecycle();
     const away = life.opponentAway;
     // awayMs: the forfeit clock at emit time (Lua counts down from receipt),
-    // -1 away with no clock, '' present.
+    // -1 away with no clock, '' present. The deadline is the server's clock and `now` this
+    // device's, so a device clock behind the server's is held to the forfeit window.
     f.row(W.lifecycle, {
       mode: src.mode,
       awayName: away?.name ?? "",
-      awayMs: !away ? "" : away.forfeitAt === null ? -1 : Math.max(0, away.forfeitAt - s.now),
+      awayMs: !away ? "" : away.forfeitAt === null ? -1 : forfeitMs(away.forfeitAt, s.now),
       flags: life.flags.join(","),
       allow: s.online && !s.view?.allowances ? "partial" : "full",
     });

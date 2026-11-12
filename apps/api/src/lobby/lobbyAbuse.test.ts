@@ -570,14 +570,21 @@ describe("lobby abuse — the match log (MIX2)", () => {
       expect(frame?.logFrom).toBeUndefined();
       expect(frame?.log).toEqual(trimmed);
     }
-    // The next action continues the trimmed log as a delta.
+    // The next action continues the trimmed log as a delta, and writes only its last chunk.
     const next = (await storedState()).phase;
     if (next.kind !== "turn:action") throw new Error("expected the next turn");
+    const put = vi.spyOn(h.storage, "put");
     await h.send(next.seat === "p1" ? host : guest, {
       kind: "action",
       action: { type: "endTurn" },
     });
     expect(host.last("match")?.logFrom).toBe(MATCH_LOG_KEPT + 1);
+    const written = put.mock.calls.flatMap(([entries]) =>
+      typeof entries === "string" ? [entries] : Object.keys(entries),
+    );
+    expect(written.filter((key) => key.startsWith("matchLog:"))).toEqual([
+      `matchLog:${Math.floor(MATCH_LOG_KEPT / LOG_CHUNK)}`,
+    ]);
   });
 });
 

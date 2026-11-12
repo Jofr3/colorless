@@ -523,7 +523,11 @@ check), **countdown** (3, 2, 1, GO! as `attention_text`; only Leave works),
 **starting**, and the info steps **invalid / not-found / full / unreachable /
 outdated** with Back to online. There is no kick and no spectating: a full lobby
 shows "Lobby is full", and a page older than the lobby protocol (close 4026)
-shows "A new version is available".
+shows "A new version is available". A tab refused as full keeps saying hello
+while its link is quiet, and takes a seat it is later given (the guest left and
+its hello landed): it leaves "Lobby is full" for the seat. A friend whose hello
+reaches a brand-new lobby before its creator's sits in the host seat, and the
+creator plays from the guest seat.
 Anonymous players can create and join,
 and sign in from the menu or the picker; the socket then reopens with the same
 seat and the account's name.
@@ -545,7 +549,11 @@ the second readies the other player, and the next game opens on the same table.
 Only an opponent who leaves or disconnects sends the wait back to the lobby
 modal. When the opponent drops, a
 `boss_warning_text` banner names them and counts down the 90-second forfeit
-locally; "{name} is back" pops when they return. Coin flips animate from the
+locally, on `love.timer` so a hidden tab's minute still counts, and never from
+more than 90 s whatever this device's clock says; "{name} is back" pops when
+they return. Both players dropping within one sweep forfeit neither: whoever
+returns first wins once the other's clock runs out. Leave with the link down
+still forfeits as soon as a socket reopens (the bye is delivered for up to 10 s). Coin flips animate from the
 log's cues, and effect prompts take their title from the frame's `invokedBy` and
 `abilityName`. Only the top card of each stack is on the wire, so the bench order
 key (a stack's bottom card) is inferred from frame to frame and resets on reload.
