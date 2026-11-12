@@ -64,6 +64,9 @@ export type LobbyClientState = {
   match: RedactedGame | null;
   /** The match's whole seat-keyed log, rebuilt from each frame (`receivedLog`). */
   matchLog: SeatLogEntry[];
+  /** How many full match frames (each a hello's answer) this client took: the server may never
+      have seen what this seat sent before one. */
+  fullFrames: number;
   /** The last refused game action; cleared by the next accepted one. */
   actionError: ActionError | null;
   /** Why the last match failed to START; cleared by the next lobby state. */
@@ -99,6 +102,7 @@ function initialLobbyState(
     status: host ? "connected" : "connecting",
     match: null,
     matchLog: [],
+    fullFrames: 0,
     actionError: null,
     matchError: null,
     deckId: null,
@@ -144,7 +148,8 @@ export class LobbyClient {
   private unsubscribe: () => void;
   private tick: ReturnType<typeof setInterval> | null = null;
   private disposed = false;
-  /** The server answered our hello "full": we hold no seat, and adopt no frame. */
+  /** The server answered our hello "full": we hold no seat, and adopt no frame until a snapshot
+      seats us. */
   private refused = false;
   private connectedOnce = false;
   private lastServerSeen = 0;
@@ -272,13 +277,16 @@ export class LobbyClient {
     switch (message.kind) {
       case "state": {
         const snapshot = message.snapshot;
-        // Only adopt a snapshot that seats US: refused sockets get broadcasts too.
+        const seat = this.role === "host" ? snapshot.host : snapshot.guest;
+        const ours = seat?.id === this.playerId;
+        // Refused sockets get broadcasts too. A refused tab's re-sent hello may later take the
+        // freed seat, which the server marks connected: adopt it rather than hold it as "full".
         if (this.refused) {
           this.lastServerSeen = this.now();
-          break;
+          if (!ours || !seat.connected) break;
+          this.refused = false;
         }
-        const seat = this.role === "host" ? snapshot.host : snapshot.guest;
-        if (seat?.id !== this.playerId) break;
+        if (!ours) break;
         this.lastServerSeen = this.now();
         this.connectedOnce = true;
         this.startPoll();
@@ -306,6 +314,7 @@ export class LobbyClient {
           match: message.game,
           matchLog,
           actionError: null,
+          ...(message.logFrom === undefined && { fullFrames: this.current.fullFrames + 1 }),
         });
         break;
       }

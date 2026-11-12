@@ -92,6 +92,9 @@ export interface DeckSaver<T> {
   flush(): void;
   /** Whether nothing is left to send: no save queued, waiting out a backoff or in flight. */
   idle(): boolean;
+  /** Resolves once no save is in flight and none will fire on its own: after dispose(), once the
+      flight and the follow-up queued behind it have answered. */
+  settled(): Promise<void>;
   /** Cancel the timer, stop accepting snapshots, and silence future callbacks
       (the builder reset or reloaded). The in-flight request, if any, is left to finish
       server-side — and a snapshot still pending behind it (a flush() that
@@ -117,6 +120,12 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
   let notBefore = 0;
   /** When the last save started. */
   let lastStart = Number.NEGATIVE_INFINITY;
+  const waiters: (() => void)[] = [];
+
+  const isSettled = () => !inFlight && (pending === null || timer === null);
+  const settle = () => {
+    if (isSettled()) for (const resolve of waiters.splice(0)) resolve();
+  };
 
   const clearTimer = () => {
     if (timer !== null) {
@@ -142,6 +151,7 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
     // reported is over.
     if (key === savedKey) {
       if (!disposed) options.onStatus?.("saved");
+      settle();
       return;
     }
     inFlight = true;
@@ -163,6 +173,7 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
         // snapshot flushed during the flight must still reach the server,
         // just without the status callbacks.
         else if (timer === null) fire();
+        settle();
       },
       (error: unknown) => {
         inFlight = false;
@@ -174,6 +185,7 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
           // but a NEWER snapshot queued behind the flight still fires once
           // (schedule() is closed after dispose, so this can't loop).
           if (pending !== null) fire();
+          settle();
           return;
         }
         // Keep (or restore) the unsaved snapshot as pending.
@@ -191,6 +203,7 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
         // Any other failure retries on the next schedule()/flush(); nothing hot-loops on its own.
         rejections = 0;
         options.onStatus?.("failed", error);
+        settle();
       },
     );
   };
@@ -203,6 +216,7 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
         // Back to (or still at) the saved state — drop any queued save.
         pending = null;
         clearTimer();
+        settle();
         return;
       }
       pending = { snapshot, key };
@@ -217,9 +231,14 @@ export function createDeckSaver<T>(options: DeckSaverOptions<T>): DeckSaver<T> {
     idle() {
       return !inFlight && pending === null;
     },
+    settled() {
+      if (isSettled()) return Promise.resolve();
+      return new Promise((resolve) => waiters.push(resolve));
+    },
     dispose() {
       disposed = true;
       clearTimer();
+      settle();
     },
   };
 }

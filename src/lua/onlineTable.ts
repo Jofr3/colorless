@@ -164,6 +164,8 @@ export class LuaOnlineMatch implements TableSource {
   private asked = new Set<string>();
   private keys = new Map<string, string>();
   private autoSent = new Set<string>();
+  /** The client's `fullFrames` when `autoSent` was last cleared. */
+  private fullFrames = 0;
   private auto = false;
   private error: ActionError | null = null;
   private muted: ActionError | null = null;
@@ -373,6 +375,14 @@ export class LuaOnlineMatch implements TableSource {
     if (!next) return;
     const log = this.log();
     const id = this.matchId();
+    // A full frame answers a reconnect's hello: an automatic step sent before it may have been lost
+    // with the old socket, so the decision it still shows is sent again. The engine refuses a copy
+    // that did land, as the phase moved on.
+    const { fullFrames } = this.client.state;
+    if (fullFrames !== this.fullFrames) {
+      this.fullFrames = fullFrames;
+      this.autoSent.clear();
+    }
     if (id !== this.match || log.length < this.logLength) {
       this.match = id;
       this.autoSent.clear();
@@ -413,7 +423,7 @@ export class LuaOnlineMatch implements TableSource {
     this.autoSteps(next);
   }
 
-  /** AutoMulliganDraw and AutoTakePrizes: once per decision, refusals muted. */
+  /** AutoMulliganDraw and AutoTakePrizes: once per decision and full frame, refusals muted. */
   private autoSteps(v: RedactedGame) {
     const action = autoStepFor(v);
     if (!action) return;

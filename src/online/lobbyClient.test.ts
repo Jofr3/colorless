@@ -178,6 +178,20 @@ describe("LobbyClient", () => {
     });
   });
 
+  it("a full lobby's refused tab adopts a state that seats it connected, and only that", () => {
+    const { client, push } = make("guest", "z");
+    push({ kind: "reject", to: testSeatId("z"), reason: "full" });
+    // A seat refused to this socket (bound to another account) still names it, away.
+    const away = { ...makePlayer(testSeatId("z"), "Zed"), connected: false };
+    push({ kind: "state", snapshot: snap({ guest: away }) });
+    expect(client.state).toMatchObject({ status: "full", snapshot: null });
+    const seated = snap({ guest: makePlayer(testSeatId("z"), "Zed") });
+    push({ kind: "state", snapshot: seated });
+    expect(client.state).toMatchObject({ status: "connected", snapshot: seated });
+    push({ kind: "match", game, log: [] });
+    expect(client.state.match).toEqual(game);
+  });
+
   it("a match-error survives the state that clears it", () => {
     const { client, push } = make("host");
     push({ kind: "state", snapshot: snap({ phase: "countdown", countdownStartedAt: 1 }) });
