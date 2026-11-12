@@ -324,7 +324,8 @@ Order of operations for a declared attack:
      attack/effects that add to base damage *before* Weakness).
    - **Stop if that number is 0** (the rulebook's damage step 2: "Stop if the base damage
      is 0 (or if the attack does not do any damage at all). Otherwise, keep going.") — no
-     Weakness, Resistance or final modifier applies to a stopped hit (D547).
+     Weakness, Resistance or final modifier applies to a stopped hit (D547); an old-era
+     additive Weakness (`+20`) does not lift a 0 to 20 either.
    - **Weakness**: if the Defender has Weakness to the attacker's type, **multiply by
      the printed multiplier — currently ×2** (Defenders print `×2`; if only a symbol
      with no number, treat as ×2). **[current: ×2]**
@@ -340,7 +341,10 @@ Order of operations for a declared attack:
 7. **Knock Out check** (see §8.1). Then the turn ends → Between-turns (§13) [🆕 D570 (D539): except a FIRST attack under Festival Lead with Festival Grounds in play, which reopens the action phase for a second attack or `endTurn` only (§5.3)].
 
 ### 8.1 Knock Out (KO) & taking prizes
-- A Pokémon is **Knocked Out** when its **damage ≥ its current HP**.
+- A Pokémon is **Knocked Out** when its **damage ≥ its current HP**, or when an effect
+  says it is Knocked Out ("the Defending Pokémon will be Knocked Out" at the end of the
+  opponent's next turn). That Knock Out is not damage, so a heal before the check (a
+  Checkup heal such as Good Sleep) does not cancel it.
 - On KO: the entire stack (all cards, attached Energy, Tools) goes to its owner's
   **discard pile** (unless an effect sends it elsewhere, e.g. Lost Zone).
 - The player **who KO'd** the Pokémon **takes prize card(s)**:
@@ -685,17 +689,24 @@ and after promotion.
 3. **Deck-out**: your opponent **cannot draw** a card at the **start of their turn**
    because their deck is empty. → you win. Checked at the draw step.
 
-**Simultaneous / tie handling:** if both players would win at the same instant (e.g.
-both empty their Bench from one attack, or both take their last prize), the official
-tournament rule breaks the tie via a **sudden-death game** (in casual play, treat as a
-draw). Engine: surface a `TIE` / `SUDDEN_DEATH` outcome rather than silently picking.
-A tie takes every Prize the Knock Outs owed before the game ends, so the final board
-shows them taken.
+**Simultaneous wins:** if both players would win at the same instant (e.g. both empty
+their Bench from one attack, or both take their last prize), the conditions are
+**counted**. The official rulebook, "What if both players win at the same time?"
+(Advanced Rules, page 21 of the Scarlet & Violet Surging Sparks and the Sword & Shield
+Fusion Strike rulebooks, pokemon.com): "If this happens, play Sudden Death. However, if
+you win in both ways and your opponent wins in only one way, you are the victor!" The
+"two ways" are conditions 1 and 2 above; deck-out is checked alone at the draw. The
+2025-01-01 Play! Pokémon Tournament Rules Handbook adds nothing on this case. Engine:
+`evaluateWin` lists each seat's conditions; more conditions wins (its reason is the
+first by precedence, Prizes before the empty board), equal counts are a `tie` (Sudden
+Death is not played; in casual play, treat it as a draw). A simultaneous end takes
+every Prize the Knock Outs owed before the game ends, so the final board shows them
+taken (correctness audit decision 5 (a), 2026-11-12).
 
 **A game already decided ends at once:** when a win condition holds as a Knock Out
 batch settles (the opponent has no Pokémon in play), the engine ends the game before
-parking a Prize pick or a promotion, so the winner is not left a pick to walk away
-from (correctness audit decision 3 (a), 2026-11-12).
+parking a Prize pick or a promotion, or running an on-KO program, so the winner is not
+left a pick to walk away from (correctness audit decision 3 (a), 2026-11-12).
 
 ---
 

@@ -669,11 +669,13 @@ export function collectKnockOuts(
 }
 
 /**
- * The §14 tie check over a settled batch: take the owed prizes on a speculative state and ask
- * `evaluateWin`. Only the prizes are speculative, since the Knock Outs already happened. Returns
- * only a tie, with the state and PRIZES_TAKEN events of the takes, so the game ends with them taken;
- * a one-sided win is left to the stage path. A take that leaves Prizes behind takes them from the
- * front of the row, since the game ends before anyone would pick.
+ * The §14 simultaneous check over a settled batch: take the owed prizes on a speculative state and
+ * ask `evaluateWin`. Only the prizes are speculative, since the Knock Outs already happened. Returns
+ * an outcome only when both seats meet a win condition (a tie, or a win in both ways against one),
+ * with the state and PRIZES_TAKEN events of the takes, so the game ends with them taken; a
+ * one-sided win is left to the stage path, whose stage order would otherwise decide the count. A
+ * take that leaves Prizes behind takes them from the front of the row, since the game ends before
+ * anyone would pick.
  */
 function tiedOverTheBatch(
   state: GameState,
@@ -689,7 +691,8 @@ function tiedOverTheBatch(
     speculative = resolveTakePrizes(speculative, stage.seat, indices, events);
   }
   const outcome = evaluateWin(speculative);
-  if (outcome === null || outcome.result !== "tie") return null;
+  if (outcome === null) return null;
+  if (SEATS.some((seat) => winConditionsMet(speculative, seat).length === 0)) return null;
   return { outcome, state: speculative, events };
 }
 
@@ -1785,28 +1788,36 @@ function returnBoomerangs(
   return recoverStatuses(next, events);
 }
 
-/** §14.1–§14.2, evaluated for BOTH seats at once and in precedence order per
-    seat (taking your last prize outranks the opponent's empty board when
-    both hold at the same instant). Both seats winning together is the §14
-    simultaneous case and comes back a TIE — deck-out (§14.3) cannot
-    participate, it is checked at the single drawing player's draw
-    (startTurn). Null = play on. */
+/** §14.1–§14.2, evaluated for BOTH seats at once. Each seat's conditions are
+    listed in precedence order (taking your last prize outranks the
+    opponent's empty board), and the first names its reason. When both seats
+    meet a condition at the same instant, the rulebook's "What if both
+    players win at the same time?": a seat that wins in both ways against one
+    that wins in only one way is the victor; otherwise it is a TIE (Sudden
+    Death). Deck-out (§14.3) cannot participate, it is checked at the single
+    drawing player's draw (startTurn). Null = play on. */
 export function evaluateWin(state: GameState): GameOutcome | null {
-  const reasons: Partial<Record<Seat, GameOverReason>> = {};
-  for (const seat of SEATS) {
-    const opponent = state.players[otherSeat(seat)];
-    if (state.players[seat].prizes.length === 0) {
-      reasons[seat] = "prizesTaken";
-    } else if (opponent.active === null && opponent.bench.length === 0) {
-      reasons[seat] = "noPokemon";
-    }
+  const p1 = winConditionsMet(state, "p1");
+  const p2 = winConditionsMet(state, "p2");
+  const [p1Reason] = p1;
+  const [p2Reason] = p2;
+  if (p1Reason !== undefined && (p2Reason === undefined || p1.length > p2.length)) {
+    return { result: "win", winner: "p1", reason: p1Reason };
   }
-  const p1 = reasons.p1;
-  const p2 = reasons.p2;
-  if (p1 !== undefined && p2 !== undefined) return { result: "tie", reasons: { p1, p2 } };
-  if (p1 !== undefined) return { result: "win", winner: "p1", reason: p1 };
-  if (p2 !== undefined) return { result: "win", winner: "p2", reason: p2 };
-  return null;
+  if (p2Reason !== undefined && (p1Reason === undefined || p2.length > p1.length)) {
+    return { result: "win", winner: "p2", reason: p2Reason };
+  }
+  if (p1Reason === undefined || p2Reason === undefined) return null;
+  return { result: "tie", reasons: { p1: p1Reason, p2: p2Reason } };
+}
+
+/** The §14.1–§14.2 conditions `seat` meets, in precedence order. */
+function winConditionsMet(state: GameState, seat: Seat): GameOverReason[] {
+  const opponent = state.players[otherSeat(seat)];
+  const reasons: GameOverReason[] = [];
+  if (state.players[seat].prizes.length === 0) reasons.push("prizesTaken");
+  if (opponent.active === null && opponent.bench.length === 0) reasons.push("noPokemon");
+  return reasons;
 }
 
 /**

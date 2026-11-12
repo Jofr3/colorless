@@ -566,6 +566,34 @@ describe("win conditions (§14)", () => {
     expect(evaluateWin(base)).toBeNull();
   });
 
+  it("counts the conditions: both ways against one wins, both ways against both ties (COR-P1)", () => {
+    const base = matchup("fix-wall");
+    const side = (seat: "p1" | "p2", prizes: boolean, pokemon: boolean) => ({
+      ...base.players[seat],
+      ...(prizes ? { prizes: [] } : {}),
+      ...(pokemon ? {} : { active: null, bench: [] }),
+    });
+    const board = (p1: GameState["players"]["p1"], p2: GameState["players"]["p2"]): GameState => ({
+      ...base,
+      players: { p1, p2 },
+    });
+    // p1 is out of Prizes and p2 out of Pokémon (two for p1); p2 is out of Prizes (one).
+    expect(evaluateWin(board(side("p1", true, true), side("p2", true, false)))).toEqual({
+      result: "win",
+      winner: "p1",
+      reason: "prizesTaken",
+    });
+    expect(evaluateWin(board(side("p1", true, false), side("p2", true, true)))).toEqual({
+      result: "win",
+      winner: "p2",
+      reason: "prizesTaken",
+    });
+    expect(evaluateWin(board(side("p1", true, false), side("p2", true, false)))).toEqual({
+      result: "tie",
+      reasons: { p1: "prizesTaken", p2: "prizesTaken" },
+    });
+  });
+
   it("hands out a GAME_OVER outcome detached from the state", () => {
     const { state: done, events } = parkedOnPrizes({ bench: 0 });
     const over = events.find((e) => e.type === "GAME_OVER");

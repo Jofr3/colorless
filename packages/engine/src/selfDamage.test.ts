@@ -219,6 +219,32 @@ describe("the two-seat sweep — a self-KO the old single-seat sweep would miss"
     ]);
   });
 
+  it("WINS for the side that meets both win conditions against one: last Prize plus an empty opposing board beats last Prize alone (COR-P1)", () => {
+    for (const emptied of ["p1", "p2"] as const) {
+      let state = matchup(4, "fix-victim");
+      state = setDamage(state, "p1", 150);
+      state = setPrizes(state, "p1", 1);
+      state = setPrizes(state, "p2", 1);
+      state = {
+        ...state,
+        players: { ...state.players, [emptied]: { ...state.players[emptied], bench: [] } },
+      };
+      const { state: after, events } = mustApply(state, {
+        type: "attack",
+        seat: "p1",
+        index: BLAZING_SHOUT.index,
+      });
+      expect(events.filter((e) => e.type === "KNOCKED_OUT")).toHaveLength(2);
+      expect(findEvent(events, "GAME_OVER")?.outcome, emptied).toEqual({
+        result: "win",
+        winner: emptied === "p1" ? "p2" : "p1",
+        reason: "prizesTaken",
+      });
+      expect(after.players.p1.prizes).toEqual([]);
+      expect(after.players.p2.prizes).toEqual([]);
+    }
+  });
+
   it("LOSES the attacker (§14.2) at once when the recoil KOs its LAST Pokémon (COR-P0E)", () => {
     let state = matchup(6, "fix-bigbody");
     state = { ...state, players: { ...state.players, p1: { ...state.players.p1, bench: [] } } };
