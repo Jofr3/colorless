@@ -11,8 +11,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 // ---- The release pin (tmp/release.json) ----
 
-/** How long a pin holds the release for its commit. A release takes about three minutes after
-    `release:gate`; an older pin is a release that died without `abort` and no longer counts. */
+/** How long a pin holds the lock against another commit's release after its release last ran a
+    step. A release takes about three minutes after `release:gate`; a pin no step has refreshed for
+    longer is a release that died without `abort`, and another commit may take the lock. */
 export const PIN_TTL_MS = 15 * 60 * 1000;
 
 /** tmp/release.json: the commit `release:gate` checked, pinned for the steps after it, and what
@@ -23,6 +24,8 @@ export type ReleasePin = {
   before: Record<string, string>;
   deployed: Record<string, string>;
   bookmark?: string;
+  /** When a release-gate step of this release last ran; `startedAt` until one has. */
+  refreshedAt?: string;
 };
 
 export function parsePin(value: unknown): ReleasePin | undefined {
@@ -40,16 +43,43 @@ export function parsePin(value: unknown): ReleasePin | undefined {
     before: ids(value.before),
     deployed: ids(value.deployed),
     ...(typeof value.bookmark === "string" ? { bookmark: value.bookmark } : {}),
+    ...(typeof value.refreshedAt === "string" ? { refreshedAt: value.refreshedAt } : {}),
   };
 }
 
-/** The pin when it still holds the release at `now`, else undefined (none, unreadable or old). */
+/** The pin when it still holds the lock at `now`, else undefined (none, unreadable or old). */
 export function activePin(pin: ReleasePin | undefined, now: number): ReleasePin | undefined {
   if (pin === undefined) return undefined;
-  const started = Date.parse(pin.startedAt);
-  return !Number.isNaN(started) && now - started < PIN_TTL_MS && started <= now + 60_000
-    ? pin
-    : undefined;
+  const seen = Date.parse(pin.refreshedAt ?? pin.startedAt);
+  return !Number.isNaN(seen) && now - seen < PIN_TTL_MS && seen <= now + 60_000 ? pin : undefined;
+}
+
+/** The pin of `head`'s release, whatever its age: the TTL frees the lock for another commit, so a
+    release that ran long still records and tags what it deployed. */
+export function releasePinOf(pin: ReleasePin | undefined, head: string): ReleasePin | undefined {
+  return pin?.commit === head ? pin : undefined;
+}
+
+/** The pin of `head`'s release after `change`, refreshed at `now`; undefined with no such pin. A
+    step that only a release runs names itself as `requiredBy`, and then a missing pin throws, since
+    what the step learns would otherwise go unrecorded. */
+export function updatedPin(
+  pin: ReleasePin | undefined,
+  head: string,
+  now: number,
+  change: (pin: ReleasePin) => void,
+  requiredBy?: string,
+): ReleasePin | undefined {
+  const own = releasePinOf(pin, head);
+  if (own === undefined) {
+    if (requiredBy === undefined) return undefined;
+    throw new Error(
+      `${requiredBy}: FAIL — tmp/release.json holds ${pin ? `the release of ${shortSha(pin.commit)}` : "no release"}, not HEAD ${shortSha(head)}; release again.`,
+    );
+  }
+  const next = { ...own, before: { ...own.before }, deployed: { ...own.deployed } };
+  change(next);
+  return { ...next, refreshedAt: new Date(now).toISOString() };
 }
 
 /** Why `release:gate` must not pin `head`, or undefined when it may. An active pin of the same

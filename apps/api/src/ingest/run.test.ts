@@ -1,8 +1,10 @@
 import { type TcgdexCard, tcgdexCardSchema } from "@colorless/schema";
 import cardPokemon from "@colorless/schema/tcgdex-fixtures/card-pokemon-swsh3-136.json";
 import { describe, expect, it } from "vitest";
+import type { CardRow } from "./map";
 import {
   createRowsTally,
+  evolutionNamesCheck,
   exitCode,
   legalityDrift,
   mapBounded,
@@ -147,6 +149,8 @@ describe("exitCode", () => {
     evolvingBasics: [],
     unresolvedEvolutions: [],
     namesUnread: false,
+    typelessEnergies: [],
+    ruleBoxMismatches: [],
     epochStamped: true,
     postPassFailed: false,
   };
@@ -159,8 +163,43 @@ describe("exitCode", () => {
     expect(exitCode({ ...clean, evolvingBasics: ["me06-011"] })).toBe(1);
     expect(exitCode({ ...clean, unresolvedEvolutions: ["30th-c-006"] })).toBe(1);
     expect(exitCode({ ...clean, namesUnread: true })).toBe(1);
+    expect(exitCode({ ...clean, typelessEnergies: ["me06-199"] })).toBe(1);
+    expect(exitCode({ ...clean, ruleBoxMismatches: ["sv01-001: x"] })).toBe(1);
     expect(exitCode({ ...clean, epochStamped: false })).toBe(1);
     expect(exitCode({ ...clean, postPassFailed: true })).toBe(1);
+  });
+});
+
+describe("evolutionNamesCheck", () => {
+  const evolver = (id: string, evolveFrom: string) =>
+    ({ id, category: "Pokemon", name: `${evolveFrom}'s next`, evolveFrom }) as CardRow;
+  const evolvers = [
+    evolver("sv01-002", "Bulbasaur"),
+    evolver("sv02-005", "Charmander"),
+    evolver("sv03-009", "Missingno"),
+  ];
+
+  it("resolves an evolution against this run's names and the target's, and names the rest (COR-P4)", () => {
+    const stored = [{ name: "Charmander" }];
+    expect(evolutionNamesCheck(evolvers, new Set(["Bulbasaur"]), () => stored)).toEqual({
+      unresolved: ["sv03-009"],
+      names: 2,
+    });
+  });
+
+  it("resolves this run's own names on a dry run, whose target holds none of them", () => {
+    expect(
+      evolutionNamesCheck(evolvers, new Set(["Bulbasaur", "Charmander", "Missingno"]), () => []),
+    ).toEqual({ unresolved: [], names: 3 });
+  });
+
+  it("checks nothing and says why when the target's names cannot be read", () => {
+    const failing = () => {
+      throw new Error("wrangler exited 1");
+    };
+    expect(evolutionNamesCheck(evolvers, new Set(), failing)).toEqual({
+      unread: "wrangler exited 1",
+    });
   });
 });
 

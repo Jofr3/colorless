@@ -32,7 +32,12 @@ export const cardIdSchema = z
 
 const nameField = z.string().trim().min(1).max(DECK_NAME_MAX);
 const tintField = z.number().int().min(0).max(360);
-const formatField = z.string().trim().min(1).max(32);
+
+/** The play formats a deck write may name: the engine's FORMATS ids, which an api test keeps
+    equal to this list. The read schemas stay free text, so a deck saved before this check loads.
+    The field takes any string as input, since the builder sends back the format it loaded. */
+export const DECK_FORMAT_IDS = ["standard", "expanded"] as const;
+const formatField = z.string().pipe(z.enum(DECK_FORMAT_IDS));
 
 /** A deck's card list: capped, and each catalog card appears at most once —
     copies are expressed through `count`, never by repeating the entry. */
@@ -73,7 +78,8 @@ export const createDeckRequestSchema = z.object({
   folderId: z.null().optional(),
   cards: deckCardsField.default([]),
 });
-export type CreateDeckRequest = z.infer<typeof createDeckRequestSchema>;
+/** What a client may send. */
+export type CreateDeckRequest = z.input<typeof createDeckRequestSchema>;
 
 export const patchDeckRequestSchema = nonEmptyPatch({
   name: nameField.optional(),
@@ -92,4 +98,4 @@ export const patchDeckRequestSchema = nonEmptyPatch({
       last-writer-wins, as for the library's rename. */
   version: z.number().int().min(0).optional(),
 });
-export type PatchDeckRequest = z.infer<typeof patchDeckRequestSchema>;
+export type PatchDeckRequest = z.input<typeof patchDeckRequestSchema>;

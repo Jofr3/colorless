@@ -11,18 +11,19 @@
 // Checks: SQLite integrity and foreign keys; ownership the routes enforce (favourite deck, a deck's
 // folder, a folder's parent); the value domains the request schemas enforce; one card per set
 // number; the reprint post-pass (`*_effective` = OR over the print_key group); `print_key` matching
-// what the current `printKey` and `normalizeCardText` compute from the stored columns (a mismatch
-// after either changes means a full re-ingest is owed); and with `--upstream`, card ids tcgdex no
-// longer lists (report only; every card of a set that now answers 404), and any set it could not
-// read.
+// what today's `mapCard` keys the stored columns as, with every text transform and supplement (a
+// mismatch after a mapper change means a full re-ingest is owed); an Energy with no type; every
+// legal Pokémon's Prize value and suffix against its printed family (src/ingest/ruleBoxes.ts); and
+// with `--upstream`, card ids tcgdex no longer lists (report only; every card of a set that now
+// answers 404), and any set it could not read.
 
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import {
-  CARD_KEY_COLUMNS,
   CONSISTENCY_CHECKS,
   COUNTED_TABLES,
   printKeyMismatches,
+  storedRuleBoxMismatches,
 } from "../src/db/consistency";
 import { createSource } from "../src/ingest/source";
 import { staleCardIds } from "../src/ingest/staleCards";
@@ -68,12 +69,17 @@ const counts = COUNTED_TABLES.map(
 );
 console.log(`rows: ${counts.join(", ")}`);
 
-const cards =
-  d1Query(target, `SELECT ${CARD_KEY_COLUMNS} FROM cards ORDER BY id`, persistTo)[0] ?? [];
-failures.push({
-  name: "print_key differs from the current printKey (full re-ingest owed)",
-  rows: printKeyMismatches(cards),
-});
+const cards = d1Query(target, "SELECT * FROM cards ORDER BY id", persistTo)[0] ?? [];
+failures.push(
+  {
+    name: "print_key differs from what mapCard keys today (full re-ingest owed)",
+    rows: printKeyMismatches(cards),
+  },
+  {
+    name: "legal Pokémon whose Prize value or suffix disagrees with its printed family",
+    rows: storedRuleBoxMismatches(cards),
+  },
+);
 if (args.upstream) {
   const { stale, unreadable } = await staleCardIds(cards, createSource("fetch"));
   failures.push(

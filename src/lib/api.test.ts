@@ -121,7 +121,7 @@ describe("request plumbing", () => {
     );
     const body = {
       name: worst.repeat(DECK_NAME_MAX),
-      format: worst.repeat(32),
+      format: "expanded",
       cards: ids.map((cardId) => ({ cardId, count: 99 })),
       chosenCoverCardId: ids[0] ?? null,
       version: Number.MAX_SAFE_INTEGER,

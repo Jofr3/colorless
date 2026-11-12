@@ -53,6 +53,13 @@ function pokemon(
     0, 1, '${id}', 0, 1)`;
 }
 
+function energy(id: string, energyType: string | null): string {
+  return `INSERT INTO cards (id, set_id, local_id, name, category, energy_type, legal_standard,
+    legal_expanded, print_key, legal_standard_effective, legal_expanded_effective)
+    VALUES ('${id}', 'sv01', '${id}', 'Some Energy', 'Energy',
+    ${energyType === null ? "NULL" : `'${energyType}'`}, 0, 1, '${id}', 0, 1)`;
+}
+
 /** The statements that break each rule, run after two clean accounts `a` and `b` exist. */
 const VIOLATIONS: Record<string, string[]> = {
   "favourite deck owned by another user": [
@@ -81,6 +88,7 @@ const VIOLATIONS: Record<string, string[]> = {
     pokemon("sv01-203", "Mega Golisopod ex", "Basic", "Wimpod"),
   ],
   "evolve_from names no card": [pokemon("sv01-204", "Dark Tyranitar", "Stage2", "Dark Pupitar")],
+  "Energy with no energy_type": [energy("sv01-230", null)],
 };
 
 /** Checks a test cannot break: D1 enforces foreign keys and owns the file, and the unique
@@ -118,7 +126,7 @@ describe("consistency checks", () => {
     for (const check of CONSISTENCY_CHECKS) expect(await rows(check.name), check.name).toEqual([]);
   });
 
-  it("finds nothing in the evolutions listed as unplayable, nor in a resolved one", async () => {
+  it("finds nothing in the evolutions listed as unplayable, nor in a resolved one, nor in the Energies listed as typeless gaps", async () => {
     const { db } = getDb();
     await db.batch(
       [
@@ -128,6 +136,10 @@ describe("consistency checks", () => {
         pokemon("sv01-202", "Wimpod", "Basic", null),
         pokemon("sv01-203", "Mega Golisopod ex", "Stage1", "Wimpod"),
         pokemon("sv01-205", "Omanyte", "Stage1", "Nest Ball"),
+        energy("me06-132", null),
+        energy("me06-133", null),
+        energy("me06-134", null),
+        energy("sv01-231", "Special"),
       ].map((sql) => db.prepare(sql)),
     );
     try {
@@ -135,6 +147,7 @@ describe("consistency checks", () => {
         "non-Basic Pokémon with no evolve_from",
         "Basic Pokémon with an evolve_from",
         "evolve_from names no card",
+        "Energy with no energy_type",
       ]) {
         expect(await rows(name), name).toEqual([]);
       }

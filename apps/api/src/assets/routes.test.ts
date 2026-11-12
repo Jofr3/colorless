@@ -254,6 +254,37 @@ describe("serveMirroredAsset stores only images from the asset origin", () => {
     expect(refusals(warn)).toEqual([reason]);
   });
 
+  it.each<[string, { status: number; url?: string; headers?: Record<string, string> }]>([
+    ["an origin 503", { status: 503 }],
+    ["an origin 404", { status: 404 }],
+    ["an origin 410", { status: 410 }],
+    ["an origin 429", { status: 429 }],
+    ["a redirect off the origin", { status: 200, url: "https://cdn.evil.example/x.webp" }],
+    ["an HTML soft 404", { status: 200, headers: { "Content-Type": "text/html" } }],
+  ])("cancels the unread body of %s (COR-P4)", async (_label, answer) => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    let cancelled = false;
+    const body = new ReadableStream({
+      cancel() {
+        cancelled = true;
+      },
+    });
+    const upstream = new Response(body, {
+      status: answer.status,
+      headers: answer.headers ?? { "Content-Type": "image/webp" },
+    });
+    if (answer.url !== undefined) Object.defineProperty(upstream, "url", { value: answer.url });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => upstream),
+    );
+    const { env, puts } = emptyBucket();
+    const res = await serve(env);
+    expect(res === null || res.status === 502).toBe(true);
+    expect(cancelled).toBe(true);
+    expect(puts).toEqual([]);
+  });
+
   it("follows a redirect that stays on the origin", async () => {
     const res = image();
     Object.defineProperty(res, "url", { value: "https://assets.tcgdex.net/elsewhere/high.webp" });

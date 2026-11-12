@@ -84,6 +84,19 @@ describe("createFetchSource", () => {
     await expect(source.getCard("nope-1")).rejects.toThrow("HTTP 404 for /cards/nope-1");
   });
 
+  it("cancels the body of a non-2xx before it throws, so the connection is not held (COR-P4)", async () => {
+    let cancelled = false;
+    const body = new ReadableStream({
+      cancel() {
+        cancelled = true;
+      },
+    });
+    const impl = (async () => new Response(body, { status: 503 })) as unknown as typeof fetch;
+    const source = createFetchSource({ fetchImpl: impl, delayMs: 0 });
+    await expect(source.getCard("sv01-001")).rejects.toThrow("HTTP 503 for /cards/sv01-001");
+    expect(cancelled).toBe(true);
+  });
+
   it("honours a custom base url", async () => {
     const { impl, urls } = stubFetch({});
     const source = createFetchSource({ fetchImpl: impl, delayMs: 0, baseUrl: "http://x/v2/fr" });

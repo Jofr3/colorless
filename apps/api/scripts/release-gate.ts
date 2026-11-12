@@ -14,8 +14,10 @@
 //
 // pin         Pins HEAD in tmp/release.json for the rest of the release, so every later
 //             clean-tree requires the commit `check` and the gates saw. Refuses while another
-//             commit's release holds a pin younger than 15 minutes (`unlock` drops a dead one); a
-//             pin of the same commit is an earlier, failed run of this release and is taken over.
+//             commit's release holds a pin a step refreshed in the last 15 minutes (each step of a
+//             release refreshes it; `unlock` drops a dead one); a pin of the same commit is an
+//             earlier, failed run of this release and is taken over. HEAD's own pin holds for its
+//             steps whatever its age, so a release that runs long still records and tags.
 //             Refuses, printing the move, while tmp/ still holds releases.log or d1-bookmarks.log.
 // clean-tree  No uncommitted changes; HEAD is the remote's main (`git ls-remote`, not the local
 //             origin/main ref, which a merge on GitHub leaves behind); and HEAD is the pinned commit
@@ -95,9 +97,11 @@ import {
   probeProblem,
   type ReleasePin,
   releaseLogLine,
+  releasePinOf,
   releaseTagName,
   remoteMainOf,
   shortSha,
+  updatedPin,
   webDistProblems,
 } from "../src/releaseChecks";
 import { missingSecrets, REQUIRED_SECRETS } from "../src/requiredSecrets";
@@ -146,12 +150,12 @@ function savePin(pin: ReleasePin): void {
   writeFileSync(PIN_FILE, `${JSON.stringify(pin, null, 2)}\n`);
 }
 
-/** Updates the active pin when it is the release of HEAD; a bare deploy has none to update. */
-function updatePin(head: string, change: (pin: ReleasePin) => void): void {
-  const pin = currentPin();
-  if (pin === undefined || pin.commit !== head) return;
-  change(pin);
-  savePin(pin);
+/** Updates and refreshes the pin of HEAD's release, whatever its age; whether there was one. A bare
+    deploy has none to update; a step only a release runs passes `requiredBy`, and then fails. */
+function updatePin(head: string, change: (pin: ReleasePin) => void, requiredBy?: string): boolean {
+  const pin = updatedPin(readPin(), head, Date.now(), change, requiredBy);
+  if (pin !== undefined) savePin(pin);
+  return pin !== undefined;
 }
 
 /** Whether this run wrote the pin, so a failure later in the same run drops it again. */
@@ -321,9 +325,13 @@ const STEPS: Record<string, () => void | Promise<void>> = {
   },
   bookmark: () => {
     const bookmark = recordBookmark("release");
-    updatePin(git("rev-parse", "HEAD"), (pin) => {
-      pin.bookmark = bookmark;
-    });
+    updatePin(
+      git("rev-parse", "HEAD"),
+      (pin) => {
+        pin.bookmark = bookmark;
+      },
+      "bookmark",
+    );
   },
   versions: () => {
     const head = git("rev-parse", "HEAD");
@@ -332,9 +340,13 @@ const STEPS: Record<string, () => void | Promise<void>> = {
       const status = JSON.parse(wrangler(["deployments", "status", "--json"], worker.dir));
       before[worker.name] = activeVersionOf(status) ?? "?";
     }
-    updatePin(head, (pin) => {
-      pin.before = before;
-    });
+    updatePin(
+      head,
+      (pin) => {
+        pin.before = before;
+      },
+      "versions",
+    );
     console.log(
       `versions: OK — running before the release: ${WORKERS.map((w) => `${w.name} ${before[w.name]}`).join(", ")}`,
     );
@@ -521,11 +533,12 @@ const STEPS: Record<string, () => void | Promise<void>> = {
   },
   finish: () => {
     const head = git("rev-parse", "HEAD");
-    const pin = currentPin();
-    if (pin === undefined || pin.commit !== head)
+    const held = readPin();
+    const pin = releasePinOf(held, head);
+    if (pin === undefined)
       throw new Error(
         [
-          `finish: FAIL — tmp/release.json holds ${pin ? shortSha(pin.commit) : "no release"}, not HEAD ${shortSha(head)}.`,
+          `finish: FAIL — tmp/release.json holds ${held ? shortSha(held.commit) : "no release"}, not HEAD ${shortSha(head)}.`,
           "finish records a release that `bun run release` pinned and deployed; nothing was tagged.",
         ].join("\n"),
       );
@@ -627,12 +640,13 @@ function deployLabelled(command: readonly string[]): void {
     throw new Error(
       `deploy: FAIL — \`${command.join(" ")}\` exited ${run.status ?? run.error?.message}`,
     );
+  const recorded = updatePin(head, (pin) => {
+    for (const { worker, versionId } of deployed) pin.deployed[worker] = versionId;
+  });
   for (const { worker, versionId } of deployed) {
-    updatePin(head, (pin) => {
-      pin.deployed[worker] = versionId;
-    });
     console.log(`deploy: ${worker} version ${versionId}, tagged ${shortSha(head)}`);
   }
+  if (!recorded) console.log("deploy: no release pins HEAD, so tmp/release.json records nothing");
 }
 
 const argv = process.argv.slice(2);
@@ -648,7 +662,10 @@ if ((requested.length === 0 && command === undefined) || unknownSteps.length > 0
   process.exit(1);
 }
 try {
-  for (const step of requested) await STEPS[step]?.();
+  for (const step of requested) {
+    if (step !== "abort" && step !== "unlock") updatePin(git("rev-parse", "HEAD"), () => {});
+    await STEPS[step]?.();
+  }
   if (command !== undefined) deployLabelled(command);
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   CARD_ID_MAX,
   createDeckRequestSchema,
+  DECK_FORMAT_IDS,
   deckSchema,
   deckSummarySchema,
   MAX_DECK_CARD_ENTRIES,
@@ -9,6 +10,17 @@ import {
 } from "./index";
 
 const card = (cardId: string, count = 1) => ({ cardId, count });
+const storedDeck = (format: string) => ({
+  id: "d1",
+  name: "Old",
+  format,
+  tint: 0,
+  folderId: null,
+  position: 0,
+  updated: "2026-07-09T00:00:00.000Z",
+  cardCount: 0,
+  coverCardId: null,
+});
 
 describe("deckSchema / deckSummarySchema", () => {
   const base = {
@@ -109,6 +121,8 @@ describe("createDeckRequestSchema", () => {
     ["missing tint", { name: "No tint" }],
     ["negative tint", { name: "Neg", tint: -1 }],
     ["blank format", { name: "Fmt", tint: 0, format: " " }],
+    ["format in another case", { name: "Fmt", tint: 0, format: "Expanded" }],
+    ["format no build knows", { name: "Fmt", tint: 0, format: "glc" }],
     ["count above 99", { name: "Cap", tint: 0, cards: [card("sv01-001", 100)] }],
   ])("rejects %s", (_label, body) => {
     expect(createDeckRequestSchema.safeParse(body).success).toBe(false);
@@ -139,6 +153,20 @@ describe("patchDeckRequestSchema", () => {
   it("accepts a lone explicit null (clear folder / format)", () => {
     expect(patchDeckRequestSchema.parse({ folderId: null }).folderId).toBeNull();
     expect(patchDeckRequestSchema.parse({ format: null }).format).toBeNull();
+  });
+
+  it("takes each known format id and refuses any other (COR-P4)", () => {
+    for (const id of DECK_FORMAT_IDS) {
+      expect(createDeckRequestSchema.parse({ name: "F", tint: 0, format: id }).format).toBe(id);
+      expect(patchDeckRequestSchema.parse({ format: id }).format).toBe(id);
+    }
+    for (const format of ["Expanded", " standard", "unlimited", ""]) {
+      expect(patchDeckRequestSchema.safeParse({ format }).success, format).toBe(false);
+    }
+  });
+
+  it("reads a stored format no write may send, so an old deck still loads", () => {
+    expect(deckSummarySchema.parse(storedDeck("Expanded")).format).toBe("Expanded");
   });
 
   it("rejects moving a deck into a folder", () => {

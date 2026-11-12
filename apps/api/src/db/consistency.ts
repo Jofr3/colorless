@@ -2,14 +2,18 @@
 // `scripts/db-check.ts` runs them against local or remote D1; consistency.d1.test.ts proves each one
 // finds the row it is about.
 
-import { normalizeCardText } from "@colorless/engine";
+import type { TcgdexCard } from "@colorless/schema";
 import { UNPLAYABLE_EVOLUTIONS } from "../ingest/evolutionSupplement";
-import { type CardRow, printKey } from "../ingest/map";
+import { type CardRow, mapCard, TYPELESS_ENERGY_GAPS } from "../ingest/map";
+import { ruleBoxMismatches } from "../ingest/ruleBoxes";
 import { escapeSqlText } from "../ingest/sql";
+import { CARDS_COLUMNS } from "../ingest/upserts";
 
 type Row = Record<string, unknown>;
 
-const UNPLAYABLE_IDS = Object.keys(UNPLAYABLE_EVOLUTIONS).map(escapeSqlText).join(", ");
+const idList = (ids: Readonly<Record<string, string>>) =>
+  Object.keys(ids).map(escapeSqlText).join(", ");
+const UNPLAYABLE_IDS = idList(UNPLAYABLE_EVOLUTIONS);
 
 /** Each query returns the offending rows; an empty result passes. */
 export const CONSISTENCY_CHECKS: readonly { name: string; sql: string }[] = [
@@ -86,6 +90,11 @@ export const CONSISTENCY_CHECKS: readonly { name: string; sql: string }[] = [
     sql: `SELECT id, evolve_from FROM cards WHERE category = 'Pokemon' AND evolve_from IS NOT NULL
             AND evolve_from NOT IN (SELECT name FROM cards) AND id NOT IN (${UNPLAYABLE_IDS})`,
   },
+  {
+    name: "Energy with no energy_type",
+    sql: `SELECT id, name FROM cards WHERE category = 'Energy' AND energy_type IS NULL
+            AND id NOT IN (${idList(TYPELESS_ENERGY_GAPS)})`,
+  },
 ];
 
 export const COUNTED_TABLES = [
@@ -103,52 +112,67 @@ export const COUNTED_TABLES = [
 export const CARD_KEY_COLUMNS = `id, set_id, name, category, hp, stage, suffix, evolve_from, types_json, retreat,
   abilities_json, attacks_json, weaknesses_json, resistances_json, trainer_type, energy_type, effect, print_key`;
 
-function json<T>(value: unknown): T | null {
-  return typeof value === "string" ? (JSON.parse(value) as T) : null;
+function json<T>(value: unknown): T | undefined {
+  return typeof value === "string" ? (JSON.parse(value) as T) : undefined;
 }
 
-function text(value: unknown): string | null {
-  return typeof value === "string" ? value : null;
+function text(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
 }
 
-function int(value: unknown): number | null {
-  return typeof value === "number" ? value : null;
+function int(value: unknown): number | undefined {
+  return typeof value === "number" ? value : undefined;
 }
 
-/** The text normalised again, so a changed `normalizeCardText` shows up as a changed key. */
-function renormalised<T extends { effect?: string }>(blocks: T[] | null): T[] | null {
-  return (
-    blocks?.map((b) =>
-      b.effect === undefined ? b : { ...b, effect: normalizeCardText(b.effect) },
-    ) ?? null
-  );
-}
-
-/** The stored row as `mapCard` would build it today, for the columns `printKey` reads. */
-function keyRow(row: Row): CardRow {
-  const effect = text(row.effect);
+/** The stored row read back as the tcgdex payload of the columns `printKey` reads, a NULL column
+    as the field left out, so `mapCard` keys it with every transform and supplement it has today. */
+function storedPayload(row: Row): TcgdexCard {
   return {
+    id: row.id,
+    localId: "",
+    set: { id: row.set_id, name: "", cardCount: { total: 0, official: 0 } },
     category: row.category,
     name: row.name,
     hp: int(row.hp),
     stage: text(row.stage),
     suffix: text(row.suffix),
     evolveFrom: text(row.evolve_from),
-    typesJson: json(row.types_json),
+    types: json(row.types_json),
     retreat: int(row.retreat),
-    abilitiesJson: renormalised(json(row.abilities_json)),
-    attacksJson: renormalised(json(row.attacks_json)),
-    weaknessesJson: json(row.weaknesses_json),
-    resistancesJson: json(row.resistances_json),
+    abilities: json(row.abilities_json),
+    attacks: json(row.attacks_json),
+    weaknesses: json(row.weaknesses_json),
+    resistances: json(row.resistances_json),
     trainerType: text(row.trainer_type),
     energyType: text(row.energy_type),
-    effect: effect === null ? null : normalizeCardText(effect),
-  } as CardRow;
+    effect: text(row.effect),
+  } as TcgdexCard;
 }
 
 /** The cards (rows of CARD_KEY_COLUMNS) whose stored `print_key` is not what today's code computes. */
 export function printKeyMismatches(cards: readonly Row[]): Row[] {
   return cards
-    .filter((card) => card.print_key !== null && printKey(keyRow(card)) !== card.print_key)
+    .filter(
+      (card) => card.print_key !== null && mapCard(storedPayload(card)).printKey !== card.print_key,
+    )
     .map((card) => ({ id: card.id }));
+}
+
+/** A stored card (every column of `cards`) as the row the ingest wrote. */
+export function storedCardRow(row: Row): CardRow {
+  return Object.fromEntries(
+    CARDS_COLUMNS.map(({ name, key, kind }) => {
+      const value = row[name] ?? null;
+      if (value === null) return [key, null];
+      if (kind === "json") return [key, JSON.parse(String(value))];
+      if (kind === "boolean") return [key, value === 1 || value === true];
+      return [key, value];
+    }),
+  ) as CardRow;
+}
+
+/** The stored legal Pokémon whose engine Prize value or suffix disagrees with its printed family
+    (ruleBoxMismatches), from rows of every `cards` column. */
+export function storedRuleBoxMismatches(cards: readonly Row[]): Row[] {
+  return ruleBoxMismatches(cards.map(storedCardRow)).map((problem) => ({ problem }));
 }

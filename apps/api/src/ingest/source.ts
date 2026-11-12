@@ -168,6 +168,7 @@ export function createFetchSource(options: FetchSourceOptions = {}): CatalogSour
     }
     if (!response.ok) {
       const status = response.status;
+      await response.body?.cancel().catch(() => {});
       throw new SourceRequestError(
         `HTTP ${status} for ${path}`,
         status === 408 || status === 429 || status >= 500,
