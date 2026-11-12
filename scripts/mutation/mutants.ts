@@ -74893,4 +74893,14 @@ export const MUTANTS: Mutant[] = [
     replace: "    return { unresolved: [], names: 0 };",
     expectKilledBy: ["apps/api/src/ingest/run.test.ts"],
   },
+  {
+    id: "COR-P4-rule-box-unchecked",
+    decision: "COR-P4",
+    what: "The engine drops BREAK's Rule Box, and the ingest's Rule Box check never reads hasRuleBox, so the catalog check passes it.",
+    file: "packages/engine/src/cards.ts",
+    symbol: "hasRuleBox",
+    find: '    isLegendPokemon(card) ||\n    card.name.endsWith(" BREAK")\n',
+    replace: "    isLegendPokemon(card)\n",
+    expectKilledBy: ["apps/api/src/ingest/ruleBoxes.test.ts"],
+  },
 ];

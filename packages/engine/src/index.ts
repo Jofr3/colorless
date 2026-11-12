@@ -73,6 +73,7 @@ export {
   isMegaEvolutionPokemonEx,
   parseAttackDamage,
   pokemonSuffixOf,
+  hasRuleBox,
   prizeValueOf,
   resistanceOf,
   retreatCostOf,

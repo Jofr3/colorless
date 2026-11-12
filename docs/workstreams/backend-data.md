@@ -171,8 +171,8 @@ that adds or changes printings, from the repo root:
    a simulation gap. An Energy with no `energyType` (it plays as {C}) is named
    too: fix the mapping, or list it in `TYPELESS_ENERGY_GAPS`
    (`apps/api/src/ingest/map.ts`) with a simulation gap. So is a legal Pokémon
-   whose Prize value or suffix in the engine, or whose catalog suffix, is not
-   what its printed name family has (`apps/api/src/ingest/ruleBoxes.ts`): fix
+   whose Prize value, suffix or Rule Box in the engine, or whose catalog suffix,
+   is not what its printed name family has (`apps/api/src/ingest/ruleBoxes.ts`): fix
    the engine's rule, or list a catalog tag the name contradicts in
    `RULE_BOX_EXCEPTIONS` there. `bun run --cwd apps/api db:check` runs the same
    checks over the whole table.

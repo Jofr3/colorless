@@ -20,7 +20,7 @@ const pokemon = (id: string, name: string, suffix: string | null, legal = true):
 });
 
 describe("ruleBoxMismatches (COR-P4)", () => {
-  it("passes every printed family as the catalog tags it, with the engine's Prize count", () => {
+  it("passes every printed family as the catalog tags it, with the engine's Prize count and Rule Box", () => {
     const families: [string, string | null][] = [
       ["Pikachu & Zekrom GX", "GX"],
       ["Darkrai & Cresselia LEGEND", "Legend"],

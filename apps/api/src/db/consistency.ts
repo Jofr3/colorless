@@ -171,7 +171,7 @@ export function storedCardRow(row: Row): CardRow {
   ) as CardRow;
 }
 
-/** The stored legal Pokémon whose engine Prize value or suffix disagrees with its printed family
+/** The stored legal Pokémon whose engine Prize value, suffix or Rule Box disagrees with its printed family
     (ruleBoxMismatches), from rows of every `cards` column. */
 export function storedRuleBoxMismatches(cards: readonly Row[]): Row[] {
   return ruleBoxMismatches(cards.map(storedCardRow)).map((problem) => ({ problem }));

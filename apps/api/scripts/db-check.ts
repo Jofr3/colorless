@@ -76,7 +76,7 @@ failures.push(
     rows: printKeyMismatches(cards),
   },
   {
-    name: "legal Pokémon whose Prize value or suffix disagrees with its printed family",
+    name: "legal Pokémon whose Prize value, suffix or Rule Box disagrees with its printed family",
     rows: storedRuleBoxMismatches(cards),
   },
 );
