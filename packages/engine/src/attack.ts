@@ -57,6 +57,7 @@ import {
   opposingToolAttackDebuff,
   passivesOf,
   providedEnergy,
+  providesEnergyType,
   seatRemovesWeakness,
   seatWeaknessRewrite,
   weaknessAmountOverride,
@@ -339,6 +340,19 @@ function scaledAttackDamage(
           (defenderActive === null ? 0 : countAttachedEnergy(state, defenderActive, null))) *
         bonus.per
       );
+    }
+    case "energyOfTypesOnYourBoard": {
+      const { types } = bonus.count;
+      const holders = inPlayOf(state.players[attackerSeat]);
+      const count = holders.reduce(
+        (total, holder) =>
+          total +
+          holder.energy.filter((uid) =>
+            types.some((type) => providesEnergyType(state, holder, uid, type)),
+          ).length,
+        0,
+      );
+      return count * bonus.per;
     }
     case "toolsOnYourBoard":
       // Pokémon Tools attached to all of the attacker's Pokémon in play, Active included.

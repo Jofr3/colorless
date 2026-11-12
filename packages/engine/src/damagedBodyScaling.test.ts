@@ -637,13 +637,14 @@ const COUNT_KINDS: Record<DamageCountSource["kind"], true> = {
   damagedBenchedPokemon: true,
   benchedPokemonWithEnergy: true,
   benchedPokemonWithMaxHp: true,
+  energyOfTypesOnYourBoard: true,
   opponentPrizesTakenLastTurn: true,
   attackDamageTakenLastTurnOnSelf: true,
 };
 
 describe("D519 §6 — `MATCH_RECORD_VERSION` HOLDS at 30: there is still no carrier", () => {
   it("the union is UNMOVED at TWENTY members — this slice bought a FIELD, not a member", () => {
-    expect(Object.keys(COUNT_KINDS)).toHaveLength(30);
+    expect(Object.keys(COUNT_KINDS)).toHaveLength(31);
     expect(COUNT_KINDS.pokemonInPlay).toBe(true);
   });
 

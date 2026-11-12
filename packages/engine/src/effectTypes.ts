@@ -2434,6 +2434,11 @@ export type DamageCountSource =
       filter?: CardFilter;
     }
   | { kind: "bothActivesEnergyCount" }
+  /**
+   * "Each {R} Energy and each {L} Energy attached to all of your Pokémon": Energy cards on the
+   * attacker's board providing any of `types`, each card counted once.
+   */
+  | { kind: "energyOfTypesOnYourBoard"; types: readonly [BasicEnergyType, BasicEnergyType] }
   | { kind: "toolsOnYourBoard" }
   | { kind: "extraEnergyUnitsBeyondCost"; extra: number }
   /**

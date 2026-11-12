@@ -7269,6 +7269,10 @@ const SELF_ENERGY_MULTIPLY =
 const SELF_BOARD_ENERGY_MULTIPLY =
   /^This attack does (\d+) damage for each (?:(.+) )?Energy attached to all of your Pokémon\.$/;
 
+/** Mega Rayquaza ex "Storm Emerald": two typed Energy, each card counted once. */
+const SELF_BOARD_TWO_TYPE_ENERGY_MULTIPLY =
+  /^This attack does (\d+) damage for each (\{[A-Z]\}) Energy and each (\{[A-Z]\}) Energy attached to all of your Pokémon\.$/;
+
 // Pokémon Tools attached to all of your Pokémon (Active and Bench). Multiply only: with no Tools
 // the attack deals nothing.
 const YOUR_TOOLS_MULTIPLY =
@@ -7513,6 +7517,15 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
     const energyType = attachedEnergyFilter(boardEnergy[2]);
     if (per >= 1 && energyType !== undefined) {
       return { per, count: { kind: "energyOnSelf", zone: "board", energyType } };
+    }
+  }
+  const twoTypes = SELF_BOARD_TWO_TYPE_ENERGY_MULTIPLY.exec(effect);
+  if (twoTypes !== null) {
+    const per = positiveInt(twoTypes[1]);
+    const first = attachedEnergyFilter(twoTypes[2]);
+    const second = attachedEnergyFilter(twoTypes[3]);
+    if (per !== null && basicTyped(first) && basicTyped(second) && first !== second) {
+      return { per, count: { kind: "energyOfTypesOnYourBoard", types: [first, second] } };
     }
   }
   const yourTools = YOUR_TOOLS_MULTIPLY.exec(effect);
@@ -8653,6 +8666,10 @@ export function splitAttackTrailingClause(text: string): { head: string; tail: s
  */
 function attachedEnergyFilter(token: string | undefined): EnergyClass | null | undefined {
   return token === undefined ? null : literalClauseRow(CLAUSE_ENERGY_TOKENS, token);
+}
+
+function basicTyped(energy: EnergyClass | null | undefined): energy is BasicEnergyType {
+  return energy !== null && energy !== undefined && energy !== "special" && energy !== "basic";
 }
 
 /** The matched status word, lowercased into the event vocabulary. The regex
