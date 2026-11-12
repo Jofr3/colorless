@@ -73302,4 +73302,15 @@ export const MUTANTS: Mutant[] = [
       "    if (per !== null && basicTyped(first) && basicTyped(second) && first === second) {",
     expectKilledBy: ["packages/engine/src/triggeredHandAbilitiesMe06B5.test.ts"],
   },
+  {
+    id: "ME06-B5-dive-foe-board",
+    decision: "ME06-B5",
+    what: 'The Mega Evolution Pokémon ex gate reads both boards, so the opponent\'s Colorless Mega ex opens Excited Dive against the printed "you have".',
+    file: "packages/engine/src/boardCondition.ts",
+    symbol: "conditionHolds",
+    find: '      const own = state.players[seat];\n      return [own.active, ...own.bench].some((body) => {\n        if (body === null) return false;\n        const card = inPlayCardOf(state, body);\n        if (card === undefined || !matchesFilter(card, { kind: "megaEvolutionEx" })) return false;',
+    replace:
+      '      const own = state.players[seat];\n      const foe = state.players[otherSeat(seat)];\n      return [own.active, ...own.bench, foe.active, ...foe.bench].some((body) => {\n        if (body === null) return false;\n        const card = inPlayCardOf(state, body);\n        if (card === undefined || !matchesFilter(card, { kind: "megaEvolutionEx" })) return false;',
+    expectKilledBy: ["packages/engine/src/triggeredHandAbilitiesMe06B5.test.ts"],
+  },
 ];
