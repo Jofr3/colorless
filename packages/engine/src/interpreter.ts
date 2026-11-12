@@ -475,6 +475,20 @@ function scoredSlot(
     : filed.filter((uid) => matchesFilter(cardOfUid(state, uid), filter)).length;
 }
 
+/** A dual-type card adds each of its types; non-Pokémon cards add none. */
+function distinctPokemonTypesInSlot(
+  record: EffectRecord,
+  state: GameState,
+  slot: EffectSlot,
+): number {
+  const seen = new Set<string>();
+  for (const uid of recorded(record, slot)) {
+    const card = cardOfUid(state, uid);
+    if (card?.category === "Pokemon") for (const type of card.types ?? []) seen.add(type);
+  }
+  return seen.size;
+}
+
 /** The slot a parking op will file its answer under, if any. */
 function recordSlotOf(op: EffectOp): EffectSlot | undefined {
   const slot = traitsOf(op)?.recordSlot;
@@ -1520,7 +1534,12 @@ function stepOp(
       // Chien-Pao ex "Hail Blade": `per` damage per card filed under `count`, through the full §8.5
       // pipeline. Flat `amount` is the "you may do N more damage" arm. Zero places nothing.
       const amount =
-        op.amount ?? (op.base ?? 0) + scoredSlot(record, state, op.count, op.countFilter) * op.per;
+        op.amount ??
+        (op.base ?? 0) +
+          (op.distinctPokemonTypes === true
+            ? distinctPokemonTypesInSlot(record, state, op.count)
+            : scoredSlot(record, state, op.count, op.countFilter)) *
+            op.per;
       if (amount <= 0) return { done: state };
       return { done: snipeActive(state, amount, false, ctx, false, events) };
     }

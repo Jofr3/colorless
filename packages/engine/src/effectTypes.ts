@@ -1274,6 +1274,11 @@ export type EffectOp =
       count: EffectSlot;
       /** Optional filter on which recorded cards count. Absent = every uid in the slot. */
       countFilter?: CardFilter;
+      /**
+       * "for each different type of Pokémon you revealed": N is the number of distinct Pokémon
+       * types across the slot's cards rather than the number of cards.
+       */
+      distinctPokemonTypes?: true;
       base?: number;
       amount?: never;
     }
@@ -1281,7 +1286,14 @@ export type EffectOp =
    * The same hit with a flat amount, decided when the program is built ("You may do N more
    * damage").
    */
-  | { op: "damageDefender"; per?: never; count?: never; countFilter?: never; amount: number }
+  | {
+      op: "damageDefender";
+      per?: never;
+      count?: never;
+      countFilter?: never;
+      distinctPokemonTypes?: never;
+      amount: number;
+    }
   /**
    * A §8.5 hit on whoever is the opponent's Active when this op runs ("This attack does N damage to
    * the new Active Pokémon.").

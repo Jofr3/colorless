@@ -2721,6 +2721,10 @@ const HAND_DISCARD_ANY_NUMBER =
 const HAND_REVEAL_NAMED_SCALED =
   /^Reveal any number of ((?:[A-Z][A-Za-z'’é-]*, )+and [A-Z][A-Za-z'’é-]*) from your hand, and this attack does (\d+) damage for each card you revealed in this way\.$/;
 
+// Kecleon "Colorful Whip": the same reveal over every Pokémon card, scored by distinct types.
+const HAND_REVEAL_POKEMON_TYPES_SCALED =
+  /^Reveal any number of Pokémon from your hand, and this attack does (\d+) damage for each different type of Pokémon you revealed in this way\.$/;
+
 // The self-damage is a downside, so "You may" is a confirm over both ops.
 const SELF_DAMAGE_AND_PARALYZE_OPTIONAL =
   /^You may have this Pokémon also do (\d+) damage to itself and make your opponent['’]s Active Pokémon Paralyzed\.$/;
@@ -4815,6 +4819,21 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           recordAs: "revealed",
         },
         { op: "damageDefender", per, count: "revealed" },
+      ];
+    }
+  }
+  match = HAND_REVEAL_POKEMON_TYPES_SCALED.exec(effect);
+  if (match !== null) {
+    const per = positiveInt(match[1]);
+    if (per !== null) {
+      return [
+        {
+          op: "revealFromHand",
+          filter: { kind: "anyPokemon" },
+          note: "Reveal any number of Pokémon from your hand.",
+          recordAs: "revealed",
+        },
+        { op: "damageDefender", per, count: "revealed", distinctPokemonTypes: true },
       ];
     }
   }

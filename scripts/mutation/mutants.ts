@@ -5277,9 +5277,8 @@ export const MUTANTS: Mutant[] = [
     what: "\ud83d\uded1 C12 \u2014 **THE ADDEND DROPPED AT THE OTHER END OF THE FIELD, WHICH IS THIS LINE EXACTLY AS IT STOOD BEFORE THIS SLICE.** C2 is the PRODUCER forgetting to write `base`; this is the CONSUMER forgetting to read it, and the two are different mistakes with one symptom \u2014 \u00a72's program rung still passes here, because the op carries the field and only the interpreter ignores it. Every \u00a75 number moves",
     file: "packages/engine/src/interpreter.ts",
     symbol: "stepOp",
-    find: "      const amount =\n        op.amount ?? (op.base ?? 0) + scoredSlot(record, state, op.count, op.countFilter) * op.per;",
-    replace:
-      "      const amount =\n        op.amount ?? scoredSlot(record, state, op.count, op.countFilter) * op.per;",
+    find: "        op.amount ??\n        (op.base ?? 0) +\n          (op.distinctPokemonTypes === true",
+    replace: "        op.amount ??\n        0 +\n          (op.distinctPokemonTypes === true",
     expectKilledBy: ["packages/engine/src/benchDiscardBoost.test.ts"],
   },
   {
