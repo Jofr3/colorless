@@ -195,7 +195,7 @@ describe("the manifest is internally consistent", () => {
     ]);
     expect(M.sixSet.sets.reduce((sum, set) => sum + (M.sets[set] ?? 0), 0)).toBe(M.sixSet.rows);
     expect(M.sixSet.rows).toBe(978);
-    expect(Object.keys(M.sets).length).toBe(30);
+    expect(Object.keys(M.sets).length).toBe(31);
     expect(
       Object.keys(M.sets).filter((set) => !/^(sv|me|mee$|mep$|30th|mfb$|swsh10\.5$)/.test(set)),
     ).toEqual([]);
@@ -218,11 +218,17 @@ describe("the manifest is internally consistent", () => {
     const trainerRowsWithAttacks = Object.values(M.trainerFaces).filter(
       (f) => (f.attacks ?? []).length > 0,
     ).length;
-    expect(trainerRowsWithAttacks).toBe(7);
+    expect(trainerRowsWithAttacks).toBe(8);
     expect(attacksJson - trainerRowsWithAttacks + M.pokemonWithoutAttacks.length).toBe(
       M.categories.Pokemon,
     );
-    expect([...M.pokemonWithoutAttacks]).toEqual(["30th-c-009", "30th-c-019", "swsh10.5-053"]);
+    expect([...M.pokemonWithoutAttacks]).toEqual([
+      "30th-c-009",
+      "30th-c-019",
+      "me06-080",
+      "me06-115",
+      "swsh10.5-053",
+    ]);
     expect(M.sixSet.textColumns.attacksJson + 1).toBe(M.sixSet.categories.Pokemon);
   });
 
@@ -234,8 +240,8 @@ describe("the manifest is internally consistent", () => {
     expect(new Date(M.source.mtime).getTime()).toBeGreaterThan(0);
   });
 
-  it("D137's apostrophe premise holds: ZERO curly apostrophes in the whole catalog", () => {
-    expect(M.curlyApostropheAnywhere).toBe(0);
+  it("D137's apostrophe premise: ONE curly apostrophe in the whole catalog, Poké Pad `30th-126`'s effect", () => {
+    expect(M.curlyApostropheAnywhere).toBe(1);
     expect(M.straightApostropheInAttacks).toBeGreaterThan(0);
   });
 });

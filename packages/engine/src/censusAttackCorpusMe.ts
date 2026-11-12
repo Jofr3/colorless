@@ -48,7 +48,7 @@ const CORPUS_ME = `
 2 Discard all Energy from this Pokémon. Your opponent's Active Pokémon is now Paralyzed.
 3 Discard all Pokémon Tools and Special Energy from all of your opponent's Pokémon.
 1 Discard all {L} Energy from this Pokémon, and this attack does 90 damage to 1 of your opponent's Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)
-15 Discard an Energy from this Pokémon.
+16 Discard an Energy from this Pokémon.
 4 Discard an Energy from your opponent's Active Pokémon.
 6 Discard any amount of {R} Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way.
 1 Discard random cards from your opponent's hand until they have 5 cards in their hand.

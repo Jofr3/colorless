@@ -4,8 +4,8 @@
 // fixtures against it, since the sqlite is `.wrangler/` dev state and may be
 // absent or stale on other machines.
 //
-//   select set_id, count(*) from cards group by set_id;   -- 30th|161  30th-c|30  me01|188  me02|130  me02.5|295  me03|124  me04|122  me05|120  mee|16  mep|112  mfb|34  sv01|258  sv02|279  sv03|230  sv03.5|207  sv04|266  sv04.5|245  sv05|218  sv06|226  sv06.5|99  sv07|175  sv08|252  sv08.5|180  sv09|190  sv10|244  sv10.5b|172  sv10.5w|173  sve|24  svp|226  swsh10.5|88
-//   select count(*) from cards;                           -- 5084
+//   select set_id, count(*) from cards group by set_id;   -- 30th|161  30th-c|30  me01|188  me02|130  me02.5|295  me03|124  me04|122  me05|120  me06|141  mee|16  mep|112  mfb|34  sv01|258  sv02|279  sv03|230  sv03.5|207  sv04|266  sv04.5|245  sv05|218  sv06|226  sv06.5|99  sv07|175  sv08|252  sv08.5|180  sv09|190  sv10|244  sv10.5b|172  sv10.5w|173  sve|24  svp|226  swsh10.5|88
+//   select count(*) from cards;                           -- 5225
 //
 // Test-only: not exported from the package index, like `testFixtures.ts`.
 
@@ -15,12 +15,12 @@ export const CATALOG_MANIFEST = {
   /** The file measured. `mtime` is the sqlite's last write, not the generation date. */
   source: {
     path: "apps/api/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/8d5f78350c10a9b5a03c32a89d7650715915d7d08c8432216859a4839915f2a8.sqlite",
-    mtime: "2026-10-23T09:10:18.926Z",
-    bytes: 3805184,
-    generated: "2026-10-23",
+    mtime: "2026-11-12T06:44:48.338Z",
+    bytes: 4288512,
+    generated: "2026-11-12",
   },
   /** `select count(*) from cards`. */
-  rows: 5084,
+  rows: 5225,
   /** `select set_id, count(*) from cards group by set_id`. */
   sets: {
     "30th": 161,
@@ -31,6 +31,7 @@ export const CATALOG_MANIFEST = {
     me03: 124,
     me04: 122,
     me05: 120,
+    me06: 141,
     mee: 16,
     mep: 112,
     mfb: 34,
@@ -56,32 +57,38 @@ export const CATALOG_MANIFEST = {
   } as Record<string, number>,
   /** `select category, count(*) from cards group by category`. */
   categories: {
-    Energy: 81,
-    Pokemon: 4316,
-    Trainer: 687,
+    Energy: 84,
+    Pokemon: 4430,
+    Trainer: 711,
   } as Record<string, number>,
   /** `select count(distinct name) from cards`; below `rows` because a card is a printing. */
-  distinctNames: 1768,
+  distinctNames: 1791,
   /** Rows where each text column is present and non-empty. */
   textColumns: {
-    effect: 711,
-    attacksJson: 4320,
-    abilitiesJson: 973,
+    effect: 715,
+    attacksJson: 4433,
+    abilitiesJson: 1003,
     /** Rows with text in at least one of the three columns. */
-    any: 5026,
+    any: 5145,
   },
   /** Rows whose `attacks_json` contains a straight apostrophe (U+0027). */
-  straightApostropheInAttacks: 1915,
+  straightApostropheInAttacks: 1965,
   /** Rows with a curly apostrophe (U+2019) in `effect`, `attacks_json`,
       `abilities_json` or `name`; the apostrophe fold guards against a re-ingest adding some. */
-  curlyApostropheAnywhere: 0,
+  curlyApostropheAnywhere: 1,
   /** `select count(*) from cards where legal_standard = 0`. */
-  legalStandardZero: 1797,
+  legalStandardZero: 1938,
   /** Pokémon rows with no attacks of their own, by id (e.g. a Pokémon whose Ability
       borrows attacks from elsewhere). */
-  pokemonWithoutAttacks: ["30th-c-009", "30th-c-019", "swsh10.5-053"] as readonly string[],
+  pokemonWithoutAttacks: [
+    "30th-c-009",
+    "30th-c-019",
+    "me06-080",
+    "me06-115",
+    "swsh10.5-053",
+  ] as readonly string[],
   /** Rows in `sets` and `series`. */
-  setRows: 30,
+  setRows: 31,
   serieRows: 3,
   /** The same counts for the older six-set slice (`sv01`, `sv02`, `sv03`, `sv06.5`, `sve`, `swsh10.5`), which
       older counts in comments refer to. */
@@ -1154,6 +1161,20 @@ export const CATALOG_MANIFEST = {
         },
       ],
       attacks: null,
+    },
+    "me06-100": {
+      name: "Mega Rayquaza Cap",
+      legal: false,
+      hp: null,
+      abilities: null,
+      attacks: [
+        {
+          cost: ["Colorless"],
+          name: "Delta Gift",
+          effect:
+            "For each of your Pokémon that has a Mega Rayquaza Cap attached, search your deck for a Basic Energy card and attach it to that Pokémon. Then, shuffle your deck.",
+        },
+      ],
     },
     "sv03.5-152": {
       name: "Antique Dome Fossil",

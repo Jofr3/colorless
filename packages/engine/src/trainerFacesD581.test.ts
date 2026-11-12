@@ -23,12 +23,12 @@ function catalogRow(id: string, trainerType: string): Card {
 }
 
 describe("D581 §1 — the catalog's Trainer faces, measured", () => {
-  it("19 Trainer rows print a face: 12 an HP, 11 an Ability, 7 an attack", () => {
+  it("20 Trainer rows print a face: 12 an HP, 11 an Ability, 8 an attack", () => {
     const faces = Object.values(M.trainerFaces);
-    expect(faces).toHaveLength(19);
+    expect(faces).toHaveLength(20);
     expect(faces.filter((f) => f.hp !== null)).toHaveLength(12);
     expect(faces.filter((f) => (f.abilities ?? []).length > 0)).toHaveLength(11);
-    expect(faces.filter((f) => (f.attacks ?? []).length > 0)).toHaveLength(7);
+    expect(faces.filter((f) => (f.attacks ?? []).length > 0)).toHaveLength(8);
   });
 
   it("the Standard-legal ones are the four BUILT fossils, TM Fluorite, and five UNBUILT `me` faces ( D620 (D539): four — Core Memory is built at D620) ( D637 (D539): none — the four `me` fossils are built at D637)", () => {
