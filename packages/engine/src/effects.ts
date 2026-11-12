@@ -681,6 +681,14 @@ const CONDITIONAL_DAMAGE_CLAUSES = new Map<string, BoardCondition>([
     "this Pokémon evolved from Magneton during this turn",
     { kind: "yourActiveEvolvedFromThisTurn", name: "Magneton" },
   ],
+  [
+    "this Pokémon evolved from Wattrel during this turn",
+    { kind: "yourActiveEvolvedFromThisTurn", name: "Wattrel" },
+  ],
+  [
+    'a Stadium that has "Legendary" in its name is in play',
+    { kind: "stadiumInPlayNameContains", fragment: "Legendary" },
+  ],
   // Literal rows: the attack name is an open vocabulary. A departed Ancient attacker still counts
   // toward the banner row, which reads `GameState.recentAttackers`.
   [
@@ -3240,6 +3248,10 @@ const MAY_DISCARD_STADIUM = /^You may discard a Stadium in play\.$/;
  */
 const STADIUM_GATED_BENCH_SPREAD =
   /^If a Stadium is in play, this attack also does (\d+) damage to each of your opponent['’]s Benched Pokémon, and discard that Stadium\. \(Don['’]t apply Weakness and Resistance for Benched Pokémon\.\)$/;
+
+/** Kyogre "Brutal Whirlpool": the Bench spread gated on a `boardConditionForClause` clause. */
+const CLAUSE_GATED_BENCH_SPREAD =
+  /^If (.+), this attack also does (\d+) damage to each of your opponent['’]s Benched Pokémon\. \(Don['’]t apply Weakness and Resistance for Benched Pokémon\.\)$/;
 
 /**
  * The count is captured because the same skeleton prints other counts elsewhere (Professor's
@@ -6569,6 +6581,14 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
           { op: "discardStadium" },
         ]),
       ];
+    }
+  }
+  match = CLAUSE_GATED_BENCH_SPREAD.exec(effect);
+  if (match !== null) {
+    const gate = boardConditionForClause(match[1] ?? "");
+    const amount = positiveInt(match[2]);
+    if (gate !== null && amount !== null) {
+      return [conditionGate(gate, [{ op: "spreadDamage", target: "opponentBench", amount }])];
     }
   }
 

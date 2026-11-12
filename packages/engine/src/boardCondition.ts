@@ -591,6 +591,12 @@ export function conditionHolds(state: GameState, seat: Seat, cond: BoardConditio
       const stadium = state.stadium;
       return stadium !== null && cardOfUid(state, stadium.uid)?.name === cond.name;
     }
+    case "stadiumInPlayNameContains": {
+      const stadium = state.stadium;
+      return (
+        stadium !== null && (cardOfUid(state, stadium.uid)?.name.includes(cond.fragment) ?? false)
+      );
+    }
     case "yourBannerPokemonInPlay": {
       // "You have any Tera Pokémon in play": the seat's Active and Bench, each body's top card
       // (§1.2).
@@ -1115,6 +1121,8 @@ export function conditionNote(cond: BoardCondition): string {
         : `you played a Supporter card that has "${cond.nameContains ?? ""}" in its name from your hand this turn`;
     case "stadiumInPlayNamed":
       return `${cond.name} is in play`;
+    case "stadiumInPlayNameContains":
+      return `a Stadium that has "${cond.fragment}" in its name is in play`;
     case "yourBannerPokemonInPlay":
       return `you have any ${cond.banner} Pokémon in play`;
     case "yourBannerPokemonOnBench":

@@ -540,6 +540,8 @@ export type BoardCondition =
   | { kind: "youPlayedSupporterNamedThisTurn"; name?: string; nameContains?: string }
   /** The Stadium in play is named `name`, whoever played it (§7.3). */
   | { kind: "stadiumInPlayNamed"; name: string }
+  /** The Stadium in play has `fragment` in its name (case-sensitive), whoever played it (§7.3). */
+  | { kind: "stadiumInPlayNameContains"; fragment: string }
   /** Any of your Pokémon in play (Active or Bench top card) has `banner`. */
   | { kind: "yourBannerPokemonInPlay"; banner: Banner }
   /** Any of your Benched Pokémon has `banner`; the Active does not count. */

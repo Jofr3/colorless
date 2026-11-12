@@ -303,8 +303,6 @@ describe("D522 §1 — the printed row derives to EXACTLY arm 43's shape minus t
         "If a Stadium is in play, this attack also does 30 damage to each of your opponent's Benched Pokémon, and discard that Stadium.",
       "the GATE dropped":
         "This attack also does 30 damage to each of your opponent's Benched Pokémon, and discard that Stadium. (Don't apply Weakness and Resistance for Benched Pokémon.)",
-      "the DISCARD dropped":
-        "If a Stadium is in play, this attack also does 30 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)",
       "the SPREAD dropped": "If a Stadium is in play, discard that Stadium.",
       "the bare lowercase consequent": "discard that Stadium.",
       "the `also` dropped (`D522-gated-spread-anchor-drops-also`)":
@@ -320,6 +318,19 @@ describe("D522 §1 — the printed row derives to EXACTLY arm 43's shape minus t
         why,
       ).toBe(false);
     }
+  });
+
+  it("the DISCARD dropped is Kyogre me06-026's clause-gated spread shape: the gate and the spread, no discard", () => {
+    const noDiscard =
+      "If a Stadium is in play, this attack also does 30 damage to each of your opponent's Benched Pokémon. (Don't apply Weakness and Resistance for Benched Pokémon.)";
+    expect(deriveAttackEffect(noDiscard)).toEqual([
+      {
+        op: "conditionGate",
+        cond: { kind: "stadiumInPlay" },
+        ops: [{ op: "spreadDamage", target: "opponentBench", amount: 30 }],
+      },
+    ]);
+    expect(deriveAttackEffect(noDiscard)).not.toEqual(PROGRAM);
   });
 
   it("a printed ZERO derives null — the guard is redundant at the interpreter and kept for the LOUD path (`D522-gated-spread-printed-zero-derives`)", () => {
