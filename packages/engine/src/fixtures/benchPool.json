@@ -119,7 +119,7 @@
       "resistances": null,
       "trainerType": "Item",
       "energyType": null,
-      "effect": null,
+      "effect": "Switch your Active Pokémon with 1 of your Benched Pokémon.",
       "legal": { "standard": true, "expanded": true },
       "variants": {
         "normal": true,
