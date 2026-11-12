@@ -238,8 +238,9 @@ export function isMegaEvolutionPokemonEx(card: Card): boolean {
 }
 
 /**
- * The rule-box suffix of a Pokémon, or null. Read from the card name because ingest drops tcgdex's
- * `suffix` field. Matched literally, so "V" does not match "VMAX" or "VSTAR".
+ * The rule-box suffix of a Pokémon, or null. Read from the card name: the `Card` face carries no
+ * suffix, and the catalog's `suffix` column spells a Pokémon ex "EX" in some sets. Matched
+ * literally, so "V" does not match "VMAX" or "VSTAR".
  */
 export function pokemonSuffixOf(card: Card): PokemonSuffix | null {
   if (card.category !== "Pokemon") return null;
