@@ -73932,4 +73932,14 @@ export const MUTANTS: Mutant[] = [
     replace: "      clearTimer();\n    },",
     expectKilledBy: ["src/decks/deckSaver.test.ts"],
   },
+  {
+    id: "COR-P0-unplayable-lists-drift",
+    decision: "COR-P0",
+    what: "The engine forgets Dark Tyranitar's unreachable evolution while the ingest still lets it through, so the builder shows it playable.",
+    file: "packages/engine/src/simulationGaps.ts",
+    symbol: "UNREACHABLE_EVOLUTIONS",
+    find: '  // Dark Tyranitar evolves from Dark Pupitar, which the catalog does not print.\n  "30th-c-006",\n',
+    replace: "",
+    expectKilledBy: ["apps/api/src/ingest/map.test.ts"],
+  },
 ];

@@ -23,6 +23,8 @@ import {
   weaklessLegalPokemon,
 } from "./map";
 import { EVOLUTION_SUPPLEMENT, UNPLAYABLE_EVOLUTIONS } from "./evolutionSupplement";
+import { mapCardRow } from "../catalog/map";
+import { simulationGaps } from "@colorless/engine";
 import { WEAK_RES_SUPPLEMENT } from "./weakResSupplement";
 
 describe("mapSerie", () => {
@@ -568,7 +570,7 @@ describe("evolution supplement (card revision Deferred 2 and 13)", () => {
     ]);
   });
 
-  it("lets through the Expanded evolutions listed as unplayable, and only those", () => {
+  it("lets through the Expanded evolutions listed as unplayable, and only those, which the engine marks as a play gap (COR-P0)", () => {
     const greninja = mapCard(evolving("30th-c-009", "Greninja BREAK", "BREAK"));
     const mew = mapCard(evolving("30th-c-026", "Mew VMAX", "VMAX"));
     const tyranitar = mapCard(
@@ -585,6 +587,9 @@ describe("evolution supplement (card revision Deferred 2 and 13)", () => {
       "30th-c-009",
       "30th-c-026",
     ]);
+    for (const row of [greninja, mew, tyranitar]) {
+      expect(simulationGaps(mapCardRow(row)), row.id).toContain("play");
+    }
   });
 
   it("holds only well-formed entries", () => {
