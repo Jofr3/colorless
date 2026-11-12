@@ -74908,6 +74908,7 @@ export const MUTANTS: Mutant[] = [
     decision: "COR-P4",
     what: "The builder keeps a stored format the write schema now refuses, so every save of that deck answers 400.",
     file: "src/lua/builder.ts",
+    symbol: "LuaBuilder",
     find: "      this.format = formatById(data.format).id;\n",
     replace: '      this.format = data.format ?? "standard";\n',
     expectKilledBy: ["src/lua/builder.test.ts"],
