@@ -2020,6 +2020,8 @@ const CENSUS_ME_POKEMON_D645: readonly string[] = ["me01-010", "mep-001", "me04-
 
 const CENSUS_ME_TRAINER_D646: readonly string[] = ["me05-074"]; // Backtrack Badge
 
+const CENSUS_ME_POKEMON_ME06_B2: readonly string[] = ["me06-006"]; // Combee "Fade Out"
+
 /** The 3 text-less `30th` Item ids keyed below. */
 const CENSUS_ME_TRAINER_B04: readonly string[] = ["30th-126", "30th-127", "30th-128"];
 
@@ -2162,9 +2164,12 @@ describe("the census at HEAD", () => {
     ]);
     const trainerGranted = ["sv08-188"];
     const meAlias = ME_REGISTRY_ATTACKS.map(([id]) => id);
+    const expandedOnly = CENSUS_ME_POKEMON_ME06_B2;
     const legalKeys = [...new Set(REGISTRY_ATTACKS.map(([id]) => id))];
     expect(attackRegistryIds().sort()).toEqual(
-      [...withReprints([...legalKeys, ...rotated, ...trainerGranted, ...meAlias])].sort(),
+      [
+        ...withReprints([...legalKeys, ...rotated, ...trainerGranted, ...meAlias, ...expandedOnly]),
+      ].sort(),
     );
     expect(legalKeys).toHaveLength(27);
     expect(REGISTRY_ATTACKS).toHaveLength(28);
@@ -2245,6 +2250,7 @@ describe("the census at HEAD", () => {
         ...CENSUS_ME_POKEMON_D645,
         ...CENSUS_ME_TRAINER_D646,
         ...CENSUS_ME_TRAINER_B04,
+        ...CENSUS_ME_POKEMON_ME06_B2,
       ]
         .filter((id) => !RETIRED_ATTACK_KEYS_D612.includes(id))
         .sort(),

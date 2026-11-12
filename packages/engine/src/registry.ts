@@ -6504,8 +6504,13 @@ const FLARING_MAGIC: CardProgram = {
   ],
 };
 
-// "Fade Out" under other attack names: "Put this Pokémon and all attached cards into your hand."
-// Each is its own object at its printed attack index.
+// "Fade Out" and the same sentence under other attack names: "Put this Pokémon and all attached
+// cards into your hand." Each is its own object at its printed attack index.
+
+/** Combee — Fade Out (attack index 0): "Put this Pokémon and all attached cards into your hand." */
+const FADE_OUT: CardProgram = {
+  attack: { 0: [{ op: "returnSelf", dest: "hand" }] },
+};
 
 /** Drifblim — Balloon Return (attack index 1). */
 const BALLOON_RETURN: CardProgram = {
@@ -8343,6 +8348,7 @@ const REGISTRY: Readonly<Record<string, CardProgram>> = {
   "mep-006": BALLOON_RETURN, // Drifblim "Balloon Return" (attack 1) — twin `sv09-068` (Lillie's Comfey "Fade Out", attack 1)
   "me03-062": TUCK_TAIL, // Meowth ex — "Tuck Tail" (attack 0) and the Ability "Last-Ditch Catch"
   "me04-030": SKY_RETURN, // Emolga "Sky Return" (attack 1)
+  "me06-006": FADE_OUT, // Combee "Fade Out" (attack 0)
   "me03-027": FIGHTING_ROAR, // Luxio "Fighting Roar" — evolve early if the opponent's Active is a Pokémon ex
   "me04-007": NEEDLY_ARMOR, // Chesnaught "Needly Armor" — 3 counters per {G} Energy on the Attacking Pokémon
   "me02-056": SHADOWY_CONCEALMENT, // Mega Gengar ex — 1 fewer Prize for a {D} body KO'd by an ex's attack
