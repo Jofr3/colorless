@@ -74076,17 +74076,6 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["apps/api/src/lobby/lobbyDO.test.ts"],
   },
   {
-    id: "COR-P2-sta6-retire-keeps-match",
-    decision: "COR-P2",
-    what: "A broken match is not deleted, so the lobby keeps a record of the broken board.",
-    file: "apps/api/src/lobby/lobbyDO.ts",
-    symbol: "LobbyDO",
-    find: "  private async retireBrokenMatch(type: string, violation: string): Promise<void> {\n    await this.match.delete();\n",
-    replace:
-      "  private async retireBrokenMatch(type: string, violation: string): Promise<void> {\n",
-    expectKilledBy: ["apps/api/src/lobby/lobbyDO.test.ts"],
-  },
-  {
     id: "COR-P2-sta6-duplicates-pass",
     decision: "COR-P2",
     what: "A uid in two zones passes the check.",

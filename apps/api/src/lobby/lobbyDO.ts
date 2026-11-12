@@ -1581,11 +1581,11 @@ export class LobbyDO {
 
   /**
    * Retire a match whose accepted action broke a rule every action keeps (`matchViolation`): an
-   * engine bug. The result is not written, the match is deleted and the lobby goes back to
-   * selecting, as for an unreadable record, and one error line names the action type and the rule.
+   * engine bug. The result is not written; the lobby goes back to selecting, which drops the match
+   * (`abandonsMatch`), as for an unreadable record, and one error line names the action type and
+   * the rule.
    */
   private async retireBrokenMatch(type: string, violation: string): Promise<void> {
-    await this.match.delete();
     logError("lobby", "match_broken", await this.fields({ type, violation }));
     const snapshot = await this.loadSnapshot();
     if (snapshot === null || snapshot.phase !== "in-game") return;
