@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { applyAction } from "./index";
 import type { GameEvent, GameState, Seat } from "./index";
 import { programFor } from "./registry";
+import { makeInPlay } from "./types";
 import {
   FIXTURE_POOL,
   battler,
@@ -144,7 +145,7 @@ function setActive(state: GameState, seat: Seat, cardId: string): GameState {
       [seat]: {
         ...side,
         deck: [...side.deck.filter((u) => u !== uid), ...returned],
-        active: { stack: [uid], damage: 0, energy: [], tools: [], conditions: [] },
+        active: makeInPlay(uid, 0),
       },
     },
   };

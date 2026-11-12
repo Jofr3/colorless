@@ -4,7 +4,7 @@ import { deriveAttackEffect } from "./effects";
 import { applyAction } from "./index";
 import type { EffectOp, GameEvent, GameState, Seat } from "./index";
 import { programFor } from "./registry";
-import { BENCH_MAX } from "./types";
+import { BENCH_MAX, makeInPlay } from "./types";
 import {
   FIXTURE_POOL,
   battler,
@@ -123,7 +123,7 @@ function setActive(state: GameState, seat: Seat, cardId: string): GameState {
       [seat]: {
         ...side,
         deck: [...side.deck.filter((u) => u !== uid), ...returned],
-        active: { stack: [uid], damage: 0, energy: [], tools: [], conditions: [] },
+        active: makeInPlay(uid, 0),
       },
     },
   };
