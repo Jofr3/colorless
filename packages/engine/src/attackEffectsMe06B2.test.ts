@@ -337,6 +337,26 @@ describe("Combee me06-006 Fade Out", () => {
     });
   });
 
+  it("the 10 that Knocks Out the Defending Pokémon takes a Prize; both sides promote, and with both Benches empty the game is a tie", () => {
+    let state = benchFromDeck(board(COMBEE.id, [["fix-grass-energy", 1]]), "p1", WALL);
+    state = setDamage(benchFromDeck(state, "p2", WALL), "p2", 390);
+    const owed = mustApply(state, attack(0)).state;
+    expect(owed.phase).toEqual({ kind: "ko:takePrizes", seat: "p1", count: 1 });
+    const out = mustApply(owed, { type: "takePrizes", seat: "p1", prizeIndices: [0] });
+    expect(out.state.phase).toEqual({ kind: "turn:action", seat: "p2" });
+    expect(ids(out.state, out.state.players.p1.active?.stack ?? [])).toEqual([WALL]);
+    expect(ids(out.state, out.state.players.p2.active?.stack ?? [])).toEqual([WALL]);
+    expect(out.state.players.p1.hand).toHaveLength(2 + 1);
+
+    const bare = setDamage(board(COMBEE.id, [["fix-grass-energy", 1]]), "p2", 390);
+    const last = mustApply(bare, attack(0)).state;
+    const tie = mustApply(last, { type: "takePrizes", seat: "p1", prizeIndices: [0] });
+    expect(tie.state.phase).toEqual({
+      kind: "gameOver",
+      outcome: { result: "tie", reasons: { p1: "noPokemon", p2: "noPokemon" } },
+    });
+  });
+
   it("is refused without a {G}", () => {
     expectErr(board(COMBEE.id, [["fix-water-energy", 1]]), attack(0), "ATTACK_COST_UNMET");
   });
@@ -401,6 +421,21 @@ describe("Mantine me06-025 Make Waves and Bubble Drain", () => {
       expect(sizes(out.state, seat), seat).toBe(sizes(state, seat));
     }
     expect(out.state.players.p2.active?.damage).toBe(0);
+  });
+
+  it("Make Waves with fewer than 4 cards to draw draws what is there, and p2's empty deck then loses at their draw", () => {
+    let state = board(MANTINE.id, [["fix-water-energy", 1]]);
+    state = patchSide(state, "p1", { deck: state.players.p1.deck.slice(0, 2) });
+    const p2 = state.players.p2.deck;
+    state = patchSide(state, "p2", { hand: p2.slice(0, 1), deck: p2.slice(1, 4) });
+    const out = mustApply(state, attack(0));
+    expect(out.state.players.p1.hand).toHaveLength(2);
+    expect(out.state.players.p1.deck).toEqual([]);
+    expect(out.state.players.p2.hand).toHaveLength(4);
+    expect(out.state.phase).toEqual({
+      kind: "gameOver",
+      outcome: { result: "win", winner: "p1", reason: "deckOut" },
+    });
   });
 
   it("Make Waves with empty hands still draws 4 each", () => {
@@ -605,6 +640,19 @@ describe("Sableye me06-060 Lure Out and Ominous Eyes", () => {
     const out = choose(parked, []);
     expect(out.state.players.p2.bench).toEqual([]);
     expect(of(out.events, "SHUFFLE")).toContainEqual({ type: "SHUFFLE", seat: "p2" });
+  });
+
+  it("with p2's Bench full the look is still announced, nothing is asked, and p2's deck is shuffled", () => {
+    let state = board(SABLEYE.id, [["fix-darkness-energy", 1]]);
+    for (let i = 0; i < 5; i += 1) state = benchFromDeck(state, "p2", WALL);
+    state = stack(state, "p2", TOP, "top");
+    const out = mustApply(state, attack(0));
+    expect(out.state.phase).toEqual({ kind: "turn:action", seat: "p2" });
+    expect(of(out.events, "DECK_TOP_REVEALED")).toEqual([
+      { type: "DECK_TOP_REVEALED", seat: "p2", uids: [], dest: "bench", reveal: true, actor: "p1" },
+    ]);
+    expect(of(out.events, "SHUFFLE")).toContainEqual({ type: "SHUFFLE", seat: "p2" });
+    expect(out.state.players.p2.bench).toHaveLength(5);
   });
 
   it("p2's Bench room caps the take: with 4 Benched only 1 fits", () => {
