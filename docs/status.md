@@ -26,7 +26,7 @@ a sandbox, or play them online against another account. Updated 2026-11-12.
 ## Current state
 
 - **Deployed:** what is live is the newest `release-*` tag (`git describe --tags --abbrev=0 --match 'release-*'`); not yet live: `git log --oneline <tag>..origin/main`. `GET /health` (`version.tag`, the API) and the page's `<meta name="build">` (the web app) confirm it (`workstreams/backend-data.md` §3.7.2).
-- **Finished and released:** the card-coverage program (October), and the audits of 2026-10-24 to 2026-11-10 (architecture, performance, database, security, reliability, UI, API, dependencies, build and CI, observability). Each has dated entries in `decisions.md`; `decision-index.md` lists them.
+- **Finished and released:** the card-coverage program (October), and the audits of 2026-10-24 to 2026-11-10 (architecture, performance, database, security, reliability, UI, API, dependencies, build and CI, observability), and the correctness and data-integrity audit of 2026-11-12 (Phases 0-4, release-20261112-1530; its unfinished follow-ups end the "Correctness audit Phases 1-4" entry). Each has dated entries in `decisions.md`; `decision-index.md` lists them.
 
 ## Open items
 
