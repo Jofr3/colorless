@@ -7,7 +7,7 @@ import {
 } from "./continuous";
 import type { GameEvent } from "./events";
 import type { GameState, InPlayPokemon, PendingStage, PokemonTarget, Seat } from "./types";
-import { inPlayOf, otherSeat, SEATS, withSide } from "./types";
+import { abilityUseHolder, inPlayOf, otherSeat, SEATS, withSide } from "./types";
 
 /**
  * The state checks that run between steps. Team Rocket's Energy is discarded wherever it may not
@@ -28,7 +28,7 @@ export function postStepChecks(
     const toolTrims = head === undefined ? [] : toolTrimStages(swept, head.seat, swept.pending);
     return toolTrims.length > 0 ? { ...swept, pending: [...toolTrims, ...swept.pending] } : swept;
   }
-  const cleared = clearDepartedChosenShields(swept);
+  const cleared = clearDepartedAbilityUses(clearDepartedChosenShields(swept));
   if (cleared.phase.kind !== "turn:action") return cleared;
   const trims = toolTrimStages(cleared, cleared.phase.seat);
   if (trims.length === 0) return cleared;
@@ -97,6 +97,30 @@ export function clearDepartedChosenShields(state: GameState): GameState {
     next = withSide(next, seat, { ...side, chosenAttackShield: null });
   }
   return next;
+}
+
+/**
+ * §9.3: a Pokémon that leaves play and comes back is a new Pokémon, so its once-per-turn Ability
+ * uses are dropped once none of its cards is in play. Kept: the `*:` keys of an Ability limited by
+ * name across copies, and keys on a card still in play (a body's top card, or a Tool's coin redo).
+ * Like the shield check, a card that leaves and returns within one action keeps its uses. Returns
+ * `state` itself when nothing changes.
+ */
+export function clearDepartedAbilityUses(state: GameState): GameState {
+  const used = state.allowances.abilitiesUsed;
+  if (used.length === 0) return state;
+  const inPlay = new Set<string>();
+  for (const seat of SEATS) {
+    for (const body of inPlayOf(state.players[seat])) {
+      for (const uid of [...body.stack, ...body.tools]) inPlay.add(uid);
+    }
+  }
+  const kept = used.filter((key) => {
+    const holder = abilityUseHolder(key);
+    return holder === null || inPlay.has(holder);
+  });
+  if (kept.length === used.length) return state;
+  return { ...state, allowances: { ...state.allowances, abilitiesUsed: kept } };
 }
 
 /**

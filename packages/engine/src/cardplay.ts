@@ -376,7 +376,9 @@ function playStadium(state: GameState, action: PlayTrainerAction, card: Card): A
   next = {
     ...next,
     stadium: { uid: action.uid, owner: action.seat },
-    allowances: { ...next.allowances, stadiumPlayed: true },
+    // The new Stadium's "once during each player's turn" is its own: the replaced card's use does
+    // not carry over.
+    allowances: { ...next.allowances, stadiumPlayed: true, stadiumAbilityUsed: false },
   };
   // A Stadium can change max HP on both boards (Gravity Mountain, or discarding a replaced
   // HP-raising Stadium), and §8.1's KO is a state check, so the sweep runs on both seats after the

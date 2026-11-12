@@ -833,7 +833,9 @@ export interface TurnAllowances {
       like `abilitiesUsed`: there is exactly one shared Stadium and only the
       turn's own player may use it, so one flag per turn suffices — and because
       allowances reset every turn (freshAllowances), it re-arms for the
-      opponent's turn, which is precisely what "each player's turn" means. */
+      opponent's turn, which is precisely what "each player's turn" means.
+      Putting a Stadium into play clears it, since the flag describes the
+      Stadium in play and a replacement is a different card. */
   stadiumAbilityUsed: boolean;
   /**
    * §9: once-per-turn Ability uses this turn. Keys are built only by `abilityUsedKey`:
@@ -909,6 +911,12 @@ export function abilityUsedKey(
 ): string {
   const keyUid = ability.oncePerTurn === "sharedByName" ? SHARED_ABILITY_UID : uid;
   return `${keyUid}:${ability.name}`;
+}
+
+/** The uid an `abilitiesUsed` key was spent on, or null for a `"sharedByName"` key. */
+export function abilityUseHolder(key: string): string | null {
+  const uid = key.slice(0, key.indexOf(":"));
+  return uid === SHARED_ABILITY_UID ? null : uid;
 }
 
 /**

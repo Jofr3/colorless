@@ -1132,7 +1132,7 @@ describe('§5 — Klinklang "Emergency Rotation" (the first in-hand Ability)', (
     }
   });
 
-  it("ONCE PER TURN: scooped back to the hand the same turn, the same card is refused", () => {
+  it("ONCE PER TURN, per card in play (§9.3, COR-P0E): scooped back to the hand the same turn, the card is a new one and benches again", () => {
     let state = setHand(table(FILLER, [], STAGE2), "p1", [KLINKLANG, SCOOP_UP]);
     const klink = state.players.p1.hand[0] as string;
     const scoop = state.players.p1.hand[1] as string;
@@ -1141,9 +1141,10 @@ describe('§5 — Klinklang "Emergency Rotation" (the first in-hand Ability)', (
     if (state.phase.kind === "effect:choose")
       state = run(state, pick({ seat: "p1", spot: { spot: "bench", index: 0 } })).state;
     expect(state.players.p1.hand).toContain(klink);
-    expect(
-      refused(state, { type: "playBasicToBench", seat: "p1", uid: klink } as GameAction).code,
-    ).toBe("ABILITY_ALREADY_USED");
+    const again = run(state, { type: "playBasicToBench", seat: "p1", uid: klink } as GameAction);
+    expect(again.state.players.p1.bench.map(top)).toContain(klink);
+    // Once benched, the same card's use is spent again for the rest of the turn.
+    expect(again.state.allowances.abilitiesUsed).toContain(`${klink}:Emergency Rotation`);
   });
 
   it("R-KR1: Potent Glare (a Pokémon-PLAY bar) refuses it", () => {

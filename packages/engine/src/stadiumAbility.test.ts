@@ -79,6 +79,34 @@ describe("useStadiumAbility — framework (§7.3)", () => {
     expectErr(done, { type: "useStadiumAbility", seat: "p1" }, "STADIUM_ABILITY_ALREADY_USED");
   });
 
+  it("a Stadium played over a used one brings its own once-per-turn ability (COR-P0E)", () => {
+    // P2 (first) plays Town Store and passes; P1 uses it, then replaces it with Artazon.
+    let state = driveSetup(3, both, { first: "p2" });
+    state = withStadium(state, "p2", "sv03-196");
+    state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
+    const { state: parked } = mustApply(state, { type: "useStadiumAbility", seat: "p1" });
+    if (parked.phase.kind !== "effect:choose") throw new Error("expected search park");
+    const prompt = parked.phase.prompt;
+    if (prompt.kind !== "chooseCards") throw new Error("expected chooseCards");
+    const used = must(
+      applyAction(parked, {
+        type: "resolveEffect",
+        seat: "p1",
+        choice: { kind: "cards", uids: [prompt.candidates[0] as string] },
+      }),
+    );
+    expect(used.allowances.stadiumAbilityUsed).toBe(true);
+    const replaced = withStadium(used, "p1", "sv02-171");
+    expect(cardIdOf(replaced, replaced.stadium?.uid ?? "")).toBe("sv02-171");
+    expect(replaced.allowances.stadiumAbilityUsed).toBe(false);
+    const { state: artazon, events } = mustApply(replaced, {
+      type: "useStadiumAbility",
+      seat: "p1",
+    });
+    expect(findEvent(events, "STADIUM_ABILITY_ACTIVATED")).toMatchObject({ stadium: "Artazon" });
+    expect(artazon.allowances.stadiumAbilityUsed).toBe(true);
+  });
+
   it("re-arms for EACH player's turn — the opponent activates the same shared Stadium", () => {
     // P1 plays + activates Town Store, then ends the turn.
     let state = withStadium(p1Turn2(1), "p1", "sv03-196");

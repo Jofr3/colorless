@@ -633,10 +633,10 @@ describe('§2 — Misty\'s Psyduck "Flustered Leap" (benchOnly, bottom mill, dec
     expect(refused(after, use("Flustered Leap", bench(0))).code).toBe("ABILITY_ALREADY_USED");
   });
 
-  // biome-ignore lint/suspicious/noTemplateCurlyInString: the title quotes the key's format, `${uid}:${name}`.
-  it("R-FL (UNRULED half): the SAME card replayed later in the turn stays locked by its `${uid}:Flustered Leap` key", () => {
+  it("R-FL (§9.3, COR-P0E): the SAME card replayed later in the turn is a new Pokémon and leaps again", () => {
     const { state: leapt } = run(leapBoard(), use("Flustered Leap", bench(0)));
     const psyduck = leapt.players.p1.deck[0] as string;
+    expect(leapt.allowances.abilitiesUsed).not.toContain(`${psyduck}:Flustered Leap`);
     // Draw it (surgery: the top card into the hand) and play it back onto the Bench.
     const drawn = {
       ...leapt,
@@ -647,7 +647,9 @@ describe('§2 — Misty\'s Psyduck "Flustered Leap" (benchOnly, bottom mill, dec
     };
     const { state: replayed } = run(drawn, { type: "playBasicToBench", seat: "p1", uid: psyduck });
     expect(top(bodyAt(replayed, "p1", 0))).toBe(psyduck);
-    expect(refused(replayed, use("Flustered Leap", bench(0))).code).toBe("ABILITY_ALREADY_USED");
+    const { state: again } = run(replayed, use("Flustered Leap", bench(0)));
+    expect(again.players.p1.bench).toHaveLength(0);
+    expect(again.players.p1.deck[0]).toBe(psyduck);
   });
 
   it("the lock is PER BODY: a second benched Psyduck still leaps", () => {
@@ -972,7 +974,8 @@ describe('§5 — Palafin "Zero to Hero" (the in-place swap, Palafin ex\'s one r
     expect(all(events, "SHUFFLE")).toHaveLength(1);
     expect(state.rngState).not.toEqual(before.rngState);
     expect(all(events, "POKEMON_EVOLVED")).toHaveLength(0);
-    expect(state.allowances.abilitiesUsed).toContain(`${palafin}:Zero to Hero`);
+    // The Palafin card left play, so its use leaves with it (§9.3).
+    expect(state.allowances.abilitiesUsed).not.toContain(`${palafin}:Zero to Hero`);
   });
 
   it('"THIS Pokémon": only the body that MOVED fires — a second Palafin already on the Bench does not', () => {
