@@ -60892,6 +60892,11 @@ export const MUTANTS: Mutant[] = [
     find: "  return `${String(seed.key)}:${String(seed.counter)}`;",
     replace: "  return String(seed);",
     expectKilledBy: ["apps/api/src/lobby/matchStore.test.ts"],
+    survives: {
+      kind: "equivalent",
+      reason:
+        "COR-P2: the store continues a log only when its first entry is the one it wrote or read, and a new match's log is new rows, so a same-millisecond rematch is written whole whatever the seed comparison says; its card tables are new objects too. If this row is ever KILLED, a record reaches the store reusing the old match's first log row.",
+    },
   },
   {
     id: "MI3-gate-indexes-the-menu-with-any-key",
