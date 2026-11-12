@@ -9,7 +9,15 @@ import cardTrainer from "@colorless/schema/tcgdex-fixtures/card-trainer-sv01-181
 import cardTrainerTm from "@colorless/schema/tcgdex-fixtures/card-trainer-tm-sv08-188.json";
 import serieFull from "@colorless/schema/tcgdex-fixtures/serie-full-sv.json";
 import setFull from "@colorless/schema/tcgdex-fixtures/set-full-sv01.json";
-import { energyTypeOf, mapCard, mapSerie, mapSet, printKey, weaklessLegalPokemon } from "./map";
+import {
+  energyTypeOf,
+  mapCard,
+  mapSerie,
+  mapSet,
+  printKey,
+  suffixOf,
+  weaklessLegalPokemon,
+} from "./map";
 import { WEAK_RES_SUPPLEMENT } from "./weakResSupplement";
 
 describe("mapSerie", () => {
@@ -331,6 +339,18 @@ describe("mapCard", () => {
 
     const { suffix: _suffix, ...withoutSuffix } = cardPokemonAbility as Record<string, unknown>;
     expect(mapCard(tcgdexCardSchema.parse(withoutSuffix)).suffix).toBeNull();
+  });
+
+  it("spells a Pokémon ex's 'EX' suffix 'ex' and leaves a Pokémon-EX's alone", () => {
+    const base = cardPokemonAbility as Record<string, unknown>;
+    const ex = mapCard(tcgdexCardSchema.parse({ ...base, name: "Mega Golurk ex", suffix: "EX" }));
+    expect(ex.suffix).toBe("ex");
+    const pokemonEx = mapCard(
+      tcgdexCardSchema.parse({ ...base, name: "Rayquaza EX", suffix: "EX" }),
+    );
+    expect(pokemonEx.suffix).toBe("EX");
+    expect(suffixOf("Mega Golurk ex", "ex")).toBe("ex");
+    expect(suffixOf("Exeggutor", "EX")).toBe("EX");
   });
 
   it("defaults a missing upstream `legal` block to false/false", () => {

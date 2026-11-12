@@ -151,7 +151,7 @@ function mapCardFields(card: TcgdexCard): CardRow {
         ...base,
         hp: card.hp ?? null,
         stage: normalizeSentinel(card.stage),
-        suffix: normalizeSentinel(card.suffix),
+        suffix: suffixOf(card.name, normalizeSentinel(card.suffix)),
         evolveFrom: normalizeSentinel(card.evolveFrom),
         typesJson: card.types ?? null,
         retreat: card.retreat ?? null,
@@ -196,6 +196,12 @@ export function weaklessLegalPokemon(rows: readonly CardRow[]): string[] {
         !(row.typesJson ?? []).includes("Dragon"),
     )
     .map((row) => row.id);
+}
+
+/** tcgdex spells some sets' Pokémon ex suffix "EX"; the name's own " ex" decides, so a
+    Pokémon-EX keeps "EX". */
+export function suffixOf(name: string, suffix: string | null): string | null {
+  return suffix === "EX" && name.endsWith(" ex") ? "ex" : suffix;
 }
 
 /** A Trainer's or Energy's rules text, normalised; null when not printed. */
