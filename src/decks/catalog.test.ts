@@ -106,6 +106,21 @@ describe("toBuilderCard", () => {
     ).toBe(false);
   });
 
+  it("a Trainer the catalog gives no trainer_type (30th-c-005 Misty) is a Trainer with no kind", () => {
+    const misty = toBuilderCard(
+      brief({
+        id: "30th-c-005",
+        name: "Misty",
+        category: "Trainer",
+        stage: null,
+        types: null,
+        hp: null,
+        trainerType: null,
+      }),
+    );
+    expect([misty.supertype, misty.subtype]).toEqual(["Trainer", ""]);
+  });
+
   it("passes unknown printed subtypes through verbatim", () => {
     expect(toBuilderCard(brief({ stage: "VMAX" })).subtype).toBe("VMAX");
   });
