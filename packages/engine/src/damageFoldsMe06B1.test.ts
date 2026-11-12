@@ -279,15 +279,15 @@ function board(attacker: string, energy: readonly (readonly [string, number])[])
   return state;
 }
 
-function withStadium(state: GameState, id: string): GameState {
-  const seated = ensureInDeck(state, "p2", id);
-  const side = seated.players.p2;
+function withStadium(state: GameState, id: string, owner: "p1" | "p2" = "p2"): GameState {
+  const seated = ensureInDeck(state, owner, id);
+  const side = seated.players[owner];
   const uid = side.deck.find((u) => seated.cardIdByUid[u] === id);
   if (uid === undefined) throw new Error(`no ${id}`);
   return {
     ...seated,
-    players: { ...seated.players, p2: { ...side, deck: side.deck.filter((u) => u !== uid) } },
-    stadium: { uid, owner: "p2" },
+    players: { ...seated.players, [owner]: { ...side, deck: side.deck.filter((u) => u !== uid) } },
+    stadium: { uid, owner },
   };
 }
 
@@ -443,6 +443,18 @@ describe('Kyogre me06-026 Brutal Whirlpool and Groudon me06-053 Brutal Lands: a 
     expect(benchDamage(out.state)).toEqual([50, 50]);
   });
 
+  it("reading: the attacker's own Legendary Summit counts too: the spread and Brutal Lands' 170 both land", () => {
+    const out = mustApply(withStadium(kyogre(), LEGENDARY_SUMMIT, "p1"), attack(1));
+    expect(activeDamage(out.state)).toBe(100);
+    expect(benchDamage(out.state)).toEqual([50, 50]);
+    const groudon = withStadium(
+      board(GROUDON.id, [["fix-fighting-energy", 3]]),
+      LEGENDARY_SUMMIT,
+      "p1",
+    );
+    expect(activeDamage(mustApply(groudon, attack(1)).state)).toBe(270);
+  });
+
   it("another Stadium, or none: only the 100", () => {
     for (const state of [withStadium(kyogre(), BEACH_COURT), kyogre()]) {
       const out = mustApply(state, attack(1));
@@ -511,6 +523,28 @@ describe("Kecleon me06-083 Colorful Whip", () => {
       ...hand(parked, DUAL_MON),
     ];
     expect(activeDamage(reveal(parked, picked).state)).toBe(120);
+  });
+
+  it("refuses the Item, a uid twice and the opponent's answer, and the park stays", () => {
+    const parked = mustApply(kecleon(), attack(0)).state;
+    const [grass] = hand(parked, GRASS_MON);
+    const [item] = hand(parked, ITEM);
+    for (const uids of [[item as string], [grass as string, grass as string]]) {
+      expectErr(
+        parked,
+        { type: "resolveEffect", seat: "p1", choice: { kind: "cards", uids } } as GameAction,
+        "BAD_EFFECT_CHOICE",
+      );
+    }
+    expectErr(
+      parked,
+      {
+        type: "resolveEffect",
+        seat: "p2",
+        choice: { kind: "cards", uids: [grass as string] },
+      } as GameAction,
+      "WRONG_SEAT",
+    );
   });
 
   it("revealing none does no damage; no Pokémon in hand does not park", () => {

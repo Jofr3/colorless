@@ -72528,6 +72528,17 @@ export const MUTANTS: Mutant[] = [
     expectKilledBy: ["packages/engine/src/damageFoldsMe06B1.test.ts"],
   },
   {
+    id: "ME06-B1-legendary-opponents-only",
+    decision: "ME06-B1",
+    what: "The Legendary test counts only a Stadium the opponent played, so the attacker's own Legendary Summit turns nothing on.",
+    file: "packages/engine/src/boardCondition.ts",
+    symbol: "conditionHolds",
+    find: "        stadium !== null && (cardOfUid(state, stadium.uid)?.name.includes(cond.fragment) ?? false)",
+    replace:
+      "        stadium !== null &&\n        stadium.owner !== seat &&\n        (cardOfUid(state, stadium.uid)?.name.includes(cond.fragment) ?? false)",
+    expectKilledBy: ["packages/engine/src/damageFoldsMe06B1.test.ts"],
+  },
+  {
     id: "ME06-B1-whirlpool-ungated",
     decision: "ME06-B1",
     what: "Brutal Whirlpool's Bench spread loses its gate and lands with any Stadium or none.",
