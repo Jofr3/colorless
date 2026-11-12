@@ -51756,9 +51756,8 @@ export const MUTANTS: Mutant[] = [
     what: "Nitpick shuffles the ATTACKER's hand instead of the opponent's. Killed by deckHandMiscMeD615 §2 and §6.",
     file: "packages/engine/src/effects.ts",
     symbol: "deriveAttackEffect",
-    find: 'return [\n        { op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: opponentDraws } },\n      ];',
-    replace:
-      '      return [{ op: "handRefresh", who: "you", draw: { kind: "fixed", count: opponentDraws } }];',
+    find: '    const who = match[1] === "Each player" ? "both" : "opponent";',
+    replace: '    const who = match[1] === "Each player" ? "both" : "you";',
     expectKilledBy: ["packages/engine/src/deckHandMiscMeD615.test.ts"],
   },
   {
@@ -51767,9 +51766,8 @@ export const MUTANTS: Mutant[] = [
     what: "Nitpick refreshes BOTH hands. Killed by deckHandMiscMeD615 §2 and §6.",
     file: "packages/engine/src/effects.ts",
     symbol: "deriveAttackEffect",
-    find: 'return [\n        { op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: opponentDraws } },\n      ];',
-    replace:
-      '      return [{ op: "handRefresh", who: "both", draw: { kind: "fixed", count: opponentDraws } }];',
+    find: '    const who = match[1] === "Each player" ? "both" : "opponent";',
+    replace: '    const who = match[1] === "Each player" ? "both" : "both";',
     expectKilledBy: ["packages/engine/src/deckHandMiscMeD615.test.ts"],
   },
   {
@@ -51778,8 +51776,8 @@ export const MUTANTS: Mutant[] = [
     what: "the draw floor admits 0. Killed by deckHandMiscMeD615 §2.",
     file: "packages/engine/src/effects.ts",
     symbol: "deriveAttackEffect",
-    find: "const opponentDraws = positiveInt(match[1]);",
-    replace: "const opponentDraws = Number(match[1]);",
+    find: "const draws = positiveInt(match[2]);",
+    replace: "const draws = Number(match[2]);",
     expectKilledBy: ["packages/engine/src/deckHandMiscMeD615.test.ts"],
   },
   {
@@ -51788,9 +51786,9 @@ export const MUTANTS: Mutant[] = [
     what: "Nitpick's anchor drops the `$`. Killed by deckHandMiscMeD615 §2's suffix near miss.",
     file: "packages/engine/src/effects.ts",
     symbol: "OPPONENT_SHUFFLES_HAND_DRAWS",
-    find: "const OPPONENT_SHUFFLES_HAND_DRAWS =\n  /^Your opponent shuffles their hand into their deck and draws (\\d+) cards\\.$/;",
+    find: "const OPPONENT_SHUFFLES_HAND_DRAWS =\n  /^(Your opponent|Each player) shuffles their hand into their deck and draws (\\d+) cards\\.$/;",
     replace:
-      "const OPPONENT_SHUFFLES_HAND_DRAWS = /^Your opponent shuffles their hand into their deck and draws (\\d+) cards\\./;",
+      "const OPPONENT_SHUFFLES_HAND_DRAWS = /^(Your opponent|Each player) shuffles their hand into their deck and draws (\\d+) cards\\./;",
     expectKilledBy: ["packages/engine/src/deckHandMiscMeD615.test.ts"],
   },
   {

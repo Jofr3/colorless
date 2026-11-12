@@ -591,11 +591,19 @@ describe("the anchor — fifteen printed sentences, ONE arm and TWO optional gro
       "Search your deck for a Basic Energy card and attach it to your opponent's Active Pokémon. Then, shuffle your deck.",
       // A brace code the ENERGY map refuses ({C} is the provision fallback).
       "Search your deck for a Basic {C} Energy card and attach it to this Pokémon. Then, shuffle your deck.",
-      // A SPECIAL Energy — the noun is welded to "Basic", and `attachableEnergies`
-      // could not honour the wider one anyway.
-      "Search your deck for an Energy card and attach it to this Pokémon. Then, shuffle your deck.",
     ];
     for (const text of rewrites) expect(deriveAttackEffect(text), text).toBeNull();
+  });
+
+  it("the bare noun an Energy card is not this arm's: Send Flowers' anchor reads it, Special Energy included", () => {
+    expect(
+      deriveAttackEffect(
+        "Search your deck for an Energy card and attach it to this Pokémon. Then, shuffle your deck.",
+      ),
+    ).toEqual([
+      { op: "attachFromDeck", filter: { kind: "anyEnergy" }, max: 1, toSelf: true },
+      { op: "shuffleDeck" },
+    ]);
   });
 
   it("carries NO new op, and ONE new op FIELD — the honest price, D457's and D458's halves included", () => {

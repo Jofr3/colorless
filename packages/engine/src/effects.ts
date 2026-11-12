@@ -1952,6 +1952,10 @@ const FLIP_PREVENT_DAMAGE_AND_EFFECTS =
 const FLIP_PREVENT_DAMAGE =
   /^Flip a coin\. If heads, during your opponent['’]s next turn, prevent all damage done to this Pokémon by attacks\.$/;
 
+// Giratina "Chaos Crawler": ungated, damage only ("from attacks", not "from and effects of").
+const PREVENT_DAMAGE_FROM_ATTACKS =
+  /^During your opponent['’]s next turn, prevent all damage from attacks done to this Pokémon\.$/;
+
 // "Prevent all damage ... by attacks from Basic [non-{X}] Pokémon." The optional excluded type is a
 // single code letter read through `POKEMON_TYPE_BY_CODE`; an unknown letter stays unbuilt.
 const PREVENT_DAMAGE_FROM_CLASS =
@@ -2511,6 +2515,10 @@ const BOTTOM_REVEAL_NAMED_ATTACK_SCALE =
 const EACH_PLAYER_HAND_ATTACH =
   /^Each player may attach up to (\d+) Basic Energy cards from their hand to their Pokémon in any way they like\. Your opponent does this first\.$/;
 
+// Sableye "Lure Out": Accompanying Flute's sentence on an attack, `lookAtTopN { whose: "opponent" }`.
+const OPPONENT_TOP_BASICS_TO_BENCH =
+  /^Reveal the top (\d+) cards of your opponent['’]s deck\. You may choose any number of Basic Pokémon you find there and put those Pokémon onto their Bench\. Your opponent shuffles the other cards back into their deck\.$/;
+
 // `ATTACK_LOOK_TOP_BENCH`'s sentence with a comma join.
 const LOOK_TOP_COMMA_BENCH =
   /^Look at the top (\d+) cards of your deck, and you may put any number of Pokémon you find there onto your Bench\. Shuffle the other cards back into your deck\.$/;
@@ -2528,8 +2536,9 @@ const HEAL_EACH_BOTH_SIDES =
   /^Heal (\d+) damage from each Pokémon \(both yours and your opponent['’]s\)\.$/;
 
 // Scraggy "Nitpick" ×2: `handRefresh` on the opponent alone (Distorted Future's `who`), a fixed draw.
+// Mantine "Make Waves" prints "Each player", Judge's `who: "both"`.
 const OPPONENT_SHUFFLES_HAND_DRAWS =
-  /^Your opponent shuffles their hand into their deck and draws (\d+) cards\.$/;
+  /^(Your opponent|Each player) shuffles their hand into their deck and draws (\d+) cards\.$/;
 
 // Ho-Oh "Flames of Revival": `discardPileRetrieval` of Basic Pokémon onto the Bench.
 const RETRIEVE_BASIC_TO_BENCH =
@@ -2609,9 +2618,10 @@ const RANDOM_DISCARD_OPPONENT_HAND_DOWN_TO =
 const MILL_TOP_KEEP_ONE =
   /^Discard the top (\d+) cards of your deck and put 1 of them into your hand\.$/;
 
-// Shaymin "Send Flowers": `attachFromDeck` of ANY Energy card onto a typed Benched body.
+// Shaymin "Send Flowers": `attachFromDeck` of ANY Energy card onto a typed Benched body; Raikou ex
+// "Thunder-Clad" attaches it to this Pokémon (group 2).
 const SEARCH_ENERGY_ATTACH_BENCHED_TYPED =
-  /^Search your deck for an Energy card and attach it to 1 of your Benched \{([A-Z])\} Pokémon\. Then, shuffle your deck\.$/;
+  /^Search your deck for an Energy card and attach it to (?:1 of your Benched \{([A-Z])\}|(this)) Pokémon\. Then, shuffle your deck\.$/;
 
 // Fletchling "Chirp": a revealed hand search over the NEW `pokemonWithResistance` filter.
 const SEARCH_POKEMON_WITH_RESISTANCE =
@@ -3603,6 +3613,24 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       ];
     }
   }
+  match = OPPONENT_TOP_BASICS_TO_BENCH.exec(effect);
+  if (match !== null) {
+    const revealed = Number(match[1]);
+    if (revealed >= 1 && revealed <= MAX_PRINTED_LOOK_WINDOW) {
+      return [
+        {
+          op: "lookAtTopN",
+          n: revealed,
+          filter: { kind: "basicPokemon" },
+          max: "any",
+          dest: "bench",
+          reveal: true,
+          whose: "opponent",
+        },
+        { op: "shuffleDeck", whose: "opponent" },
+      ];
+    }
+  }
   match = LOOK_TOP_COMMA_REVEAL_HAND.exec(effect);
   if (match !== null) {
     const handWindow = Number(match[1]);
@@ -3632,11 +3660,10 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
   }
   match = OPPONENT_SHUFFLES_HAND_DRAWS.exec(effect);
   if (match !== null) {
-    const opponentDraws = positiveInt(match[1]);
-    if (opponentDraws !== null) {
-      return [
-        { op: "handRefresh", who: "opponent", draw: { kind: "fixed", count: opponentDraws } },
-      ];
+    const who = match[1] === "Each player" ? "both" : "opponent";
+    const draws = positiveInt(match[2]);
+    if (draws !== null) {
+      return [{ op: "handRefresh", who, draw: { kind: "fixed", count: draws } }];
     }
   }
   match = RETRIEVE_BASIC_TO_BENCH.exec(effect);
@@ -3887,6 +3914,12 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     }
   }
   match = SEARCH_ENERGY_ATTACH_BENCHED_TYPED.exec(effect);
+  if (match?.[2] !== undefined) {
+    return [
+      { op: "attachFromDeck", filter: { kind: "anyEnergy" }, max: 1, toSelf: true },
+      { op: "shuffleDeck" },
+    ];
+  }
   if (match !== null) {
     const benchedType = POKEMON_TYPE_BY_CODE[match[1] ?? ""];
     if (benchedType !== undefined) {
@@ -5060,6 +5093,7 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
     // `effects` is absent, not `false`, when the sentence does not say "from and effects of".
     return [headsGate([{ op: "preventDamage" }])];
   }
+  if (PREVENT_DAMAGE_FROM_ATTACKS.test(effect)) return [{ op: "preventDamage" }];
   // Ungated prevention narrowed to an attacker class, with an optional `non-{X}` exclusion. An
   // unresolvable code falls through to the loud path rather than installing a wider block.
   match = PREVENT_DAMAGE_FROM_CLASS.exec(effect);
@@ -8354,6 +8388,7 @@ const ATTACK_GATE_CLAUSES = [
   "You can use this attack only if you go second, and only during your first turn.",
   "You can use this attack only if this Pokémon used Rollout during your last turn.",
   "If 1 of your Pokémon used Angelite during your last turn, this attack can't be used.",
+  "If 1 of your Pokémon used Chaos Crawler during your last turn, this attack can't be used.",
   // Cost clauses rather than timing gates.
   "If this Pokémon has any damage counters on it, this attack can be used for {F}.",
   "If this Pokémon is affected by a Special Condition, ignore all Energy in this attack's cost.",
@@ -8446,6 +8481,10 @@ const ATTACK_GATE_CLAUSE_GATES: Record<AttackGateClause, AttackTimingGate> = {
   "If 1 of your Pokémon used Angelite during your last turn, this attack can't be used.": {
     kind: "barredIf",
     condition: { kind: "yourPokemonUsedAttackLastTurn", attack: "Angelite" },
+  },
+  "If 1 of your Pokémon used Chaos Crawler during your last turn, this attack can't be used.": {
+    kind: "barredIf",
+    condition: { kind: "yourPokemonUsedAttackLastTurn", attack: "Chaos Crawler" },
   },
   // Cost clauses printed as the whole effect text, so the split answers `body: ""`. They are read
   // by `attackCostAt` and excluded from `BlockingAttackGate`; otherwise `attackTimingBlocked` would
