@@ -5956,7 +5956,7 @@ const TARRAGON: CardProgram = {
     doesn't have a Rule Box, reveal it, and put it into your hand. Then, shuffle your deck.
     (Pokémon ex, Pokémon V, etc. have Rule Boxes.)"* Master Ball `sv05-153` (`MASTER_BALL`) with
     Lana's Aid's `noRuleBox` on `anyPokemon` (any stage; a Mega Evolution Pokémon ex is an "ex",
-    `hasRuleBox`). `30th-126` prints no text and is not keyed. */
+    `hasRuleBox`). `30th-126` is keyed by id: its "doesn’t" keeps its print_key apart. */
 const POKE_PAD: CardProgram = {
   trainer: searchThenShuffle({
     filter: { kind: "anyPokemon", noRuleBox: true },
@@ -8253,11 +8253,10 @@ const REGISTRY: Readonly<Record<string, CardProgram>> = {
   "sv05-063": MR_MIME_LOOK_ALIKE_SHOW, // Mr. Mime — Look-Alike Show: reveal the opponent's hand, use 1 Supporter's effect
   "me02.5-214": NEMONA, // Urbain — twin `sv01-180` (Nemona, same text)
   "me02.5-258": NEMONA, // Cheren — twin `sv01-180` (Nemona, same text)
-  // The three `30th` Items, `legal_standard = 1`, whose catalog row has `effect = NULL` (tcgdex
-  // prints no text, so their print_key matches no twin). Keyed by NAME on the shipped object: each is
-  // the reprint of that card. The missing face text is catalog debt (see card-revision.md).
+  // Two `30th` Items, `legal_standard = 1`, whose print_key matches no twin: Poké Pad's text spells
+  // "doesn’t" with U+2019 where its twin has a straight apostrophe, and Ultra Ball's catalog row has
+  // `effect = NULL`. Keyed by NAME on the shipped object: each is the reprint of that card.
   "30th-126": POKE_PAD, // Poké Pad — twin `me02.5-198`
-  "30th-127": SWITCH, // Switch — twin `sv01-194`
   "30th-128": ULTRA_BALL, // Ultra Ball — twin `sv01-196`
   // — Pokémon, same Abilities —
   "me02.5-079": POWER_SAVER, // Team Rocket's Mewtwo ex — twin `svp-205`
@@ -8267,7 +8266,6 @@ const REGISTRY: Readonly<Record<string, CardProgram>> = {
   "me02-011": MELT_AWAY, // Charmander — twin `sv10-036` (Ethan's Magcargo, same text)
   "me02-041": REDUCE_30_AFTER_WR, // Mega Diancie ex — twin `sv02-150` (Copperajah ex, same text)
   "me02-070": UNAWARE, // Empoleon ex — twin `sv08-031` (Skeledirge, same text)
-  "me02.5-267": REDUCE_30_AFTER_WR, // Mega Diancie ex — twin `sv02-150` (Copperajah ex, same text)
   "me05-038": TRAP_TERRITORY, // Mega Chandelure ex — twin `sv01-019` (Spidops ex, same text)
   "30th-028": PRESSURE, // Pikachu — twin `sv03-030` (Entei, same text)
   "30th-033": CURIOUS_TEA_PARTY, // Pikachu — twin `sv06-020` (Poltchageist, same text)
@@ -8348,7 +8346,6 @@ const REGISTRY: Readonly<Record<string, CardProgram>> = {
   "me03-027": FIGHTING_ROAR, // Luxio "Fighting Roar" — evolve early if the opponent's Active is a Pokémon ex
   "me04-007": NEEDLY_ARMOR, // Chesnaught "Needly Armor" — 3 counters per {G} Energy on the Attacking Pokémon
   "me02-056": SHADOWY_CONCEALMENT, // Mega Gengar ex — 1 fewer Prize for a {D} body KO'd by an ex's attack
-  "me02.5-125": SHADOWY_CONCEALMENT, // Mega Gengar ex
   "mep-073": SHADOWY_CONCEALMENT, // Mega Gengar ex
   "me02.5-116": TENACIOUS_BODY, // Mega Hawlucha ex — coin-flip survival on 10 HP
   "me05-041": DURABLE_BODY, // Annihilape — Tenacious Body's sentence
