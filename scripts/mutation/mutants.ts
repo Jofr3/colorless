@@ -41202,6 +41202,11 @@ export const MUTANTS: Mutant[] = [
     find: "  if (abilityUsedThisTurn(state, usedKey)) {",
     replace: "  if (false) {",
     expectKilledBy: ["packages/engine/src/calmDiversD572.test.ts"],
+    survives: {
+      kind: "equivalent",
+      reason:
+        "COR-P0E: a once-per-turn use is dropped once its card leaves play (§9.3), and Emergency Rotation spends its key only as it puts the card onto the Bench, so the key is never held while the card is in the hand. A Klinklang scooped back the same turn is a new card and benches again with or without the check. If this row is ever KILLED, a path now reaches the hand check with the key still spent.",
+    },
   },
   {
     id: "D572-rotation-allowance-not-spent",
