@@ -1526,7 +1526,7 @@ describe("the `specialEnergy` column, by card (D308)", () => {
 /** The `me` serie's legal pool, per column (the statement above, `:serie = 'me'`). */
 const POPULATION_ME = {
   legalRows: 1266,
-  attackUnits: 1039,
+  attackUnits: 1040,
   abilityUnits: 234,
   trainerUnits: 183,
   specialEnergyUnits: 11,
@@ -1534,7 +1534,7 @@ const POPULATION_ME = {
 
 const POPULATION_D581 = {
   legalRows: 3287,
-  attackUnits: 2771,
+  attackUnits: 2772,
   abilityUnits: 610,
   trainerUnits: 447,
   specialEnergyUnits: 22,
@@ -2098,7 +2098,7 @@ describe("the census at HEAD", () => {
     for (const { name, read } of ATTACK_READERS) expect(read.name).toBe(name);
   });
 
-  it("the committed corpora are the legal attack columns: sv 640 / 1,732, me 442 / 1,039", () => {
+  it("the committed corpora are the legal attack columns: sv 640 / 1,732, me 442 / 1,040", () => {
     const sv = legalAttackCorpus();
     expect(sv.length).toBe(640);
     expect(sv.reduce((sum, [units]) => sum + units, 0)).toBe(POPULATION.attackUnits);
@@ -2331,12 +2331,19 @@ const CENSUS_HISTORY: readonly {
   { decision: "D644", attack: 2770, ability: 606, trainer: 446, specialEnergy: 22 },
   { decision: "D645", attack: 2771, ability: 610, trainer: 446, specialEnergy: 22 },
   { decision: "D646", attack: 2771, ability: 610, trainer: 447, specialEnergy: 22 },
+  {
+    decision: "Catalog re-ingest 2026-11-12",
+    attack: 2772,
+    ability: 610,
+    trainer: 447,
+    specialEnergy: 22,
+  },
 ];
 
 describe("CENSUS_HISTORY", () => {
   it("the last recorded slice is the census at HEAD", () => {
     expect(CENSUS_HISTORY.at(-1)).toEqual({
-      decision: "D646",
+      decision: "Catalog re-ingest 2026-11-12",
       attack: liveAttackBuilt(),
       ability: POPULATION_D581.abilityUnits,
       trainer: POPULATION_D581.trainerUnits,

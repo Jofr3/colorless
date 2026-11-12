@@ -44300,8 +44300,8 @@ export const MUTANTS: Mutant[] = [
     what: "the D581 attack denominator is copied one short of `sv` + `me`. Killed by the census suite's D581 sum rung.",
     file: "packages/engine/src/censusAtHead.test.ts",
     symbol: "POPULATION_D581",
-    find: "  legalRows: 3287,\n  attackUnits: 2771,",
-    replace: "  legalRows: 3287,\n  attackUnits: 2770,",
+    find: "  legalRows: 3287,\n  attackUnits: 2772,",
+    replace: "  legalRows: 3287,\n  attackUnits: 2771,",
     expectKilledBy: ["packages/engine/src/censusAtHead.test.ts"],
   },
   {
