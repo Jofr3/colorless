@@ -179,11 +179,15 @@ export interface PassiveEffects {
    * after use.
    */
   damageReductionAfterWRFromTypeThenDiscard?: { amount: number; type: PokemonType };
-  /** §8.5 `damageReductionAfterWR` gated on the attacker's class (Sacred Charm, Thick Scale). */
+  /**
+   * §8.5 `damageReductionAfterWR` gated on the attacker's class (Sacred Charm, Thick Scale).
+   * `holderAtFullHp` also requires the holder to have no damage counters when the damage is dealt.
+   */
   damageReductionAfterWRFromAttacker?: {
     amount: number;
     attacker: CardFilter;
     holderType?: PokemonType;
+    holderAtFullHp?: true;
   };
   /**
    * §8.1 Survival Brace: at full HP, survives a Knock Out from an opponent's attack with 10 HP,
@@ -692,6 +696,11 @@ export interface PassiveEffects {
    * attack costs, surcharges included.
    */
   ignoreColorlessCostIfOpponentHandExactly?: number;
+  /**
+   * §8.2 If its controller has a Pokémon of each of these names in play (Active or Bench, read off
+   * the top card), ignore all {C} in this Pokémon's attack costs, surcharges included.
+   */
+  ignoreColorlessCostIfNamedInPlay?: readonly [string, ...string[]];
   /**
    * §8.2 Attached Tool's {C} discount on its holder's attacks. Not §9-gated. `holder` filters the
    * holder's top card; `ifMorePrizesRemaining` requires the holder's side to have strictly more

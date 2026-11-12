@@ -1252,7 +1252,8 @@ function foldDamageModifiers(
   const fromAttacker = passive.damageReductionAfterWRFromAttacker;
   if (
     fromAttacker !== undefined &&
-    (fromAttacker.holderType === undefined || holder.types.includes(fromAttacker.holderType))
+    (fromAttacker.holderType === undefined || holder.types.includes(fromAttacker.holderType)) &&
+    (fromAttacker.holderAtFullHp !== true || holder.pokemon.damage === 0)
   )
     out.damageReductionsFromAttacker.push({
       amount: fromAttacker.amount,
@@ -3593,17 +3594,25 @@ export function selfPreWRBonusPerOpponentPrize(state: GameState, pokemon: InPlay
 }
 
 /**
- * §8.2: Decidueye ex "Sniper's Eye": does `pokemon` ignore every {C} in its attack costs because
- * the opponent holds exactly the printed number of cards?
+ * §8.2: does `pokemon` ignore every {C} in its attack costs? Decidueye ex "Sniper's Eye" (the
+ * opponent holds exactly the printed number of cards) or "Incarnate Solidarity" (its controller has
+ * every printed name in play).
  */
 export function selfIgnoresColorlessCost(state: GameState, pokemon: InPlayPokemon): boolean {
   const top = topCardOf(state, pokemon);
   const uid = topUid(pokemon);
   if (top === undefined || uid === undefined) return false;
-  const exactly = programFor(top.id)?.passive?.ignoreColorlessCostIfOpponentHandExactly;
-  if (exactly === undefined || disabledAbilityUids(state).has(uid)) return false; // §9
+  const passive = programFor(top.id)?.passive;
+  const exactly = passive?.ignoreColorlessCostIfOpponentHandExactly;
+  const names = passive?.ignoreColorlessCostIfNamedInPlay;
+  if (exactly === undefined && names === undefined) return false;
+  if (disabledAbilityUids(state).has(uid)) return false; // §9
   const seat = seatOfPokemon(state, pokemon);
-  return seat !== undefined && state.players[otherSeat(seat)].hand.length === exactly;
+  if (seat === undefined) return false;
+  if (exactly !== undefined && state.players[otherSeat(seat)].hand.length !== exactly) return false;
+  if (names === undefined) return true;
+  const inPlay = inPlayOf(state.players[seat]).map((body) => topCardOf(state, body)?.name);
+  return names.every((name) => inPlay.includes(name));
 }
 
 /**
