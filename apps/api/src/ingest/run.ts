@@ -98,16 +98,24 @@ export interface RunSummary {
   failedSets: readonly string[];
   weakless: readonly string[];
   evolutionless: readonly string[];
+  evolvingBasics: readonly string[];
+  unresolvedEvolutions: readonly string[];
+  /** The catalog's names could not be read, so unresolvedEvolutions was not checked. */
+  namesUnread: boolean;
   epochStamped: boolean;
   postPassFailed: boolean;
 }
 
 /** Non-zero when anything in the run needs a person: a failed set, a Pokémon owed a supplement
-    entry, a missing epoch stamp or a failed whole-table reprint pass. */
+    entry or with an evolution the engine cannot play, a missing epoch stamp or a failed
+    whole-table reprint pass. */
 export function exitCode(summary: RunSummary): 0 | 1 {
   return summary.failedSets.length > 0 ||
     summary.weakless.length > 0 ||
     summary.evolutionless.length > 0 ||
+    summary.evolvingBasics.length > 0 ||
+    summary.unresolvedEvolutions.length > 0 ||
+    summary.namesUnread ||
     !summary.epochStamped ||
     summary.postPassFailed
     ? 1

@@ -144,6 +144,9 @@ describe("exitCode", () => {
     failedSets: [],
     weakless: [],
     evolutionless: [],
+    evolvingBasics: [],
+    unresolvedEvolutions: [],
+    namesUnread: false,
     epochStamped: true,
     postPassFailed: false,
   };
@@ -153,6 +156,9 @@ describe("exitCode", () => {
     expect(exitCode({ ...clean, failedSets: ["sv01"] })).toBe(1);
     expect(exitCode({ ...clean, weakless: ["sv01-001"] })).toBe(1);
     expect(exitCode({ ...clean, evolutionless: ["me06-005"] })).toBe(1);
+    expect(exitCode({ ...clean, evolvingBasics: ["me06-011"] })).toBe(1);
+    expect(exitCode({ ...clean, unresolvedEvolutions: ["30th-c-006"] })).toBe(1);
+    expect(exitCode({ ...clean, namesUnread: true })).toBe(1);
     expect(exitCode({ ...clean, epochStamped: false })).toBe(1);
     expect(exitCode({ ...clean, postPassFailed: true })).toBe(1);
   });

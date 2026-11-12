@@ -40,6 +40,19 @@ async function rows(name: string): Promise<unknown[]> {
   return (await getDb().db.prepare(check.sql).all()).results;
 }
 
+function pokemon(
+  id: string,
+  name: string,
+  stage: string | null,
+  evolveFrom: string | null,
+): string {
+  const text = (v: string | null) => (v === null ? "NULL" : `'${v}'`);
+  return `INSERT INTO cards (id, set_id, local_id, name, category, stage, evolve_from, legal_standard,
+    legal_expanded, print_key, legal_standard_effective, legal_expanded_effective)
+    VALUES ('${id}', 'sv01', '${id}', '${name}', 'Pokemon', ${text(stage)}, ${text(evolveFrom)},
+    0, 1, '${id}', 0, 1)`;
+}
+
 /** The statements that break each rule, run after two clean accounts `a` and `b` exist. */
 const VIOLATIONS: Record<string, string[]> = {
   "favourite deck owned by another user": [
@@ -62,6 +75,12 @@ const VIOLATIONS: Record<string, string[]> = {
       print_key, legal_standard_effective, legal_expanded_effective)
       VALUES ('sv01-999', 'sv01', '999', 'Nest Ball', 'Trainer', 0, 1, '${KEY}', 0, 1)`,
   ],
+  "non-Basic Pokémon with no evolve_from": [pokemon("sv01-201", "Mew VMAX", "VMAX", null)],
+  "Basic Pokémon with an evolve_from": [
+    pokemon("sv01-202", "Wimpod", "Basic", null),
+    pokemon("sv01-203", "Mega Golisopod ex", "Basic", "Wimpod"),
+  ],
+  "evolve_from names no card": [pokemon("sv01-204", "Dark Tyranitar", "Stage2", "Dark Pupitar")],
 };
 
 /** Checks a test cannot break: D1 enforces foreign keys and owns the file, and the unique
@@ -97,6 +116,31 @@ describe("consistency checks", () => {
     await seedAccount(db, "a");
     await seedAccount(db, "b");
     for (const check of CONSISTENCY_CHECKS) expect(await rows(check.name), check.name).toEqual([]);
+  });
+
+  it("finds nothing in the evolutions listed as unplayable, nor in a resolved one", async () => {
+    const { db } = getDb();
+    await db.batch(
+      [
+        pokemon("30th-c-006", "Dark Tyranitar", "Stage2", "Dark Pupitar"),
+        pokemon("30th-c-009", "Greninja BREAK", "BREAK", null),
+        pokemon("30th-c-026", "Mew VMAX", "VMAX", null),
+        pokemon("sv01-202", "Wimpod", "Basic", null),
+        pokemon("sv01-203", "Mega Golisopod ex", "Stage1", "Wimpod"),
+        pokemon("sv01-205", "Omanyte", "Stage1", "Nest Ball"),
+      ].map((sql) => db.prepare(sql)),
+    );
+    try {
+      for (const name of [
+        "non-Basic Pokémon with no evolve_from",
+        "Basic Pokémon with an evolve_from",
+        "evolve_from names no card",
+      ]) {
+        expect(await rows(name), name).toEqual([]);
+      }
+    } finally {
+      await restoreCatalog(db);
+    }
   });
 
   for (const [name, statements] of Object.entries(VIOLATIONS)) {
