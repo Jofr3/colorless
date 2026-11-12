@@ -2053,10 +2053,15 @@ export function advance(stateIn: GameState, events: GameEvent[]): ApplyResult {
       return runCheckup(state, stage.seat, events);
     case "resumeTurn":
       return runResumeTurnStage(state, stage, events);
-    case "koTrigger":
+    case "koTrigger": {
+      // §14: a game already won (a denied Prize leaves no Prize stage to find it) ends before the
+      // on-KO program can run or park.
+      const decided = evaluateWin(state);
+      if (decided !== null) return finishGame(state, decided, events);
       // §9 The Knocked Out Pokémon's on-KO Ability, or an attached Amulet of Hope. Pop first so the
       // stages behind resume if the program parks.
       return runKoTrigger(popStage(state), stage.seat, stage.uid, stage.toolUid, events);
+    }
     case "endTurnToolTrigger":
       // Powerglass. Pop first so the re-queued `endTurn` drains after it.
       return runEndTurnToolTrigger(popStage(state), stage.seat, stage.toolUid, events);
