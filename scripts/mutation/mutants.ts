@@ -74903,4 +74903,13 @@ export const MUTANTS: Mutant[] = [
     replace: "    isLegendPokemon(card)\n",
     expectKilledBy: ["apps/api/src/ingest/ruleBoxes.test.ts"],
   },
+  {
+    id: "COR-P4-unknown-format-kept",
+    decision: "COR-P4",
+    what: "The builder keeps a stored format the write schema now refuses, so every save of that deck answers 400.",
+    file: "src/lua/builder.ts",
+    find: "      this.format = formatById(data.format).id;\n",
+    replace: '      this.format = data.format ?? "standard";\n',
+    expectKilledBy: ["src/lua/builder.test.ts"],
+  },
 ];

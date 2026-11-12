@@ -594,7 +594,7 @@ export class LuaBuilder {
       this.message = notice;
       this.name = data.name;
       this.keptName = data.name.trim();
-      this.format = data.format ?? "standard";
+      this.format = formatById(data.format).id;
       this.cover = data.chosenCoverCardId;
       this.entries = new Map(data.cards.map((c) => [c.cardId, c.count]));
       this.pending.clear();

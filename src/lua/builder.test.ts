@@ -557,6 +557,18 @@ describe("Lua deck builder", () => {
     await b.command("format");
     expect(rows()).toEqual({ a: "0", x: "0" });
   });
+  it("loads a deck stored in a format no longer offered as Standard, and saves it as Standard (COR-P4)", async () => {
+    vi.mocked(api.getDeck).mockResolvedValue({ ...deck(), format: "legacy" });
+    const { b } = await setup();
+    expect(b.format).toBe("standard");
+    await b.command("add\ta");
+    await tick();
+    expect(api.patchDeck).toHaveBeenLastCalledWith(
+      "one",
+      expect.objectContaining({ format: "standard" }),
+      { keepalive: false },
+    );
+  });
   it("drops cover pins when removing the selected cover", async () => {
     const { b } = await setup();
     await b.command("add\ta");
