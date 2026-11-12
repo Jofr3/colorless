@@ -2425,6 +2425,45 @@ const ENERGIZING_PRESENT: CardProgram = {
   ],
 };
 
+const RULERS_ROAR_TEXT =
+  "Once during your turn, when you play this Pokémon from your hand onto your Bench, you may use this Ability. Look at the top 4 cards of your deck and attach a Basic Energy card you find there to this Pokémon. Shuffle the other cards and put them on the bottom of your deck.";
+
+/** Mega Rayquaza ex — "Ruler's Roar". */
+const RULERS_ROAR: CardProgram = {
+  triggered: [
+    {
+      name: "Ruler's Roar",
+      trigger: "onPlayToBench",
+      program: [
+        {
+          op: "optional",
+          note: RULERS_ROAR_TEXT,
+          ops: [
+            {
+              op: "attachFromTop",
+              n: 4,
+              filter: { kind: "basicEnergy" },
+              max: 1,
+              toSelf: true,
+              restTo: "shuffledBottom",
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+/** Talonflame ex — "Excited Dive": "Once during your turn, if this Pokémon is in your hand, and if
+    you have any Colorless Mega Evolution Pokémon ex in play, you may use this Ability. Put this
+    Pokémon onto your Bench." */
+const EXCITED_DIVE: CardProgram = {
+  benchFromHand: {
+    name: "Excited Dive",
+    playableIf: { kind: "yourMegaExInPlay", type: "Colorless" },
+  },
+};
+
 /** Volcanion ex — "Scalding Steam". */
 const SCALDING_STEAM: CardProgram = {
   abilities: [
@@ -8532,6 +8571,8 @@ const REGISTRY: Readonly<Record<string, CardProgram>> = {
   "me06-057": MATERNAL_CALL, // Nidoqueen "Maternal Call" — Captivating Invitation without the Confusion
   "me06-075": BEAT_SCALES, // Kommo-o "Beat Scales" — Energized Steps' window at 6 onto {N}
   "me06-079": ENERGIZING_PRESENT, // Delibird "Energizing Present"
+  "me06-084": RULERS_ROAR, // Mega Rayquaza ex "Ruler's Roar" — Metal Maker's window onto this Pokémon
+  "me06-088": EXCITED_DIVE, // Talonflame ex "Excited Dive" — Emergency Rotation's in-hand bench
   "me03-027": FIGHTING_ROAR, // Luxio "Fighting Roar" — evolve early if the opponent's Active is a Pokémon ex
   "me04-007": NEEDLY_ARMOR, // Chesnaught "Needly Armor" — 3 counters per {G} Energy on the Attacking Pokémon
   "me02-056": SHADOWY_CONCEALMENT, // Mega Gengar ex — 1 fewer Prize for a {D} body KO'd by an ex's attack

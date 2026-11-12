@@ -1063,6 +1063,7 @@ describe("the non-attack columns, partitioned over the live registry (D273)", ()
       ...CENSUS_ME_TRAINER_B04,
       ...CENSUS_ME_POKEMON_ME06_B3,
       ...CENSUS_ME_POKEMON_ME06_B4,
+      ...CENSUS_ME_POKEMON_ME06_B5,
     ];
     // No id classified twice — otherwise a column could borrow from another and
     // the sizes would still add up.
@@ -2038,6 +2039,11 @@ const CENSUS_ME_POKEMON_ME06_B4: readonly string[] = [
   ...["me06-057", "me06-075", "me06-079"],
 ];
 
+/** The me06 triggered and in-hand Ability keys: Ruler's Roar ×3, Excited Dive ×2. */
+const CENSUS_ME_POKEMON_ME06_B5: readonly string[] = [
+  ...["me06-084", "me06-138", "me06-141", "me06-088", "me06-124"],
+];
+
 /** The 3 text-less `30th` Item ids keyed below. */
 const CENSUS_ME_TRAINER_B04: readonly string[] = ["30th-126", "30th-127", "30th-128"];
 
@@ -2269,6 +2275,7 @@ describe("the census at HEAD", () => {
         ...CENSUS_ME_POKEMON_ME06_B2,
         ...CENSUS_ME_POKEMON_ME06_B3,
         ...CENSUS_ME_POKEMON_ME06_B4,
+        ...CENSUS_ME_POKEMON_ME06_B5,
       ]
         .filter((id) => !RETIRED_ATTACK_KEYS_D612.includes(id))
         .sort(),

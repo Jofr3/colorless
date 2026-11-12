@@ -742,7 +742,7 @@ describe("§7 — the census moves in exactly ONE summand, and the other three a
 
   it("NONE of the thirteen ids is a registry ATTACK, so the +16 stands still", () => {
     const ids = new Set(programmedCardIds());
-    expect(ids.size).toBe(1547);
+    expect(ids.size).toBe(1552);
     const present = TAKEN_IDS.filter((id) => ids.has(id));
     expect(present).toEqual(["sv06-009"]);
     expect(Object.keys(programFor("sv06-009") ?? {})).toEqual(["attackGate"]);
