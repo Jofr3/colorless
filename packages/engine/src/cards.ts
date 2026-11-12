@@ -218,14 +218,25 @@ export function attacksOf(card: Card): readonly Attack[] {
 }
 
 /**
- * Prizes the knocking-out player takes (§8.1): 3 for a VMAX or a Mega Evolution Pokémon ex, 2 for
- * any other rule box, 1 otherwise. Read from the name suffix. This is the base count that prize
- * modifiers adjust and callers clamp to the Prizes left.
+ * Prizes the knocking-out player takes (§8.1): 3 for a VMAX, a Mega Evolution Pokémon ex or a TAG
+ * TEAM, 2 for any other suffix rule box (a Pokémon-EX and an M Pokémon-EX included) and for a
+ * LEGEND, 1 otherwise (a Radiant or BREAK rule box gives 1). Read from the name. This is the base
+ * count that prize modifiers adjust and callers clamp to the Prizes left.
  */
 export function prizeValueOf(card: Card): number {
   const suffix = pokemonSuffixOf(card);
-  if (suffix === null) return 1;
-  return suffix === "VMAX" || isMegaEvolutionPokemonEx(card) ? 3 : 2;
+  if (suffix === null) return isLegendPokemon(card) ? 2 : 1;
+  return suffix === "VMAX" || isMegaEvolutionPokemonEx(card) || isTagTeamPokemon(card) ? 3 : 2;
+}
+
+/** A TAG TEAM Pokémon-GX ("Pikachu & Zekrom GX"): two names joined by " & ", with the GX suffix. */
+export function isTagTeamPokemon(card: Card): boolean {
+  return pokemonSuffixOf(card) === "GX" && card.name.includes(" & ");
+}
+
+/** A Pokémon LEGEND half ("Darkrai & Cresselia LEGEND"). Read from the name. */
+export function isLegendPokemon(card: Card): boolean {
+  return card.category === "Pokemon" && card.name.endsWith(" LEGEND");
 }
 
 /**
@@ -250,6 +261,7 @@ export function pokemonSuffixOf(card: Card): PokemonSuffix | null {
   if (name.endsWith(" V")) return "V";
   if (name.endsWith(" ex")) return "ex";
   if (name.endsWith(" GX")) return "GX";
+  if (name.endsWith(" EX")) return "EX";
   return null;
 }
 
@@ -315,12 +327,18 @@ function matchesStage(
 }
 
 /**
- * Does this Pokémon have a Rule Box? The suffix families plus Radiant Pokémon (a name prefix).
- * Name-derived, so a new Rule Box family would need adding here. Non-Pokémon are false.
+ * Does this Pokémon have a Rule Box? The suffix families, Radiant Pokémon (a name prefix), and the
+ * older LEGEND and BREAK cards. Name-derived, so a new Rule Box family would need adding here.
+ * Non-Pokémon are false.
  */
 export function hasRuleBox(card: Card): boolean {
   if (card.category !== "Pokemon") return false;
-  return pokemonSuffixOf(card) !== null || card.name.startsWith("Radiant ");
+  return (
+    pokemonSuffixOf(card) !== null ||
+    card.name.startsWith("Radiant ") ||
+    isLegendPokemon(card) ||
+    card.name.endsWith(" BREAK")
+  );
 }
 
 /** Is `card` a Tera Pokémon? Read from the id-keyed banner table. `undefined` is false. */

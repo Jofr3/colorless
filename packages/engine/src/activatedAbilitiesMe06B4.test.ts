@@ -49,6 +49,7 @@ const ENERGIZING_PRESENT =
 const ARBOLIVA: Card = battler("me06-017", {
   name: "Arboliva",
   stage: "Stage2",
+  evolveFrom: "Dolliv",
   hp: 150,
   types: ["Grass"],
   retreat: 2,
@@ -59,6 +60,7 @@ const ARBOLIVA: Card = battler("me06-017", {
 const MAGMORTAR: Card = battler("me06-021", {
   name: "Magmortar",
   stage: "Stage1",
+  evolveFrom: "Magmar",
   hp: 140,
   types: ["Fire"],
   retreat: 3,
@@ -69,6 +71,7 @@ const MAGMORTAR: Card = battler("me06-021", {
 const JELLICENT: Card = battler("me06-028", {
   name: "Jellicent",
   stage: "Stage1",
+  evolveFrom: "Frillish",
   hp: 120,
   types: ["Water"],
   retreat: 2,
@@ -88,6 +91,7 @@ const WISHIWASHI: Card = battler("me06-029", {
 const PAWMOT: Card = battler("me06-039", {
   name: "Pawmot",
   stage: "Stage2",
+  evolveFrom: "Pawmo",
   hp: 150,
   types: ["Lightning"],
   retreat: 1,
@@ -98,6 +102,7 @@ const PAWMOT: Card = battler("me06-039", {
 const NIDOQUEEN: Card = battler("me06-057", {
   name: "Nidoqueen",
   stage: "Stage2",
+  evolveFrom: "Nidorina",
   hp: 170,
   types: ["Darkness"],
   retreat: 3,
@@ -115,6 +120,7 @@ const NIDOQUEEN: Card = battler("me06-057", {
 const KOMMO_O: Card = battler("me06-075", {
   name: "Kommo-o",
   stage: "Stage2",
+  evolveFrom: "Hakamo-o",
   hp: 160,
   types: ["Dragon"],
   retreat: 2,

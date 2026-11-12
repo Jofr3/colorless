@@ -110,10 +110,10 @@ describe("pokemonSuffixOf", () => {
   it("matches LITERALLY — each suffix is its own, and a plain body is null", () => {
     // The distinction Choice Belt draws: it boosts a V, never a VMAX/VSTAR.
     // Case and word-boundary matter, so "Vaporeon" is not a V and the
-    // capital-E "EX" of the old print is not the modern lowercase "ex".
+    // capital-E "EX" of a Pokémon-EX is its own suffix, not the modern lowercase "ex".
     expect(pokemonSuffixOf(battler("x", { name: "Vaporeon" }))).toBeNull();
     expect(pokemonSuffixOf(battler("x", { name: "Mew" }))).toBeNull();
-    expect(pokemonSuffixOf(battler("x", { name: "Gardevoir EX" }))).toBeNull();
+    expect(pokemonSuffixOf(battler("x", { name: "Gardevoir EX" }))).toBe("EX");
     // Non-Pokémon never carry one, whatever their name ends in.
     expect(pokemonSuffixOf(basicEnergy("e"))).toBeNull();
   });

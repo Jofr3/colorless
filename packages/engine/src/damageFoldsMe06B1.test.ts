@@ -48,6 +48,7 @@ const CACTURNE: Card = battler("me06-005", {
   hp: 130,
   types: ["Grass"],
   stage: "Stage1",
+  evolveFrom: "Cacnea",
   retreat: 2,
   weaknesses: [{ type: "Fire", value: "×2" }],
   attacks: [

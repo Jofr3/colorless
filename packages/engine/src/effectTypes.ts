@@ -2517,8 +2517,9 @@ export interface PokemonRef {
   spot: PokemonTarget;
 }
 
-/** The rule-box suffix a Pokémon's name carries ("V", "VMAX", "VSTAR", "ex", "GX"). */
-export type PokemonSuffix = "ex" | "V" | "VMAX" | "VSTAR" | "GX";
+/** The rule-box suffix a Pokémon's name carries ("V", "VMAX", "VSTAR", "ex", "GX", and "EX" for a
+    Pokémon-EX, which is not a Pokémon ex). */
+export type PokemonSuffix = "ex" | "V" | "VMAX" | "VSTAR" | "GX" | "EX";
 
 /**
  * The override `attack()` re-enters with. `empty` means no candidate; otherwise the source attack,

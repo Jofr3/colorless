@@ -107,6 +107,48 @@ describe("simulationGaps — what a card prints that the engine cannot play", ()
     const card = { ...probe(UNSIMULATED_ATTACKS[0]), abilities: [ability] };
     expect(simulationGaps(card)).toEqual(["ability", "attack"]);
   });
+
+  it("flags an Energy the ingest left with no tag and no text, which plays as {C} (COR-P0E)", () => {
+    // me06-132/-133/-134 as the catalog stores them: energy_type and effect both NULL.
+    for (const [id, name] of [
+      ["me06-132", "Bubbly Water Energy"],
+      ["me06-133", "Growing Grass Energy"],
+      ["me06-134", "Nitro Fire Energy"],
+    ] as const) {
+      const card: Card = { ...basicEnergy(id), name, energyType: null, effect: null };
+      expect(simulationGaps(card), id).toEqual(["specialEnergy"]);
+    }
+  });
+
+  it("flags a Pokémon the engine cannot put into play as printed (COR-P0E)", () => {
+    // Greninja BREAK and Mew VMAX: an evolving stage with no evolveFrom.
+    expect(
+      simulationGaps(battler("30th-c-009", { name: "Greninja BREAK", stage: "BREAK" })),
+    ).toEqual(["play"]);
+    expect(simulationGaps(battler("30th-c-026", { name: "Mew VMAX", stage: "VMAX" }))).toEqual([
+      "play",
+    ]);
+    // Dark Tyranitar evolves from a card the catalog does not print.
+    const tyranitar = battler("30th-c-006", {
+      name: "Dark Tyranitar",
+      stage: "Stage2",
+      evolveFrom: "Dark Pupitar",
+    });
+    expect(simulationGaps(tyranitar)).toEqual(["play"]);
+    // A LEGEND half and an M Pokémon-EX stored as a Basic.
+    for (const id of ["30th-c-019", "30th-c-020"]) {
+      expect(simulationGaps(battler(id, { name: "Darkrai & Cresselia LEGEND" })), id).toEqual([
+        "play",
+      ]);
+    }
+    expect(simulationGaps(battler("30th-c-023", { name: "M Gardevoir EX" }))).toEqual(["play"]);
+    // Controls: a Pokémon-EX Basic, a reachable evolution and a Basic.
+    expect(simulationGaps(battler("30th-c-004", { name: "Genesect EX" }))).toEqual([]);
+    const evolution = battler("gap-stage1", { stage: "Stage1", evolveFrom: "Fixmon" });
+    expect(simulationGaps(evolution)).toEqual([]);
+    expect(simulationGaps({ ...evolution, id: "gap-stage2", stage: "Stage2" })).toEqual([]);
+    expect(simulationGaps(battler("gap-plain"))).toEqual([]);
+  });
 });
 
 describe("simulationGaps agrees with the attack the engine runs", () => {

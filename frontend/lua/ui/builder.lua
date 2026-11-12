@@ -44,7 +44,7 @@ local LOADING_DETAILS='Loading card details...'
 local function formatName(format) return format=='standard' and 'Standard' or 'Expanded' end
 local MODAL_TITLES={choices='Options',transfer='Import or export decklist',clear='Clear this deck?',validation='Deck details',stats='Deck information'}
 -- The printed parts the simulator cannot play yet, by the engine's gap names.
-local GAP_LABELS={trainer='card effect',ability='Ability',specialEnergy='Energy effect',attack='attack effect'}
+local GAP_LABELS={play='putting it into play',trainer='card effect',ability='Ability',specialEnergy='Energy effect',attack='attack effect'}
 local function gapLine(gaps)
   local parts={};for gap in (gaps or ''):gmatch('[^,]+') do parts[#parts+1]=GAP_LABELS[gap] or gap end
   return #parts>0 and 'Not simulated yet: '..table.concat(parts,', ') or nil

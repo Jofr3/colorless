@@ -60,6 +60,7 @@ const WIMPOD: Card = battler("me06-010", {
 const ALTARIA: Card = battler("me06-082", {
   name: "Altaria",
   stage: "Stage1",
+  evolveFrom: "Swablu",
   hp: 110,
   types: ["Colorless"],
   retreat: 1,
@@ -136,6 +137,7 @@ const TORNADUS: Card = battler("me06-085", {
 const SANDSLASH: Card = battler("me06-050", {
   name: "Sandslash",
   stage: "Stage1",
+  evolveFrom: "Sandshrew",
   hp: 110,
   types: ["Fighting"],
   retreat: 1,
@@ -146,6 +148,7 @@ const SANDSLASH: Card = battler("me06-050", {
 const STEELIX: Card = battler("me06-052", {
   name: "Steelix",
   stage: "Stage1",
+  evolveFrom: "Onix",
   hp: 190,
   types: ["Fighting"],
   retreat: 4,
