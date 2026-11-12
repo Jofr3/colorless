@@ -2,7 +2,8 @@
 // M another printing of the same name in the catalog, B the base species' printings ("X" for
 // "X ex" and "Mega X ex"; a Mega Evolution Pokémon ex shares X's stage and evolution), T a tcgdex
 // English printing outside the catalog scope, named after the letter. `stage` is given only where
-// tcgdex sends the wrong one. Applied only when tcgdex sends no `evolveFrom`.
+// tcgdex sends the wrong one, and replaces a tcgdex stage of Basic or none whether or not tcgdex
+// sends an `evolveFrom`; an evolving stage or an `evolveFrom` from tcgdex wins over the table's.
 
 export interface EvolutionSupplement {
   stage?: "Stage1" | "Stage2";
@@ -95,4 +96,12 @@ export const EVOLUTION_SUPPLEMENT: Readonly<Record<string, EvolutionSupplement>>
   "mfb-2": { evolveFrom: "Bulbasaur", from: "M" }, // Ivysaur
   "mfb-26": { evolveFrom: "Squirtle", from: "M" }, // Wartortle
   "mfb-4": { evolveFrom: "Oddish", from: "M" }, // Gloom
+};
+
+/** Pokémon the engine can neither play as a Basic nor evolve into, which the ingest's and
+    db-check's evolution guards let through while they stay listed here. */
+export const UNPLAYABLE_EVOLUTIONS: Readonly<Record<string, string>> = {
+  "30th-c-006": "Dark Tyranitar evolves from Dark Pupitar, which no catalog card is",
+  "30th-c-009": "Greninja BREAK: tcgdex sends no evolveFrom",
+  "30th-c-026": "Mew VMAX: tcgdex sends no evolveFrom",
 };

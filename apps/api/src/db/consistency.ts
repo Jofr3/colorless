@@ -3,9 +3,13 @@
 // finds the row it is about.
 
 import { normalizeCardText } from "@colorless/engine";
+import { UNPLAYABLE_EVOLUTIONS } from "../ingest/evolutionSupplement";
 import { type CardRow, printKey } from "../ingest/map";
+import { escapeSqlText } from "../ingest/sql";
 
 type Row = Record<string, unknown>;
+
+const UNPLAYABLE_IDS = Object.keys(UNPLAYABLE_EVOLUTIONS).map(escapeSqlText).join(", ");
 
 /** Each query returns the offending rows; an empty result passes. */
 export const CONSISTENCY_CHECKS: readonly { name: string; sql: string }[] = [
@@ -66,6 +70,21 @@ export const CONSISTENCY_CHECKS: readonly { name: string; sql: string }[] = [
             max(legal_expanded) AS expanded FROM cards WHERE print_key IS NOT NULL GROUP BY print_key) g
             ON g.print_key = c.print_key
           WHERE c.legal_standard_effective IS NOT g.standard OR c.legal_expanded_effective IS NOT g.expanded`,
+  },
+  {
+    name: "non-Basic Pokémon with no evolve_from",
+    sql: `SELECT id, stage FROM cards WHERE category = 'Pokemon' AND stage IS NOT 'Basic'
+            AND evolve_from IS NULL AND id NOT IN (${UNPLAYABLE_IDS})`,
+  },
+  {
+    name: "Basic Pokémon with an evolve_from",
+    sql: `SELECT id, evolve_from FROM cards WHERE category = 'Pokemon' AND stage = 'Basic'
+            AND evolve_from IS NOT NULL`,
+  },
+  {
+    name: "evolve_from names no card",
+    sql: `SELECT id, evolve_from FROM cards WHERE category = 'Pokemon' AND evolve_from IS NOT NULL
+            AND evolve_from NOT IN (SELECT name FROM cards) AND id NOT IN (${UNPLAYABLE_IDS})`,
   },
 ];
 

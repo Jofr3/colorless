@@ -19,15 +19,18 @@ import {
 import type { z } from "zod";
 import { CATALOG_EPOCH_KEY } from "../src/catalog/epoch";
 import {
+  type CardRow,
   cardsUpsertStatements,
   escapeSqlText,
+  evolutionlessPokemon,
+  evolvingBasics,
   mapCard,
   mapSerie,
   mapSet,
   reprintLegalitySql,
   seriesUpsertSql,
   setsUpsertSql,
-  evolutionlessPokemon,
+  unresolvedEvolutions,
   weaklessLegalPokemon,
 } from "../src/ingest";
 import { createPayloadCache, type PayloadKind } from "../src/ingest/payloadCache";
@@ -266,6 +269,9 @@ applySqlCommand(writeSqlFile("series", seriesSql), seriesSql);
 const outcomes: SetOutcome[] = [];
 const weakless: string[] = [];
 const evolutionless: string[] = [];
+const basicsEvolving: string[] = [];
+const evolvers: CardRow[] = [];
+const runNames = new Set<string>();
 for (const setId of setIds) {
   const setStartedAt = Date.now();
   console.log(`\nset ${setId}:`);
@@ -329,6 +335,11 @@ for (const setId of setIds) {
     const rows = cardPayloads.map(mapCard);
     weakless.push(...weaklessLegalPokemon(rows));
     evolutionless.push(...evolutionlessPokemon(rows));
+    basicsEvolving.push(...evolvingBasics(rows));
+    for (const row of rows) {
+      runNames.add(row.name);
+      if (row.evolveFrom !== null) evolvers.push(row);
+    }
     const chunks = cardsUpsertStatements(rows);
     // The set-scoped reprint pass rides in the same file, so the import that upserts the set's
     // cards also settles their effective legality.
@@ -363,6 +374,22 @@ try {
   applySqlCommand(writeSqlFile("reprint-legality", postPass), postPass);
 } catch (error) {
   postPassFailed = true;
+  console.error(`  failed: ${error instanceof Error ? error.message : String(error)}`);
+}
+
+// After every set is written, so an evolution may name a card from any set, this run's or stored.
+console.log("\nevolution names:");
+let unresolved: string[] = [];
+let namesUnread = false;
+try {
+  const names = new Set(runNames);
+  for (const row of d1Query(d1Target, "SELECT DISTINCT name FROM cards")[0] ?? []) {
+    names.add(String(row.name));
+  }
+  unresolved = unresolvedEvolutions(evolvers, names);
+  console.log(`  ${evolvers.length} evolutions checked against ${names.size} card names`);
+} catch (error) {
+  namesUnread = true;
   console.error(`  failed: ${error instanceof Error ? error.message : String(error)}`);
 }
 
@@ -403,8 +430,29 @@ if (weakless.length > 0) {
 if (evolutionless.length > 0) {
   // Written anyway; see evolutionlessPokemon.
   console.error(
-    `${evolutionless.length} Stage 1 / Stage 2 Pokémon have no evolveFrom — add them to ` +
-      `src/ingest/evolutionSupplement.ts: ${evolutionless.join(", ")}`,
+    `${evolutionless.length} non-Basic Pokémon have no evolveFrom — add them to ` +
+      `EVOLUTION_SUPPLEMENT in src/ingest/evolutionSupplement.ts, or to UNPLAYABLE_EVOLUTIONS ` +
+      `there with a simulation gap: ${evolutionless.join(", ")}`,
+  );
+}
+if (basicsEvolving.length > 0) {
+  // Written anyway; see evolvingBasics.
+  console.error(
+    `${basicsEvolving.length} Basic Pokémon have an evolveFrom — give them their stage in ` +
+      `src/ingest/evolutionSupplement.ts: ${basicsEvolving.join(", ")}`,
+  );
+}
+if (unresolved.length > 0) {
+  // Written anyway; see unresolvedEvolutions.
+  console.error(
+    `${unresolved.length} Pokémon evolve from a name no card has — fix the name in ` +
+      `src/ingest/evolutionSupplement.ts, or list them in UNPLAYABLE_EVOLUTIONS there with a ` +
+      `simulation gap: ${unresolved.join(", ")}`,
+  );
+}
+if (namesUnread) {
+  console.error(
+    "could not read the catalog's card names, so no evolveFrom was checked: rerun the same command",
   );
 }
 if (failedSets.length > 0) {
@@ -432,6 +480,9 @@ if (
     failedSets: failedSets.map((o) => o.setId),
     weakless,
     evolutionless,
+    evolvingBasics: basicsEvolving,
+    unresolvedEvolutions: unresolved,
+    namesUnread,
     epochStamped,
     postPassFailed,
   })

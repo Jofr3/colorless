@@ -8,7 +8,7 @@ import type { TcgdexCard, TcgdexSerie, TcgdexSet } from "@colorless/schema";
 import { isAssetOriginUrl } from "../assets/files";
 import type { cards, series, sets } from "../db/schema";
 import { normalizeSentinel } from "../sentinel";
-import { EVOLUTION_SUPPLEMENT } from "./evolutionSupplement";
+import { EVOLUTION_SUPPLEMENT, UNPLAYABLE_EVOLUTIONS } from "./evolutionSupplement";
 import { WEAK_RES_SUPPLEMENT } from "./weakResSupplement";
 
 export type SeriesRow = Required<typeof series.$inferInsert>;
@@ -149,12 +149,14 @@ function mapCardFields(card: TcgdexCard): CardRow {
           ? WEAK_RES_SUPPLEMENT[card.id]
           : undefined;
       const evolveFrom = normalizeSentinel(card.evolveFrom);
-      // Upstream wins once it sends an evolution (./evolutionSupplement.ts).
-      const evolution = evolveFrom === null ? EVOLUTION_SUPPLEMENT[card.id] : undefined;
+      const stage = normalizeSentinel(card.stage);
+      // Upstream wins field by field once it sends an evolution or an evolving stage
+      // (./evolutionSupplement.ts).
+      const evolution = EVOLUTION_SUPPLEMENT[card.id];
       return {
         ...base,
         hp: card.hp ?? null,
-        stage: evolution?.stage ?? normalizeSentinel(card.stage),
+        stage: stage === null || stage === "Basic" ? (evolution?.stage ?? stage) : stage,
         suffix: suffixOf(card.name, normalizeSentinel(card.suffix)),
         evolveFrom: evolveFrom ?? evolution?.evolveFrom ?? null,
         typesJson: card.types ?? null,
@@ -202,15 +204,46 @@ export function weaklessLegalPokemon(rows: readonly CardRow[]): string[] {
     .map((row) => row.id);
 }
 
-/** The rows nothing can evolve into: a Stage 1 or Stage 2 Pokémon with no `evolveFrom`. Written
-    anyway, and the ingest exits non-zero naming them. */
+function listedUnplayable(row: CardRow): boolean {
+  return Object.hasOwn(UNPLAYABLE_EVOLUTIONS, row.id);
+}
+
+/** The rows nothing can evolve into: a Pokémon of any stage but Basic with no `evolveFrom`, so the
+    engine can neither bench it nor evolve into it. Written anyway, and the ingest exits non-zero
+    naming them; so do evolvingBasics and unresolvedEvolutions. */
 export function evolutionlessPokemon(rows: readonly CardRow[]): string[] {
   return rows
     .filter(
       (row) =>
         row.category === "Pokemon" &&
-        (row.stage === "Stage1" || row.stage === "Stage2") &&
-        row.evolveFrom === null,
+        row.stage !== "Basic" &&
+        row.evolveFrom === null &&
+        !listedUnplayable(row),
+    )
+    .map((row) => row.id);
+}
+
+/** A Basic Pokémon with an `evolveFrom`: the engine would let it be benched on the first turn and
+    opened with as well as evolved into. */
+export function evolvingBasics(rows: readonly CardRow[]): string[] {
+  return rows
+    .filter((row) => row.category === "Pokemon" && row.stage === "Basic" && row.evolveFrom !== null)
+    .map((row) => row.id);
+}
+
+/** The Pokémon whose `evolveFrom` is not the name of any card in `names` (Pokémon or the Antique
+    Fossil Trainers), so no card in play can evolve into them. */
+export function unresolvedEvolutions(
+  rows: readonly CardRow[],
+  names: ReadonlySet<string>,
+): string[] {
+  return rows
+    .filter(
+      (row) =>
+        row.category === "Pokemon" &&
+        row.evolveFrom !== null &&
+        !names.has(row.evolveFrom) &&
+        !listedUnplayable(row),
     )
     .map((row) => row.id);
 }

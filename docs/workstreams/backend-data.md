@@ -153,7 +153,13 @@ that adds or changes printings, from the repo root:
    checks fail where the new counts moved; update them.
 3. A Standard-legal Pokémon with no Weakness is named at the end of the
    ingest: add it to `apps/api/src/ingest/weakResSupplement.ts` and ingest
-   again.
+   again. So is a Pokémon whose evolution the engine cannot play: a non-Basic
+   with no `evolveFrom`, a Basic with one, or an `evolveFrom` that names no
+   card in the catalog. Give it its stage and evolution in `EVOLUTION_SUPPLEMENT`
+   (`apps/api/src/ingest/evolutionSupplement.ts`) and ingest again, or, when no
+   printing can supply them, list it in `UNPLAYABLE_EVOLUTIONS` there and give it
+   a simulation gap. `bun run --cwd apps/api db:check` runs the same three
+   checks over the whole table.
 4. A new Antique Fossil joins `FOSSIL_IDS` (`packages/engine/src/fossils.ts`);
    its reprints follow through the alias table.
 5. Text the engine does not play shows in `simulationGaps(card)`; check the

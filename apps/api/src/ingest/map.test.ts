@@ -12,15 +12,17 @@ import setFull from "@colorless/schema/tcgdex-fixtures/set-full-sv01.json";
 import {
   energyTypeOf,
   evolutionlessPokemon,
+  evolvingBasics,
   mapCard,
   mapSerie,
   mapSet,
   printKey,
   suffixOf,
   tidyWhitespace,
+  unresolvedEvolutions,
   weaklessLegalPokemon,
 } from "./map";
-import { EVOLUTION_SUPPLEMENT } from "./evolutionSupplement";
+import { EVOLUTION_SUPPLEMENT, UNPLAYABLE_EVOLUTIONS } from "./evolutionSupplement";
 import { WEAK_RES_SUPPLEMENT } from "./weakResSupplement";
 
 describe("mapSerie", () => {
@@ -502,11 +504,29 @@ describe("evolution supplement (card revision Deferred 2 and 13)", () => {
     expect([talonflame.stage, talonflame.evolveFrom]).toEqual(["Stage2", "Fletchinder"]);
   });
 
-  it("lets upstream win once tcgdex sends an evolution", () => {
+  it("lets upstream's evolution win and still gives the table's stage over tcgdex's Basic", () => {
     const sent = mapCard(
       evolving("me06-088", "Talonflame ex", "Basic", { evolveFrom: "Fletchling" }),
     );
-    expect([sent.stage, sent.evolveFrom]).toEqual(["Basic", "Fletchling"]);
+    expect([sent.stage, sent.evolveFrom]).toEqual(["Stage2", "Fletchling"]);
+  });
+
+  it("keeps an Evolution ex evolving when tcgdex adds its evolveFrom but leaves it Basic", () => {
+    const golisopod = mapCard(
+      evolving("me06-011", "Mega Golisopod ex", "Basic", { evolveFrom: "Wimpod" }),
+    );
+    expect([golisopod.stage, golisopod.evolveFrom]).toEqual(["Stage1", "Wimpod"]);
+    expect(evolvingBasics([golisopod])).toEqual([]);
+  });
+
+  it("gives the table's stage when tcgdex sends none", () => {
+    const row = mapCard(evolving("me06-011", "Mega Golisopod ex", "None"));
+    expect([row.stage, row.evolveFrom]).toEqual(["Stage1", "Wimpod"]);
+  });
+
+  it("lets upstream win once tcgdex sends an evolving stage", () => {
+    const sent = mapCard(evolving("me06-088", "Talonflame ex", "Stage1"));
+    expect([sent.stage, sent.evolveFrom]).toEqual(["Stage1", "Fletchinder"]);
   });
 
   it("feeds the print key", () => {
@@ -514,15 +534,56 @@ describe("evolution supplement (card revision Deferred 2 and 13)", () => {
     expect(row.printKey).not.toBe(printKey({ ...row, evolveFrom: null }));
   });
 
-  it("flags a Stage 1 or Stage 2 with no evolution, and nothing else", () => {
+  it("flags a Pokémon of any stage but Basic with no evolution, and nothing else", () => {
     const flagged = mapCard(evolving("x-001", "Cacturne", "Stage1"));
     const stage2 = { ...flagged, id: "x-002", stage: "Stage2" };
-    const basic = { ...flagged, id: "x-003", stage: "Basic" };
+    const breakStage = { ...flagged, id: "x-003", stage: "BREAK" };
+    const vmax = { ...flagged, id: "x-004", stage: "VMAX" };
+    const stageless = { ...flagged, id: "x-005", stage: null };
+    const basic = { ...flagged, id: "x-006", stage: "Basic" };
     const patched = mapCard(evolving("me06-005", "Cacturne", "Stage1"));
     const trainer = mapCard(tcgdexCardSchema.parse(cardTrainer));
-    expect(evolutionlessPokemon([flagged, stage2, basic, patched, trainer])).toEqual([
+    expect(
+      evolutionlessPokemon([flagged, stage2, breakStage, vmax, stageless, basic, patched, trainer]),
+    ).toEqual(["x-001", "x-002", "x-003", "x-004", "x-005"]);
+  });
+
+  it("flags a Basic with an evolution, and nothing else", () => {
+    const flagged = mapCard(evolving("x-001", "Cacturne", "Basic", { evolveFrom: "Cacnea" }));
+    const stage1 = { ...flagged, id: "x-002", stage: "Stage1" };
+    const basic = { ...flagged, id: "x-003", evolveFrom: null };
+    const trainer = mapCard(tcgdexCardSchema.parse(cardTrainer));
+    expect(evolvingBasics([flagged, stage1, basic, trainer])).toEqual(["x-001"]);
+  });
+
+  it("flags an evolution from a name no card has, and nothing else", () => {
+    const flagged = mapCard(evolving("x-001", "Cacturne", "Stage1", { evolveFrom: "Cacnae" }));
+    const known = { ...flagged, id: "x-002", evolveFrom: "Cacnea" };
+    const fossil = { ...flagged, id: "x-003", evolveFrom: "Antique Root Fossil" };
+    const basic = { ...flagged, id: "x-004", stage: "Basic", evolveFrom: null };
+    const trainer = mapCard(tcgdexCardSchema.parse(cardTrainer));
+    const names = new Set(["Cacnea", "Antique Root Fossil"]);
+    expect(unresolvedEvolutions([flagged, known, fossil, basic, trainer], names)).toEqual([
       "x-001",
-      "x-002",
+    ]);
+  });
+
+  it("lets through the Expanded evolutions listed as unplayable, and only those", () => {
+    const greninja = mapCard(evolving("30th-c-009", "Greninja BREAK", "BREAK"));
+    const mew = mapCard(evolving("30th-c-026", "Mew VMAX", "VMAX"));
+    const tyranitar = mapCard(
+      evolving("30th-c-006", "Dark Tyranitar", "Stage2", { evolveFrom: "Dark Pupitar" }),
+    );
+    const names = new Set(["Greninja", "Mew V", "Larvitar"]);
+    expect(evolutionlessPokemon([greninja, mew, tyranitar])).toEqual([]);
+    expect(unresolvedEvolutions([greninja, mew, tyranitar], names)).toEqual([]);
+    const unlisted = [greninja, mew, tyranitar].map((row) => ({ ...row, id: `x-${row.id}` }));
+    expect(evolutionlessPokemon(unlisted)).toEqual(["x-30th-c-009", "x-30th-c-026"]);
+    expect(unresolvedEvolutions(unlisted, names)).toEqual(["x-30th-c-006"]);
+    expect(Object.keys(UNPLAYABLE_EVOLUTIONS).sort()).toEqual([
+      "30th-c-006",
+      "30th-c-009",
+      "30th-c-026",
     ]);
   });
 
