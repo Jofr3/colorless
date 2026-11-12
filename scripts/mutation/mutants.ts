@@ -73100,4 +73100,26 @@ export const MUTANTS: Mutant[] = [
     replace: "const noun = plural;",
     expectKilledBy: ["packages/engine/src/activatedAbilitiesMe06B4.test.ts"],
   },
+  {
+    id: "ME06-B4-generator-two",
+    decision: "ME06-B4",
+    what: "Generator's Touch attaches up to 2 Basic {L} Energy from the discard pile instead of 1.",
+    file: "packages/engine/src/registry.ts",
+    symbol: "GENERATORS_TOUCH.abilities",
+    find: 'program: [{ op: "attachEnergyFrom", source: "discard", energyType: "Lightning" }],',
+    replace:
+      'program: [{ op: "attachEnergyFrom", source: "discard", energyType: "Lightning", count: 2 }],',
+    expectKilledBy: ["packages/engine/src/activatedAbilitiesMe06B4.test.ts"],
+  },
+  {
+    id: "ME06-B4-buddy-lightning-two",
+    decision: "ME06-B4",
+    what: 'Buddy Boost\'s {L} op attaches up to 2 cards, so "1 of each" lets two {L} land.',
+    file: "packages/engine/src/registry.ts",
+    symbol: "BUDDY_BOOST.abilities",
+    find: '          energyType: "Lightning",\n          targetNames: ["Electivire", "Magmortar"],\n',
+    replace:
+      '          energyType: "Lightning",\n          targetNames: ["Electivire", "Magmortar"],\n          count: 2,\n',
+    expectKilledBy: ["packages/engine/src/activatedAbilitiesMe06B4.test.ts"],
+  },
 ];
