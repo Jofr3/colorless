@@ -224,6 +224,8 @@ export class LuaBuilder {
   private readonly searches = epochGuard();
   private revision = 0;
   private saver?: DeckSaver<DeckSnapshot>;
+  /** The deck `saver` saves. */
+  private saverDeck = "";
   private savedTimer?: ReturnType<typeof setTimeout>;
   private searchTimer?: ReturnType<typeof setTimeout>;
   private busyTimer?: ReturnType<typeof setTimeout>;
@@ -572,6 +574,15 @@ export class LuaBuilder {
     this.phase = "loading";
     this.message = "";
     this.emit();
+    // A reopen of the deck reads it once this tab's own saves of it have landed, so the copy it
+    // loads, and the version its next save is made from, include them.
+    const previous = this.saver;
+    if (current === undefined && previous && this.saverDeck === id) {
+      previous.flush();
+      previous.dispose();
+      await previous.settled();
+      if (!live()) return;
+    }
     // The filter options do not depend on the deck, so they load alongside it.
     const options = catalogOptions();
     options.catch(() => {});
@@ -605,11 +616,14 @@ export class LuaBuilder {
           { ...snapshot, name: snapshot.name || undefined, version },
           { keepalive: this.keepalive },
         );
+      this.saverDeck = id;
       this.saver = createDeckSaver({
         initial,
         delay: SAVE_DELAY_MS,
         save: async (snapshot) => {
-          if (!live() || !this.user || this.deckGone) throw new Error("Session changed");
+          // A follow-up queued behind a flight is still sent once another deck opens (dispose()),
+          // but never for another account.
+          if (this.user !== user || (live() && this.deckGone)) throw new Error("Session changed");
           const key = JSON.stringify(snapshot);
           try {
             let result: SavedDeck;
@@ -642,7 +656,8 @@ export class LuaBuilder {
             if (error instanceof api.ApiError && error.status === 404 && live()) this.onDeckGone();
             // Another tab or device saved first. Its copy wins and this one's unsaved edits go
             // (the user's call, over offering to overwrite). The reload starts a new epoch, which
-            // silences this saver's status callback and any save queued behind this one.
+            // silences this saver's status callback; a save queued behind this one carries the
+            // refused version, so the server refuses it too.
             const latest = conflictingDeck(error);
             if (latest !== undefined && live() && this.active) {
               this.pendingExit = undefined;
@@ -953,7 +968,7 @@ export class LuaBuilder {
     this.emit();
   }
   navigate(done: () => void) {
-    if (this.dirty) this.leaveWhenSaved(done);
+    if (this.hasUnsavedEdits()) this.leaveWhenSaved(done);
     else done();
   }
   /** Sends the edits and leaves once they land. After a failed save, that press also arms the
@@ -1055,7 +1070,7 @@ export class LuaBuilder {
     await this.search();
   }
   private onLeave() {
-    if (this.dirty) this.leaveWhenSaved();
+    if (this.hasUnsavedEdits()) this.leaveWhenSaved();
     else this.exit();
   }
   private onClose() {

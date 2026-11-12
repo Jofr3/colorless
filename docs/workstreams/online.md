@@ -36,6 +36,19 @@ Durable Object.
   cues, and prompts carry `invokedBy`/`abilityName`. Only the stack bottoms for bench order are
   still inferred client-side (`frontend/lua/README.md`, "Online").
 
+## Status — reconnect wedges (correctness audit Phase 0C, 2026-11-12)
+
+Client only (`src/online/lobbyClient.ts`, `src/lua/onlineTable.ts`); no wire or DO change.
+
+- **Automatic steps after a reconnect (ONL2).** The table sends a Prize take or mulligan draw once
+  per decision, and again after each full match frame (`LobbyClientState.fullFrames`, bumped by a
+  frame with no `logFrom`, which answers a hello) that still shows the decision: the first send may
+  have gone down with a half-open or closing socket. A copy the server did get is refused by the
+  engine (the phase moved on, or the Prize index is gone) and that refusal stays muted.
+- **A refused tab seated later (ONL1).** A tab answered "full" adopts a later `state` frame that
+  seats its own id, connected, in its role's slot: its re-sent hello took the freed guest seat. A
+  snapshot naming the seat away (a seat bound to another account) is still ignored.
+
 ## Status — match RNG (security Phase 4, MI1, 2026-10-27)
 
 A match's randomness is a ChaCha20 keystream (`packages/engine/src/rng.ts`, `@noble/ciphers`)

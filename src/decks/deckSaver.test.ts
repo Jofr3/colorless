@@ -219,6 +219,45 @@ describe("createDeckSaver", () => {
     expect(saver.idle()).toBe(false);
   });
 
+  it("settles once a disposed saver's flight and the follow-up behind it have answered", async () => {
+    const first = deferred();
+    const second = deferred();
+    const save = vi
+      .fn<(snapshot: Snap) => Promise<void>>()
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise);
+    const saver = createDeckSaver<Snap>({ save, delay: 600, spacing: 0 });
+    await saver.settled();
+    saver.schedule({ v: 1 });
+    await vi.advanceTimersByTimeAsync(600);
+    saver.schedule({ v: 2 });
+    saver.flush();
+    saver.dispose();
+    const settled = vi.fn();
+    void saver.settled().then(settled);
+    first.resolve();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(save).toHaveBeenCalledTimes(2);
+    expect(settled).not.toHaveBeenCalled();
+    second.reject(new TypeError("Failed to fetch"));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(settled).toHaveBeenCalledTimes(1);
+  });
+
+  it("settles at dispose when only a debounced save was queued", async () => {
+    const save = vi.fn(async (_: Snap) => {});
+    const saver = createDeckSaver<Snap>({ save, delay: 600 });
+    saver.schedule({ v: 1 });
+    const settled = vi.fn();
+    void saver.settled().then(settled);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(settled).not.toHaveBeenCalled();
+    saver.dispose();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(settled).toHaveBeenCalledTimes(1);
+    expect(save).not.toHaveBeenCalled();
+  });
+
   it("dispose cancels the pending save and silences callbacks", async () => {
     const save = vi.fn(async (_: Snap) => {});
     const recorder = statusRecorder();

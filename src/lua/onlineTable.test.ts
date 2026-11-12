@@ -81,6 +81,9 @@ async function table(state: GameState = driveSetup(7, undefined, { first: "p1" }
   );
   const push = (game: RedactedGame, log: SeatLogEntry[] = []) =>
     fake().push({ kind: "match", game, log });
+  /** A frame that continues the held log, as every frame but a hello's answer does. */
+  const pushDelta = (game: RedactedGame) =>
+    fake().push({ kind: "match", game, log: [], logFrom: online.client?.state.matchLog.length });
   fake().push({ kind: "state", snapshot: snap(me) });
   push(frame(state));
   // The modal hands over: close + open online in the same tick.
@@ -100,6 +103,7 @@ async function table(state: GameState = driveSetup(7, undefined, { first: "p1" }
     publish,
     fake,
     push,
+    pushDelta,
     me,
     rows,
     tagged,
@@ -244,14 +248,14 @@ describe("LuaOnlineMatch", () => {
       v.phase = { kind: "setup:drawExtra", owed: 2 };
       v.waitingOn = "you";
     });
-    t.push(draw);
-    t.push(structuredClone(draw));
+    t.pushDelta(draw);
+    t.pushDelta(structuredClone(draw));
     const prizes = frame(t.state, (v) => {
       v.phase = { kind: "ko:takePrizes", count: 2 };
       v.waitingOn = "you";
     });
-    t.push(prizes);
-    t.push(structuredClone(prizes));
+    t.pushDelta(prizes);
+    t.pushDelta(structuredClone(prizes));
     expect(t.actions()).toEqual([
       { type: "setupDrawExtra", seat: "p1", count: 2 },
       { type: "takePrizes", seat: "p1", prizeIndices: [5, 4] },
@@ -260,6 +264,27 @@ describe("LuaOnlineMatch", () => {
     t.fake().push({ kind: "reject-action", reason: "Already taken" });
     expect(t.rows()[0]?.[6]).toBe("");
     expect(t.tagged("M")).toHaveLength(0);
+  });
+
+  it("sends an automatic step again after a reconnect's full frame still shows its decision", async () => {
+    const t = await table();
+    const prizes = frame(t.state, (v) => {
+      v.phase = { kind: "ko:takePrizes", count: 1 };
+      v.waitingOn = "you";
+    });
+    const take = { type: "takePrizes", seat: "p1", prizeIndices: [5] };
+    t.pushDelta(prizes);
+    expect(t.actions()).toEqual([take]);
+    // The take went down with a half-open or closing socket; the new socket's hello is answered
+    // with the whole match, still waiting on this seat.
+    t.push(structuredClone(prizes));
+    expect(t.actions()).toEqual([take, take]);
+    t.pushDelta(structuredClone(prizes));
+    expect(t.actions()).toEqual([take, take]);
+    // A copy that did land is refused once the phase moved on, and that refusal is not shown.
+    t.fake().push({ kind: "reject-action", reason: "Not now" });
+    expect(t.rows()[0]?.[6]).toBe("");
+    expect(t.tagged("L")[0]?.[4]).not.toContain("pending");
   });
 
   it("shows a refused action until the next frame", async () => {

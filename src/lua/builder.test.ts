@@ -697,6 +697,105 @@ describe("Lua deck builder", () => {
     expect(server.deck.version).toBe(3);
     expect(back).toHaveBeenCalledTimes(1);
   });
+  /** Holds every PATCH until `release`, as a slow link would; the first is then in flight. */
+  const slowLink = () => {
+    const real = vi.mocked(api.patchDeck).getMockImplementation();
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    vi.mocked(api.patchDeck).mockImplementation(async (...args) => {
+      await gate;
+      if (!real) throw new Error("no server");
+      return real(...args);
+    });
+    return () => release();
+  };
+  /** Adds a card, waits until its save is in flight, and undoes the add. */
+  const undoInFlight = async (b: LuaBuilder) => {
+    await b.command("add\ta");
+    await vi.advanceTimersByTimeAsync(SAVE_DELAY_MS + 100);
+    expect(api.patchDeck).toHaveBeenCalledTimes(1);
+    await b.command("remove\ta");
+  };
+  it("leaves by navigation only once an undo made while its save is in flight is sent", async () => {
+    const server = versionedServer();
+    const release = slowLink();
+    const { b } = await setup();
+    await undoInFlight(b);
+    const done = vi.fn();
+    b.navigate(done);
+    expect(done).not.toHaveBeenCalled();
+    release();
+    await tick();
+    await tick();
+    expect(server.deck.cards).toEqual([]);
+    expect(done).toHaveBeenCalledTimes(1);
+  });
+  it("leaves by Back only once an undo made while its save is in flight is sent", async () => {
+    const server = versionedServer();
+    const release = slowLink();
+    const { b, back } = await setup();
+    await undoInFlight(b);
+    await b.command("leave");
+    expect(back).not.toHaveBeenCalled();
+    release();
+    await tick();
+    await tick();
+    expect(server.deck.cards).toEqual([]);
+    expect(back).toHaveBeenCalledTimes(1);
+  });
+  it("still sends an undo queued behind an in-flight save once another deck opens", async () => {
+    const server = versionedServer();
+    const release = slowLink();
+    const { b } = await setup();
+    await undoInFlight(b);
+    await b.command("close");
+    vi.mocked(api.getDeck).mockResolvedValueOnce({ ...server.deck, id: "two", name: "Other" });
+    await b.command("open\ttwo");
+    release();
+    await tick();
+    await tick();
+    expect(vi.mocked(api.patchDeck).mock.calls.map(([id, body]) => [id, body.cards])).toEqual([
+      ["one", [{ cardId: "a", count: 1 }]],
+      ["one", []],
+    ]);
+    expect(server.deck.cards).toEqual([]);
+    expect(b.name).toBe("Other");
+  });
+  it("sends no follow-up queued behind an in-flight save once another account signs in", async () => {
+    const server = versionedServer();
+    const release = slowLink();
+    const { b } = await setup();
+    await undoInFlight(b);
+    b.session("authenticated", "u2");
+    release();
+    await tick();
+    await tick();
+    expect(api.patchDeck).toHaveBeenCalledTimes(1);
+    expect(server.deck.cards).toEqual([{ cardId: "a", count: 1 }]);
+  });
+  it("reopens a deck once its in-flight save and the undo queued behind it land", async () => {
+    const server = versionedServer();
+    vi.mocked(api.getDeck).mockImplementation(async () => server.deck);
+    const release = slowLink();
+    const { b } = await setup();
+    await undoInFlight(b);
+    await b.command("close");
+    const reopened = b.command("open\tone");
+    await tick();
+    expect(api.getDeck).toHaveBeenCalledTimes(1);
+    release();
+    await tick();
+    await tick();
+    await reopened;
+    expect(api.getDeck).toHaveBeenCalledTimes(2);
+    expect(server.deck).toMatchObject({ cards: [], version: 3 });
+    await b.command("add\tb");
+    await tick();
+    expect(server.deck).toMatchObject({ cards: [{ cardId: "b", count: 1 }], version: 4 });
+    expect(b.message).toBe("");
+  });
   it("takes a lost save made while the name field was blank as its own (DECK2)", async () => {
     const server = versionedServer();
     server.loseNext = true;

@@ -3,6 +3,7 @@ import {
   LIVENESS_SWEEP_MS,
   SEATED_LIVENESS_SWEEP_MS,
   SOCKET_SILENCE_MS,
+  seatIdOf,
   seatSecret,
   sessionIdOf,
 } from "@colorless/api/testing/lobbyHarness";
@@ -293,6 +294,47 @@ describe("the web client against the lobby DO", () => {
     expect(late.tab.sockets.length).toBeGreaterThan(3);
     expect(late.tab.sockets.length).toBeLessThan(15);
     expect(late.client.state.status).toBe("full");
+  });
+
+  it("a tab refused full that its own re-sent hello later seats takes the seat up", async () => {
+    const host = b.client(b.tab("ana"), {
+      code: SEAM_CODE,
+      role: "host",
+      secret: seatSecret("h"),
+      name: "h",
+    });
+    await b.run(500);
+    const guest = b.client(b.tab("bo"), {
+      code: SEAM_CODE,
+      role: "guest",
+      secret: seatSecret("g"),
+      name: "g",
+    });
+    await b.run(500);
+    const lateTab = b.tab("cy");
+    const late = b.client(lateTab, {
+      code: SEAM_CODE,
+      role: "guest",
+      secret: seatSecret("c"),
+      name: "c",
+    });
+    await b.run(1000);
+    expect(late.state.status).toBe("full");
+    guest.dispose();
+    await b.run(1000);
+    expect(host.state.snapshot?.guest).toBeNull();
+    // The late tab's path dies; the channel reconnects it, leading the new socket with its hello.
+    const socket = lateTab.sockets.at(-1);
+    if (!socket) throw new Error("no socket");
+    socket.blackholed = true;
+    await b.run(15_000);
+    expect(host.state.snapshot?.guest).toMatchObject({ id: seatIdOf("c"), connected: true });
+    expect(late.state.status).toBe("connected");
+    expect(late.self?.id).toBe(seatIdOf("c"));
+    late.selectDeck({ id: "deck-cy", name: "Cy's deck" });
+    late.setReady(true);
+    await b.run(500);
+    expect(host.state.snapshot?.guest).toMatchObject({ hasDeck: true, ready: true });
   });
 
   it("a signed-out seat's rematch is refused, and the tab keeps its result", async () => {
