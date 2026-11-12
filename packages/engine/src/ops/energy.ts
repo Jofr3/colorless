@@ -208,6 +208,7 @@ export function attachEnergyTargets(
       riders.basicOnly === true ||
       riders.stage2Only === true ||
       riders.ownerPokemon !== undefined ||
+      riders.targetNames !== undefined ||
       riders.targetBanner !== undefined
     ) {
       // Read the in-play card so `targetType` sees the types the body has.
@@ -228,6 +229,12 @@ export function attachEnergyTargets(
       if (
         riders.ownerPokemon !== undefined &&
         !matchesFilter(card, { kind: "ownerPokemon", owner: riders.ownerPokemon })
+      ) {
+        return false;
+      }
+      if (
+        riders.targetNames !== undefined &&
+        (card === undefined || !riders.targetNames.includes(card.name))
       ) {
         return false;
       }

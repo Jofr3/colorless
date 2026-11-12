@@ -602,6 +602,8 @@ export interface AttachTargetRiders {
    * through `matchesFilter`'s `ownerPokemon` arm so deck and board agree.
    */
   ownerPokemon?: string;
+  /** Only Pokémon whose top card has one of these exact names ("your Electivire and Magmortar"). */
+  targetNames?: readonly [string, ...string[]];
   /** Only Pokémon whose top card has this banner. */
   targetBanner?: Banner;
   /** Only BENCHED Pokémon — the Active is not a target (Electric Generator's
@@ -1782,6 +1784,7 @@ export type EffectOp =
       stage2Only?: true;
       /** Owner-prefixed subgroup the attach may land on, e.g. "1 of your Iono's Pokémon". */
       ownerPokemon?: string;
+      targetNames?: readonly [string, ...string[]];
       /** Only Benched Pokémon may be the target. */
       benchOnly?: true;
       bonusCounters?: number;

@@ -564,6 +564,7 @@ export function attachTargetNoun(riders: AttachTargetRiders): string {
   // The printed stage word ("1 of your Stage 2 Pokémon", Rosa's Encouragement); no printing pairs
   // it with a type or owner.
   if (riders.stage2Only === true) return `${zone}Stage 2 Pokémon`;
+  if (riders.targetNames !== undefined) return `${zone}${riders.targetNames.join(" and ")}`;
   // No type: the bare noun.
   if (types.length === 0) return `${zone}${owner}Pokémon`;
   // Multiple types repeat the noun as the card does ("your {P} Pokémon and {M} Pokémon").
