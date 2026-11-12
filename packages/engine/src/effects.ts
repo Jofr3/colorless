@@ -6791,6 +6791,10 @@ const YOUR_BENCH_FILTERED_SCALE =
 const IN_PLAY_BODY_SCALE =
   /^This attack does (\d+) more damage for each of your ((?!opponent)[^.]+) in play\.$/;
 
+/** Cacturne "Punishing Needles": the opponent's Pokémon in play narrowed to those with an Ability. */
+const IN_PLAY_FOE_ABILITY_SCALE =
+  /^This attack does (\d+) more damage for each of your opponent['’]s Pokémon in play that has an Ability\.$/;
+
 const DISCARD_PILE_COUNT_SCALE =
   /^This attack does (\d+) more damage for each ([^.]+) in (your opponent['’]s|your) discard pile\.$/;
 
@@ -6936,6 +6940,17 @@ export function deriveAttackDamageBonus(text: string): AttackDamageBonus | null 
       // The pattern's `(?!opponent)` lookahead means it never matches an opponent-side noun, so the
       // seat is always "you".
       return { per, count: { kind: "pokemonInPlay", seat: "you", filter } };
+    }
+  }
+  // `abilityPokemon` reads the printed Ability, so a §9-locked one still counts.
+  const foeAbilityBodies = IN_PLAY_FOE_ABILITY_SCALE.exec(effect);
+  if (foeAbilityBodies !== null) {
+    const per = positiveInt(foeAbilityBodies[1]);
+    if (per !== null) {
+      return {
+        per,
+        count: { kind: "pokemonInPlay", seat: "opponent", filter: { kind: "abilityPokemon" } },
+      };
     }
   }
   // The seat comes from the printed noun phrase (capture 3), never from which reader matched.
