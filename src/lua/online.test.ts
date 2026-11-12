@@ -251,6 +251,22 @@ describe("Lua online adapter", () => {
     online.halt();
   });
 
+  it("a halt stops the countdown ticker and the notice timer (XC6)", async () => {
+    const { online, last, publish } = setup();
+    await online.command("open");
+    await online.command(`join\t${CODE}`);
+    last().push({
+      kind: "state",
+      snapshot: seated(myId(), { phase: "countdown", countdownStartedAt: Date.now() }),
+    });
+    await online.command("copy");
+    online.halt();
+    expect(vi.getTimerCount()).toBe(0);
+    const emits = publish.mock.calls.length;
+    vi.advanceTimersByTime(5000);
+    expect(publish.mock.calls.length).toBe(emits);
+  });
+
   it("resumes a staked identity on a deep link (reload keeps the seat)", async () => {
     sessionStorage.setItem(
       `online.identity.${CODE}`,
@@ -592,6 +608,35 @@ describe("Lua online adapter", () => {
     await online.command("close");
     vi.advanceTimersByTime(TABLE_CLAIM_MS);
     expect(c.kinds()).toContain("bye");
+  });
+
+  it("a release's wait for the table drops only the lobby it was armed for (CLI7)", async () => {
+    const { online, made } = setup();
+    await online.command("open");
+    await online.command(`join\t${CODE}`);
+    const first = made[0];
+    first?.push({ kind: "state", snapshot: seated(myId(), { phase: "in-game" }) });
+    first?.push({ kind: "match", game, log: [] });
+    await online.command("close");
+    vi.advanceTimersByTime(1000);
+    expect(online.attach(CODE)).toBe(first?.client);
+    // Match one ends, and the player leaves the table for another lobby, whose match starts.
+    online.detach();
+    vi.advanceTimersByTime(0);
+    await online.command("open");
+    await online.command("join\tWXYZ");
+    const second = made[1];
+    const me = publicSeatId(identity("WXYZ").secret);
+    second?.push({
+      kind: "state",
+      snapshot: { ...seated(me, { phase: "in-game" }), code: "WXYZ" },
+    });
+    second?.push({ kind: "match", game, log: [] });
+    await online.command("close");
+    vi.advanceTimersByTime(TABLE_CLAIM_MS - 1000);
+    expect(second?.kinds()).not.toContain("bye");
+    vi.advanceTimersByTime(1000);
+    expect(second?.kinds()).toContain("bye");
   });
 
   it("a sign-in reopens the socket with the same identity and no bye", async () => {

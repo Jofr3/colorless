@@ -46,8 +46,53 @@ Client only (`src/online/lobbyClient.ts`, `src/lua/onlineTable.ts`); no wire or 
   have gone down with a half-open or closing socket. A copy the server did get is refused by the
   engine (the phase moved on, or the Prize index is gone) and that refusal stays muted.
 - **A refused tab seated later (ONL1).** A tab answered "full" adopts a later `state` frame that
-  seats its own id, connected, in its role's slot: its re-sent hello took the freed guest seat. A
+  seats its own id, connected (in either slot since Phase 2's ONL3): its re-sent hello took the
+  freed guest seat. A
   snapshot naming the seat away (a seat bound to another account) is still ignored.
+
+## Status — online server and lobby client (correctness audit Phase 2, 2026-11-12)
+
+No wire change. The DO (`apps/api/src/lobby/`) and the client (`src/online/`, `src/lua/online*.ts`,
+`ui/sim_presence.lua`) both changed; the release deploys the API first, as always.
+
+- **Both players away (ONLX1).** `judgeForfeits` forfeits an away seat only when its deadline is
+  strictly the earliest of the away seats'. Two seats on one deadline (both dropped within one
+  sweep) forfeit neither and keep their deadlines, which get no alarm (`forfeitWakeups`): whoever
+  says hello first wins once the other's clock, already past, is judged; with nobody back the
+  empty lobby is wiped with the match unfinished.
+- **The rematch chooser (ONL4)** is dropped by any commit that frees the guest seat or seats a new
+  id in it, so a new opponent goes back to the coin.
+- **An unreadable snapshot (ONL5)** read beside its keys deletes the match, the pending graces, the
+  seat bindings and the chooser, with one `snapshot_unreadable` error line; the next hello claims a
+  fresh lobby.
+- **The stored log (ONL6, STA3).** `MatchStore` continues the stored log only when the record's
+  first log entry is the one it wrote or read: a trim always puts a new marker row first, so a
+  trimmed log no shorter than the stored one is rewritten whole.
+- **Board invariants (STA6).** After every accepted action, and a forfeit's concede, the DO checks
+  `matchViolation` (`match.ts`: no uid in two zones, none lost or minted, the generator
+  kept). A break deletes the match unwritten, sends the lobby back to selecting with a `match-error`
+  and logs `match_broken` at error level. Under 0.03 ms an action (mean over 80,821 fixture-walk
+  actions). The record reader also refuses a `rngState` that is neither a number nor a ChaCha20
+  state, so the match is retired as unreadable instead of refusing every action.
+- **A guest's hello first (ONL3).** `LobbyClient` adopts whichever slot holds its id
+  (`client.role` follows it), so a friend who reached a fresh lobby before its creator plays from
+  the host seat and the creator from the guest seat. The ONL1 adoption now also takes either slot.
+- **A Leave with the link down (ONL8).** `dispose()` closes the channel with `deliver`: frames
+  still queued (the bye) go out on the next socket behind its hello, for up to `DELIVER_MS` (10 s),
+  then the channel shuts.
+- **A queued action and its answer (EFF3, decision 9a).** `LobbyChannel.post` says whether a frame
+  went out on an open socket. The table keeps `pending` through a full frame that shows the log the
+  action was sent against when the action was queued behind that frame's hello; any delta, a full
+  frame whose log moved on, a later hello's answer or a refusal ends it. A refusal that finds a
+  player action unanswered is shown as that action's, even with an automatic step sent after it;
+  an automatic step queued behind a hello is not sent again on that hello's answer (ONL2 follow-up).
+- **Clocks (CLI3, CLI4, XC2).** `countdownSeconds` is held to 3 and the away banner's `awayMs` to
+  `LOBBY_FORFEIT_MS` (90 s), since both read server stamps on the device clock (no server `now` on
+  the wire, decision 8a). The channel's and `LobbyClient`'s durations use `performance.now()`. The
+  Lua forfeit countdown runs on `love.timer.getTime()`, not frame time.
+- **Timers (XC6, CLI7).** `LuaOnline.halt()` clears the countdown ticker, the notice timer and the
+  release timer; a release's drop is kept as a handle, and the next release cancels it, so one
+  armed for an earlier lobby cannot drop a later one in its own handoff wait.
 
 ## Status — match RNG (security Phase 4, MI1, 2026-10-27)
 

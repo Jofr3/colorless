@@ -11,6 +11,11 @@ import { DISPLAY_NAME_MAX } from "../displayName";
     client overlay animates the same window from `countdownStartedAt`. */
 export const COUNTDOWN_MS = 3000;
 
+/** How long a player may be away from a running match before forfeiting it. Shared because both
+    ends use it: the DO arms an away seat's `forfeitAt` this far ahead, and the client, which reads
+    that server stamp against its own clock, holds the countdown it shows to it. */
+export const LOBBY_FORFEIT_MS = 90_000;
+
 /** The transport keepalive pair. The client sends the literal `LOBBY_WS_PING`
     and the DO answers `LOBBY_WS_PONG` via `setWebSocketAutoResponse`, i.e.
     without ever waking a hibernated instance — these are raw strings on the

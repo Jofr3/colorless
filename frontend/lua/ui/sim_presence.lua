@@ -4,7 +4,11 @@ local Dyna=require('ui.dynatext')
 local Simulator={}
 -- boss_warning_text: two floating DynaTexts over the table while the opponent
 -- is disconnected. The forfeit clock counts down from receipt, so presence
--- never needs per-second snapshots (each would invalidate click tokens).
+-- never needs per-second snapshots (each would invalidate click tokens). It
+-- counts on love.timer, not frame time, which stops while the tab is hidden.
+local function now(self)
+  return love.timer and love.timer.getTime and love.timer.getTime() or self.time
+end
 function Simulator.clock(seconds)
   seconds=math.max(0,math.ceil(seconds))
   return string.format('%d:%02d',math.floor(seconds/60),seconds%60)
@@ -12,7 +16,7 @@ end
 function Simulator:awayDetail()
   local a=self.away
   if not a.deadline then return 'Waiting for them to reconnect...' end
-  local left=a.deadline-self.time
+  local left=a.deadline-now(self)
   return left>0 and 'Forfeits in '..Simulator.clock(left) or 'Forfeiting...'
 end
 function Simulator:syncAway(row)
@@ -28,7 +32,7 @@ function Simulator:syncAway(row)
     return
   end
   local ms=tonumber(row.ms)
-  local deadline=ms and ms>=0 and self.time+ms/1000 or nil
+  local deadline=ms and ms>=0 and now(self)+ms/1000 or nil
   if a and not a.leaving then
     if a.name~=row.name then a.name=row.name;a.title:set(row.name..' disconnected',self.time) end
     a.deadline=deadline;a.detail:set(self:awayDetail(),self.time)

@@ -65,7 +65,7 @@ import {
   EMPTY_LOBBY_TTL_MS,
   FRAME_MAX_CHARS,
   type FrameBudget,
-  forfeitDeadlines,
+  forfeitWakeups,
   type HelloDecision,
   helloDecision,
   INACTIVE_LOBBY_MS,
@@ -87,6 +87,7 @@ import {
   setSeatConnected,
   slotOf,
   helloIsOutdated,
+  judgeForfeits,
   MIN_LOBBY_PROTOCOL,
   socketIsSilent,
   socketNeedsNudge,
@@ -99,7 +100,6 @@ import {
   storedPendingSchema,
   storedSeatUsersSchema,
   storedTimeSchema,
-  withForfeitAt,
   withoutPendingDisconnect,
   withPendingDisconnect,
 } from "./logic";
@@ -115,6 +115,7 @@ import {
   type MatchSlot,
   matchFrameFor,
   matchSeatOf,
+  matchViolation,
   playerIdOfSeat,
   SEAT_OF_SLOT,
   type Seat,
@@ -148,7 +149,8 @@ const CLEANUP_AT_KEY = "cleanupAt";
 const ACTIVE_AT_KEY = "activeAt";
 const PENDING_KEY = "pendingDisconnects";
 // The public seat id of who lost the last game in this lobby: they choose the rematch's
-// play order (`settleFirstPlayer`). Consumed by the next successful handoff.
+// play order (`settleFirstPlayer`). Consumed by the next successful handoff, and dropped when the
+// guest seat changes hands.
 const CHOOSER_KEY = "nextChooser";
 // Public seat id → the account it's bound to. Written the first time an
 // authenticated socket claims a seat; a later hello for that seat must present the SAME account
@@ -224,6 +226,10 @@ const REMATCH_OPPONENT_SIGNED_OUT_REASON = "Your opponent is signed out, so ther
     with both seats un-readied, so the next step really is just to ready up. */
 const STALE_MATCH_REASON =
   "This match ended because the server was updated. Pick your decks and ready up to play again.";
+
+/** What both players are told when a match is retired because an action broke the board. */
+const BROKEN_MATCH_REASON =
+  "This match ended because of a server error. Pick your decks and ready up to play again.";
 
 /** Everything the lobby reads from outside its own storage and sockets: the clock, the match
     seed and deck pre-shuffle, and the D1 lookups. */
@@ -566,6 +572,8 @@ export class LobbyDO {
     // view as it is, so it is neither written nor sent.
     const { state, log } = outcome.record;
     if (state === record.state && log.length === record.log.length) return;
+    const violation = matchViolation(record.state, state);
+    if (violation !== null) return await this.retireBrokenMatch(frame.action.type, violation);
     await this.match.put(outcome.record);
     await this.matchEnded(record, outcome.record);
     await this.touchActivity();
@@ -871,20 +879,11 @@ export class LobbyDO {
     }
 
     // A player who never came back forfeits. Judged on the final `next` so a match started on
-    // this alarm is not judged by a previous deadline. The deadline is consumed whether or not
-    // the forfeit lands, and the concede runs after the commit.
-    const forfeiting: Seat[] = [];
-    for (const { slot, deadline } of forfeitDeadlines(next)) {
-      if (deadline > now) continue;
-      const player = slot === "host" ? next.host : next.guest;
-      next = withForfeitAt(next, slot, null);
-      // `hasSocket` re-checks the live truth: a deadline is cleared the moment
-      // its player says hello, but this also covers one set before they came
-      // back. A lobby that already left in-game has nothing to forfeit.
-      if (next.phase === "in-game" && player !== null && !hasSocket(player.id)) {
-        forfeiting.push(SEAT_OF_SLOT[slot]);
-      }
-    }
+    // this alarm is not judged by a previous deadline, and on the live sockets, which also cover a
+    // deadline set before its player came back. The concede runs after the commit.
+    const judged = judgeForfeits(next, now, (playerId) => !hasSocket(playerId));
+    next = judged.snapshot;
+    const forfeiting = judged.forfeiting.map((slot) => SEAT_OF_SLOT[slot]);
 
     // The graces judged above are consumed in the same breath as the snapshot they changed, and
     // before it, since the commit schedules the next alarm from what is still pending.
@@ -1329,6 +1328,11 @@ export class LobbyDO {
     await this.state.storage.put(SNAPSHOT_KEY, stamped);
     this.snapshot = stamped;
     if (abandoned) await this.match.delete();
+    // The last game's loser picks the next play order only against the opponent they lost to: a
+    // guest seat freed or taken by someone new goes back to the coin.
+    if (previous !== null && previous.guest?.id !== stamped.guest?.id) {
+      await this.state.storage.delete(CHOOSER_KEY);
+    }
     this.broadcast({ kind: "state", snapshot: wireSnapshot(stamped) });
     await this.touchActivity();
     await this.scheduleMaintenance();
@@ -1351,7 +1355,7 @@ export class LobbyDO {
     // the empty-lobby TTL either). It sits beside `countdownEndsAt` on purpose:
     // one place that turns snapshot state into the next wake-up.
     if (snapshot !== null) {
-      for (const { deadline } of forfeitDeadlines(snapshot)) deadlines.push(deadline);
+      deadlines.push(...forfeitWakeups(snapshot));
     }
 
     // While anyone is connected, keep a poll running: it is the ONLY thing that can notice a
@@ -1397,9 +1401,23 @@ export class LobbyDO {
       embedded engine state a default could quietly get wrong. */
   private async loadSnapshot(): Promise<LobbyState | null> {
     if (this.snapshot === undefined) {
-      this.snapshot = readSnapshot(await this.state.storage.get(SNAPSHOT_KEY));
+      const raw = await this.state.storage.get(SNAPSHOT_KEY);
+      this.snapshot = readSnapshot(raw);
+      if (this.snapshot === null && raw !== undefined) await this.discardUnreadableLobby();
     }
     return this.snapshot;
+  }
+
+  /**
+   * A stored snapshot this deploy cannot read leaves the lobby open to a new host, so everything
+   * kept for the seats it named goes with it: the match, the graces, the seat bindings and the
+   * chooser. Otherwise the next handoff would find that match live and hand it to new players.
+   */
+  private async discardUnreadableLobby(): Promise<void> {
+    await this.match.delete();
+    await this.state.storage.delete([SNAPSHOT_KEY, PENDING_KEY, SEAT_USERS_KEY, CHOOSER_KEY]);
+    this.seatUsersMirror = {};
+    logError("lobby", "snapshot_unreadable", await this.failureFields({}));
   }
 
   /** The value stored under `key`, or undefined when it is absent or does not parse. */
@@ -1511,6 +1529,8 @@ export class LobbyDO {
     if (load.kind !== "ok") return;
     const outcome = applyMatchAction(load.record, seat, { type: "concede" }, now);
     if (!outcome.ok) return;
+    const violation = matchViolation(load.record.state, outcome.record.state);
+    if (violation !== null) return await this.retireBrokenMatch("concede", violation);
     await this.match.put(outcome.record);
     await this.touchActivity();
     await this.info("forfeit", { seat, cause });
@@ -1557,6 +1577,20 @@ export class LobbyDO {
     if (snapshot === null || snapshot.phase !== "in-game") return;
     await this.commit(endMatch(snapshot));
     this.broadcast({ kind: "match-error", reason: STALE_MATCH_REASON });
+  }
+
+  /**
+   * Retire a match whose accepted action broke a rule every action keeps (`matchViolation`): an
+   * engine bug. The result is not written, the match is deleted and the lobby goes back to
+   * selecting, as for an unreadable record, and one error line names the action type and the rule.
+   */
+  private async retireBrokenMatch(type: string, violation: string): Promise<void> {
+    await this.match.delete();
+    logError("lobby", "match_broken", await this.fields({ type, violation }));
+    const snapshot = await this.loadSnapshot();
+    if (snapshot === null || snapshot.phase !== "in-game") return;
+    await this.commit(endMatch(snapshot));
+    this.broadcast({ kind: "match-error", reason: BROKEN_MATCH_REASON });
   }
 
   /**

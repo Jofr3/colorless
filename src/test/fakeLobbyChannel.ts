@@ -8,16 +8,22 @@ export function fakeLobbyChannel() {
   const posts: LobbyMessage[] = [];
   const handlers = new Set<(m: LobbyMessage) => void>();
   let closed = false;
+  let closedWith: { deliver?: boolean } | null = null;
+  /** Posts answer as the real channel's do while its socket is down: queued, not sent. */
+  const link = { down: false };
   const channel: LobbyChannel = {
     post: (m) => {
-      if (!closed) posts.push(m);
+      if (closed) return false;
+      posts.push(m);
+      return !link.down;
     },
     subscribe: (h) => {
       handlers.add(h);
       return () => handlers.delete(h);
     },
-    close: () => {
+    close: (opts) => {
       closed = true;
+      closedWith = opts ?? {};
       handlers.clear();
     },
   };
@@ -28,7 +34,9 @@ export function fakeLobbyChannel() {
       for (const h of [...handlers]) h(m);
     },
     kinds: () => posts.map((p) => p.kind),
+    link,
     closed: () => closed,
+    closedWith: () => closedWith,
   };
 }
 

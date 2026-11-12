@@ -16,12 +16,16 @@ import { apiWebSocketUrl } from "../lib/apiOrigin";
 
 export interface LobbyChannel {
   /** Send a message toward the lobby server. It is never echoed back to the
-      sender: the server broadcasts snapshots, not the sender's own frames. */
-  post(message: LobbyMessage): void;
+      sender: the server broadcasts snapshots, not the sender's own frames. True when it went out on
+      an open socket; false when it waits for the next one, behind that socket's hello, or the
+      channel is closed. */
+  post(message: LobbyMessage): boolean;
   /** Register a listener; returns an unsubscribe function. */
   subscribe(handler: (message: LobbyMessage) => void): () => void;
-  /** Tear the channel down and drop all listeners. */
-  close(): void;
+  /** Tear the channel down and drop all listeners. With `deliver`, frames still waiting for a
+      socket go out on the next one (after its hello) before it closes, if one opens within
+      `DELIVER_MS`. */
+  close(opts?: { deliver?: boolean }): void;
 }
 
 // One WebSocket per lobby code, against GET /lobby/:code/ws. The Durable Object is the authority
@@ -45,6 +49,11 @@ export const STABLE_OPEN_MS = 5000;
 // Posts buffered while disconnected; beyond this the oldest are dropped (the
 // client's periodic hello retries make individual frames safe to lose).
 const MAX_QUEUED_MESSAGES = 32;
+/** How long a closed channel keeps reconnecting to deliver the frames it still holds (a bye). */
+export const DELIVER_MS = 10_000;
+
+/** A clock for durations: unlike `Date.now`, a step of the device clock does not move it. */
+const monotonicNow = () => performance.now();
 
 /** The delay before reconnect attempt `attempt` (0-based): 400ms doubling to a cap of 8s, spread
     ±20% by `jitter` (0 to 1) so tabs a server restart dropped together do not return together. */
@@ -63,7 +72,7 @@ const SERVER_HEARTBEAT: LobbyMessage = { kind: "heartbeat", from: "server", slot
     the lobby just never finds a server. */
 function createNoopChannel(): LobbyChannel {
   return {
-    post: () => {},
+    post: () => false,
     subscribe: () => () => {},
     close: () => {},
   };
@@ -99,6 +108,8 @@ export function createLobbyChannel(
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   let connectTimer: ReturnType<typeof setTimeout> | null = null;
   let pingTimer: ReturnType<typeof setInterval> | null = null;
+  // Closed, but still reconnecting to deliver the queue: ends at the next open or `DELIVER_MS`.
+  let deliverTimer: ReturnType<typeof setTimeout> | null = null;
   // The newest hello posted. A reopened socket is attached to no seat until it says hello, and the
   // client only re-announces after PRESENCE_TIMEOUT_MS of silence, which the server's pongs to the
   // new socket never let happen: so every socket leads with it, ahead of every frame queued while
@@ -128,11 +139,25 @@ export function createLobbyChannel(
       clearTimeout(reconnectTimer);
       reconnectTimer = null;
     }
+    if (deliverTimer !== null) {
+      clearTimeout(deliverTimer);
+      deliverTimer = null;
+    }
+  };
+
+  const shut = () => {
+    closed = true;
+    handlers.clear();
+    stopTimers();
+    queue.length = 0;
+    socket?.close(1000, "channel closed");
+    socket = null;
+    open = false;
   };
 
   /** The socket is gone: give up on the lobby if the server closed it for good, else reconnect. */
   const lost = (code: number | undefined) => {
-    if (openedAt !== null && Date.now() - openedAt >= STABLE_OPEN_MS) attempt = 0;
+    if (openedAt !== null && monotonicNow() - openedAt >= STABLE_OPEN_MS) attempt = 0;
     openedAt = null;
     open = false;
     socket = null;
@@ -143,6 +168,7 @@ export function createLobbyChannel(
     if (code === LOBBY_WS_CLOSED || code === LOBBY_WS_NOT_FOUND || code === LOBBY_WS_OUTDATED) {
       closed = true;
       queue.length = 0;
+      stopTimers();
       onLobbyClosed?.(code === LOBBY_WS_OUTDATED ? "outdated" : "closed");
       return;
     }
@@ -180,11 +206,16 @@ export function createLobbyChannel(
       if (connectTimer !== null) clearTimeout(connectTimer);
       connectTimer = null;
       open = true;
-      openedAt = Date.now();
+      openedAt = monotonicNow();
       if (lastHello !== null) ws.send(lastHello);
       for (const pending of queue.splice(0)) ws.send(pending);
+      // A socket buffers what it was sent ahead of its close, so the delivery is done.
+      if (deliverTimer !== null) {
+        shut();
+        return;
+      }
       pingTimer = setInterval(() => {
-        const now = Date.now();
+        const now = monotonicNow();
         if (unansweredSince !== null && now - unansweredSince >= SOCKET_SILENCE_MS) {
           abandon(ws);
           return;
@@ -202,7 +233,7 @@ export function createLobbyChannel(
         return;
       }
       if (event.data === LOBBY_WS_NUDGE) {
-        unansweredSince = Date.now();
+        unansweredSince = monotonicNow();
         ws.send(LOBBY_WS_PING);
         return;
       }
@@ -234,28 +265,31 @@ export function createLobbyChannel(
 
   return {
     post: (message) => {
-      if (closed) return;
+      if (closed || deliverTimer !== null) return false;
       const encoded = JSON.stringify(message);
       if (message.kind === "hello") lastHello = encoded;
       if (open && socket !== null) {
         socket.send(encoded);
-      } else if (message.kind !== "hello") {
+        return true;
+      }
+      if (message.kind !== "hello") {
         queue.push(encoded);
         if (queue.length > MAX_QUEUED_MESSAGES) queue.shift();
       }
+      return false;
     },
     subscribe: (handler) => {
       handlers.add(handler);
       return () => handlers.delete(handler);
     },
-    close: () => {
-      closed = true;
+    close: ({ deliver = false } = {}) => {
+      if (closed || deliverTimer !== null) return;
+      if (!deliver || open || queue.length === 0) {
+        shut();
+        return;
+      }
       handlers.clear();
-      stopTimers();
-      queue.length = 0;
-      socket?.close(1000, "channel closed");
-      socket = null;
-      open = false;
+      deliverTimer = setTimeout(shut, DELIVER_MS);
     },
   };
 }

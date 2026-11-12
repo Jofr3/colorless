@@ -21,6 +21,10 @@ import { autoStepFor, counterSourcePicked, eventsFromLog, NO_EVENTS } from "./ta
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
+/** A player action the server has not answered yet: the log it was sent against, the client's
+    `fullFrames` then, and whether it waits in the channel behind the next socket's hello. */
+type InFlight = { logLength: number; last: string; fullFrames: number; queued: boolean };
+
 /** Shown on a finished table whose seat was refused on reconnect: its account is signed out. */
 export const SEAT_LOST = "Sign in again to take your seat back.";
 /** A server that predates `benchLimit` leaves the limit to this client's own card data. */
@@ -151,6 +155,11 @@ export function onlineGate(action: GameAction, v: RedactedGame): boolean {
 
 export type CardPool = (ids: string[]) => Promise<{ pool: Record<string, Card> }>;
 
+/** The last row of `log`, as comparable text. */
+function logKey(log: readonly SeatLogEntry[]): string {
+  return JSON.stringify(log.at(-1) ?? null);
+}
+
 /** The live lobby match as a table: RedactedGame frames in, GameActions out
  * through the one LobbyClient the modal also drives. No engine, no save. */
 export class LuaOnlineMatch implements TableSource {
@@ -163,9 +172,12 @@ export class LuaOnlineMatch implements TableSource {
   private pool: Record<string, Card> = {};
   private asked = new Set<string>();
   private keys = new Map<string, string>();
-  private autoSent = new Set<string>();
+  /** Each automatic step sent for the decision on screen, and whether it still waits in the
+      channel behind the next socket's hello. */
+  private autoSent = new Map<string, boolean>();
   /** The client's `fullFrames` when `autoSent` was last cleared. */
   private fullFrames = 0;
+  private inFlight: InFlight | null = null;
   private auto = false;
   private error: ActionError | null = null;
   private muted: ActionError | null = null;
@@ -218,10 +230,20 @@ export class LuaOnlineMatch implements TableSource {
     return !!this.seen && onlineGate(action, this.seen);
   }
   send(action: GameAction, opts: { auto?: boolean } = {}) {
+    this.post(action, !!opts.auto);
+  }
+  /** Send `action`; true when it went out on an open socket. */
+  private post(action: GameAction, auto: boolean): boolean {
     this.counter = counterSourcePicked(this.seen, action) ?? this.counter;
-    this.auto = !!opts.auto;
-    if (!opts.auto) this.pending = true;
-    this.client.sendAction(action);
+    this.auto = auto;
+    const { matchLog, fullFrames } = this.client.state;
+    const flight = { logLength: matchLog.length, last: logKey(matchLog), fullFrames };
+    const sent = this.client.sendAction(action);
+    if (!auto) {
+      this.pending = true;
+      this.inFlight = { ...flight, queued: !sent };
+    }
+    return sent;
   }
   allowances() {
     const v = this.seen;
@@ -332,15 +354,17 @@ export class LuaOnlineMatch implements TableSource {
     // the result it saw seated.
     const keepResult = !!this.seen?.outcome && (match === null || this.seatLost());
     if (match !== this.seen && !keepResult) {
-      this.pending = false;
+      if (this.pending && this.answered()) this.settle();
       this.frame(match);
       shown = true;
     }
     if (actionError !== this.error) {
       this.error = actionError;
       if (actionError) {
-        if (this.auto) this.muted = actionError;
-        else this.pending = false;
+        // Refusals come back in the order things were sent, so one that finds a player action
+        // unanswered is that action's, whatever was sent after it.
+        if (this.auto && !this.pending) this.muted = actionError;
+        else this.settle();
         // A refused rematch (a signed-out seat) is not waiting on the other player any more.
         if (this.seen?.outcome && this.sentRematch === this.matchId()) this.sentRematch = "";
       }
@@ -353,6 +377,28 @@ export class LuaOnlineMatch implements TableSource {
       shown = true;
     }
     if (shown) this.notify();
+  }
+
+  private settle() {
+    this.pending = false;
+    this.inFlight = null;
+  }
+
+  /**
+   * Whether the frame just taken can answer the player action in flight. A delta follows an
+   * accepted action. A full frame answers a hello: one with the log as it was sent against
+   * answers nothing when the action was queued behind that hello, since the action reaches the
+   * server only after it (a second answer on the same prompt shape would land on the next prompt).
+   * Sent on a socket since replaced, it was answered before that hello or lost with the socket.
+   */
+  private answered(): boolean {
+    const flight = this.inFlight;
+    const { match, matchLog, fullFrames } = this.client.state;
+    if (flight === null || match === null || fullFrames === flight.fullFrames) return true;
+    if (matchLog.length !== flight.logLength || logKey(matchLog) !== flight.last) return true;
+    if (!flight.queued) return true;
+    this.inFlight = { ...flight, fullFrames, queued: false };
+    return false;
   }
 
   /** Our rematch is pending and the lobby left the game for one: when it was the opponent's that
@@ -377,11 +423,15 @@ export class LuaOnlineMatch implements TableSource {
     const id = this.matchId();
     // A full frame answers a reconnect's hello: an automatic step sent before it may have been lost
     // with the old socket, so the decision it still shows is sent again. The engine refuses a copy
-    // that did land, as the phase moved on.
+    // that did land, as the phase moved on. A step queued behind that hello is sent after it, so
+    // it is not sent again until the next one.
     const { fullFrames } = this.client.state;
     if (fullFrames !== this.fullFrames) {
       this.fullFrames = fullFrames;
-      this.autoSent.clear();
+      for (const [key, queued] of this.autoSent) {
+        if (queued) this.autoSent.set(key, false);
+        else this.autoSent.delete(key);
+      }
     }
     if (id !== this.match || log.length < this.logLength) {
       this.match = id;
@@ -429,8 +479,7 @@ export class LuaOnlineMatch implements TableSource {
     if (!action) return;
     const key = JSON.stringify(action);
     if (this.autoSent.has(key)) return;
-    this.autoSent.add(key);
-    this.send(action, { auto: true });
+    this.autoSent.set(key, !this.post(action, true));
   }
 
   /** Catalogue faces for every visible card id, fetched once each. */

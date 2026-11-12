@@ -1,7 +1,22 @@
-import { formatElapsed, logFromEvents, otherSeat, redactGame, type Seat } from "@colorless/engine";
+import {
+  createGame,
+  formatElapsed,
+  type GameState,
+  logFromEvents,
+  otherSeat,
+  redactGame,
+  type Seat,
+} from "@colorless/engine";
 import { type Card, redactedPhaseSchema } from "@colorless/schema";
 import { describe, expect, it } from "vitest";
-import { ALL_BASIC_DECK, drbgSeed, driveSetup } from "@colorless/engine/testing";
+import {
+  ALL_BASIC_DECK,
+  drbgSeed,
+  driveSetup,
+  FIXTURE_POOL,
+  MIXED_DECK,
+  walkGame,
+} from "@colorless/engine/testing";
 import {
   applyMatchAction,
   beginMatch,
@@ -15,6 +30,7 @@ import {
   type MatchSlot,
   matchFrameFor,
   matchSeatOf,
+  matchViolation,
   migrateMatchRecord,
   playerIdOfSeat,
   readMatchRecord,
@@ -23,6 +39,7 @@ import {
   settleFirstPlayer,
   startMatch,
   SUPPORTED_MATCH_ACTIONS,
+  zoneUids,
 } from "./match";
 import type { LobbyState } from "./snapshot";
 
@@ -506,6 +523,10 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     expect(readMatchRecord({ ...record, startedAt: "soon" })).toBeNull();
     expect(readMatchRecord({ ...record, names: { p1: "Ana" } })).toBeNull();
     expect(readMatchRecord({ ...record, names: null })).toBeNull();
+    for (const rngState of [undefined, null, "seed", { alg: "chacha20", key: "", counter: 0 }]) {
+      expect(readMatchRecord({ ...record, state: { ...record.state, rngState } })).toBeNull();
+    }
+    expect(readMatchRecord({ ...record, state: { ...record.state, rngState: 7 } })).not.toBeNull();
   });
 
   it("refuses a non-object (absent, garbled, or a bare string)", () => {
@@ -515,12 +536,12 @@ describe("readMatchRecord — the persisted-shape gate", () => {
     expect(readMatchRecord(42)).toBeNull();
   });
 
-  it("checks the embedded engine state only at its top level", () => {
+  it("checks the embedded engine state only at its top level and its generator", () => {
     const { record } = freshRecord();
     expect(readMatchRecord({ ...record, state: { nonsense: true } })).toBeNull();
     expect(readMatchRecord({ ...record, state: { ...record.state, phase: null } })).toBeNull();
     expect(readMatchRecord({ ...record, state: { ...record.state, players: "p1" } })).toBeNull();
-    const shallow = { phase: { kind: "nonsense" }, players: {} };
+    const shallow = { phase: { kind: "nonsense" }, players: {}, rngState: record.state.rngState };
     expect(readMatchRecord({ ...record, state: shallow })?.state).toBe(shallow);
   });
 
@@ -812,5 +833,51 @@ describe("capLog — the match log's bound (MIX2)", () => {
       segments: [{ text: "Earlier log entries were trimmed." }],
     });
     expect(capped.log.slice(1)).toEqual(log.slice(-MATCH_LOG_KEPT));
+  });
+});
+
+function openedGame(seed = 3): GameState {
+  const created = createGame({
+    seed: drbgSeed(seed),
+    decks: { p1: [...MIXED_DECK], p2: [...MIXED_DECK] },
+    cardPool: FIXTURE_POOL,
+  });
+  if (!created.ok) throw new Error(created.error.message);
+  return created.state;
+}
+
+describe("matchViolation (STA6)", () => {
+  it("finds nothing over a fixture game, every card of which sits in a zone it reads", () => {
+    let steps = 0;
+    walkGame(openedGame(), 3, () => {}, {
+      maxSteps: 300,
+      onStep: (before, _action, _events, after) => {
+        steps++;
+        expect(matchViolation(before, after)).toBeNull();
+        expect(zoneUids(after).sort()).toEqual(Object.keys(after.cardIdByUid).sort());
+      },
+    });
+    expect(steps).toBeGreaterThan(50);
+  });
+
+  it("names a card in two zones, a card lost or minted and a generator left", () => {
+    const before = openedGame();
+    const p1 = before.players.p1;
+    const [uid, ...rest] = p1.deck;
+    if (uid === undefined) throw new Error("an empty deck");
+    const withP1 = (side: Partial<typeof p1>): GameState => ({
+      ...before,
+      players: { ...before.players, p1: { ...p1, ...side } },
+    });
+    expect(matchViolation(before, withP1({ discard: [uid] }))).toBe("a card is in two zones");
+    expect(matchViolation(before, withP1({ deck: rest }))).toBe("a card was lost or minted");
+    expect(matchViolation(before, withP1({ discard: ["x-1"] }))).toBe("a card was lost or minted");
+    expect(matchViolation(before, withP1({ deck: ["x-1", ...rest] }))).toBe(
+      "a card was lost or minted",
+    );
+    expect(matchViolation(before, { ...before, rngState: 7 })).toBe("the game left its generator");
+    expect(matchViolation(before, { ...before, rngState: { alg: "x" } as never })).toBe(
+      "the game left its generator",
+    );
   });
 });

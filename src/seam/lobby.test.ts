@@ -337,6 +337,56 @@ describe("the web client against the lobby DO", () => {
     expect(host.state.snapshot?.guest).toMatchObject({ hasDeck: true, ready: true });
   });
 
+  it("a guest whose hello reaches a fresh lobby before its creator's plays it from the host seat (ONL3)", async () => {
+    const hostTab = b.tab("ana");
+    // The creator's first sockets fail, a blip right after Create, while the code is shared.
+    hostTab.offline = true;
+    const creator = b.client(hostTab, {
+      code: SEAM_CODE,
+      role: "host",
+      secret: seatSecret("h"),
+      name: "h",
+    });
+    await b.run(300);
+    const friend = b.client(b.tab("bo"), {
+      code: SEAM_CODE,
+      role: "guest",
+      secret: seatSecret("g"),
+      name: "g",
+    });
+    await b.run(1000);
+    hostTab.offline = false;
+    await b.run(25_000);
+    expect(b.h.storage.data.get("snapshot")).toMatchObject({
+      host: { id: seatIdOf("g") },
+      guest: { id: seatIdOf("h") },
+    });
+    expect(friend.state.status).toBe("connected");
+    expect(creator.state.status).toBe("connected");
+    expect([friend.role, creator.role]).toEqual(["host", "guest"]);
+    expect(friend.opponent?.id).toBe(seatIdOf("h"));
+    creator.selectDeck({ id: "deck-ana", name: "Ana's deck" });
+    creator.setReady(true);
+    await b.run(500);
+    expect(friend.opponent).toMatchObject({ hasDeck: true, ready: true });
+  });
+
+  it("a Leave mid-match while the link is down forfeits once the link is back, not after the away clock (ONL8)", async () => {
+    const { host, guest } = await inGame();
+    guest.offline = true;
+    b.deliver(() => b.h.drop(lastSocket(guest).server));
+    await b.run(1000);
+    guest.match.leave();
+    expect(guest.online.client).toBeNull();
+    guest.offline = false;
+    await b.run(10_000);
+    expect(host.match.view()?.outcome).toMatchObject({ winner: "you", reason: "conceded" });
+    expect(lastSocket(guest).server.closed).not.toBeNull();
+    const sockets = guest.sockets.length;
+    await b.run(30_000);
+    expect(guest.sockets).toHaveLength(sockets);
+  });
+
   it("a signed-out seat's rematch is refused, and the tab keeps its result", async () => {
     const { host, guest } = await inGame();
     concede(host);

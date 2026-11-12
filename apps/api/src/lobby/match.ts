@@ -15,6 +15,7 @@ import {
   type GameAction,
   type GameEvent,
   type GameState,
+  type InPlayPokemon,
   type Seat,
   applyAction,
   createGame,
@@ -27,6 +28,7 @@ import {
   migrateGameState,
   type RngState,
   redactGame,
+  SEATS,
   savedDeckReasons,
 } from "@colorless/engine";
 import type { Card, LobbyServerMessage, SeatLogEntry, WireAction } from "@colorless/schema";
@@ -306,18 +308,26 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-/** The persisted `GameState`, checked only for the keys every reader touches first. */
+/** A generator state as a record may hold it: an older one's u32 seed state, or ChaCha20's. */
+function isStoredRng(value: unknown): boolean {
+  return (typeof value === "number" && Number.isFinite(value)) || isRngState(value);
+}
+
+/** The persisted `GameState`, checked only for the keys every reader touches first, and for a
+    generator the next action can draw from: a corrupt one would refuse every action. */
 const storedStateSchema = z.custom<GameState>(
-  (value) => isObject(value) && isObject(value.phase) && isObject(value.players),
+  (value) =>
+    isObject(value) &&
+    isObject(value.phase) &&
+    isObject(value.players) &&
+    isStoredRng(value.rngState),
 );
 
 function matchRecordSchema(version: z.ZodType<number>, state: z.ZodType<GameState>) {
   return z.object({
     version,
     // An older record holds the u32 seed the DO minted, which can pass the int32 range.
-    seed: z.custom<RngState>(
-      (value) => (typeof value === "number" && Number.isFinite(value)) || isRngState(value),
-    ),
+    seed: z.custom<RngState>(isStoredRng),
     startedAt: z.number(),
     names: z.object({ p1: z.string(), p2: z.string() }),
     state,
@@ -477,4 +487,44 @@ export function matchFrameFor(
   const game = redactGame(record.state, viewer);
   if (logFrom === undefined) return { kind: "match", game, log: record.log };
   return { kind: "match", game, log: record.log.slice(logFrom), logFrom };
+}
+
+// What every accepted action keeps, checked by the lobby before it persists the result: the cards
+// only move, and the game keeps its generator. The engine is meant to keep both; a break is an
+// engine bug, and the match is retired rather than played on from a board that lost a card.
+
+function bodyUids(pokemon: InPlayPokemon | null): string[] {
+  return pokemon === null ? [] : [...pokemon.stack, ...pokemon.energy, ...pokemon.tools];
+}
+
+/** Every card uid in a zone of `state`, in no particular order. */
+export function zoneUids(state: GameState): string[] {
+  const uids = SEATS.flatMap((seat) => {
+    const side = state.players[seat];
+    return [
+      ...side.deck,
+      ...side.hand,
+      ...side.discard,
+      ...side.prizes,
+      ...bodyUids(side.active),
+      ...side.bench.flatMap(bodyUids),
+    ];
+  });
+  if (state.stadium !== null) uids.push(state.stadium.uid);
+  return uids;
+}
+
+/** The first rule `after` breaks against `before`, the state it was applied to, or null. The
+    text names no card, seat or player, so it can go in a log line as it is. */
+export function matchViolation(before: GameState, after: GameState): string | null {
+  const was = zoneUids(before);
+  const now = zoneUids(after);
+  const held = new Set(now);
+  if (held.size !== now.length) return "a card is in two zones";
+  if (now.length !== was.length || !was.every((uid) => held.has(uid)))
+    return "a card was lost or minted";
+  if (!isRngState(after.rngState) || typeof after.rngState !== typeof before.rngState) {
+    return "the game left its generator";
+  }
+  return null;
 }

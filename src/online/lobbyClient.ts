@@ -122,9 +122,12 @@ export function receivedLog(
   return [...held, ...frame.log];
 }
 
-/** Whole seconds left on the start countdown (3, 2, 1, then 0 = "Go!"). */
+/** Whole seconds left on the start countdown (3, 2, 1, then 0 = "Go!"). `startedAt` is the
+    server's clock and `now` this device's, so a device clock behind the server's would count from
+    more than the countdown has: it is held to the countdown's length. */
 export function countdownSeconds(startedAt: number, now: number): number {
-  return Math.max(0, Math.ceil((COUNTDOWN_MS - (now - startedAt)) / 1000));
+  const seconds = Math.ceil((COUNTDOWN_MS - (now - startedAt)) / 1000);
+  return Math.min(Math.ceil(COUNTDOWN_MS / 1000), Math.max(0, seconds));
 }
 
 /** The versus status line (four cases, in the Lua font's ASCII). */
@@ -136,10 +139,12 @@ export function versusStatus(self: PlayerState | null, opponent: PlayerState | n
 
 export class LobbyClient {
   readonly code: string;
-  readonly role: LobbySlot;
   /** This seat's PUBLIC id, as the lobby's snapshots name it: the hash of `secret`. */
   readonly playerId: string;
   private readonly secret: string;
+  /** The seat this client holds: the role it joined as, until a snapshot seats its id in the
+      other one (a guest whose hello reached a fresh lobby before its creator's). */
+  private slot: LobbySlot;
   private name: string;
   private channel: LobbyChannel;
   private now: () => number;
@@ -159,11 +164,11 @@ export class LobbyClient {
 
   constructor(opts: LobbyClientOptions, deps: { channel?: LobbyChannel; now?: () => number } = {}) {
     this.code = opts.code;
-    this.role = opts.role;
+    this.slot = opts.role;
     this.secret = opts.secret;
     this.playerId = publicSeatId(opts.secret);
     this.name = opts.name;
-    this.now = deps.now ?? Date.now;
+    this.now = deps.now ?? (() => performance.now());
     this.channel =
       deps.channel ??
       createLobbyChannel(opts.code, { onLobbyClosed: (reason) => this.lobbyClosed(reason) });
@@ -181,14 +186,18 @@ export class LobbyClient {
     return this.current;
   }
 
+  get role(): LobbySlot {
+    return this.slot;
+  }
+
   get self(): PlayerState | null {
     const s = this.current.snapshot;
-    return s ? (this.role === "host" ? s.host : s.guest) : null;
+    return s ? (this.slot === "host" ? s.host : s.guest) : null;
   }
 
   get opponent(): PlayerState | null {
     const s = this.current.snapshot;
-    return s ? (this.role === "host" ? s.guest : s.host) : null;
+    return s ? (this.slot === "host" ? s.guest : s.host) : null;
   }
 
   subscribe(fn: (s: LobbyClientState) => void): () => void {
@@ -207,7 +216,7 @@ export class LobbyClient {
 
   /** Announce a graceful departure (dispose does this too). */
   leave() {
-    this.channel.post({ kind: "bye", from: this.playerId, slot: this.role });
+    this.channel.post({ kind: "bye", from: this.playerId, slot: this.slot });
   }
 
   /** Only the server knows whether the match is over, so it decides. */
@@ -216,9 +225,10 @@ export class LobbyClient {
   }
 
   /** The DO binds the action to this socket's seat. GameAction structurally
-      satisfies the loose wire action; the cast is a Zod index-signature artifact. */
-  sendAction(action: GameAction) {
-    this.channel.post({ kind: "action", action: action as unknown as WireAction });
+      satisfies the loose wire action; the cast is a Zod index-signature artifact. True when the
+      action went out on an open socket, false when it waits behind the next socket's hello. */
+  sendAction(action: GameAction): boolean {
+    return this.channel.post({ kind: "action", action: action as unknown as WireAction });
   }
 
   /** Stop, optionally say bye, and close. `{bye:false}` keeps the seat held so a
@@ -230,7 +240,9 @@ export class LobbyClient {
     if (opts.bye !== false) this.leave();
     this.unsubscribe();
     this.listeners.clear();
-    this.channel.close();
+    // A bye queued while the link is down still goes out on the next socket, or a Leave mid-match
+    // would forfeit only once the away clock ran out.
+    this.channel.close({ deliver: opts.bye !== false });
   }
 
   private set(patch: Partial<LobbyClientState>) {
@@ -277,16 +289,24 @@ export class LobbyClient {
     switch (message.kind) {
       case "state": {
         const snapshot = message.snapshot;
-        const seat = this.role === "host" ? snapshot.host : snapshot.guest;
-        const ours = seat?.id === this.playerId;
+        // The seat holding this client's id, whichever: a guest's hello that reached a fresh lobby
+        // first was seated as its host, and the creator's then as its guest.
+        const slot =
+          snapshot.host.id === this.playerId
+            ? "host"
+            : snapshot.guest?.id === this.playerId
+              ? "guest"
+              : null;
+        const seat = slot === null ? null : snapshot[slot];
         // Refused sockets get broadcasts too. A refused tab's re-sent hello may later take the
         // freed seat, which the server marks connected: adopt it rather than hold it as "full".
         if (this.refused) {
           this.lastServerSeen = this.now();
-          if (!ours || !seat.connected) break;
+          if (!seat?.connected) break;
           this.refused = false;
         }
-        if (!ours) break;
+        if (slot === null || seat === null) break;
+        this.slot = slot;
         this.lastServerSeen = this.now();
         this.connectedOnce = true;
         this.startPoll();
