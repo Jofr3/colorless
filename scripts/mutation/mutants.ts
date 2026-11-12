@@ -53869,8 +53869,8 @@ export const MUTANTS: Mutant[] = [
     what: "Riptide's tail is an empty program: the counted Energy stays in the discard pile. Killed by scalingCountsMeD623 §2 and §4.",
     file: "packages/engine/src/effects.ts",
     symbol: "deriveAttackEffect",
-    find: '      { op: "discardPileRetrieval", filter: RIPTIDE_PILE_FILTER, dest: "deck", max: "all" },\n      { op: "shuffleDeck" },\n',
-    replace: "",
+    find: '    const filter = shuffleBackPileFilter(match[2]);\n    return [\n      { op: "discardPileRetrieval", filter, dest: "deck", max: "all" },\n      { op: "shuffleDeck" },\n    ];\n',
+    replace: "    return [];\n",
     expectKilledBy: ["packages/engine/src/scalingCountsMeD623.test.ts"],
   },
   {
@@ -53879,8 +53879,8 @@ export const MUTANTS: Mutant[] = [
     what: "Riptide's tail drops its trailing shuffle: the Energy goes back on the bottom of the deck unshuffled. Killed by scalingCountsMeD623 §2 and §4's SHUFFLE rows.",
     file: "packages/engine/src/effects.ts",
     symbol: "deriveAttackEffect",
-    find: 'filter: RIPTIDE_PILE_FILTER, dest: "deck", max: "all" },\n      { op: "shuffleDeck" },\n',
-    replace: 'filter: RIPTIDE_PILE_FILTER, dest: "deck", max: "all" },\n',
+    find: '      { op: "discardPileRetrieval", filter, dest: "deck", max: "all" },\n      { op: "shuffleDeck" },\n    ];\n',
+    replace: '      { op: "discardPileRetrieval", filter, dest: "deck", max: "all" },\n    ];\n',
     expectKilledBy: ["packages/engine/src/scalingCountsMeD623.test.ts"],
   },
   {
@@ -53889,9 +53889,8 @@ export const MUTANTS: Mutant[] = [
     what: "the tail's printed-zero guard is dropped: a \"0 damage\" Riptide still shuffles while its fold is refused. Killed by scalingCountsMeD623 §2's zero rung.",
     file: "packages/engine/src/effects.ts",
     symbol: "deriveAttackEffect",
-    find: '  if (match !== null && Number(match[1]) >= 1) {\n    return [\n      { op: "discardPileRetrieval", filter: RIPTIDE_PILE_FILTER,',
-    replace:
-      '  if (match !== null) {\n    return [\n      { op: "discardPileRetrieval", filter: RIPTIDE_PILE_FILTER,',
+    find: "  if (match !== null && Number(match[1]) >= 1) {\n    const filter = shuffleBackPileFilter(match[2]);",
+    replace: "  if (match !== null) {\n    const filter = shuffleBackPileFilter(match[2]);",
     expectKilledBy: ["packages/engine/src/scalingCountsMeD623.test.ts"],
   },
   {
@@ -53899,9 +53898,9 @@ export const MUTANTS: Mutant[] = [
     decision: "D623",
     what: "Riptide's shared filter widens to any Energy card: the Fire and the blend Special count and are shuffled away. Killed by scalingCountsMeD623 §2 and §4 (100, not 60).",
     file: "packages/engine/src/effects.ts",
-    symbol: "RIPTIDE_PILE_FILTER",
-    find: 'const RIPTIDE_PILE_FILTER: CardFilter = { kind: "basicEnergy", energyType: "Water" };',
-    replace: 'const RIPTIDE_PILE_FILTER: CardFilter = { kind: "anyEnergy" };',
+    symbol: "shuffleBackPileFilter",
+    find: '  return { kind: "basicEnergy", energyType: ENERGY_TYPE_BY_CODE[code ?? ""] };',
+    replace: '  return { kind: "anyEnergy" };',
     expectKilledBy: ["packages/engine/src/scalingCountsMeD623.test.ts"],
   },
   {

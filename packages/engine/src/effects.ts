@@ -378,10 +378,14 @@ function opponentHandFilter(noun: string): CardFilter | null {
 // Read by two readers: the multiplier folds the discard-pile count and the effect reader shuffles
 // those same cards back. The fold lands before the program (§8), so the count is taken before the
 // shuffle.
-const DISCARD_PILE_COUNT_THEN_SHUFFLE =
-  /^This attack does (\d+) damage for each Basic \{W\} Energy card in your discard pile\. Then, shuffle those cards into your deck\.$/;
+const DISCARD_PILE_COUNT_THEN_SHUFFLE = new RegExp(
+  `^This attack does (\\d+) damage for each Basic \\{([${Object.keys(ENERGY_TYPE_BY_CODE).join("")}])\\} Energy card in your discard pile\\. Then, shuffle those cards into your deck\\.$`,
+);
 
-const RIPTIDE_PILE_FILTER: CardFilter = { kind: "basicEnergy", energyType: "Water" };
+/** The Basic Energy the brace code names; Kyogre's {W} and Heat Rotom ex's {R} share the anchor. */
+function shuffleBackPileFilter(code: string | undefined): CardFilter {
+  return { kind: "basicEnergy", energyType: ENERGY_TYPE_BY_CODE[code ?? ""] };
+}
 
 /**
  * The conditional bonus with a Weakness-only suppression rider. Capture groups match
@@ -6142,12 +6146,13 @@ export function deriveAttackEffect(text: string): EffectOp[] | null {
       return [{ op: "revealOpponentHand" }];
     }
   }
-  // Kyogre — Riptide: the damage fold is handled by `deriveAttackDamageMultiplier`; a whiffed
-  // retrieval still shuffles.
+  // Kyogre — Riptide, Heat Rotom ex — Rewarm: the damage fold is handled by
+  // `deriveAttackDamageMultiplier`; a whiffed retrieval still shuffles.
   match = DISCARD_PILE_COUNT_THEN_SHUFFLE.exec(effect);
   if (match !== null && Number(match[1]) >= 1) {
+    const filter = shuffleBackPileFilter(match[2]);
     return [
-      { op: "discardPileRetrieval", filter: RIPTIDE_PILE_FILTER, dest: "deck", max: "all" },
+      { op: "discardPileRetrieval", filter, dest: "deck", max: "all" },
       { op: "shuffleDeck" },
     ];
   }
@@ -7349,13 +7354,13 @@ export function deriveAttackDamageMultiplier(text: string): AttackDamageBonus | 
       return { per, count: { kind: "cardsInDiscardPile", seat, filter } };
     }
   }
-  // Kyogre — Riptide: the count half of a shared anchor whose shuffle tail `deriveAttackEffect`
-  // reads.
+  // Kyogre — Riptide, Heat Rotom ex — Rewarm: the count half of a shared anchor whose shuffle tail
+  // `deriveAttackEffect` reads.
   const riptide = DISCARD_PILE_COUNT_THEN_SHUFFLE.exec(effect);
   if (riptide !== null && Number(riptide[1]) >= 1) {
     return {
       per: Number(riptide[1]),
-      count: { kind: "cardsInDiscardPile", seat: "you", filter: RIPTIDE_PILE_FILTER },
+      count: { kind: "cardsInDiscardPile", seat: "you", filter: shuffleBackPileFilter(riptide[2]) },
     };
   }
   const pileByAttackName = DISCARD_PILE_ATTACK_NAME_MULTIPLY.exec(effect);
