@@ -188,6 +188,7 @@ const HEAVY = "b3-heavy";
 const TORNADUS_EX = "b3-tornadus-ex";
 const STADIUM = "b3-stadium";
 const KLEFKI = "sv01-096";
+const SEISMITOAD = "sv03-052";
 
 const SMASH = 0;
 const BIG_SMASH = 1;
@@ -274,7 +275,7 @@ const DECK = deckOf({
   [SANDSLASH.id]: 1,
   [STEELIX.id]: 1,
   [GOLURK.id]: 1,
-  [WALL]: 18,
+  [WALL]: 17,
   [BRUTE_EX]: 2,
   [BRUTE_V]: 1,
   [SPROUT]: 1,
@@ -282,6 +283,7 @@ const DECK = deckOf({
   [HEAVY]: 2,
   [TORNADUS_EX]: 1,
   [KLEFKI]: 1,
+  [SEISMITOAD]: 1,
   [STADIUM]: 1,
   "fix-grass-energy": 3,
   "fix-lightning-energy": 4,
@@ -519,6 +521,44 @@ describe("Incarnate Solidarity (Thundurus, Enamorus, Landorus, Tornadus)", () =>
     expectErr(state, attack(0), "ATTACK_COST_UNMET");
   });
 
+  it("a reading: a surcharge's {C} goes too, so Thunderous Edge still costs {L} alone under Seismitoad's Quaking Zone", () => {
+    const state = attachFromDeck(
+      bench(board(THUNDURUS.id, SEISMITOAD), "p1", others(THUNDURUS.id)),
+      "p1",
+      "fix-lightning-energy",
+      1,
+    );
+    const thundurus = state.players.p1.active;
+    if (thundurus === null) throw new Error("no Active");
+    expect(effectiveAttackCost(state, thundurus, THUNDURUS.attacks?.[0]?.cost ?? [])).toEqual([
+      "Lightning",
+    ]);
+    const out = mustApply(state, attack(0)).state;
+    expect(ids(out, out.players.p2.discard)).toContain(SEISMITOAD);
+  });
+
+  it("Thunderous Edge isn't affected by effects on the opponent's Active: a full-HP Steelix takes the whole 90", () => {
+    const state = attachFromDeck(
+      bench(board(THUNDURUS.id, STEELIX.id), "p1", others(THUNDURUS.id)),
+      "p1",
+      "fix-lightning-energy",
+      1,
+    );
+    expect(mustApply(state, attack(0)).state.players.p2.active?.damage).toBe(90);
+  });
+
+  it("Corkscrew Dive's draw is optional: declined, the hand stays at 2", () => {
+    const state = handOf(bench(board(TORNADUS.id), "p1", others(TORNADUS.id)), "p1", 2);
+    const parked = roundTrip(mustApply(state, attack(0)).state);
+    const declined = mustApply(parked, {
+      type: "resolveEffect",
+      seat: "p1",
+      choice: { kind: "confirm", yes: false },
+    }).state;
+    expect(declined.players.p2.active?.damage).toBe(70);
+    expect(declined.players.p1.hand).toHaveLength(2);
+  });
+
   it("Tornadus's Corkscrew Dive costs nothing: 70, then the optional draw to 6", () => {
     const state = handOf(bench(board(TORNADUS.id), "p1", others(TORNADUS.id)), "p1", 2);
     const parked = mustApply(state, attack(0)).state;
@@ -566,6 +606,17 @@ describe("Incarnate Solidarity (Thundurus, Enamorus, Landorus, Tornadus)", () =>
     expect(out.stadium).toBeNull();
     expect(out.players.p2.discard).toContain(stadiumUid);
   });
+  it("with no Stadium in play Gaia Crush still does 110", () => {
+    const state = attachFromDeck(
+      bench(board(LANDORUS.id), "p1", others(LANDORUS.id)),
+      "p1",
+      "fix-fighting-energy",
+      1,
+    );
+    const out = mustApply(state, attack(0)).state;
+    expect(out.players.p2.active?.damage).toBe(110);
+    expect(out.stadium).toBeNull();
+  });
 });
 
 describe("Mega Golurk ex me06-047 Restricted Activation", () => {
@@ -609,6 +660,13 @@ describe("Steelix me06-052 High Density Armor and Tough Swing", () => {
       attack(1, "p2"),
     );
     expect(hurt.state.players.p1.active?.damage).toBe(130);
+  });
+
+  it("on the Bench it takes 60 less too: Shockwave's 30 lands as 0", () => {
+    const state = bench(board(HEAVY), "p1", [STEELIX.id]);
+    const out = mustApply(opponentTurn(state, BRUTE_EX), attack(SHOCKWAVE, "p2"));
+    expect(out.state.players.p1.active?.damage).toBe(10);
+    expect(out.state.players.p1.bench[0]?.damage).toBe(0);
   });
 
   it("damage from its own side's attack is not reduced", () => {
