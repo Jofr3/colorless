@@ -360,7 +360,7 @@ export const LEGAL_EX_POOL: readonly LegalExRow[] = [
   ["svp-198", "Zacian ex", 220, ["Steel Armament", "Slashing Strike"], []],
   ["svp-204", "Cynthia's Garchomp ex", 330, ["Corkscrew Dive", "Draconic Buster"], []],
   ["svp-205", "Team Rocket's Mewtwo ex", 280, ["Erasure Ball"], ["Power Saver"]],
-  ["svp-215", "Toxtricity ex", 260, ["Stumming Thunder"], []],
+  ["svp-215", "Toxtricity ex", 260, ["Strumming Thunder"], []],
   ["svp-216", "Team Rocket's Mewtwo ex", 280, ["Erasure Ball"], ["Power Saver"]],
   ["svp-217", "Team Rocket's Nidoking ex", 330, ["Tainted Horn", "Kingly Impact"], []],
   ["svp-218", "Team Rocket's Persian ex", 260, ["Haughty Order", "Cruel Slash"], []],

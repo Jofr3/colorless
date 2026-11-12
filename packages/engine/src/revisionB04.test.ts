@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { GameAction, GameEvent, GameState } from "./index";
 import { applyAction } from "./index";
 import { programFor } from "./registry";
+import { simulationGaps } from "./simulationGaps";
 import {
   FIXTURE_POOL,
   battler,
@@ -24,13 +25,17 @@ const SWITCH_TEXT = "Switch your Active Pokémon with 1 of your Benched Pokémon
 const ULTRA_BALL_TEXT =
   "You can use this card only if you discard 2 other cards from your hand.\n\nSearch your deck for a Pokémon, reveal it, and put it into your hand. Then, shuffle your deck.";
 const SHOVEL_TEXT = "Discard the top 2 cards of your deck.";
+const POKE_PAD_TEXT =
+  "Search your deck for a Pokémon that doesn't have a Rule Box, reveal it, and put it into your hand. Then, shuffle your deck. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)";
+/** The `30th` printing's catalog text, which spells "doesn’t" with U+2019. */
+const POKE_PAD_30TH_TEXT = POKE_PAD_TEXT.replace("doesn't", "doesn\u2019t");
 
 const RARE_CANDY_IDS = ["sv01-191", "sv04.5-089"] as const;
 const SWITCH_IDS = ["sv01-194", "sv03.5-206", "mfb-34", "30th-127"] as const;
 const ULTRA_BALL_IDS = ["sv01-196", "sv04.5-091", "30th-128"] as const;
 const POKE_PAD_IDS = ["me02.5-198", "30th-126"] as const;
 const SHOVEL = "me03-074";
-const TEXTLESS = new Set(["30th-126", "30th-127", "30th-128"]);
+const TEXTLESS = new Set(["30th-128"]);
 
 const ABRA = "b04-abra";
 const KADABRA = "b04-kadabra";
@@ -59,11 +64,7 @@ const LOCAL: Record<string, Card> = {
   ...Object.fromEntries(
     POKE_PAD_IDS.map((id) => [
       id,
-      item(
-        id,
-        "Poké Pad",
-        "Search your deck for a Pokémon that doesn't have a Rule Box, reveal it, and put it into your hand. Then, shuffle your deck. (Pokémon ex, Pokémon V, etc. have Rule Boxes.)",
-      ),
+      item(id, "Poké Pad", id === "30th-126" ? POKE_PAD_30TH_TEXT : POKE_PAD_TEXT),
     ]),
   ),
   [SHOVEL]: item(SHOVEL, "Hole-Digging Shovel", SHOVEL_TEXT),
@@ -226,6 +227,13 @@ describe("B04 §1/§2 — every Standard-legal printing of Rare Candy, Switch, U
       );
     },
   );
+
+  it("Poké Pad 30th-126 prints its twin's text with a curly apostrophe, and nothing on it goes unplayed", () => {
+    const face = LOCAL["30th-126"] as Card;
+    expect(face.effect).toContain("doesn\u2019t");
+    expect(face.effect?.replace("\u2019", "'")).toBe(LOCAL["me02.5-198"]?.effect);
+    expect(simulationGaps(face)).toEqual([]);
+  });
 
   it("Poké Pad 30th-126: a Pokémon without a Rule Box from the deck to the hand (an ex is not offered)", () => {
     const parked = play(board([]), "30th-126").state;
