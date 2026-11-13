@@ -208,7 +208,7 @@ function Overlay:makeCards(options,scale,top)
     local rowBounds=CollectionMotion.bounds(rowCount,scale,self.cardGap)
     local rowTop=top+row*(self.cardRowHeight+self.cardGap)-rowBounds.top
     local y=rowTop+D.HALF_H*scale
-    local item={id=o.uid~='' and o.uid or ('opt'..i),cardId=o.cardId,name=o.label,hidden=o.cardId=='' or o.cardId=='hidden',selected=o.selected,disabled=o.disabled,edition='dissolve',resolution=2}
+    local item={id=o.uid~='' and o.uid or ('opt'..i),cardId=o.cardId,name=o.label,hidden=o.cardId=='' or o.cardId=='hidden',selected=o.selected,disabled=o.disabled,edition='dissolve',scan=true}
     local card=sim:newCard(item,i,x,y,scale)
     card.greyed=self.kind=='cards' and (o.disabled or o.dimmed) or false
     CollectionMotion.place(card,x,rowTop,rowCount,col,self.x+self.w/2,sim.time,sim.reduced,sim.boardW)
@@ -383,7 +383,7 @@ function Overlay:build(keepCards)
     bottom=y+h-54
     local cx=p and x+w/2 or x+24+D.HALF_W*scale
     local cy=p and y+40+D.HALF_H*scale or y+36+D.HALF_H*scale
-    local card=sim:newCard({id=item.id,cardId=item.cardId,name=item.name,hidden=item.hidden,edition='dissolve',resolution=2},1,cx,cy,scale)
+    local card=sim:newCard({id=item.id,cardId=item.cardId,name=item.name,hidden=item.hidden,edition='dissolve',scan=true},1,cx,cy,scale)
     card.motion.T.r=0;card.motion.VT.r=0
     self.cards[1]=card
     local ax=p and x+24 or x+24+D.W*scale+24

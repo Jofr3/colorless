@@ -57,7 +57,7 @@ function Wipe:layout(w,h,unit,viewportWidth,viewportHeight)
     end
     if self.art and self.art.token then Bridge.emit('transition-art','used',self.art.token)
     elseif rejectedToken then Bridge.emit('transition-art','invalid',rejectedToken) end
-    self.card=Card.new({edition='dissolve',resolution=2,drawFace=function(cw,ch)
+    self.card=Card.new({edition='dissolve',scan=true,drawFace=function(cw,ch)
       g.setColor(1,1,1)
       if self.front then
         CardFrame.draw(cw,ch,function(aw,ah)

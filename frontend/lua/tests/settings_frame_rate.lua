@@ -1,6 +1,6 @@
--- Settings' Graphics tab gains a Max Frame Rate cycle (60 FPS / 144 FPS) in the free space
--- under CRT Bloom: the tab's existing controls keep their place and size, keyboard and pointer
--- reach the new one, and it shows and says its value.
+-- Settings' Graphics tab has a Max Frame Rate cycle (60 FPS / 144 FPS) under CRT Bloom: with
+-- Card Quality under it, the tab's four rows take Audio's spacing; keyboard and pointer reach
+-- it, and it shows and says its value.
 package.path='frontend/lua/?.lua;frontend/lua/tests/?.lua;'..package.path
 local Stub=require('support.draw_stub').install()
 local T=require('ui.theme')
@@ -27,18 +27,18 @@ end
 for _,size in ipairs({{1280,800},{480,850}}) do
   popup:layout(size[1],size[2])
   popup.tab=Settings.tabs.graphics;popup:build()
-  -- The places the tab's controls had before the new one (settings.lua's row formula).
+  -- settings.lua's row formula for a four-row tab.
   local crt,bloom,back=byLabel('CRT'),byLabel('CRT Bloom'),byLabel('Back')
-  check(crt.x==popup.x+(popup.w-240-56)/2 and crt.y==popup.y+180 and crt.w==240 and crt.h==40,'CRT stays put')
-  check(bloom.x==popup.x+(popup.w-264)/2 and bloom.y==popup.y+292 and bloom.w==264 and bloom.h==38.4,'CRT Bloom stays put')
+  check(crt.x==popup.x+(popup.w-240-56)/2 and crt.y==popup.y+134 and crt.w==240 and crt.h==40,'CRT takes the first row')
+  check(bloom.x==popup.x+(popup.w-264)/2 and bloom.y==popup.y+225 and bloom.w==264 and bloom.h==38.4,'CRT Bloom the second')
   check(back.x==popup.x+16 and back.y==popup.y+popup.h-58 and back.w==popup.w-32 and back.h==38,'Back stays put')
   local rate,index=byLabel('Max Frame Rate')
   check(rate and rate.kind=='cycle' and rate.key=='highFrameRate','Graphics has a Max Frame Rate cycle')
   check(rate.w==bloom.w and rate.h==bloom.h and rate.x==bloom.x,'It is a cycle the size of CRT Bloom, in its column')
-  check(rate.y==popup.y+404,'It takes the next row under CRT Bloom')
+  check(rate.y==popup.y+316,'It takes the next row under CRT Bloom')
   -- Its label sits 32 above it; nothing it draws reaches CRT Bloom or Back.
   check(rate.y-32>bloom.y+bloom.h+6 and rate.y+rate.h+6<back.y,'It fits between CRT Bloom and Back')
-  check(index==#popup.items-1,'Tab reaches it after CRT Bloom and before Back')
+  check(index==#popup.items-2,'Tab reaches it after CRT Bloom and before Card Quality')
 end
 popup:layout(1280,800);popup.tab=Settings.tabs.graphics;popup:build()
 check(drawn('Max Frame Rate') and drawn('60 FPS') and not drawn('144 FPS'),'It shows 60 FPS by default')
@@ -56,4 +56,4 @@ popup:update(1/60,20,-1000,-1000,true) -- the popup has slid in
 popup:mousepressed(rate.x+rate.w-10,rate.y+15);popup:mousereleased(rate.x+rate.w-10,rate.y+15)
 check(p.highFrameRate==1,'Its arrow toggles it')
 check(popup:describe(byLabel('CRT Bloom'))=='CRT Bloom: off','CRT Bloom still says on and off')
-print('PASS: Settings Graphics adds Max Frame Rate under CRT Bloom without moving its controls')
+print('PASS: Settings Graphics has Max Frame Rate under CRT Bloom')

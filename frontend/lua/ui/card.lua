@@ -39,22 +39,32 @@ local function emblem(kind,colour)
   end
 end
 
--- `texture`: a canvas already painted with this item's face, adopted as is.
-function Card.new(item,index,class,texture)
+-- `painted`: a card whose canvas already shows this item's face, adopted as is.
+function Card.new(item,index,class,painted)
   local self = setmetatable({item=item,index=index,x=0,y=0,homeX=0,homeY=0,angle=0,scale=1,hovered=false,ambientTilt=0.2},class or Card)
-  if texture then self.texture=texture else self:rebuild() end
+  if painted then self.texture,self.resolution=painted.texture,painted.resolution else self:rebuild() end
   return self
+end
+-- The face raster of an item that draws a scan (item.scan): main.lua sets it from Card Quality.
+Card.quality=D.QUALITIES[1]
+-- The scan raster's size in pixels: what host.js resizes each scan to.
+function Card.scanSize()
+  local resolution=Card.quality.resolution
+  return math.floor(W*resolution+0.5),math.floor(H*resolution+0.5)
 end
 -- Canvas size and filter. Native rasters copy drawFace's texels unscaled.
 function Card:raster()
-  local resolution=self.item.resolution or 1
-  return W*resolution,H*resolution,'nearest',false
+  if not self.item.scan then return W,H,'nearest',false end
+  local w,h=Card.scanSize()
+  return w,h,Card.quality.filter,false
 end
 function Card:rebuild()
   local item,index=self.item,self.index
   if self.texture then self.texture:release() end
   local tw,th,filter,native=self:raster()
   self.texture = g.newCanvas(tw,th)
+  -- What draw divides by: the canvas's texels per face unit, as built.
+  self.resolution=native and 1 or tw/W
   g.setCanvas(self.texture); g.clear(); g.push()
   if native then
     -- 'replace' keeps the RGB of transparent texels for linear filtering.
@@ -159,7 +169,7 @@ function Card:shaderValues(time,mx,my,reduced)
   local phase=math.min(self.angle*3,1)+time/28+(j and j.r*20 or 0)+tiltAmount
   -- Balatro atlases use logical 71x95 pixels even with 2x artwork. Keep the
   -- original burn-mask grain independent of our higher-resolution canvases.
-  local resolution=self.item.resolution or 1
+  local resolution=self.resolution or 1
   local shaderW,shaderH=W*resolution,H*resolution
   if self.disintegration then shaderW,shaderH=71,95 end
   -- One values table per card, refilled each frame.
@@ -204,7 +214,7 @@ Card.send=send
 function Card:draw(shaders,time,mx,my,reduced,roomWidth)
   local values,edition=self:shaderValues(time,mx,my,reduced)
   local scale=self.motion.VT.scale
-  local resolution=self.item.resolution or 1
+  local resolution=self.resolution or 1
   local sx,sy=CARD_W*self.unit/W*scale/resolution,CARD_H*self.unit/H*scale/resolution
   sx=sx*(self.flipScale or 1)
   -- Balatro Card:draw's greyed deck-view cards use played.fs directly, with

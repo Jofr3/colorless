@@ -140,7 +140,7 @@ end
 -- An Energy card without art (ui/energy.lua).
 Builder.energyFace=Energy.face
 function Builder:newCard(item,index,x,y,scale,grid)
-  item.colour=T.blue;item.edition='dissolve';item.resolution=2;item.drawFace=function(w,h)self:face(item,w,h)end
+  item.colour=T.blue;item.edition='dissolve';item.scan=true;item.drawFace=function(w,h)self:face(item,w,h)end
   local copy={};for k,v in pairs(item)do copy[k]=v end
   local card=Card.new(copy,index);card:place(x,y,scale,false)
   if not grid then card.motion.T.r=((index-1)%4-1.5)*0.025;return card end

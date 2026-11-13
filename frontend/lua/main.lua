@@ -22,6 +22,8 @@ local Viewport = require('ui.viewport')
 local Size = require('ui.interface_size')
 local Display = require('ui.display')
 local LobbySize = require('ui.lobby_size')
+local Card = require('ui.card')
+local D = require('ui.card_dimensions')
 local g = love.graphics
 -- Game:main_menu starts REAL at 12 when skipping the introductory splash.
 local state = {time=12,focused=0,hovered=0,muted=false,reduced=false,poll=0,ready=false,parked=false,lastInput='pointer',focusEdge='none'}
@@ -411,6 +413,13 @@ applyPreferences=function()
   if reduced~=state.reduced then redraw() end
   state.reduced=reduced
   state.muted=preferences.muted==1
+  -- Card Quality: host.js stages every scan again at the new size, and each screen rebuilds a
+  -- card as its new scan arrives.
+  local quality=D.QUALITIES[preferences.cardQuality+1]
+  if quality~=Card.quality or not state.artSizeSent then
+    Card.quality,state.artSizeSent=quality,true
+    Bridge.emit('art-size',Card.scanSize())
+  end
   if sounds.music1 then
     sounds.music1:setVolume(0.32*preferences.volume/100*preferences.musicVolume/100)
     if not state.muted and state.audioUnlocked and state.windowFocused~=false then

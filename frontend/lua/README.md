@@ -44,7 +44,7 @@ To run a second web/API pair beside `dev:all` (for browser QA), run `bun run dev
 
 - Three equally sized menu buttons: Sandbox (blue) → `/sandbox`, Online (red) → the lobby modal at `/online`, Decks (pale green) → the deck library at `/decks`.
 - Account opens the Account tab in the Lua settings popup. Game, Graphics, Audio and Account share Balatro's overlay, border, controls and Back button. The Account tab shows your email in a disabled input, edits your display name, saves to the shared API, and signs out. Sign-in and registration open a Lua modal with email/password fields and Google sign-in, then return to the Account tab. The modal uses the same border, buttons, motion and screen effects as Settings.
-- Settings apply immediately: screenshake (0–100), reduced motion, CRT strength (0–100), bloom, max frame rate (60 or 144 FPS), master/music/game-sound volume, and mute. They persist in browser storage across reloads. Reduced motion follows the device preference until explicitly changed. These settings currently apply to the Lua frontend. Under them, the Game tab's Credits button opens the third-party notices in a new tab (`COLORLESS:credits`; the page's native Credits link goes to the same file).
+- Settings apply immediately: screenshake (0–100), reduced motion, CRT strength (0–100), bloom, max frame rate (60 or 144 FPS), card quality (Performance or Quality), master/music/game-sound volume, and mute. They persist in browser storage across reloads. Reduced motion follows the device preference until explicitly changed. These settings currently apply to the Lua frontend. Under them, the Game tab's Credits button opens the third-party notices in a new tab (`COLORLESS:credits`; the page's native Credits link goes to the same file).
 - The frame loop (`love.run` in `main.lua`) runs update and draw at most 60 times a second, or 144 with Max Frame Rate, however fast the display refreshes (`ui/frame_pacer.lua`); input events are still read on every animation frame. Home and its Settings under reduced motion skip drawing frames that would repeat the last one (the browser keeps showing the last frame) and draw again on any input, page message, resize or change, and once a second regardless. Boot compiles only the menu's two shaders; the table and card shaders compile in the first frames after the menu shows, or at once for a page that needs them.
 - Account and Settings use separate compact panels matching Balatro's grey Profile button and original projected shadow, without extra headings. The Sound button is removed; the M keyboard shortcut remains available.
 - Balatro-style buttons with the original four-step corner profile and projected shadows (no coloured button extrusion). The wrapper has the source's 0.1-tile embossed edge, without a drop shadow. Main buttons share the same dimensions and uppercase text size in a centered group.
@@ -59,7 +59,7 @@ Click a button to open its page; releasing outside the pressed button cancels th
 
 The sandbox chooser opens the full gameplay page at `/sandbox/play`. Online play runs in Lua too: the lobby modal at `/online` and the live table at `/online/<code>/play` (see Online below). The account adapter uses the shared API client and cookie session; passwords and session cookies never cross into Lua or local storage.
 
-Inside Settings, Tab/Shift+Tab or up/down move between controls. Left/right switch tabs, cycle CRT Bloom or Max Frame Rate, or adjust a focused slider by 5; Home/End set its minimum/maximum. Enter/Space activates toggles and buttons. Drag sliders with a mouse or touch. Select Display name to edit it; the canvas field uses a native input proxy for IME, selection, paste and mobile keyboards. Enter finishes editing and Escape cancels the edit. Profile changes require Save; the success message disappears after three seconds. In the authentication modal, Enter advances through the fields and submits from the last field, Tab/Shift+Tab moves between controls, and Back returns to Account settings. Passwords are masked in Lua and kept only in the native inputs/API request, then cleared on success or dismissal. Google redirects through the existing provider configuration and returns to `/?account`. Escape or Back closes the popup; a keyboard close returns focus to the home button that opened it (Settings or Account), and a pointer close leaves none focused. The background menu cannot receive input while the popup is open. Native accessible navigation opens the same popup when WASM is running, with live control announcements; its fallback links (`/?settings`, `/?account`) reload the page with that popup requested.
+Inside Settings, Tab/Shift+Tab or up/down move between controls. Left/right switch tabs, cycle CRT Bloom, Max Frame Rate or Card Quality, or adjust a focused slider by 5; Home/End set its minimum/maximum. Enter/Space activates toggles and buttons. Drag sliders with a mouse or touch. Select Display name to edit it; the canvas field uses a native input proxy for IME, selection, paste and mobile keyboards. Enter finishes editing and Escape cancels the edit. Profile changes require Save; the success message disappears after three seconds. In the authentication modal, Enter advances through the fields and submits from the last field, Tab/Shift+Tab moves between controls, and Back returns to Account settings. Passwords are masked in Lua and kept only in the native inputs/API request, then cleared on success or dismissal. Google redirects through the existing provider configuration and returns to `/?account`. Escape or Back closes the popup; a keyboard close returns focus to the home button that opened it (Settings or Account), and a pointer close leaves none focused. The background menu cannot receive input while the popup is open. Native accessible navigation opens the same popup when WASM is running, with live control announcements; its fallback links (`/?settings`, `/?account`) reload the page with that popup requested.
 
 ## Visual source and new work
 
@@ -146,19 +146,26 @@ A wire field: add it to its row in `WIRE_ROWS` (`src/lua/wireFields.ts`), emit i
 
 Card render textures are recreated after viewport changes because love.js clears canvas contents when resizing its WebGL backbuffer. Keep that behavior when adding future card artwork.
 
-`ui/card_dimensions.lua` defines every card's geometry: a 136×187 artwork
-area (matching the 600×825 source scans), with a one-pixel rim on
-every side, giving a 138×189 texture. The browser caches scans at 272×374.
+`ui/card_dimensions.lua` defines every card's geometry: a 136×187 card
+(matching the 600×825 source scans) that the scan fills edge to edge, with no
+rim. Settings' Card Quality (`D.QUALITIES`) sets the raster of a face that draws a scan
+(`item.scan`): Performance builds it at 272×374 with nearest filtering, Quality at the
+scan's own 600×825 with linear filtering. Lua prints `COLORLESS:art-size:<w>\t<h>`
+(`Card.scanSize`) at boot and on every change; `web/host.js` resizes each scan to that
+size, caches it in IndexedDB under the card id (Performance) or `<id>@<w>x<h>`, and keeps
+showing a scan staged at the old size until its replacement is staged, so the screens
+rebuild each card as its new scan arrives. A built canvas keeps the resolution it was built
+at (`Card.resolution`) until it is rebuilt.
 `ui/card_frame.lua` reproduces the ordinary `Enhancers.png` card's stepped
-corners at those dimensions, without a white mat. Each scan's added rim
-extends the nearby colours from each of its four outer edges, preserving
-silver gradients and full-art variation rather than choosing a single tint.
-Rounded/transparent corners use the nearest straight edge. Small edge profiles
+corners at those dimensions, without a white mat. Behind the scan it paints the
+nearby colours from each of its four outer edges, preserving silver gradients and
+full-art variation rather than choosing a single tint, so the scan's own
+rounded/transparent corners show that stock; they use the nearest straight edge. Small edge profiles
 are cached for up to 64 artwork files; decoded pixels are released immediately.
 Generated faces use their own outer stock colour. `CardFrame.scan(path,w,h)` draws a
 cached scan into the artwork box and returns false when there is none, so the
 builder and the table fall back to their own placeholder faces.
-The scan fits the inner rectangle. Corners copy both the alpha mask and the
+The scan fills the card. Corners copy both the alpha mask and the
 inner rim of Balatro's ordinary `Enhancers.png` card at its native 1× scale.
 The source's empty outer row/column are removed, so the straight borders
 reach the wrapper edges; only the stepped corners are transparent.

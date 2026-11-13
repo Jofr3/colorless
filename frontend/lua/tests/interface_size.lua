@@ -15,18 +15,18 @@ local function check(ok,message) if not ok then error(message,2) end end
 -- The record.
 local p=Preferences.new()
 check(p.interfaceSize==0,'100% is the default')
-check(p:serialize()=='50 -1 70 0 50 100 100 0 0 0','The size is the tenth value')
+check(p:serialize()=='50 -1 70 0 50 100 100 0 0 0 0','The size is the tenth value')
 local eight=Preferences.new('20 1 0 1 35 80 60 1')
 check(eight.screenshake==20 and eight.reducedMotion==1 and eight.crt==0 and eight.bloom==1 and eight.volume==35
   and eight.musicVolume==80 and eight.effectsVolume==60 and eight.muted==1 and eight.highFrameRate==0 and eight.interfaceSize==0,
   'An eight-value record keeps every setting and takes the defaults after it')
 local nine=Preferences.new('20 1 0 1 35 80 60 1 1')
 check(nine.highFrameRate==1 and nine.crt==0 and nine.muted==1 and nine.interfaceSize==0,'A nine-value record keeps its frame rate')
-check(nine:serialize()=='20 1 0 1 35 80 60 1 1 0','and saves ten values')
+check(nine:serialize()=='20 1 0 1 35 80 60 1 1 0 0','and saves every value')
 local ten=Preferences.new('20 1 0 1 35 80 60 1 1 2')
-check(ten.interfaceSize==2 and ten:serialize()=='20 1 0 1 35 80 60 1 1 2','A ten-value record round-trips')
+check(ten.interfaceSize==2 and ten:serialize()=='20 1 0 1 35 80 60 1 1 2 0','A ten-value record keeps its size')
 check(Preferences.new('20 1 0 1 35 80 60 1 1 7').interfaceSize==2,'The size is clamped to 150%')
-check(Preferences.new('20 1 0 1 35 80 60 1 1 2 1').crt==70,'A record with too many values is not read')
+check(Preferences.new('20 1 0 1 35 80 60 1 1 2 1 1').crt==70,'A record with too many values is not read')
 check(Preferences.new('{"crt":20,"interfaceSize":1}').interfaceSize==1,'A JSON record reads the size')
 check(Size.steps[Preferences.new().interfaceSize+1]==1,'The default step is 100%')
 

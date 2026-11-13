@@ -363,6 +363,10 @@ const loveModule = {
     } else if (message.startsWith("COLORLESS:music:want\t")) {
       askForMusic(message.slice("COLORLESS:music:want\t".length));
       return;
+    } else if (message.startsWith("COLORLESS:art-size:")) {
+      const [, w, h] = message.match(/^COLORLESS:art-size:(\d+)\t(\d+)$/) || [];
+      if (w) setArtSize(Number(w), Number(h));
+      return;
     } else if (message.startsWith("COLORLESS:transition-art:")) {
       const [, action, token] =
         message.match(/^COLORLESS:transition-art:(used|invalid)\t(\d+)$/) || [];
@@ -646,6 +650,28 @@ const artCache = new Map();
 const artPending = new Set();
 /** @type {Map<string, number>} */
 const artFailed = new Map();
+/** Staged scans at an older size, still shown until their replacement is staged. @type {Set<string>} */
+const artStale = new Set();
+// The scan raster Lua asks for (Card.scanSize, from Settings' Card Quality); Performance's
+// 272×374 until Lua says otherwise.
+const DEFAULT_ART_SIZE = "272x374";
+let artWidth = 272,
+  artHeight = 374;
+/** @param {number} w @param {number} h */
+function setArtSize(w, h) {
+  if (w === artWidth && h === artHeight) return;
+  artWidth = w;
+  artHeight = h;
+  for (const id of artCache.keys()) artStale.add(id);
+  artFailed.clear();
+  pumpArt();
+}
+/** The artwork cache key of a card's scan at the current size; Performance's keeps the bare id.
+ * @param {string} id */
+function artKey(id) {
+  const size = `${artWidth}x${artHeight}`;
+  return size === DEFAULT_ART_SIZE ? id : `${id}@${size}`;
+}
 let artRevision = 0,
   artSerial = 0,
   artActive = 0;
@@ -718,32 +744,39 @@ async function consumeTransitionArt(token, invalid) {
 async function loadArt(card) {
   artActive++;
   artPending.add(card.id);
+  const width = artWidth,
+    height = artHeight,
+    key = artKey(card.id);
   try {
     const cache = bridge?.artwork;
-    let blob = await cache?.get(card.id);
+    let blob = await cache?.get(key);
     if (!blob) {
       const response = await fetch(card.url);
       if (!response.ok) throw Error("art");
       const bitmap = await createImageBitmap(await response.blob());
-      // Twice card_dimensions.lua's 136×187 artwork area (the scan's 8:11
-      // ratio), excluding the equal inset added by the Lua frame renderer.
       const c = document.createElement("canvas");
-      c.width = 272;
-      c.height = 374;
+      c.width = width;
+      c.height = height;
       c.getContext("2d")?.drawImage(bitmap, 0, 0, c.width, c.height);
       bitmap.close();
       blob = await new Promise((resolve) => c.toBlob(resolve, "image/png"));
-      if (blob && cache) void cache.put(card.id, blob).then(() => prepareTransitionArt());
+      if (blob && cache) void cache.put(key, blob).then(() => prepareTransitionArt());
     }
     const running = runtime;
     if (!running || !blob) throw Error("art");
     const path = `__card_art_${++artSerial}.png`;
     running.FS_createDataFile("/", path, new Uint8Array(await blob.arrayBuffer()), true, true);
+    const replaced = artCache.get(card.id);
+    if (replaced !== undefined) running.FS_unlink(`/${replaced}`);
+    artCache.delete(card.id);
     artCache.set(card.id, path);
+    if (width === artWidth && height === artHeight) artStale.delete(card.id);
+    else artStale.add(card.id);
     for (const [id, old] of artCache) {
       if (artCache.size <= (bridge?.artSlots ?? artCache.size)) break;
       running.FS_unlink(`/${old}`);
       artCache.delete(id);
+      artStale.delete(id);
     }
     publishArt();
   } catch {
@@ -758,7 +791,7 @@ function pumpArt() {
   for (const card of wantedArt) {
     if (artActive >= 4) break;
     if (
-      !artCache.has(card.id) &&
+      (!artCache.has(card.id) || artStale.has(card.id)) &&
       !artPending.has(card.id) &&
       Date.now() - (artFailed.get(card.id) || 0) > 30000
     )

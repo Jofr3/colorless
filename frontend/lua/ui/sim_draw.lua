@@ -112,7 +112,7 @@ function Simulator:eachAttached(c,visit)
   if item.toolCards then attachedStack(self,item.toolCards,-1,c,cw,ch,s,aw,ah,peek,visit) end
 end
 local function drawAttachedCard(tex,x,y,scale,angle,side)
-  local res=tex.item.resolution or 1
+  local res=tex.resolution or 1
   local sx=scale/res
   g.setColor(0,0,0,0.3)
   g.draw(tex.texture,x+side*3,y+(side>0 and -1 or 3),angle,sx,sx,D.W*res/2,D.H*res/2)

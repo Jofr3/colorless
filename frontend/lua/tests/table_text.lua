@@ -24,6 +24,7 @@ local glyphs={getWidth=function(_,s) return #tostring(s)*80 end,getHeight=functi
   end}
 T.font=function() return glyphs end
 local Card=require('ui.card');Card.rebuild=function(self) self.texture={release=function() end} end
+local D=require('ui.card_dimensions')
 local Display=require('ui.display')
 local Simulator=require('ui.simulator')
 local Dyna=require('ui.dynatext')
@@ -233,7 +234,7 @@ for _,view in ipairs(layouts) do
       check(not overlaps(rect,face(b)),name..': the inspector text keeps off '..b.label)
     end
     local c=o.cards[1]
-    local cardTop=c.homeY-c.baseScale*189/2
+    local cardTop=c.homeY-c.baseScale*D.H/2
     check(cardTop>=o.y+30 and math.abs(c.baseScale-grown('inspectCard',c.baseScale))<1e-12,name..': the zoomed card keeps its size, inside the frame')
     local scanned=find(drawn(),'Bouffer')
     check(scanned and math.abs(scanned.sx-rect.scale)<1e-9,name..': the inspector draws its text at its scale')

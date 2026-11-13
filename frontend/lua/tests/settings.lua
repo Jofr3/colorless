@@ -19,12 +19,17 @@ local legacy=Preferences.new('20 1 0 1 35 80 60 1')
 assert(legacy.screenshake==20 and legacy.reducedMotion==1 and legacy.crt==0 and legacy.bloom==1 and
   legacy.volume==35 and legacy.musicVolume==80 and legacy.effectsVolume==60 and legacy.muted==1,
   'An eight-value record from before the frame-rate key keeps its settings')
-assert(legacy.highFrameRate==0 and legacy:serialize()=='20 1 0 1 35 80 60 1 0 0','It takes the default frame rate (and interface size)')
+assert(legacy.highFrameRate==0 and legacy:serialize()=='20 1 0 1 35 80 60 1 0 0 0','It takes the default frame rate (and interface size and card quality)')
 assert(Preferences.new('20 1 0 1 35 80 60 1 1').highFrameRate==1,'A nine-value record reads its frame rate')
 assert(Preferences.new('20 1 0 1 35 80 60').crt==70,'A record with too few values is not read')
-assert(Preferences.new('20 1 0 1 35 80 60 1 1 1 1').crt==70,'A record with too many values is not read')
+assert(Preferences.new('20 1 0 1 35 80 60 1 1 1 1 1').crt==70,'A record with too many values is not read')
+-- Card Quality was appended as an eleventh value: a ten-value record takes Performance.
+local ten=Preferences.new('20 1 0 1 35 80 60 1 1 2')
+assert(ten.interfaceSize==2 and ten.cardQuality==0,'A ten-value record keeps its size and takes Performance')
+assert(Preferences.new('20 1 0 1 35 80 60 1 1 2 1').cardQuality==1,'An eleven-value record reads its card quality')
+assert(Preferences.new('{"cardQuality":1}').cardQuality==1 and Preferences.new('{"cardQuality":5}').cardQuality==1,'JSON reads it, clamped')
 local stored=Preferences.new('{"version":1,"screenshake":20,"reducedMotion":1,"crt":0,"bloom":1,"volume":35,"musicVolume":80,"effectsVolume":60,"muted":1}')
-assert(stored:serialize()=='20 1 0 1 35 80 60 1 0 0','A JSON record reads field by field')
+assert(stored:serialize()=='20 1 0 1 35 80 60 1 0 0 0','A JSON record reads field by field')
 assert(Preferences.new('{"crt":250}').crt==100 and Preferences.new('{"crt":250}').volume==50)
 local changes,closed,announcements=0,0,{}
 local popup=Settings.new(p,{

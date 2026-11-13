@@ -121,12 +121,12 @@ for _,resolution in ipairs({1,2}) do
     local left,top=art.x*face.sx,art.y*face.sy
     local right=(card.texture.w-art.x-art.w)*face.sx
     local bottom=(card.texture.h-art.y-art.h)*face.sy
-    near(left,scale);near(top,left);near(right,left);near(bottom,left)
+    near(left,0);near(top,0);near(right,0);near(bottom,0)
     near(card.texture.w*face.sx,D.W*scale)
     near(card.texture.h*face.sy,D.H*scale)
   end
 end
-print('PASS: original scan proportions, equal four-sided padding and uniform rendering at both texture resolutions and three display scales')
+print('PASS: original scan proportions, the scan filling the card edge to edge and uniform rendering at both texture resolutions and three display scales')
 
 -- Border gradients must remain local: a silver card can have different
 -- colours at the top, bottom and either side. Ignore interior art/corners.
@@ -174,8 +174,8 @@ g.rectangle=function(_,x,y,w,h) painted[#painted+1]={x=x,y=y,w=w,h=h,c=current} 
 Frame.draw(D.W,D.H,function() end,silver)
 local sideSeen,topSeen=false,false
 for _,rect in ipairs(painted) do
-  if rect.x==0 and rect.y==90 then near(rect.c[1],silver.left[90][1]);sideSeen=true end
-  if rect.x==68 and rect.y==0 then near(rect.c[1],silver.top[68][1]);topSeen=true end
+  if rect.x==0 and rect.y==90 then near(rect.c[1],silver.left[90-D.INSET+1][1]);sideSeen=true end
+  if rect.x==68 and rect.y==0 then near(rect.c[1],silver.top[68-D.INSET+1][1]);topSeen=true end
 end
 assert(sideSeen and topSeen,'Draw the local profiles on their corresponding edges')
 -- The wrapper bounds must be opaque along all four straight sides.

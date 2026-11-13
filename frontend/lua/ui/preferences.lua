@@ -1,12 +1,13 @@
 local Preferences={}
 Preferences.__index=Preferences
 -- The record is positional (serialize), so a new key is only ever appended.
-Preferences.keys={'screenshake','reducedMotion','crt','bloom','volume','musicVolume','effectsVolume','muted','highFrameRate','interfaceSize'}
+Preferences.keys={'screenshake','reducedMotion','crt','bloom','volume','musicVolume','effectsVolume','muted','highFrameRate','interfaceSize','cardQuality'}
 -- highFrameRate: 0 caps update and draw at 60 per second, 1 allows 144 (main.lua frameCap).
 -- interfaceSize: 0, 1 or 2 for 100%, 125% or 150% (ui/interface_size.lua).
-Preferences.defaults={screenshake=50,reducedMotion=-1,crt=70,bloom=0,volume=50,musicVolume=100,effectsVolume=100,muted=0,highFrameRate=0,interfaceSize=0}
-local ranges={reducedMotion={-1,1},bloom={0,1},muted={0,1},highFrameRate={0,1},interfaceSize={0,2}}
--- How many values a record had before highFrameRate and interfaceSize were appended: such a
+-- cardQuality: 0 Performance, 1 Quality (card_dimensions.lua QUALITIES).
+Preferences.defaults={screenshake=50,reducedMotion=-1,crt=70,bloom=0,volume=50,musicVolume=100,effectsVolume=100,muted=0,highFrameRate=0,interfaceSize=0,cardQuality=0}
+local ranges={reducedMotion={-1,1},bloom={0,1},muted={0,1},highFrameRate={0,1},interfaceSize={0,2},cardQuality={0,1}}
+-- How many values a record had before highFrameRate, interfaceSize and cardQuality were appended: such a
 -- record keeps its settings, and the keys after them keep their defaults.
 local FIRST_RECORD_LENGTH=8
 function Preferences.new(raw)

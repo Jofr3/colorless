@@ -24,7 +24,9 @@ local rows={
   {{kind='slider',key='crt',label='CRT'},
    {kind='cycle',key='bloom',label='CRT Bloom'},
    -- The update and draw cap (main.lua frameCap); `options` names each value, from 0.
-   {kind='cycle',key='highFrameRate',label='Max Frame Rate',options={'60 FPS','144 FPS'}}},
+   {kind='cycle',key='highFrameRate',label='Max Frame Rate',options={'60 FPS','144 FPS'}},
+   -- The card face raster (card_dimensions.lua QUALITIES).
+   {kind='cycle',key='cardQuality',label='Card Quality',options={'Performance','Quality'}}},
   {{kind='slider',key='volume',label='Master Volume'},
    {kind='slider',key='musicVolume',label='Music Volume'},
    {kind='slider',key='effectsVolume',label='Game Sounds'},
@@ -223,13 +225,15 @@ function Settings:build()
     self.items[i]={kind='tab',tab=i,label=label,x=left+(i-1)*(tabWidth+gap),y=self.y+34,
       w=tabWidth,h=48,fontSize=narrow and 22 or 30,colour=T.red}
   end
-  for i,row in ipairs(rows[self.tab] or {}) do
+  local tabRows=rows[self.tab] or {}
+  for i,row in ipairs(tabRows) do
     local item={}
     for k,v in pairs(row) do item[k]=v end
     item.w=(narrow or self.tab~=TAB.audio) and 240 or 300
     if item.kind=='toggle' then item.w=180 end
     item.x=self.x+(self.w-item.w-56)/2
-    item.y=self.y+(self.tab==TAB.audio and 134+(i-1)*91 or 180+(i-1)*112)
+    -- Four rows take Audio's tighter spacing, so the last one clears Back.
+    item.y=self.y+(#tabRows>3 and 134+(i-1)*91 or 180+(i-1)*112)
     item.h=40
     if item.kind=='cycle' then
       -- create_option_cycle: w=4, scale=0.8, at 60 pixels per tile.

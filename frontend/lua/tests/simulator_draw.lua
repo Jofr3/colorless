@@ -257,3 +257,29 @@ for _,size in ipairs({{1280,800},{480,850}}) do
   end
 end
 print('PASS: Lua simulator draw paths for every table state and overlay kind in both layouts')
+
+-- Card Quality reaches every card on the table: hand, board, prizes, face-down cards, attached
+-- cards, the discard pile's top card and an overlay's cards take the scan raster; only the deck,
+-- drawn from Balatro's native back atlas, keeps its own.
+sim:sync(snapshot(40));frames(2,40)
+Card.quality=D.QUALITIES[2]
+local function quality(c,what)
+  local w,h,filter=c:raster()
+  assert(w==600 and h==825 and filter=='linear',what..' takes Quality: '..w..'x'..h..' '..filter)
+end
+assert(#sim.cards>0,'The table has cards')
+for _,c in ipairs(sim.cards) do quality(c,c.item.id) end
+local attached=0
+for id,c in pairs(sim.attached or {}) do quality(c,'attached '..id);attached=attached+1 end
+assert(attached>0,'The table has attached cards')
+local discard=0
+for _,p in ipairs(sim.piles) do
+  if p.item.kind=='discard' then quality(p,'the discard pile');discard=discard+1
+  else assert(p:raster()==142,'The deck keeps the back atlas raster') end
+end
+assert(discard>0,'The table has a discard pile')
+sim:sync(snapshot(41,{row('M','pile','Your discard pile','3 cards.','false','m5'),row('O','16','Switch','blue','true','false','sv01-194','d1')}));frames(5,41)
+assert(sim.overlay and #sim.overlay.cards>0,'An overlay shows cards')
+for _,c in ipairs(sim.overlay.cards) do quality(c,'overlay '..c.item.id) end
+Card.quality=D.QUALITIES[1]
+print('PASS: Card Quality reaches every table card but the deck back')

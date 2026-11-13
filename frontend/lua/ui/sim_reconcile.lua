@@ -14,10 +14,10 @@ local Ko=require('ui.sim_ko')
 local Simulator={}
 local STATUS_ROTATION={asleep=-math.pi/2,paralyzed=math.pi/2,confused=math.pi}
 local prefix=Layout.prefix
-function Simulator:newCard(item,index,x,y,scale,texture)
-  item.edition='dissolve';item.resolution=2
+function Simulator:newCard(item,index,x,y,scale,painted)
+  item.edition='dissolve';item.scan=true
   item.drawFace=function(w,h) self:face(item,w,h) end
-  local c=Card.new(item,index,nil,texture);c:place(x,y,scale,false)
+  local c=Card.new(item,index,nil,painted);c:place(x,y,scale,false)
   c.motion.T.r=0;c.motion.VT.r=0
   return c
 end
@@ -259,7 +259,7 @@ function Simulator:placeCards(resize,previous)
     return c
   end
   for i,item in ipairs(self.items) do
-    item.edition='dissolve';item.resolution=2;item.drawFace=function(w,h) self:face(item,w,h) end
+    item.edition='dissolve';item.scan=true;item.drawFace=function(w,h) self:face(item,w,h) end
     local zone=(item.zone=='played' and L.zones.played) or L.zones[prefix(item.owner)..(item.zone=='prize' and 'prizes' or item.zone)] or L.zones.playmat
     if item.zone=='discard' then
       -- Cost discards slide straight in; staged Trainers clear instantly at
@@ -294,7 +294,7 @@ function Simulator:placeCards(resize,previous)
       if c and (c.item.cardId~=item.cardId or c.item.hidden~=item.hidden or (flipped and item.hidden)) then c.texture:release();c=nil end
       local painted
       -- Mirrored by a flip: a new card on its new side, with the same face.
-      if c and flipped and c.item.owner~=item.owner then painted=c.texture;c=nil end
+      if c and flipped and c.item.owner~=item.owner then painted=c;c=nil end
       if not flipped and (item.zone=='active' or item.zone=='bench') and not item.hidden then
         local was=prevBySpot[item.owner..':'..item.zone..':'..item.index]
         local oldKey=was and (item.owner..':'..was.id)
@@ -389,7 +389,7 @@ function Simulator:placeCards(resize,previous)
         if not self.attached[a.id] or self.attached[a.id].item.cardId~=a.cardId then
           if self.attached[a.id] then self.attached[a.id].texture:release() end
           local info=self.info[a.cardId] or {}
-          local card={id=a.id,cardId=a.cardId,name=info.name or ((a.kind or 'Pokémon')..(a.kind and ' Energy' or ' Tool')),edition='dissolve',resolution=2}
+          local card={id=a.id,cardId=a.cardId,name=info.name or ((a.kind or 'Pokémon')..(a.kind and ' Energy' or ' Tool')),edition='dissolve',scan=true}
           card.drawFace=function(w,h) self:face(card,w,h) end
           self.attached[a.id]=Card.new(card,1)
         end
@@ -439,7 +439,7 @@ function Simulator:placeCards(resize,previous)
     local top
     for _,it in ipairs(self.items) do if it.owner==owner and it.zone=='discard' then top=it end end
     if side and dzone and top then
-      local item={id=owner..'discard',owner=owner,kind='discard',count=math.max(1,side.discard),name='Discard',drawFace=function(w,h) self:face(top,w,h) end}
+      local item={id=owner..'discard',owner=owner,kind='discard',count=math.max(1,side.discard),name='Discard',scan=true,drawFace=function(w,h) self:face(top,w,h) end}
       if landing[owner] and not resize then
         local pending=self.pendingPiles[owner]
         local p,kept=pile(pending,item,dzone,top)

@@ -144,7 +144,7 @@ function Frame.draw(w,h,artwork,border)
   -- Copy the source's inner contour too: the first shoulder row has two
   -- rim pixels, followed by one. A constant-width outline misses this joint.
   g.setBlendMode('alpha','alphamultiply')
-  for y=D.INSET,corner-1 do
+  for y=shoulder,corner-1 do
     local x=shoulder
     local width=y==shoulder and 2 or 1
     local i=x-D.INSET+1

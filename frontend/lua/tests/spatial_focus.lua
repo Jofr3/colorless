@@ -281,9 +281,10 @@ do
   local item=press(popup,'down','items');check(item.key=='crt','Down from the Graphics tab reaches CRT')
   local crt=popup.preferences.crt;popup:keypressed('right');check(popup.preferences.crt==crt+5,'Right on the slider still adjusts it')
   check(press(popup,'down','items').key=='bloom','Down walks the rows')
-  check(press(popup,'down','items').key=='highFrameRate' and press(popup,'down','items').kind=='back','Down reaches Back')
+  check(press(popup,'down','items').key=='highFrameRate' and press(popup,'down','items').key=='cardQuality'
+    and press(popup,'down','items').kind=='back','Down reaches Back')
   check(press(popup,'down','items').kind=='back','Down from Back stays')
-  check(press(popup,'up','items').key=='highFrameRate','Up returns')
+  check(press(popup,'up','items').key=='cardQuality','Up returns')
   popup.focus=find(popup.items,function(b) return b.key=='crt' end)
   local up=press(popup,'up','items');check(up.kind=='tab','Up from the first row reaches a tab')
   popup.focus=4;check(press(popup,'tab','items').key=='crt','Tab keeps list order')
