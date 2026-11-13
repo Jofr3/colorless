@@ -15,7 +15,7 @@ local Simulator={}
 local STATUS_ROTATION={asleep=-math.pi/2,paralyzed=math.pi/2,confused=math.pi}
 local prefix=Layout.prefix
 function Simulator:newCard(item,index,x,y,scale,painted)
-  item.edition='dissolve';item.scan=true
+  item.edition='dissolve';item.scan=item.scan or true
   item.drawFace=function(w,h) self:face(item,w,h) end
   local c=Card.new(item,index,nil,painted);c:place(x,y,scale,false)
   c.motion.T.r=0;c.motion.VT.r=0

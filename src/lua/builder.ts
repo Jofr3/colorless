@@ -390,7 +390,7 @@ export class LuaBuilder {
         retry: +LOAD_FAILURES.has(this.message),
       }),
     ];
-    const row = (tag: "C" | "D" | "S", c: BuilderCard) =>
+    const row = (tag: "C" | "D" | "S" | "N", c: BuilderCard) =>
       wireRow(
         W.card,
         {
@@ -410,6 +410,7 @@ export class LuaBuilder {
         tag,
       );
     for (const c of this.results) rows.push(row("C", c));
+    for (const c of this.nearbyResults()) rows.push(row("N", c));
     for (const [id, quantity] of this.entries) {
       const c = this.cards.get(id);
       rows.push(
@@ -520,13 +521,23 @@ export class LuaBuilder {
     this.publish(encodeRows(rows));
     this.publishImages();
   }
-  /** Visible artwork first, then the prefetched pages nearest to this one. */
-  private publishImages() {
-    const selectedCard = this.cards.get(this.selected);
+  /** The prefetched pages' cards, nearest page first, without the visible page's. */
+  private nearbyResults(): BuilderCard[] {
+    const seen = new Set(this.results.map((c) => c.cardId));
     const nearby: BuilderCard[] = [];
     for (let d = 1; d <= PREFETCH_PAGES; d++)
       for (const page of [this.page + d, this.page - d])
-        nearby.push(...(this.pages.get(page)?.items ?? []));
+        for (const c of this.pages.get(page)?.items ?? [])
+          if (!seen.has(c.cardId)) {
+            seen.add(c.cardId);
+            nearby.push(c);
+          }
+    return nearby;
+  }
+  /** Visible artwork first, then the prefetched pages nearest to this one. */
+  private publishImages() {
+    const selectedCard = this.cards.get(this.selected);
+    const nearby = this.nearbyResults();
     const art = [
       ...this.results,
       ...this.previewIds.flatMap((id) => {
@@ -710,7 +721,10 @@ export class LuaBuilder {
       // free-text search made before then starts the same load and waits for it.
       if (live())
         whenIdle(() => {
-          if (live()) loadCardIndex().catch((error) => reportError("load card index", error));
+          if (!live()) return;
+          loadCardIndex()
+            .then(() => this.warmNearby(live))
+            .catch((error) => reportError("load card index", error));
         });
     } catch (error) {
       reportError("open deck", error);
@@ -720,6 +734,14 @@ export class LuaBuilder {
         this.emit();
       }
     }
+  }
+  /** Once the card index loads, the page already on screen learns its neighbours too. */
+  private async warmNearby(live: () => boolean) {
+    if (this.phase !== "ready" || this.busy) return;
+    const catalog = this.catalog();
+    if (catalog.key !== this.pageKey) return;
+    await this.prefetch(catalog);
+    if (live() && !this.busy && catalog.key === this.pageKey) this.emit();
   }
   /** Entries still waiting for their card details. */
   private loadingCount(): number {
@@ -831,8 +853,8 @@ export class LuaBuilder {
     if (current()) {
       this.busy = false;
       clearTimeout(this.busyTimer);
-      this.emit();
-      this.prefetch(catalog);
+      await this.prefetch(catalog);
+      if (current()) this.emit();
     }
   }
   /** The last page the pager reaches. Only pages the API caches are requested from it, and the
@@ -906,21 +928,26 @@ export class LuaBuilder {
   }
   /** Warm the neighbouring pages the card index answers and queue their artwork behind this
       page's. A page that would come from /cards is left until it is opened: every KV miss spends
-      the API's per-address search limit, and a prefetch may never be looked at. */
-  private prefetch(catalog: Catalog) {
-    if (catalog.key !== this.pageKey) return;
+      the API's per-address search limit, and a prefetch may never be looked at. Settles once the
+      neighbours that need no download are in hand: with the card index loaded, each is a slice of
+      the search already made, so the page's one snapshot names them for Lua to draw ahead. */
+  private prefetch(catalog: Catalog): Promise<unknown> {
+    if (catalog.key !== this.pageKey) return Promise.resolve();
     const live = this.epoch.current();
     const last = this.lastPage();
+    const sliced: Promise<void>[] = [];
     for (let d = 1; d <= PREFETCH_PAGES; d++)
       for (const page of [this.page + d, this.page - d]) {
         if (page < 1 || page > last || this.pages.has(page)) continue;
         if (!fromIndex(catalog.query, page)) continue;
-        this.fetchPage(catalog, page)
+        const request = this.fetchPage(catalog, page)
           .then(() => {
             if (live() && catalog.key === this.pageKey) this.publishImages();
           })
           .catch((error) => reportError("prefetch card page", error));
+        if (cardIndexLoaded()) sliced.push(request);
       }
+    return Promise.all(sliced);
   }
   private changed(message = "") {
     this.message = message || (this.deckGone ? MESSAGE.deckGone : "");
@@ -1179,8 +1206,9 @@ export class LuaBuilder {
     this.busy = false;
     this.results = cached.items;
     this.total = cached.total;
-    this.emit();
-    this.prefetch(catalog);
+    const page = this.page;
+    await this.prefetch(catalog);
+    if (this.page === page && catalog.key === this.pageKey) this.emit();
   }
   /** Steps the sort by `step`: the Sort button sends none (forward), the Filters cycle -1 or 1. */
   private async onSort(step: string) {

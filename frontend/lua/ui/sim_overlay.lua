@@ -1,4 +1,5 @@
 local D=require('ui.card_dimensions')
+local Card=require('ui.card')
 local WheelPager=require('ui.wheel_pager')
 -- Overlay menus for the table: create_UIBox_generic_options (T.jokerGrey frame,
 -- 0.1 emboss, L_BLACK body, orange Back) holding engine prompts rendered as
@@ -383,7 +384,8 @@ function Overlay:build(keepCards)
     bottom=y+h-54
     local cx=p and x+w/2 or x+24+D.HALF_W*scale
     local cy=p and y+40+D.HALF_H*scale or y+36+D.HALF_H*scale
-    local card=sim:newCard({id=item.id,cardId=item.cardId,name=item.name,hidden=item.hidden,edition='dissolve',scan=true},1,cx,cy,scale)
+    if not item.hidden then Card.wantFull(item.cardId) end
+    local card=sim:newCard({id=item.id,cardId=item.cardId,name=item.name,hidden=item.hidden,edition='dissolve',scan='full'},1,cx,cy,scale)
     card.motion.T.r=0;card.motion.VT.r=0
     self.cards[1]=card
     local ax=p and x+24 or x+24+D.W*scale+24

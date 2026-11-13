@@ -1,6 +1,7 @@
 local T = require('ui.theme')
 local Motion = require('ui.motion')
 local D = require('ui.card_dimensions')
+local Bridge = require('ui.bridge')
 local Card = {}
 Card.__index = Card
 local g = love.graphics
@@ -47,15 +48,31 @@ function Card.new(item,index,class,painted)
 end
 -- The face raster of an item that draws a scan (item.scan): main.lua sets it from Card Quality.
 Card.quality=D.QUALITIES[1]
+-- `pixels`: device pixels per layout pixel. Quality's resolution goes up in quarter steps, so
+-- resizing a window restages the scans only now and then.
+function Card.setQuality(quality,pixels)
+  local resolution=quality.resolution or math.max(2,math.min(quality.full,math.ceil(pixels*D.SCREEN_SCALE*4)/4))
+  Card.quality={resolution=resolution,filter=quality.filter,full=quality.full}
+end
+local function size(resolution) return math.floor(W*resolution+0.5),math.floor(H*resolution+0.5) end
 -- The scan raster's size in pixels: what host.js resizes each scan to.
-function Card.scanSize()
-  local resolution=Card.quality.resolution
-  return math.floor(W*resolution+0.5),math.floor(H*resolution+0.5)
+function Card.scanSize() return size(Card.quality.resolution) end
+-- A zoomed card's: the full scan where Card Quality stages one (Bridge 'art-full').
+function Card.fullSize() return size(Card.quality.full or Card.quality.resolution) end
+-- The staged scan a face draws, from `art` (a screen's id -> path map): a zoomed card's full scan,
+-- `<id>@full`, once host.js stages it; until then, and under Performance, the ordinary one.
+function Card.scanPath(art,item,id)
+  return item.scan=='full' and Card.quality.full and art[id..'@full'] or art[id]
+end
+-- Asks host.js to stage a zoomed card's full scan; Performance has none.
+function Card.wantFull(id)
+  if Card.quality.full and id and id~='' and id~='hidden' then Bridge.emit('art-full',id) end
 end
 -- Canvas size and filter. Native rasters copy drawFace's texels unscaled.
 function Card:raster()
   if not self.item.scan then return W,H,'nearest',false end
-  local w,h=Card.scanSize()
+  local w,h
+  if self.item.scan=='full' then w,h=Card.fullSize() else w,h=Card.scanSize() end
   return w,h,Card.quality.filter,false
 end
 function Card:rebuild()

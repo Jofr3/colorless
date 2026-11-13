@@ -28,7 +28,7 @@ for _,name in ipairs({'library','builder','sandbox','simulator','settings','onli
   function s:close()self.closes=(self.closes or 0)+1 end
   function s:cancelInteractions()self.cancels=(self.cancels or 0)+1 end
   function s:openAuth(mode)self.auth=mode end
-  for _,method in ipairs({'layout','closeModal','update','draw','authInput','accountChanged','editBox'})do s[method]=noop end
+  for _,method in ipairs({'layout','closeModal','update','draw','authInput','accountChanged','editBox','releaseFaces'})do s[method]=noop end
   scenes[name]=s;return s
  end}
 end

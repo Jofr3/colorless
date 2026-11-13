@@ -280,6 +280,7 @@ window.colorlessHost = {
       }
     }
     pumpArt();
+    pumpFullArt();
   },
 };
 const motion = matchMedia("(prefers-reduced-motion: reduce)");
@@ -366,6 +367,10 @@ const loveModule = {
     } else if (message.startsWith("COLORLESS:art-size:")) {
       const [, w, h] = message.match(/^COLORLESS:art-size:(\d+)\t(\d+)$/) || [];
       if (w) setArtSize(Number(w), Number(h));
+      return;
+    } else if (message.startsWith("COLORLESS:art-full:")) {
+      const id = message.slice("COLORLESS:art-full:".length);
+      if (id) wantFullArt(id);
       return;
     } else if (message.startsWith("COLORLESS:transition-art:")) {
       const [, action, token] =
@@ -664,6 +669,7 @@ function setArtSize(w, h) {
   artHeight = h;
   for (const id of artCache.keys()) artStale.add(id);
   artFailed.clear();
+  if (`${w}x${h}` === DEFAULT_ART_SIZE) dropFullArt();
   pumpArt();
 }
 /** The artwork cache key of a card's scan at the current size; Performance's keeps the bare id.
@@ -684,6 +690,7 @@ function publishArt() {
     [
       ++artRevision,
       ...[...artCache].map(([id, path]) => [id, path].map(encodeURIComponent).join("\t")),
+      ...[...fullArt].map(([id, path]) => [`${id}@full`, path].map(encodeURIComponent).join("\t")),
     ].join("\n"),
   );
 }
@@ -740,32 +747,47 @@ async function consumeTransitionArt(token, invalid) {
   }
   await prepareTransitionArt();
 }
+/** A card's scan at width×height, from the artwork cache or fetched and resized.
+ * @param {ArtRequest} card @param {number} width @param {number} height @param {string} key
+ * @returns {Promise<Blob | null>} */
+async function scanBlob(card, width, height, key) {
+  const cache = bridge?.artwork;
+  const cached = await cache?.get(key);
+  if (cached) return cached;
+  const response = await fetch(card.url);
+  if (!response.ok) throw Error("art");
+  const bitmap = await createImageBitmap(await response.blob());
+  const c = document.createElement("canvas");
+  c.width = width;
+  c.height = height;
+  const context = c.getContext("2d");
+  // Card Quality's sizes shrink the scan with the browser's best filter; Performance keeps its look.
+  if (context && key !== card.id) context.imageSmoothingQuality = "high";
+  context?.drawImage(bitmap, 0, 0, c.width, c.height);
+  bitmap.close();
+  /** @type {Blob | null} */
+  const blob = await new Promise((resolve) => c.toBlob(resolve, "image/png"));
+  if (blob && cache) void cache.put(key, blob).then(() => prepareTransitionArt());
+  return blob;
+}
+/** Writes a scan into Lua's filesystem and returns its path.
+ * @param {NonNullable<typeof runtime>} running @param {Blob} blob */
+async function stageScan(running, blob) {
+  const path = `__card_art_${++artSerial}.png`;
+  running.FS_createDataFile("/", path, new Uint8Array(await blob.arrayBuffer()), true, true);
+  return path;
+}
 /** @param {ArtRequest} card */
 async function loadArt(card) {
   artActive++;
   artPending.add(card.id);
   const width = artWidth,
-    height = artHeight,
-    key = artKey(card.id);
+    height = artHeight;
   try {
-    const cache = bridge?.artwork;
-    let blob = await cache?.get(key);
-    if (!blob) {
-      const response = await fetch(card.url);
-      if (!response.ok) throw Error("art");
-      const bitmap = await createImageBitmap(await response.blob());
-      const c = document.createElement("canvas");
-      c.width = width;
-      c.height = height;
-      c.getContext("2d")?.drawImage(bitmap, 0, 0, c.width, c.height);
-      bitmap.close();
-      blob = await new Promise((resolve) => c.toBlob(resolve, "image/png"));
-      if (blob && cache) void cache.put(key, blob).then(() => prepareTransitionArt());
-    }
+    const blob = await scanBlob(card, width, height, artKey(card.id));
     const running = runtime;
     if (!running || !blob) throw Error("art");
-    const path = `__card_art_${++artSerial}.png`;
-    running.FS_createDataFile("/", path, new Uint8Array(await blob.arrayBuffer()), true, true);
+    const path = await stageScan(running, blob);
     const replaced = artCache.get(card.id);
     if (replaced !== undefined) running.FS_unlink(`/${replaced}`);
     artCache.delete(card.id);
@@ -785,6 +807,69 @@ async function loadArt(card) {
     artPending.delete(card.id);
     artActive--;
     pumpArt();
+  }
+}
+// A zoomed card's full 600×825 scan (Lua's 'art-full', sent under Card Quality's Quality),
+// published as `<id>@full` beside the ordinary one. Only the last FULL_SLOTS stay staged.
+const FULL_WIDTH = 600,
+  FULL_HEIGHT = 825,
+  FULL_SLOTS = 2;
+/** Staged full scans by card id, least recently zoomed first. @type {Map<string, string>} */
+const fullArt = new Map();
+/** The ids Lua last zoomed, most recent last. @type {string[]} */
+let fullWanted = [];
+/** @type {Set<string>} */
+const fullPending = new Set();
+/** @param {string} id */
+function wantFullArt(id) {
+  fullWanted = [...fullWanted.filter((wanted) => wanted !== id), id].slice(-FULL_SLOTS);
+  const path = fullArt.get(id);
+  if (path !== undefined) {
+    fullArt.delete(id);
+    fullArt.set(id, path);
+  }
+  pumpFullArt();
+}
+function dropFullArt() {
+  fullWanted = [];
+  for (const path of fullArt.values()) runtime?.FS_unlink(`/${path}`);
+  if (fullArt.size > 0) {
+    fullArt.clear();
+    publishArt();
+  }
+}
+function pumpFullArt() {
+  for (const id of fullWanted) {
+    if (fullArt.has(id) || fullPending.has(id)) continue;
+    if (Date.now() - (artFailed.get(`${id}@full`) || 0) <= 30000) continue;
+    const card = wantedArt.find((c) => c.id === id);
+    if (card) void loadFullArt(card);
+  }
+}
+/** @param {ArtRequest} card */
+async function loadFullArt(card) {
+  fullPending.add(card.id);
+  try {
+    const key = `${card.id}@${FULL_WIDTH}x${FULL_HEIGHT}`;
+    const blob = await scanBlob(card, FULL_WIDTH, FULL_HEIGHT, key);
+    const running = runtime;
+    if (!running || !blob) throw Error("art");
+    if (!fullWanted.includes(card.id)) return;
+    const path = await stageScan(running, blob);
+    const replaced = fullArt.get(card.id);
+    if (replaced !== undefined) running.FS_unlink(`/${replaced}`);
+    fullArt.delete(card.id);
+    fullArt.set(card.id, path);
+    for (const [id, old] of fullArt) {
+      if (fullArt.size <= FULL_SLOTS) break;
+      running.FS_unlink(`/${old}`);
+      fullArt.delete(id);
+    }
+    publishArt();
+  } catch {
+    artFailed.set(`${card.id}@full`, Date.now());
+  } finally {
+    fullPending.delete(card.id);
   }
 }
 function pumpArt() {

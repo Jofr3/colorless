@@ -20,7 +20,7 @@ for _,view in ipairs({'list','cards'})do
    b:mousepressed(x,y)
    local dropX,dropY=remove and 500 or 1100,530
    for frame=1,30 do b:update(1/60,frame/60,dropX,dropY,reduced)end
-   local c=assert(b.dragCard);local texture=c.texture;local releasedX,releasedY=c.x,c.y
+   local c=assert(b.dragCard);local texture=c.texture;local releasedX,releasedY=c.x,c.y;local held=c.face.users
    local before=#commands
    b:mousereleased(dropX,dropY)
    assert(b.dragCard==c and c.returning and not c.dragging and not texture.released,'Release must retain the returning card')
@@ -35,7 +35,7 @@ for _,view in ipairs({'list','cards'})do
     assert(c.x~=releasedX or c.y~=releasedY,'Return must advance with the motion engine')
    end
    for frame=32,180 do b:update(1/60,frame/60,dropX,dropY,reduced)end
-   assert(not b.dragCard and texture.released,'Settled card must release its temporary texture')
+   assert(not b.dragCard and c.face.users==held-1,'Settled card must hand its face back to the cache')
    assert(#commands==before+(remove and 1 or 0),'Animation must not send additional mutations')
   end
  end
@@ -51,10 +51,10 @@ do
  for _,c in ipairs(b.controls)do if c.action=='detail' then control=c;break end end
  b:mousepressed(control.x+control.w/2,control.y+control.h/2)
  for frame=1,30 do b:update(1/60,frame/60,1100,530,true)end
- local c=assert(b.dragCard);local texture=c.texture;local before=#commands
+ local c=assert(b.dragCard);local held=c.face.users;local before=#commands
  b:cancelInteractions()
- assert(not b.dragCard and not b.drag and not b.pressed and texture.released,'Cancelling drops and frees the dragged card')
+ assert(not b.dragCard and not b.drag and not b.pressed and c.face.users==held-1,'Cancelling drops the dragged card and hands its face back')
  for _,card in ipairs(b.cards)do assert(not card.dragging)end
  b:mousereleased(1100,530);assert(#commands==before,'A cancelled drag sends nothing on release')
 end
-print('PASS: list/grid drag return, cancelled/accepted drops, refresh survival, reduced motion, cancelled drags and texture cleanup')
+print('PASS: list/grid drag return, cancelled/accepted drops, refresh survival, reduced motion, cancelled drags and face hand-back')

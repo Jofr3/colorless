@@ -57,21 +57,50 @@ popup:mousepressed(quality.x+quality.w-10,quality.y+15);popup:mousereleased(qual
 check(p.cardQuality==1,'Its arrow toggles it')
 print('PASS: Settings Graphics adds Card Quality under Max Frame Rate, clear of Back')
 
--- The raster: Performance builds a scan face at 272×374 with nearest filtering, Quality at the
--- scan's own 600×825 with linear; a face that draws no scan stays at 136×187.
+-- The raster: Performance builds a scan face at 272×374 with nearest filtering. Quality matches
+-- the screen, with linear filtering, and a zoomed card (scan 'full') the scan's own 600×825; a
+-- face that draws no scan stays at 136×187.
 check(Card.quality==D.QUALITIES[1],'Cards start at Performance')
 check(select(1,Card.scanSize())==272 and select(2,Card.scanSize())==374,'Performance is 272×374')
 local scan=Card.new({scan=true,edition='dissolve',drawFace=function() end},1)
+local zoomed=Card.new({scan='full',edition='dissolve',drawFace=function() end},1)
 local plain=Card.new({edition='dissolve',drawFace=function() end},1)
 local function size(c) local w,h,filter=c:raster() return w..'x'..h..' '..filter end
 check(size(scan)=='272x374 nearest' and scan.resolution==2,'A Performance scan face')
+check(size(zoomed)=='272x374 nearest','Performance zooms the same raster')
 check(size(plain)=='136x187 nearest' and plain.resolution==1,'A face without a scan')
-Card.quality=D.QUALITIES[2]
-check(size(scan)=='600x825 linear' and size(plain)=='136x187 nearest','Quality changes only scan faces')
+-- 2880x1800 lays out at 2.25 device pixels per layout pixel: 2.25 x 1.1, up to a quarter step.
+Card.setQuality(D.QUALITIES[2],2.25)
+check(size(scan)=='340x468 linear' and size(plain)=='136x187 nearest','Quality changes only scan faces, to the screen')
+check(size(zoomed)=='600x825 linear','A zoomed card takes the full scan')
+Card.setQuality(D.QUALITIES[2],2.2)
+check(size(scan)=='340x468 linear','A slightly smaller window keeps the same quarter step')
+Card.setQuality(D.QUALITIES[2],1)
+check(size(scan)=='272x374 linear','A small screen never goes below Performance')
+Card.setQuality(D.QUALITIES[2],8)
+check(size(scan)=='600x825 linear','A large one never goes above the scan')
+Card.setQuality(D.QUALITIES[1],2.25)
+check(size(scan)=='272x374 nearest','Performance ignores the screen')
+Card.setQuality(D.QUALITIES[2],2.25)
 check(scan.resolution==2,'A built canvas keeps the resolution it was built at')
 scan:rebuild()
-check(math.abs(scan.resolution-600/136)<1e-12,'A rebuild takes the new one')
+check(scan.resolution==2.5,'A rebuild takes the new one')
 local adopted=Card.new({scan=true},1,nil,scan)
 check(adopted.texture==scan.texture and adopted.resolution==scan.resolution,'An adopted canvas keeps its resolution')
-Card.quality=D.QUALITIES[1]
 print('PASS: Card Quality picks the scan raster; built canvases keep theirs until rebuilt')
+
+-- A zoomed card draws `<id>@full` once host.js stages it, and asks for it only under Quality.
+local art={a='a.png',['a@full']='a-full.png',b='b.png'}
+check(Card.scanPath(art,{scan='full'},'a')=='a-full.png','A zoomed card draws its full scan')
+check(Card.scanPath(art,{scan='full'},'b')=='b.png','Until it arrives, its ordinary one')
+check(Card.scanPath(art,{scan=true},'a')=='a.png','Other cards draw the ordinary scan')
+local printed={}
+local print0=print;print=function(line) printed[#printed+1]=line end
+Card.wantFull('a');Card.wantFull('hidden');Card.wantFull('')
+Card.setQuality(D.QUALITIES[1],2.25)
+Card.wantFull('a')
+check(Card.scanPath(art,{scan='full'},'a')=='a.png','Performance draws the ordinary scan')
+print=print0
+check(#printed==1 and printed[1]=='COLORLESS:art-full:a','Quality asks for a known card\'s full scan, Performance never')
+Card.quality=D.QUALITIES[1]
+print('PASS: a zoomed card asks for and draws the full scan under Quality only')

@@ -43,7 +43,7 @@ function Builder:makeDeckCards()
   signature=table.concat(signature,'|')
   if signature~=self.deckCardSignature then
     self.deckCardSignature=signature
-    for _,c in ipairs(self.deckCards)do c.texture:release()end;self.deckCards={}
+    for _,c in ipairs(self.deckCards)do self:discard(c)end;self.deckCards={}
     local p=self.portrait;local left=p and 24 or DECK_X;local span=p and 432 or DECK_WIDTH
     for i,item in ipairs(items)do
       local cx=left+span*((i-1)%3+0.5)/3

@@ -148,14 +148,28 @@ Card render textures are recreated after viewport changes because love.js clears
 
 `ui/card_dimensions.lua` defines every card's geometry: a 136×187 card
 (matching the 600×825 source scans) that the scan fills edge to edge, with no
-rim. Settings' Card Quality (`D.QUALITIES`) sets the raster of a face that draws a scan
-(`item.scan`): Performance builds it at 272×374 with nearest filtering, Quality at the
-scan's own 600×825 with linear filtering. Lua prints `COLORLESS:art-size:<w>\t<h>`
-(`Card.scanSize`) at boot and on every change; `web/host.js` resizes each scan to that
-size, caches it in IndexedDB under the card id (Performance) or `<id>@<w>x<h>`, and keeps
-showing a scan staged at the old size until its replacement is staged, so the screens
-rebuild each card as its new scan arrives. A built canvas keeps the resolution it was built
-at (`Card.resolution`) until it is rebuilt.
+rim. Settings' Card Quality (`D.QUALITIES`, `Card.setQuality`) sets the raster of a face
+that draws a scan (`item.scan`): Performance builds it at 272×374 with nearest filtering.
+Quality matches the screen with linear filtering: `D.SCREEN_SCALE` (the builder's grid card
+with its hover lift) times the device pixels per layout pixel, in quarter steps, between
+272×374 and 600×825. Decoding the staged scan is most of a face's cost, so the scan itself
+shrinks with it. Lua prints `COLORLESS:art-size:<w>\t<h>` (`Card.scanSize`) at boot and
+whenever the size changes; `web/host.js` resizes each scan to that size, caches it in
+IndexedDB under the card id (Performance) or `<id>@<w>x<h>`, and keeps showing a scan
+staged at the old size until its replacement is staged, so the screens rebuild each card as
+its new scan arrives. A zoomed card (`item.scan=='full'`: the builder's card details, the
+table's inspector) is the exception: under Quality Lua prints `COLORLESS:art-full:<id>`
+(`Card.wantFull`), the host stages that card's full 600×825 scan beside the ordinary one as
+`<id>@full` in the art mailbox, keeping the last two, and `Card.scanPath` draws it once it
+arrives. A built canvas keeps the resolution it was built at (`Card.resolution`) until it
+is rebuilt.
+
+The builder keeps its card faces in `ui/face_cache.lua`, keyed by card, staged scan and
+raster: a card hands its face back instead of releasing it, so a page turned back to adopts
+its faces. Its snapshot also names the prefetched pages either side as `N` rows (nearest
+first), and `Builder:preload` draws one of their faces a frame as their scans arrive, so
+turning to one draws nothing. The cache holds 56 faces and releases the free ones on leaving
+the builder.
 `ui/card_frame.lua` reproduces the ordinary `Enhancers.png` card's stepped
 corners at those dimensions, without a white mat. Behind the scan it paints the
 nearby colours from each of its four outer edges, preserving silver gradients and

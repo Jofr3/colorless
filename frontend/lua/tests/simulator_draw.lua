@@ -262,10 +262,10 @@ print('PASS: Lua simulator draw paths for every table state and overlay kind in 
 -- cards, the discard pile's top card and an overlay's cards take the scan raster; only the deck,
 -- drawn from Balatro's native back atlas, keeps its own.
 sim:sync(snapshot(40));frames(2,40)
-Card.quality=D.QUALITIES[2]
+Card.setQuality(D.QUALITIES[2],2.25)
 local function quality(c,what)
   local w,h,filter=c:raster()
-  assert(w==600 and h==825 and filter=='linear',what..' takes Quality: '..w..'x'..h..' '..filter)
+  assert(w==340 and h==468 and filter=='linear',what..' takes Quality: '..w..'x'..h..' '..filter)
 end
 assert(#sim.cards>0,'The table has cards')
 for _,c in ipairs(sim.cards) do quality(c,c.item.id) end
@@ -281,5 +281,20 @@ assert(discard>0,'The table has a discard pile')
 sim:sync(snapshot(41,{row('M','pile','Your discard pile','3 cards.','false','m5'),row('O','16','Switch','blue','true','false','sv01-194','d1')}));frames(5,41)
 assert(sim.overlay and #sim.overlay.cards>0,'An overlay shows cards')
 for _,c in ipairs(sim.overlay.cards) do quality(c,'overlay '..c.item.id) end
-Card.quality=D.QUALITIES[1]
 print('PASS: Card Quality reaches every table card but the deck back')
+
+-- The inspector's zoomed card asks host.js for its full scan and is built at 600×825.
+local shown
+for _,c in ipairs(sim.cards) do if not c.item.hidden and c.item.cardId~='' then shown=c;break end end
+local printed={}
+local print0=print;print=function(line) printed[#printed+1]=line end
+sim.overlay=nil;sim:openInspect(shown)
+print=print0
+local zoomed=assert(sim.overlay and sim.overlay.kind=='inspect' and sim.overlay.cards[1],'The inspector opens')
+local w,h,filter=zoomed:raster()
+assert(w==600 and h==825 and filter=='linear','The zoomed card takes the full scan: '..w..'x'..h)
+local asked=false
+for _,line in ipairs(printed) do asked=asked or line=='COLORLESS:art-full:'..shown.item.cardId end
+assert(asked,'It asks for its full scan')
+Card.quality=D.QUALITIES[1]
+print('PASS: the inspector zooms the full scan under Quality')

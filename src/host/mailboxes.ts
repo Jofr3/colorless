@@ -51,4 +51,4 @@ export const SHELL_PRINT_CHANNELS = [
 export type ShellPrintChannel = (typeof SHELL_PRINT_CHANNELS)[number];
 
 /** The prints frontend/lua/web/host.js answers itself and does not hand the shell. */
-export const HOST_PRINT_CHANNELS = ["music", "transition-art", "art-size"] as const;
+export const HOST_PRINT_CHANNELS = ["music", "transition-art", "art-size", "art-full"] as const;

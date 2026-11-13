@@ -6,6 +6,7 @@ local Button=require('ui.button')
 local Card=require('ui.card')
 local Collection=require('ui.collection_motion')
 local CardFrame=require('ui.card_frame')
+local FaceCache=require('ui.face_cache')
 local DeckStats=require('ui.deck_stats')
 local Limits=require('ui.limits')
 local DeckRow=require('ui.deck_row')
@@ -41,6 +42,9 @@ local CATALOG_PAGER={face=-135,w=270,arrow=36,h=44,fontSize=30}
 local FIELD_LABELS={name='Deck name',query='Search cards',optionQuery='Find an option',text='Rules text',transfer='Decklist'}
 -- builder.ts's placeholder while a card's rules text loads.
 local LOADING_DETAILS='Loading card details...'
+-- Faces the cache keeps: a page and the four either side (host.js's nearby scans), the deck's
+-- cards, a dragged and a zoomed one.
+local FACE_LIMIT=56
 local function formatName(format) return format=='standard' and 'Standard' or 'Expanded' end
 local MODAL_TITLES={choices='Options',transfer='Import or export decklist',clear='Clear this deck?',validation='Deck details',stats='Deck information'}
 -- The printed parts the simulator cannot play yet, by the engine's gap names.
@@ -63,13 +67,16 @@ end
 function Builder.new(callbacks)
   local self=setmetatable({callbacks=callbacks,phase='loading',time=0,hover=0,focus=0,controls={},cards={},deckCards={},deckView='list',items={},deck={},options={},fields={},art={},pageText=PageText.new(),deckPageText=PageText.new(),page=1,pages=1,total=0,count=0,name='',format='standard',message='',saveStatus='',details='',transfer='',deckPage=1,deckType='all',tab='catalog',filterPage=1,editing='',values={},validation='',groups={0,0,0},basic=0,choices={},optionKey='',optionLabel='',optionPage=1,optionPages=1},Builder)
   self.transferArea=TextArea.new('Paste a decklist here...')
+  self.faces,self.nearby=FaceCache.new(FACE_LIMIT),{}
   return self
 end
+-- Leaving the page frees the faces no card holds.
+function Builder:releaseFaces() self.faces:trim(0) end
 function Builder:command(...)
   Codec.command(self.callbacks.command,...)
 end
 function Builder:open(reduced,id)
-  if self.dragCard then self.dragCard.texture:release();self.dragCard=nil end
+  if self.dragCard then self:discard(self.dragCard);self.dragCard=nil end
   self.motion=Modal.motion(reduced);self.id=id;self.modal=nil;self.focus=0;self.deckPage=1;self.deckType='all'
   self.opening=true;self.spokenSummary=self:summary('loading');self.callbacks.announce(self.spokenSummary)
   self:command('open',id or '')
@@ -96,7 +103,7 @@ function Builder:closeModal()
   local returnTo=self.modal and self.modal.returnTo
   if self.modal and self.modal.mode=='transfer' then self:command('cancel-import')end
   self:command('finish-input');self.editing='';self.modal=nil;self.focus=0;self.pressed=nil
-  if self.detailCard then self.detailCard.texture:release();self.detailCard=nil end
+  if self.detailCard then self:discard(self.detailCard);self.detailCard=nil end
   if returnTo then self:openModal(returnTo)else self:build()end
 end
 -- What the save caption says, or nil when there is nothing to save.
@@ -119,19 +126,19 @@ function Builder:messageLine()
 end
 function Builder:layout(w,h)
   self.hpDrag=nil
-  if self.dragCard then self.dragCard.texture:release();self.dragCard=nil end
+  if self.dragCard then self:discard(self.dragCard);self.dragCard=nil end
   self.width,self.height=w,h;self.portrait=w<600
   self.deckPage=math.max(1,math.min(self.deckPage,math.ceil(#self:visibleDeck()/self:deckPageSize())))
-  if self.detailCard then self.detailCard.texture:release();self.detailCard=nil end
+  if self.detailCard then self:discard(self.detailCard);self.detailCard=nil end
   self:command('size',self.portrait and 4 or 8)
   CardFrame.open();self:makeCards(false);self:build();CardFrame.close()
 end
 function Builder:face(item,w,h)
   CardFrame.draw(w,h,function(aw,ah) self:artwork(item,aw,ah) end,
-    CardFrame.border(self.art[item.id],T.paper))
+    CardFrame.border(Card.scanPath(self.art,item,item.id),T.paper))
 end
 function Builder:artwork(item,w,h)
-  if CardFrame.scan(self.art[item.id],w,h) then return end
+  if CardFrame.scan(Card.scanPath(self.art,item,item.id),w,h) then return end
   if item.kind=='Energy' then return Builder.energyFace(item,w,h) end
   T.box(0,0,w,h,T.paper,4);T.box(4,4,w-8,h-8,T.ink,4)
   T.text(item.name,18,10,36,w-20,T.paper)
@@ -139,10 +146,47 @@ function Builder:artwork(item,w,h)
 end
 -- An Energy card without art (ui/energy.lua).
 Builder.energyFace=Energy.face
-function Builder:newCard(item,index,x,y,scale,grid)
-  item.colour=T.blue;item.edition='dissolve';item.scan=true;item.drawFace=function(w,h)self:face(item,w,h)end
+-- What a face shows: its card, the scan it draws and its raster.
+function Builder:faceKey(item)
+  local w,h=Card.raster({item=item})
+  return item.id..'\t'..tostring(Card.scanPath(self.art,item,item.id))..'\t'..w..'x'..h
+end
+function Builder:acquireFace(item,index)
+  return self.faces:acquire(self:faceKey(item),function()
+    local c=Card.new(item,index);return {texture=c.texture,resolution=c.resolution}
+  end)
+end
+-- A card hands its face back to the cache rather than releasing it.
+function Builder:discard(card) self.faces:release(card.face) end
+function Builder:repaint(card)
+  local old=card.face
+  card.face=self:acquireFace(card.item,card.index);card.texture,card.resolution=card.face.texture,card.face.resolution
+  self.faces:release(old)
+end
+-- Whether a card's face no longer shows its staged scan: one that arrived or replaced the last.
+function Builder:stale(card)
+  return Card.scanPath(self.art,card.item,card.item.id)~=nil and self:faceKey(card.item)~=card.face.key
+end
+-- One face a frame for the pages either side, in the order host.js stages their scans, so a page
+-- turned to adopts its faces. Those already drawn count as just used, so the cache keeps them
+-- over faces from farther pages.
+function Builder:preload()
+  for _,item in ipairs(self.nearby) do
+    local key=self:faceKey(item)
+    if self.faces:has(key) then self.faces:touch(key)
+    elseif Card.scanPath(self.art,item,item.id) then
+      self.faces:release(self:acquireFace(item,1));return
+    end
+  end
+end
+-- `full`: a zoomed card, which draws the full scan Card Quality stages for it.
+function Builder:newCard(item,index,x,y,scale,grid,full)
+  item.colour=T.blue;item.edition='dissolve';item.scan=full and 'full' or true;item.drawFace=function(w,h)self:face(item,w,h)end
   local copy={};for k,v in pairs(item)do copy[k]=v end
-  local card=Card.new(copy,index);card:place(x,y,scale,false)
+  if full then Card.wantFull(item.id) end
+  local face=self:acquireFace(copy,index)
+  local card=Card.new(copy,index,nil,face);card.face=face
+  card:place(x,y,scale,false)
   if not grid then card.motion.T.r=((index-1)%4-1.5)*0.025;return card end
   -- Grid cards fan like the simulator's card modals: each page deals from
   -- the row centre and spreads with Moveable's spring (collection_motion).
@@ -151,7 +195,7 @@ function Builder:newCard(item,index,x,y,scale,grid)
 end
 function Builder:makeCards(entering)
   if not self.width then return end
-  for _,c in ipairs(self.cards)do c.texture:release()end;self.cards={};self.drag=nil
+  for _,c in ipairs(self.cards)do self:discard(c)end;self.cards={};self.drag=nil
   if self.dragCard and not self.dragCard.returning then self.dragCard.texture:release();self.dragCard=nil end
   local p=self.portrait;local cols=p and 2 or 4
   for i,item in ipairs(self.items)do
@@ -216,16 +260,17 @@ function Builder:sync(raw)
     self.exportRaw=f[H.transfer];self.transfer=f[H.transfer];self.transferBaseline=f[H.transfer]
   end
   self.cover=f[H.cover];self.importing=f[H.importing]=='1';self.dirty=f[H.dirty]=='1';self.retry=f[H.retry]=='1'
-  self.options={};self.choices={};self.deck={};self.items={};self.selectedItem=nil
+  self.options={};self.choices={};self.deck={};self.items={};self.nearby={};self.selectedItem=nil
   local optionKey=''
   local signature={tostring(self.page)}
   for i=2,#lines do local r=lines[i]
-    if r[1]=='C' or r[1]=='D' or r[1]=='S' then
+    if r[1]=='C' or r[1]=='D' or r[1]=='S' or r[1]=='N' then
       local c=W.card
       local item={id=r[c.cardId],name=r[c.name],kind=r[c.supertype],subtype=r[c.subtype],quantity=tonumber(r[c.quantity]) or 0,remaining=tonumber(r[c.remaining]) or 0,
         hp=r[c.hp] or '',mark=r[c.mark] or '',number=r[c.number] or '',copyLimit=tonumber(r[c.copyLimit]) or 4,illegal=r[c.illegal]=='1',gaps=r[c.gaps] or ''}
       if r[1]=='C' then self.items[#self.items+1]=item;signature[#signature+1]=item.id
       elseif r[1]=='D' then self.deck[#self.deck+1]=item
+      elseif r[1]=='N' then item.colour=T.blue;item.edition='dissolve';item.scan=true;item.drawFace=function(w,h)self:face(item,w,h)end;self.nearby[#self.nearby+1]=item
       else self.selectedItem=item end
     elseif r[1]=='L' then local l=W.pending
       self.deck[#self.deck+1]={id=r[l.cardId],name=r[l.name],kind='',subtype='',quantity=tonumber(r[l.quantity]) or 0,remaining=0,
@@ -312,9 +357,9 @@ function Builder:build()
     if m.mode=='detail' then
       local dx=p and x or x+332;local dw=p and bw or bw-332
       if not self.detailCard or self.detailCard.item.id~=m.id then
-        if self.detailCard then self.detailCard.texture:release()end
+        if self.detailCard then self:discard(self.detailCard)end
         local item=self.selectedItem or m.item
-        if item then self.detailCard=self:newCard(item,2,p and w/2 or x+142,p and m.y+205 or m.y+302,p and 1.25 or 1.9,false)end
+        if item then self.detailCard=self:newCard(item,2,p and w/2 or x+142,p and m.y+205 or m.y+302,p and 1.25 or 1.9,false,true)end
       end
       local by=m.y+m.h-182
       self:add('Remove',dx,by,dw/2-6,42,self.selectedItem and self.selectedItem.kind=='' and 'discard' or 'remove',T.red,m.id,{disabled=not self.selectedItem or self.selectedItem.quantity==0})
@@ -572,14 +617,15 @@ function Builder:update(dt,time,mx,my,reduced)
         local r=TextRecord.read(self,raw)
         if r then self.editing=r.action=='input' and r.field or '';self.values[r.field]=r.value;self.first,self.last=r.selectionStart,r.selectionEnd;if r.field=='transfer'then self.transfer=r.value;self.clipboard=nil end end
       elseif file=='art' and raw~=self.artRaw then
-        self.artRaw=raw;local old=self.art;self.art=Mailbox.artMap(raw)
-        for _,c in ipairs(self.cards)do if self.art[c.item.id] and old[c.item.id]~=self.art[c.item.id]then c:rebuild()end end
-        for _,c in ipairs(self.deckCards)do if self.art[c.item.id] and old[c.item.id]~=self.art[c.item.id]then c:rebuild()end end
-        if self.dragCard and self.art[self.dragCard.item.id]~=old[self.dragCard.item.id]then self.dragCard:rebuild()end
-        if self.detailCard and self.art[self.detailCard.item.id]~=old[self.detailCard.item.id]then self.detailCard:rebuild()end
+        self.artRaw=raw;self.art=Mailbox.artMap(raw)
+        for _,c in ipairs(self.cards)do if self:stale(c)then self:repaint(c)end end
+        for _,c in ipairs(self.deckCards)do if self:stale(c)then self:repaint(c)end end
+        if self.dragCard and self:stale(self.dragCard)then self:repaint(self.dragCard)end
+        if self.detailCard and self:stale(self.detailCard)then self:repaint(self.detailCard)end
       elseif file=='builderClipboard' and raw~=self.clipboardRaw then self.clipboardRaw=raw;self.clipboard=Codec.fields(raw)[2] or raw end
     end
   end
+  self:preload()
   CardFrame.close()
   self:refreshTransferControls()
   if self.modal then self.modal.motion:update(dt,time,false,false,reduced)end
@@ -625,7 +671,7 @@ function Builder:update(dt,time,mx,my,reduced)
     -- the drag enlargement and rotation. Reduced motion settles immediately.
     if c.returning and (reduced or (math.abs(c.x-c.homeX)<0.5 and math.abs(c.y-c.homeY)<0.5
       and math.abs(c.motion.VT.r-c.motion.T.r)<0.01 and math.abs(c.motion.VT.scale-1)<0.01))then
-      c.texture:release();self.dragCard=nil
+      self:discard(c);self.dragCard=nil
     end
   end
   if self.detailCard then self.detailCard:update(dt,time,self.detailCard:hit(mx,my-(self.modal and self.modal.motion.VT.y*60 or 0)),reduced)end
@@ -633,7 +679,7 @@ end
 -- Drops any press, card drag or HP drag in progress.
 function Builder:cancelInteractions()
   self.drag=nil;self.hpDrag=nil;self.pressed=nil
-  if self.dragCard then self.dragCard.texture:release();self.dragCard=nil end
+  if self.dragCard then self:discard(self.dragCard);self.dragCard=nil end
   for _,card in ipairs(self.cards) do card.dragging=false end
 end
 function Builder:mousepressed(x,y)
@@ -643,7 +689,7 @@ function Builder:mousepressed(x,y)
     self.hpDrag=b;self:slideHP(b,x)
   elseif b and b.action=='card' then self.drag={index=b.card,x=x,y=y-self:offset()}
   elseif b and (b.action=='detail' or b.action=='deck-card') then
-    if self.dragCard then self.dragCard.texture:release();self.dragCard=nil end
+    if self.dragCard then self:discard(self.dragCard);self.dragCard=nil end
     local home=b.deckCard and self.deckCards[b.deckCard]
     self.drag={source='deck',item=b.arg,x=x,y=y-self:offset(),
       homeX=home and home.homeX or b.x+b.w/2,homeY=home and home.homeY or b.y+b.h/2,

@@ -7,6 +7,7 @@ local D=require('ui.card_dimensions')
 -- The browser host (LuaSimulator) owns the rules; Lua owns everything seen.
 -- This file opens and lays out the table and runs each frame's update; the
 -- parts mixed in at the end (ui/sim_*.lua) hold the rest.
+local Card=require('ui.card')
 local CardFrame=require('ui.card_frame')
 local Codec=require('ui.codec')
 local Mailbox=require('ui.mailbox')
@@ -94,7 +95,7 @@ function Simulator:update(dt,time,mx,my,reduced)
     -- Discard piles paint their top card's scan, which can arrive after a reload.
     for _,p in ipairs(self.piles) do if p.topItem and old[p.topItem.cardId]~=art[p.topItem.cardId] then p:rebuild();p.faceKey=self:pileFace(p.item.kind,p.owner,p.topItem) end end
     for _,c in pairs(self.attached or {}) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end
-    if self.overlay then for _,c in ipairs(self.overlay.cards) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end end
+    if self.overlay then for _,c in ipairs(self.overlay.cards) do if Card.scanPath(old,c.item,c.item.cardId)~=Card.scanPath(art,c.item,c.item.cardId) then c:rebuild() end end end
   end
   CardFrame.close()
   mx,my=self:point(mx,my);self.mx,self.my=mx,my

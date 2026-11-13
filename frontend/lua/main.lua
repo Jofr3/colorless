@@ -166,6 +166,14 @@ local function fitOnline(portrait)
   onlineLayer.scale,onlineLayer.w,onlineLayer.h=scale,virtualWidth/scale,virtualHeight/scale
   return changed
 end
+-- Card Quality at this screen's size. host.js stages every scan again when the size changes,
+-- and each screen rebuilds a card as its new scan arrives.
+local function syncCardQuality()
+  if not layoutScale then return end
+  Card.setQuality(D.QUALITIES[preferences.cardQuality+1],layoutScale)
+  local w,h=Card.scanSize()
+  if w..'x'..h~=state.artSize then state.artSize=w..'x'..h;Bridge.emit('art-size',w,h) end
+end
 local function layout(w,h,pixelDensity)
   width,height,density=w,h,pixelDensity or 1
   redraw()
@@ -173,6 +181,7 @@ local function layout(w,h,pixelDensity)
   local portrait=w/h<0.9
   virtualWidth,virtualHeight=portrait and 480 or 1280,portrait and 850 or 800
   layoutScale=math.min(w/virtualWidth,h/virtualHeight)
+  syncCardQuality()
   offsetX,offsetY=(w-virtualWidth*layoutScale)/2,(h-virtualHeight*layoutScale)/2
   room=Room.new(virtualWidth,virtualHeight,Screen.unit(w,h)/layoutScale)
   arrangeLayers(portrait)
@@ -288,7 +297,7 @@ applyPage=function(page,deckId)
   -- Create/Join replace the URL with the lobby code; the modal stays put.
   if page=='online' and state.page=='online' then state.deckId=deckId;online:retarget(deckId);return end
   if state.page=='online' then online:close() end
-  if state.page=='builder' then builder:command('close') end
+  if state.page=='builder' then builder:command('close');builder:releaseFaces() end
   if state.page=='sandbox' then sandbox:command('close') end
   -- Cards draw with dissolve and played; the table's background with background.fs.
   if isTable(page) then ensureShaders('background','dissolve','played')
@@ -413,13 +422,7 @@ applyPreferences=function()
   if reduced~=state.reduced then redraw() end
   state.reduced=reduced
   state.muted=preferences.muted==1
-  -- Card Quality: host.js stages every scan again at the new size, and each screen rebuilds a
-  -- card as its new scan arrives.
-  local quality=D.QUALITIES[preferences.cardQuality+1]
-  if quality~=Card.quality or not state.artSizeSent then
-    Card.quality,state.artSizeSent=quality,true
-    Bridge.emit('art-size',Card.scanSize())
-  end
+  syncCardQuality()
   if sounds.music1 then
     sounds.music1:setVolume(0.32*preferences.volume/100*preferences.musicVolume/100)
     if not state.muted and state.audioUnlocked and state.windowFocused~=false then

@@ -173,9 +173,10 @@ export const WIRE_ROWS = {
         "retry",
       ],
     },
-    /** `C` a catalog result, `D` a deck entry, `S` the selected card. */
+    /** `C` a catalog result, `D` a deck entry, `S` the selected card, `N` a result on a prefetched
+        page, whose face Lua draws ahead of time. */
     card: {
-      tags: ["C", "D", "S"],
+      tags: ["C", "D", "S", "N"],
       fields: [
         "cardId",
         "name",

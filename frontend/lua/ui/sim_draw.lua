@@ -4,6 +4,7 @@ local D=require('ui.card_dimensions')
 -- the HUD, controls, attached and hover popups, the away banner, juice and overlays.
 local T=require('ui.theme')
 local Button=require('ui.button')
+local Card=require('ui.card')
 local CardFrame=require('ui.card_frame')
 local CardBack=require('ui.card_back')
 local Codec=require('ui.codec')
@@ -27,10 +28,10 @@ end
 function Simulator:face(item,w,h)
   if item.hidden or item.cardId=='' or item.cardId=='hidden' then self:drawBack(item.owner,w,h);return end
   CardFrame.draw(w,h,function(aw,ah) self:artwork(item,aw,ah) end,
-    CardFrame.border(self.art[item.cardId],T.ink))
+    CardFrame.border(Card.scanPath(self.art,item,item.cardId),T.ink))
 end
 function Simulator:artwork(item,w,h)
-  if CardFrame.scan(self.art[item.cardId],w,h) then return end
+  if CardFrame.scan(Card.scanPath(self.art,item,item.cardId),w,h) then return end
   local info=self.info[item.cardId] or {}
   local types=Energy.split(info.types)
   local colour=info.category=='Trainer' and (Popup.badgeColours[info.trainerType or ''] or T.blue) or Energy.colour(types[1] or 'Colorless')

@@ -1088,6 +1088,31 @@ describe("Lua deck builder", () => {
     await tick();
     expect(pages()).toEqual([1]);
   });
+  it("names the prefetched neighbours in the page's one snapshot, nearest first, for Lua to draw ahead", async () => {
+    const idle = heldIdle();
+    vi.mocked(api.getCards).mockImplementation(catalogOf(() => 40));
+    const { b, publish } = await setup(vi.fn());
+    await tick();
+    const nearby = (raw: unknown) =>
+      String(raw)
+        .split("\n")
+        .filter((line) => line.startsWith("N\t"))
+        .map((line) => decodeURIComponent(line.split("\t")[1] ?? ""));
+    expect(nearby(publish.mock.lastCall?.[0])).toEqual([]);
+    // The card index's load hands the page already on screen its neighbours.
+    idle[0]?.();
+    await tick();
+    expect(nearby(publish.mock.lastCall?.[0])).toEqual([...ids(8, 16), ...ids(16, 24)]);
+    publish.mockClear();
+    await b.command("page\t1");
+    await tick();
+    expect(publish).toHaveBeenCalledTimes(1);
+    expect(nearby(publish.mock.lastCall?.[0])).toEqual([
+      ...ids(16, 24),
+      ...ids(0, 8),
+      ...ids(24, 32),
+    ]);
+  });
   it("slices every page from the card index once it has loaded, asking /cards for none (CAT1)", async () => {
     vi.mocked(api.getCards).mockImplementation(catalogOf(() => 40));
     const images = vi.fn();

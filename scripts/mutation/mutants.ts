@@ -64141,8 +64141,8 @@ export const MUTANTS: Mutant[] = [
     what: "The idle load still runs for a builder left (signed out) before the browser was idle. Killed by builder.test's left-builder case.",
     file: "src/lua/builder.ts",
     symbol: "LuaBuilder",
-    find: '          if (live()) loadCardIndex().catch((error) => reportError("load card index", error));\n',
-    replace: '          loadCardIndex().catch((error) => reportError("load card index", error));\n',
+    find: "          if (!live()) return;\n          loadCardIndex()\n",
+    replace: "          loadCardIndex()\n",
     expectKilledBy: ["src/lua/builder.test.ts"],
   },
   {
