@@ -394,10 +394,9 @@ describe("Lua simulator", () => {
     for (const index of [0, secondTarget]) {
       expect(sim.menu?.kind).toBe("board");
       expect(rows(publish).find((r: string[]) => r[0] === "M")?.[6]).toBe("true");
-      // No confirm step: the footer is only the hot seat's Undo and Redo.
+      // No confirm step: the footer is only the hot seat's Undo.
       expect(rows(publish).flatMap((r: string[]) => (r[0] === "F" ? [r[2]] : []))).toEqual([
         "Undo",
-        "Redo",
       ]);
       const before = sim.host?.game.players.p2.bench[index]?.damage ?? 0;
       sim.menu?.options[index]?.run();
@@ -610,7 +609,7 @@ describe("Lua simulator", () => {
     button("Redo action")?.run();
     expect(sim.host?.game).toBe(placed);
   });
-  it("keeps Undo and Redo on a knock-out's promotion, before and after it is answered", () => {
+  it("keeps Undo on a knock-out's promotion, before and after it is answered", () => {
     const state = knockoutState("fix-victim", 30, 3);
     const publish = vi.fn();
     const sim = new LuaSimulator(publish, vi.fn());
@@ -623,10 +622,7 @@ describe("Lua simulator", () => {
     sim.dispatch({ type: "attack", seat: "p1", index: 0 });
     const prompt = sim.host?.game;
     expect(prompt?.phase.kind).toBe("ko:promote");
-    expect(footer().map((r: string[]) => [r[2], r[4]])).toEqual([
-      ["Undo", "false"],
-      ["Redo", "true"],
-    ]);
+    expect(footer().map((r: string[]) => [r[2], r[4]])).toEqual([["Undo", "false"]]);
     run("Undo");
     expect(sim.host?.game).toEqual(state);
     expect(sim.menu).toBeNull();
@@ -637,10 +633,7 @@ describe("Lua simulator", () => {
     expect(sim.host?.game.phase.kind).toBe("turn:action");
     sim.history("undoAction");
     expect(sim.host?.game).toBe(prompt);
-    expect(footer().map((r: string[]) => [r[2], r[4]])).toEqual([
-      ["Undo", "false"],
-      ["Redo", "false"],
-    ]);
+    expect(footer().map((r: string[]) => [r[2], r[4]])).toEqual([["Undo", "false"]]);
     run("Undo");
     expect(sim.host?.game).toEqual(state);
   });

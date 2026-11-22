@@ -76,9 +76,9 @@ check(said[#said]=='Ash: played Nest Ball.','A played card is announced, got '..
 sim:update(1/60,1,-1000,-1000,true)
 check(said[#said]:find('^Search your deck for a Basic Pokémon onto your Bench%. %d+ cards?%.$'),'The tray opens with its instruction, got '..tostring(said[#said]))
 check(sim.menu and sim.menu.kind=='cards' and sim.menu.mandatory,'Search prompt is a mandatory card menu')
-check(#sim.menu.options>0 and #sim.menu.footer==3,'Prompt options and footer parsed')
+check(#sim.menu.options>0 and #sim.menu.footer==2,'Prompt options and footer parsed')
 for _,o in ipairs(sim.menu.options) do check(o.uid~='' and o.cardId~='' and o.label~='' and not o.disabled,'Option '..o.token..' names a card') end
-check(sim.menu.footer[1].label=='0/1','Footer counts the picks')
+check(sim.menu.footer[2].label=='0/1','The pick counter sits right of Undo')
 check(next(sim.cardActions)==nil,'Card buttons hide behind the prompt')
 check(find(sim.items,function(i) return i.id=='nest-ball' end).zone=='discard' and sim.sides.you.discard==1,'Played Item went to the discard')
 check(find(sim.items,function(i) return i.zone=='stadium' end).name=='Beach Court','Stadium stays in play')

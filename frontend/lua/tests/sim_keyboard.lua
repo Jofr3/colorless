@@ -169,14 +169,14 @@ sim:keypressed('return')
 check(commands[#commands]=='invoke\t8\t21','Enter takes the focused Prize, got '..tostring(commands[#commands]))
 print('PASS: a Prize prompt puts its face-down Prizes in the ring')
 
--- An untitled card tray prints and says its instruction.
+-- A card tray says its instruction but draws no header band for it.
 said={}
 sim:sync(snapshot(9,{gamePhase='effect:choose',hint='Search your deck for a Basic Pokémon onto your Bench.',rows={row('M','cards','','','true','search'),
   row('O','30','Fuecoco','blue','false','false','sv01-036','d1'),row('O','31','Growlithe','blue','false','false','sv01-030','d2'),
   row('F','32','0/2','blue','true','false','','')}}));frames(1)
 local tray=sim.overlay
 check(tray.instructionText=='Search your deck for a Basic Pokémon onto your Bench.','The tray carries the prompt\'s instruction')
-check(tray.viewport.y==tray.y+48,'The instruction takes one band above the cards')
+check(tray.viewport.y==tray.y+24,'The cards start right under the tray\'s top edge')
 check(last()=='Search your deck for a Basic Pokémon onto your Bench. 2 cards.','The tray says its instruction as it opens, got '..last())
 -- A toggle says the host's answer: the card, its state and the count.
 tray:activate(1)

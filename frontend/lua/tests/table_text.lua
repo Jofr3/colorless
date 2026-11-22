@@ -343,18 +343,12 @@ for _,view in ipairs(layouts) do
       Display.set({coarse=false});run(0.1)
     end
 
-    -- 6e. An untitled card tray's instruction line grows in the band above its cards (shrinking to
-    -- its width as before); the tray and its buttons do not move.
+    -- 6e. A card tray draws no instruction line at any size; the tray and its buttons do not move.
     snapshot({row('M','cards','','Pick a Basic.','false','tray1'),row('O','12','Houndour','blue','false','false','sv01-033','x1'),row('F','14','Confirm','blue','false','false','','')});run(0.5)
     o=sim.overlay
     check(o and o.kind=='cards',name..': the card tray opens')
     same('tray',faces(o.controls)..string.format(' %.6f %.6f %.6f %.6f',o.x,o.y,o.w,o.h),'the tray and its buttons')
-    local instruction=find(drawn(),'Pick a Basic.')
-    check(instruction,name..': the tray instruction draws')
-    local unitInstruction=grown('instruction',instruction.scale)
-    if factor>1 then check(instruction.scale>unitInstruction+1e-9,name..': the tray instruction grows') end
-    note(name,'instruction',instruction.scale/unitInstruction)
-    check(instruction.y>=o.y+4 and instruction.y+instruction.h<=o.viewport.y-2+1e-9,name..': the tray instruction stays above the cards')
+    check(not find(drawn(),'Pick a Basic.'),name..': the tray draws no instruction')
     sim:closeOverlay(true);snapshot();run(0.3)
 
     -- 7. The coin captions grow below their coins, above the overlay's button.

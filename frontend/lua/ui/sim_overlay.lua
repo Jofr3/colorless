@@ -126,20 +126,16 @@ function Overlay:layout()
     self.cardGap=8
     -- Keep room for lift, held-card zoom and shadows outside the tight grid.
     self.cardPadding=24
-    local compact=(self.data.title or '')==''
-    self.instructionText=compact and self:instruction() or ''
-    local band=self.instructionText~='' and 24 or 0
+    -- A card tray draws no title or instruction; the instruction is only spoken.
+    self.instructionText=self:instruction()
     local maxColumns=5
-    self.cardColumns=compact and math.max(1,math.min(maxColumns,#(self.data.options or {}))) or maxColumns
-    self.cardHeader=compact and 24+band or 110
+    self.cardColumns=math.max(1,math.min(maxColumns,#(self.data.options or {})))
+    self.cardHeader=24
     w=p and 456 or math.min(W-40,maxColumns*D.W*sim.L.zones.you_hand.scale+(maxColumns-1)*self.cardGap+2*self.cardPadding+48)
-    local widest=w
     local unitBounds=CollectionMotion.bounds(maxColumns,1,0)
     self.cardScale=math.min(sim.L.zones.you_hand.scale,(w-48-(maxColumns-1)*self.cardGap-2*self.cardPadding)/unitBounds.width)
     local bounds=CollectionMotion.bounds(self.cardColumns,self.cardScale,self.cardGap)
     w=bounds.width+2*self.cardPadding+48
-    -- A narrow tray widens for its instruction line, up to the full tray.
-    if band>0 then w=math.max(w,math.min(widest,Dyna.measure(self.instructionText,0.28)+64)) end
     self.cardRowHeight=bounds.height
     local count=#(self.data.options or {})
     local rows=math.max(1,math.ceil(count/self.cardColumns))
@@ -265,8 +261,7 @@ function Overlay:build(keepCards)
     self.viewport={x=x+24,y=y+self.cardHeader,w=w-48,h=gridBottom-(y+self.cardHeader)}
     self.cardTop=self.viewport.y+self.cardPadding
     if not keepCards then self:makeCards(d.options,self.cardScale,self.cardTop) end
-    -- An untitled tray prints its instruction as one line instead.
-    if (self.instructionText or '')=='' and d.note and d.note~='' then self.noteLines=Dyna.wrap(d.note,0.28,bw-16) else self.noteLines={} end
+    self.noteLines={}
     for _,c in ipairs(self.cards) do
       self.controls[#self.controls+1]={label=c.item.name,x=c.homeX-D.HALF_W*c.baseScale,y=c.homeY-D.HALF_H*c.baseScale,w=D.W*c.baseScale,h=D.H*c.baseScale,action='card',card=c,disabled=c.item.disabled and kind=='cards',fontSize=20,token=d.options[c.option].token}
     end
@@ -639,21 +634,12 @@ function Overlay:draw(shaders)
   g.push();g.translate(0,self:offset())
   Button.modalFrameRaised(x,y,w,h)
   local kind=self.kind
-  if kind~='inspect' and kind~='gameover' and kind~='options' and (d.title or '')~='' then self.titleText:draw(x+w/2,y+38,rw) end
+  if kind~='inspect' and kind~='gameover' and kind~='options' and kind~='cards' and kind~='pile' and (d.title or '')~='' then self.titleText:draw(x+w/2,y+38,rw) end
   if kind=='list' or kind=='confirm' then
     local top=y+74
     for i=1,math.min(4,#(self.noteLines or {})) do Dyna.static(self.noteLines[i],0.3,x+32,top+(i-1)*18,w-64,18,T.jokerGrey,{roomWidth=rw}) end
     if self.pages>1 then cycle(self,x+w/2-112,y+h-54-(d.mandatory and 0 or 50)-48,224,36) end
   elseif kind=='cards' or kind=='pile' then
-    local top=y+(kind=='pile' and 64 or 66)
-    for i=1,math.min(2,#(self.noteLines or {})) do Dyna.static(self.noteLines[i],0.28,x+32,top+(i-1)*16,w-64,16,T.jokerGrey,{roomWidth=rw}) end
-    if (self.instructionText or '')~='' then
-      -- Interface Size grows it about its line's centre, in the band above the cards; fit keeps
-      -- it in the tray's width.
-      local k=Display.tableText
-      if k==1 then Dyna.static(self.instructionText,0.28,x+32,y+22,w-64,16,T.jokerGrey,{roomWidth=rw,fit=true})
-      else Dyna.static(self.instructionText,0.28*k,x+32,y+30-8*k,w-64,16*k,T.jokerGrey,{roomWidth=rw,fit=true}) end
-    end
     -- The pack tray: G.C.BLACK inset with a 0.05 emboss, like the collection.
     local v=self.viewport
     local tx,ty,tw,th=v.x,v.y,v.w,v.h

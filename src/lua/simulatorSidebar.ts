@@ -10,21 +10,19 @@ export interface SidebarHost {
   history(type: HistoryStep): void;
 }
 
-/** A hot-seat prompt (a promotion, a card's choice) keeps Undo and Redo,
- * which step out of it without answering. */
+/** A hot-seat prompt (a promotion, a card's choice) keeps Undo, which steps
+ * out of it without answering; the prompt's own buttons sit to its right.
+ * An online prompt never offers it. */
 export function withHistory(host: SidebarHost, src: TableSource | null, menu: SimMenu): SimMenu {
-  const history = src?.history;
+  const history = src?.mode === "local" ? src.history : undefined;
   if (!history || !menu.mandatory || menu.kind === "coin") return menu;
-  const step = (label: string, type: "undoAction" | "redoAction"): SimOption => ({
-    label,
+  const undo: SimOption = {
+    label: "Undo",
     colour: "red",
-    disabled: !history.canStep(type),
-    run: () => host.history(type),
-  });
-  return {
-    ...menu,
-    footer: [...(menu.footer ?? []), step("Undo", "undoAction"), step("Redo", "redoAction")],
+    disabled: !history.canStep("undoAction"),
+    run: () => host.history("undoAction"),
   };
+  return { ...menu, footer: [undo, ...(menu.footer ?? [])] };
 }
 
 /** Both seats at one table: either player's choices, plus the game's history. */
