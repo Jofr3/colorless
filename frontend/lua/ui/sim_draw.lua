@@ -310,7 +310,7 @@ function Simulator:draw(shaders)
   end
   self.tooltip:draw(self.boardW,self.boardH,rw)
   -- Hover popup.
-  if self.popup and self.popupBox and not self.overlay then
+  if self.popup and self.popupBox and (not self.overlay or self.peek) then
     local hover=self:hoverPopup()
     if hover.scale==1 then self.popupBox.draw(hover.x,hover.y)
     else
@@ -332,9 +332,12 @@ function Simulator:draw(shaders)
     end
   end
   self.fx:draw(rw)
-  if self.overlay and not self.peek then
-    Modal.backdrop(self.boardW,self.boardH)
-    self.overlay:draw(shaders)
+  if self.overlay then
+    if not self.peek then
+      Modal.backdrop(self.boardW,self.boardH)
+      self.overlay:draw(shaders)
+    end
+    if self.overlay:hasPeek() then self.overlay:drawPeek() end
   end
   g.pop()
 end

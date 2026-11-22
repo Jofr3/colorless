@@ -181,7 +181,7 @@ assert(sim.overlay==keep and sim.overlay.cards[1].item.selected,'Refreshed menu 
 assert(keep.cards[1]==keptCards[1] and keep.cards[2]==keptCards[2],'Selection refresh preserves the card objects')
 assert(keep.cards[2].motion.VT.x==keptX and keep.cards[2].motion.VT.y==keptY,'Selection refresh does not restart the card entrance animation')
 assert(keep.controls[1].token=='13' and not keep.cards[2].item.selected,'Refreshed controls and selections stay current')
-assert(keep.cards[2].greyed and not keep.controls[2].disabled,'Dimmed replacement candidates stay clickable')
+assert(keep.cards[2].tint and not keep.cards[2].greyed and not keep.controls[2].disabled,'Dimmed replacement candidates stay opaque and clickable')
 keep:activate(2)
 assert(commands[#commands]=='invoke\t4\t14','Dimmed cards can replace the current selection')
 sim:sync(snapshot(5,{row('M','coin','Coin flip','Player 1: Heads\nPlayer 2: Tails','true','m3'),row('O','16','Continue','blue','false','false','','')}))

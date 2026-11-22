@@ -21,28 +21,31 @@ C	opponent-hand-5	hidden	Face-down%20card	opponent	hand	5	true	Trainer				0					
 C	p2%237	fix-attacker	fix-attacker	opponent	active	0	false	Pokemon		Basic	120	40				Fire	false	0
 C	p2%2332	sv01-167	Beach%20Court	global	stadium	0	false	Trainer	Stadium			0					false	0
 M	cards			true	2	false		false
-O	1	fix-basic-1	blue	false	false	fix-basic-1	p1%2313	false
-O	2	fix-attacker	blue	false	false	fix-attacker	p1%231	false
-O	3	fix-attacker	blue	false	false	fix-attacker	p1%238	false
-O	4	fix-weak	blue	false	false	fix-weak	p1%2327	false
-O	5	fix-weak	blue	false	false	fix-weak	p1%2326	false
-O	6	fix-basic-1	blue	false	false	fix-basic-1	p1%2319	false
-O	7	fix-attacker	blue	false	false	fix-attacker	p1%232	false
-O	8	fix-basic-1	blue	false	false	fix-basic-1	p1%2318	false
-O	9	fix-attacker	blue	false	false	fix-attacker	p1%2310	false
-O	10	fix-attacker	blue	false	false	fix-attacker	p1%235	false
-O	11	fix-basic-1	blue	false	false	fix-basic-1	p1%2316	false
-O	12	fix-attacker	blue	false	false	fix-attacker	p1%239	false
-O	13	fix-victim	blue	false	false	fix-victim	p1%2324	false
-O	14	fix-attacker	blue	false	false	fix-attacker	p1%237	false
-O	15	fix-wall	blue	false	false	fix-wall	p1%2328	false
-O	16	fix-basic-1	blue	false	false	fix-basic-1	p1%2312	false
-O	17	fix-victim	blue	false	false	fix-victim	p1%2325	false
-O	18	fix-wall	blue	false	false	fix-wall	p1%2329	false
-O	19	fix-attacker	blue	false	false	fix-attacker	p1%233	false
-O	20	fix-attacker	blue	false	false	fix-attacker	p1%230	false
-F	21	Undo	red	false	false			false
-F	22	0%2F1	blue	false	false			false
+H	1	Show%20all%20cards	profile	false	false			false	1
+H	2	Group%20cards	profile	false	false			false	1
+H	3	Order%3A%20None	profile	false	false			false	1
+O	4	fix-basic-1	blue	false	false	fix-basic-1	p1%2313	false	1
+O	5	fix-attacker	blue	false	false	fix-attacker	p1%231	false	1
+O	6	fix-attacker	blue	false	false	fix-attacker	p1%238	false	1
+O	7	fix-weak	blue	false	false	fix-weak	p1%2327	false	1
+O	8	fix-weak	blue	false	false	fix-weak	p1%2326	false	1
+O	9	fix-basic-1	blue	false	false	fix-basic-1	p1%2319	false	1
+O	10	fix-attacker	blue	false	false	fix-attacker	p1%232	false	1
+O	11	fix-basic-1	blue	false	false	fix-basic-1	p1%2318	false	1
+O	12	fix-attacker	blue	false	false	fix-attacker	p1%2310	false	1
+O	13	fix-attacker	blue	false	false	fix-attacker	p1%235	false	1
+O	14	fix-basic-1	blue	false	false	fix-basic-1	p1%2316	false	1
+O	15	fix-attacker	blue	false	false	fix-attacker	p1%239	false	1
+O	16	fix-victim	blue	false	false	fix-victim	p1%2324	false	1
+O	17	fix-attacker	blue	false	false	fix-attacker	p1%237	false	1
+O	18	fix-wall	blue	false	false	fix-wall	p1%2328	false	1
+O	19	fix-basic-1	blue	false	false	fix-basic-1	p1%2312	false	1
+O	20	fix-victim	blue	false	false	fix-victim	p1%2325	false	1
+O	21	fix-wall	blue	false	false	fix-wall	p1%2329	false	1
+O	22	fix-attacker	blue	false	false	fix-attacker	p1%233	false	1
+O	23	fix-attacker	blue	false	false	fix-attacker	p1%230	false	1
+F	24	Undo	red	false	false			false	1
+F	25	0%2F1	blue	false	false			false	1
 I	sv01-167	Trainer	Stadium							The%20Retreat%20Cost%20of%20each%20Basic%20Pok%C3%A9mon%20in%20play%20(both%20yours%20and%20your%20opponent's)%20is%20%7BC%7D%20less.				Beach%20Court
 I	fix-attacker	Pokemon		Basic	120	Fire	1					Bite%1FColorless%1F30%1F%1EFlame%1FFire%2CColorless%1F60%1F%1EYawn%1F%1F%1FYour%20opponent's%20Active%20Pok%C3%A9mon%20is%20now%20Asleep.%1ERage%1FColorless%1F10%2B%1FThis%20attack%20does%2010%20more%20damage%20for%20each%20damage%20counter%20on%20this%20Pok%C3%A9mon.%1EFury%1FColorless%1F%1FThis%20attack%20does%2020%20more%20damage%20for%20each%20damage%20counter%20on%20this%20Pok%C3%A9mon.%1EBounty%1FColorless%1F40%2B%1FThis%20attack%20does%2050%20more%20damage%20for%20each%20Prize%20card%20your%20opponent%20has%20taken.		fix-attacker
 I	sv01-197	Trainer	Tool							The%20attacks%20of%20the%20Pok%C3%A9mon%20this%20card%20is%20attached%20to%20do%2010%20more%20damage...				sv01-197

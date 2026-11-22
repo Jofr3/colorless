@@ -10,7 +10,7 @@ local cardKey,groupLabel=Shared.cardKey,Shared.groupLabel
 function Simulator:closeOverlay(fromBack)
   if not self.overlay then return end
   local kind=self.overlay.kind
-  self.overlay:release();self.overlay=nil
+  self.overlay:release();self.overlay=nil;self.peek=false
   if fromBack and self.menu and kind==self.menu.kind and not self.menu.mandatory then self:command('dismiss') end
   self:build()
 end
@@ -55,7 +55,7 @@ end
 function Simulator:rematchPending() return self.rematchSent or self.flags['rematch-sent'] or false end
 function Simulator:openOptions()
   if self.overlay then self.overlay:release() end
-  self.highlight=nil;self.luaTargeting=nil
+  self.peek=false;self.highlight=nil;self.luaTargeting=nil
   self.overlay=Overlay.new(self,'options',{title='Options',mandatory=false})
   if self.callbacks.jiggle then self.callbacks.jiggle(1) end
   self:build()
@@ -63,6 +63,7 @@ end
 function Simulator:openInspect(card)
   if not card or card.item.hidden then return end
   if self.overlay then self.overlay:release() end
+  self.peek=false
   local actions={}
   for _,a in ipairs(self.cardActions[card.item.id] or {}) do
     if a.group=='' or a.targetUid=='' then actions[#actions+1]={label=a.label,colour=a.colour,token=a.token,disabled=a.disabled} end
@@ -104,8 +105,14 @@ end
 function Simulator:mousepressed(x,y)
   if self.koPresentation or self.counterMotion then return end
   x,y=self:point(x,y);self.focus=0;self.focusCard=nil;self.focusKey=nil
-  if self.peek then self.peek=false;return end
+  if self.peek then
+    if self.overlay and self.overlay:hasPeek() then
+      self.pressedOverlay=self.overlay:hitPeek(x,y) and 'peek' or 0
+    else self.peek=false end
+    return
+  end
   if self.overlay then
+    if self.overlay:hasPeek() and self.overlay:hitPeek(x,y) then self.pressedOverlay='peek';return end
     self.pressedOverlay=self.overlay:press(x,y);return
   end
   self.pressed=self:hit(x,y)
@@ -126,7 +133,11 @@ function Simulator:mousereleased(x,y)
   if self.koPresentation or self.counterMotion then return end
   x,y=self:point(x,y)
   if self.overlay then
-    if self.pressedOverlay and self.pressedOverlay>0 and self.pressedOverlay==self.overlay:hit(x,y) then self.overlay:activate(self.pressedOverlay) end
+    if self.pressedOverlay=='peek' then
+      if self.overlay:hasPeek() and self.overlay:hitPeek(x,y) then self.overlay:togglePeek() end
+    elseif self.pressedOverlay and self.pressedOverlay>0 and self.pressedOverlay==self.overlay:hit(x,y) then
+      self.overlay:activate(self.pressedOverlay)
+    end
     self.pressedOverlay=nil;return
   end
   if self.pressed and self.pressed>0 then
@@ -175,7 +186,12 @@ function Simulator:mousereleased(x,y)
 end
 function Simulator:keypressed(key)
   if self.koPresentation or self.counterMotion then return end
-  if self.peek then self.peek=false;return end
+  if self.peek then
+    if self.overlay and self.overlay:hasPeek() then
+      if key=='escape' or key=='return' or key=='space' then self.overlay:togglePeek() end
+    else self.peek=false end
+    return
+  end
   if self.overlay then self.overlay:keypressed(key);return end
   if key=='escape' then
     if self.drag then
@@ -212,6 +228,6 @@ function Simulator:keypressed(key)
   end
 end
 function Simulator:wheelmoved(y)
-  if self.overlay then self.overlay:wheelmoved(y) end
+  if self.overlay and not self.peek then self.overlay:wheelmoved(y) end
 end
 return Simulator

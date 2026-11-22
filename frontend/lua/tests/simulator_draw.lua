@@ -54,7 +54,7 @@ local function snapshot(rev,extraRows,head)
   return table.concat(out,'\n')
 end
 local function frames(n,start)
-  for i=1,n do sim:update(1/60,(start or 0)+i/60,sim.mx or -100,sim.my or -100,false);sim:draw(shaders) end
+  for i=1,n do sim:update(1/60,(start or 0)+i/60,sim.mx or -100,sim.my or -100,sim.reduced or false);sim:draw(shaders) end
 end
 local function at(x,y) sim.mx,sim.my=x,y;sim:update(1/60,sim.time+1/60,x,y,false);sim:draw(shaders) end
 for _,size in ipairs({{1280,800},{480,850}}) do
@@ -278,7 +278,10 @@ for _,p in ipairs(sim.piles) do
   else assert(p:raster()==142,'The deck keeps the back atlas raster') end
 end
 assert(discard>0,'The table has a discard pile')
-sim:sync(snapshot(41,{row('M','pile','Your discard pile','3 cards.','false','m5'),row('O','16','Switch','blue','true','false','sv01-194','d1')}));frames(5,41)
+sim:sync(snapshot(41,{row('M','pile','Your discard pile','3 cards.','false','m5'),
+  row('H','15a','Group cards','green','false','true','','','false','1'),
+  row('H','15b','Order: Card type','blue','false','false','','','false','1'),
+  row('O','16','Switch','blue','true','false','sv01-194','d1','false','3')}));frames(5,41)
 assert(sim.overlay and #sim.overlay.cards>0,'An overlay shows cards')
 for _,c in ipairs(sim.overlay.cards) do quality(c,'overlay '..c.item.id) end
 print('PASS: Card Quality reaches every table card but the deck back')
@@ -298,3 +301,320 @@ for _,line in ipairs(printed) do asked=asked or line=='COLORLESS:art-full:'..sho
 assert(asked,'It asks for its full scan')
 Card.quality=D.QUALITIES[1]
 print('PASS: the inspector zooms the full scan under Quality')
+
+-- Grouped card tray: real stacked card layers, no active header outlines, no fake
+-- panel backs/pills, and under-card count labels inside the viewport clearing row 2.
+do
+  local Button=require('ui.button')
+  local savedFont=T.font
+  local font200={
+    getWidth=function(_,s) return #tostring(s)*80 end,
+    getHeight=function() return 200 end,
+    setFilter=function() end,
+    getWrap=function(_,s,w)
+      local lines,line={},''
+      for word in tostring(s):gmatch('%S+') do
+        local next=line=='' and word or line..' '..word
+        if #next*80>w and line~='' then lines[#lines+1]=line;line=word else line=next end
+      end
+      if line~='' then lines[#lines+1]=line end
+      return #tostring(s)*80,lines
+    end,
+  }
+  T.font=function(size) return size==200 and font200 or savedFont(size) end
+
+  local function cardHalfExtents(c)
+    local s=c.baseScale*c.motion.VT.scale
+    local hw=s*(D.W*math.abs(math.cos(c.angle))+D.H*math.abs(math.sin(c.angle)))/2
+    local hh=s*(D.H*math.abs(math.cos(c.angle))+D.W*math.abs(math.sin(c.angle)))/2
+    return hw,hh
+  end
+
+  local groupOptions={
+    {label='Fuecoco',cardId='sv01-036',disabled=false,count=1},
+    {label='Growlithe',cardId='sv01-030',disabled=false,count=2},
+    {label='Houndour',cardId='sv01-033',disabled=false,count=3},
+    {label='Fire Energy',cardId='sv03-230',disabled=false,count=4},
+    {label='Switch',cardId='sv01-194',disabled=true,count=3},
+    {label='Nest Ball',cardId='sv01-181',disabled=false,count=2},
+    {label='Beach Court',cardId='sv01-167',disabled=false,count=4},
+    {label='Quaxly',cardId='sv01-052',disabled=false,count=1},
+    {label='Professor\'s Research',cardId='sv01-189',disabled=false,count=3},
+    {label='Psychic Energy',cardId='sve-005',disabled=false,count=4},
+  }
+  local expectedNormalDraws={[1]=2,[2]=4,[3]=5,[4]=6}
+  local wrappedKeys={'push','pop','translate','scale','rotate','draw','print','printf','setColor','setFont'}
+
+  for layoutIdx,size in ipairs({{1280,800},{480,850}}) do
+    local tag=size[1]..'x'..size[2]
+    sim:layout(size[1],size[2]);sim:open(false)
+    sim.mx,sim.my=-100,-100
+    local rows={
+      row('M','cards','Choose cards (0/2)','Pick cards.','false','grouped-tray-'..tag),
+      row('H','gh1','Group cards','green','false','true','','','false','1'),
+      row('H','gh2','Order: Card type','blue','false','false','','','false','1'),
+      row('F','gf1','Confirm','blue','false','false','','','false','1'),
+    }
+    for i,opt in ipairs(groupOptions) do
+      rows[#rows+1]=row('O','go'..i,opt.label,'blue',opt.disabled and 'true' or 'false','false',opt.cardId,'gu'..i,'false',tostring(opt.count))
+    end
+    sim:sync(snapshot(50+layoutIdx,rows))
+    sim.reduced=true;frames(5,50+layoutIdx)
+
+    local overlay=sim.overlay
+    assert(overlay and overlay.kind=='cards',tag..' opens cards overlay')
+    assert(overlay.cardColumns==5 and overlay.cardRows==2 and overlay.pages==1 and #overlay.cards==10,
+      tag..' lays out a single 5x2 page of 10 cards')
+    local header1,header2=overlay.controls[1],overlay.controls[2]
+    assert(header1 and header1.headerIndex==1 and header1.selected==true,tag..' active header button is selected')
+    assert(header2 and header2.headerIndex==2 and not header2.selected,tag..' inactive header button is unselected')
+
+    local savedG={}
+    for _,k in ipairs(wrappedKeys) do savedG[k]=rawget(g,k) end
+    local origOutline,origPanel=Button.outline,Button.panel
+
+    local m={a=1,b=0,c=0,d=1,tx=0,ty=0}
+    local stack={}
+    local currentColor={1,1,1,1}
+    local currentFont=nil
+    local cardByTexture={}
+    for _,c in ipairs(overlay.cards) do cardByTexture[c.texture]=c end
+    local draws,prints,printsByCard,printfs={},{},{},{}
+    local outlineCalls,panelCalls=0,0
+    local lastCard=nil
+
+    local function pt(x,y) return m.a*x+m.c*y+m.tx,m.b*x+m.d*y+m.ty end
+    g.push=function(...)
+      stack[#stack+1]={a=m.a,b=m.b,c=m.c,d=m.d,tx=m.tx,ty=m.ty}
+      if savedG.push then return savedG.push(...) end
+    end
+    g.pop=function(...)
+      m=table.remove(stack) or {a=1,b=0,c=0,d=1,tx=0,ty=0}
+      if savedG.pop then return savedG.pop(...) end
+    end
+    g.translate=function(dx,dy,...)
+      m.tx=m.tx+m.a*dx+m.c*dy
+      m.ty=m.ty+m.b*dx+m.d*dy
+      if savedG.translate then return savedG.translate(dx,dy,...) end
+    end
+    g.scale=function(sx,sy,...)
+      sy=sy or sx
+      m.a,m.b=m.a*sx,m.b*sx
+      m.c,m.d=m.c*sy,m.d*sy
+      if savedG.scale then return savedG.scale(sx,sy,...) end
+    end
+    g.rotate=function(r,...)
+      local cs,sn=math.cos(r),math.sin(r)
+      local a,b,c,d=m.a,m.b,m.c,m.d
+      m.a,m.b=a*cs+c*sn,b*cs+d*sn
+      m.c,m.d=-a*sn+c*cs,-b*sn+d*cs
+      if savedG.rotate then return savedG.rotate(r,...) end
+    end
+    g.setColor=function(r,gr,b,a,...)
+      if type(r)=='table' then currentColor={r[1],r[2],r[3],r[4] or 1}
+      else currentColor={r,gr,b,a or 1} end
+      if savedG.setColor then return savedG.setColor(r,gr,b,a,...) end
+    end
+    g.setFont=function(f,...)
+      currentFont=f
+      if savedG.setFont then return savedG.setFont(f,...) end
+    end
+    g.draw=function(drawable,x,y,r,sx,sy,...)
+      local wx,wy=pt(x or 0,y or 0)
+      local list=draws[drawable]
+      if not list then list={};draws[drawable]=list end
+      list[#list+1]={x=wx,y=wy,r=r or 0,sx=sx,sy=sy,color={currentColor[1],currentColor[2],currentColor[3],currentColor[4]}}
+      if cardByTexture[drawable] then lastCard=cardByTexture[drawable] end
+      if savedG.draw then return savedG.draw(drawable,x,y,r,sx,sy,...) end
+    end
+    g.print=function(text,x,y,r,sx,sy,...)
+      local wx,wy=pt(x or 0,y or 0)
+      local ex=(sx or 1)*math.sqrt(m.a*m.a+m.b*m.b)
+      local ey=(sy or sx or 1)*math.sqrt(m.c*m.c+m.d*m.d)
+      local f=currentFont or T.font(200)
+      local rec={text=tostring(text),x=wx,y=wy,w=f:getWidth(text)*ex,h=f:getHeight()*ey,card=lastCard}
+      prints[#prints+1]=rec
+      if lastCard then
+        local list=printsByCard[lastCard]
+        if not list then list={};printsByCard[lastCard]=list end
+        list[#list+1]=rec
+      end
+      if savedG.print then return savedG.print(text,x,y,r,sx,sy,...) end
+    end
+    g.printf=function(text,...)
+      printfs[#printfs+1]=tostring(text)
+      if savedG.printf then return savedG.printf(text,...) end
+    end
+    Button.outline=function(...) outlineCalls=outlineCalls+1;return origOutline(...) end
+    Button.panel=function(...) panelCalls=panelCalls+1;return origPanel(...) end
+
+    overlay:draw(shaders)
+
+    for _,k in ipairs(wrappedKeys) do g[k]=savedG[k] end
+    Button.outline,Button.panel=origOutline,origPanel
+
+    assert(header1.selected==true and outlineCalls==0,tag..' draws no outline on active header buttons')
+    assert(panelCalls==5,tag..' draws only 5 panels (modal frame + viewport inset), got '..panelCalls)
+    for _,s in ipairs(printfs) do
+      assert(s~='x2' and s~='x3' and s~='x4',tag..' never draws stack counts via g.printf: '..s)
+    end
+
+    local groupedCards=0
+    local v=overlay.viewport
+    for idx,c in ipairs(overlay.cards) do
+      local count=c.item.count or 1
+      local cd=draws[c.texture] or {}
+      assert(not c.greyed,tag..' card '..idx..' stays opaque (not translucent greyed)')
+      assert(#cd==expectedNormalDraws[count],
+        tag..' card '..idx..' (count '..count..') draws '..expectedNormalDraws[count]..' times, got '..#cd)
+      if c.tint then
+        assert(c.tint[4]==1,tag..' disabled card '..idx..' uses opaque tint')
+        for layer=2,3 do
+          assert(math.abs(cd[layer].x-c.x)>0.5 and math.abs(cd[layer].y-c.y)>0.5,
+            tag..' disabled back layer '..(layer-1)..' is offset from card centre')
+        end
+        assert(math.abs(cd[#cd].x-c.x)<0.01 and math.abs(cd[#cd].y-c.y)<0.01,
+          tag..' disabled face draws at card centre')
+      end
+
+      local cp=printsByCard[c] or {}
+      if count==1 then
+        assert(#cp==0,tag..' count=1 card draws no count label')
+      else
+        groupedCards=groupedCards+1
+        assert(#cp==1 and cp[1].text=='x'..count,
+          tag..' card '..idx..' draws single count label x'..count)
+        local lbl=cp[1]
+        local _,hh=cardHalfExtents(c)
+        assert(lbl.w>0 and lbl.h>0,tag..' count label for card '..idx..' has positive 200px metrics')
+        assert(lbl.y>=c.y+hh,tag..' count label for card '..idx..' sits below card bottom')
+        assert(lbl.x>c.x and lbl.x+lbl.w<=c.x+D.HALF_W*c.baseScale,
+          tag..' count label for card '..idx..' is right-aligned under the card')
+        assert(lbl.x>=v.x and lbl.x+lbl.w<=v.x+v.w and lbl.y>=v.y and lbl.y+lbl.h<=v.y+v.h,
+          tag..' count label for card '..idx..' stays strictly inside overlay viewport')
+      end
+    end
+    assert(#prints==groupedCards,tag..' records exactly one g.print per grouped card')
+
+    for col=1,5 do
+      local c1,c2=overlay.cards[col],overlay.cards[col+5]
+      if (c1.item.count or 1)>1 then
+        local lbl=printsByCard[c1][1]
+        local _,hh2=cardHalfExtents(c2)
+        assert(lbl.y+lbl.h<=c2.y-hh2,
+          tag..' row-1 count label at col '..col..' clears row-2 card below it')
+      end
+    end
+  end
+
+  sim.reduced=false
+  T.font=savedFont
+  print('PASS: grouped card trays stack real cards, omit header outlines, and clear row 2 in both layouts')
+end
+
+-- Floating modal-visibility peek toggle on cards overlays across both layouts.
+do
+  local Button=require('ui.button')
+  local function screen(x,y) return x*sim.zoom+sim.ox,y*sim.zoom+sim.oy end
+  local function clickBoard(x,y)
+    local sx,sy=screen(x,y)
+    sim:update(1/60,sim.time+1/60,sx,sy,sim.reduced)
+    sim:mousepressed(sx,sy)
+    sim:mousereleased(sx,sy)
+  end
+
+  local commands=0
+  local origCommand=sim.callbacks.command
+  sim.callbacks.command=function(...) commands=commands+1;return origCommand(...) end
+
+  for idx,size in ipairs({{1280,800},{480,850}}) do
+    local tag=size[1]..'x'..size[2]
+    local portrait=size[1]<size[2]
+    local baseRev=60+idx*10
+    sim:layout(size[1],size[2]);sim:open(false)
+    sim.reduced=true
+    sim:sync(snapshot(baseRev,{
+      row('M','cards','Choose cards (0/1)','Pick a card.','true','peek-'..tag),
+      row('O','201','Fuecoco','blue','false','false','sv01-036','pk1'),
+      row('O','202','Growlithe','blue','false','false','sv01-030','pk2'),
+      row('F','203','Confirm','blue','false','false','',''),
+    }))
+    frames(5,baseRev)
+
+    local overlay=sim.overlay
+    assert(overlay and overlay.kind=='cards',tag..' opens cards overlay')
+    assert(overlay:hasPeek(),tag..' cards overlay has peek toggle')
+    local f,b=overlay.peekFrame,overlay.peekControl
+    assert(f and f.w==68 and f.h==68,tag..' peekFrame is 68x68')
+    assert(b and b.w==50 and b.h==50 and b.x==f.x+9 and b.y==f.y+9,tag..' peekControl is 50x50 centered inside peekFrame')
+    if not portrait then
+      assert(f.x==overlay.x+overlay.w+10 and f.y==overlay.y and f.x+f.w<=sim.boardW,
+        tag..' landscape peekFrame sits beside top-right corner on-board')
+    else
+      assert(f.x==overlay.x+overlay.w-f.w and f.y==overlay.y-f.h-8 and f.y>=8,
+        tag..' portrait peekFrame sits directly above top-right corner on-board')
+    end
+
+    assert(not sim.peek,tag..' starts with peek disabled')
+    local origPanel=Button.panel
+    local panelCalls=0
+    Button.panel=function(...) panelCalls=panelCalls+1;return origPanel(...) end
+    overlay:drawPeek()
+    Button.panel=origPanel
+    assert(b.icon=='eye_open' and b.colour==T.profile,tag..' drawPeek shows eye_open in profile colour when not peeking')
+    assert(panelCalls==3,tag..' drawPeek draws modalFrameRaised via 3 Button.panel calls, got '..panelCalls)
+
+    local drawCalls,peekDrawCalls=0,0
+    local origDraw,origDrawPeek=overlay.draw,overlay.drawPeek
+    overlay.draw=function(self,...) drawCalls=drawCalls+1;return origDraw(self,...) end
+    overlay.drawPeek=function(self,...) peekDrawCalls=peekDrawCalls+1;return origDrawPeek(self,...) end
+    sim:draw(shaders)
+    assert(drawCalls==1 and peekDrawCalls==1,tag..' sim:draw draws both overlay and peek toggle when not peeking')
+
+    clickBoard(b.x+b.w/2,b.y+b.h/2+overlay:offset())
+    assert(sim.peek==true,tag..' clicking peek button enables peek')
+    drawCalls,peekDrawCalls=0,0
+    sim:draw(shaders)
+    assert(drawCalls==0 and peekDrawCalls==1,tag..' sim:draw skips overlay:draw but still calls drawPeek while peeking')
+    assert(b.icon=='eye_closed' and b.colour==T.orange,tag..' drawPeek switches to eye_closed in orange while peeking')
+
+    local boardCard=assert(sim.cards[1],tag..' has a board card')
+    local csx,csy=screen(boardCard.x,boardCard.y)
+    sim:update(1/60,sim.time+1/60,csx,csy,sim.reduced)
+    assert(sim.hoverCard==boardCard and sim.popup==boardCard and sim.popupBox,tag..' hovering a board card while peeking sets hoverCard and popup')
+
+    commands=0
+    clickBoard(boardCard.x,boardCard.y)
+    assert(sim.highlight==nil and sim.peek==true and commands==0,tag..' clicking a board card while peeking does not highlight or fire commands')
+    local sidebarBtn=assert(sim.controls[1],tag..' has a sidebar control')
+    clickBoard(sidebarBtn.x+sidebarBtn.w/2,sidebarBtn.y+sidebarBtn.h/2)
+    assert(sim.highlight==nil and sim.peek==true and commands==0,tag..' clicking a sidebar control while peeking does not fire commands')
+
+    clickBoard(b.x+b.w/2,b.y+b.h/2+overlay:offset())
+    assert(sim.peek==false,tag..' clicking peek button again disables peek')
+
+    clickBoard(b.x+b.w/2,b.y+b.h/2+overlay:offset())
+    assert(sim.peek==true,tag..' clicking peek button re-enables peek')
+    sim:keypressed('escape')
+    assert(sim.peek==false,tag..' pressing escape while peeking restores peek=false')
+
+    clickBoard(b.x+b.w/2,b.y+b.h/2+overlay:offset())
+    assert(sim.peek==true,tag..' peek enabled before closing overlay')
+    overlay.draw,overlay.drawPeek=origDraw,origDrawPeek
+    sim:sync(snapshot(baseRev+1))
+    assert(sim.overlay==nil and sim.peek==false,tag..' closing overlay resets sim.peek to false')
+
+    sim:sync(snapshot(baseRev+2,{
+      row('M','pile','Your discard pile','2 cards.','false','pile-peek-'..tag),
+      row('O','211','Switch','blue','true','false','sv01-194','pd1'),
+      row('O','212','Potion','blue','true','false','sv01-188','pd2'),
+    }))
+    frames(5,baseRev+2)
+    assert(sim.overlay and sim.overlay.kind=='pile',tag..' opens pile overlay')
+    assert(not sim.overlay:hasPeek() and sim.overlay.peekFrame==nil,tag..' pile overlay has no peek toggle or peekFrame')
+  end
+
+  sim.reduced=false
+  sim.callbacks.command=origCommand
+  print('PASS: floating peek toggle placement, wrapper, icon state, and board inspection in both layouts')
+end

@@ -42,7 +42,7 @@ function Simulator:open(reduced,skipCommand,mode,code)
   self.prizeMotion={}
   self.rareCandy=nil
   self.counterMotion=nil;self.completedCounterTransfer=nil
-  self.reduced=reduced;self.drag=nil;self.focus=0;self.focusKey=nil;self.focusCard=nil;self.raw=nil;self.previous=nil;self.highlight=nil;self.hoverCard=nil;self.targeting=nil;self.luaTargeting=nil
+  self.reduced=reduced;self.drag=nil;self.focus=0;self.focusKey=nil;self.focusCard=nil;self.raw=nil;self.previous=nil;self.highlight=nil;self.hoverCard=nil;self.targeting=nil;self.luaTargeting=nil;self.peek=false
   if self.overlay then self.overlay:release();self.overlay=nil end
   -- Forget the last game so a reopened page never diffs against it.
   for _,c in ipairs(self.cards) do c.texture:release() end
@@ -114,10 +114,16 @@ function Simulator:update(dt,time,mx,my,reduced)
     if reduced or self.closingPopup.motion.VT.y>=0.96 then self.closingPopup=nil end
   end
   self:updateCounterMotion(time,reduced)
+  local peeking=self.overlay and self.peek
   local blocked=self.koPresentation or self.counterMotion or (self.overlay and not self.peek)
-  if self.overlay then self.overlay:update(dt,time,blocked and mx or -1000,blocked and my or -1000,reduced) end
-  self.hover=blocked and 0 or self:hit(mx,my)
-  local hovered=(not blocked and self.hover==0) and self:cardHit(mx,my) or nil
+  local boardControlsBlocked=blocked or peeking
+  if self.overlay then
+    local overlayPointer=blocked or (peeking and self.overlay:hasPeek())
+    self.overlay:update(dt,time,overlayPointer and mx or -1000,overlayPointer and my or -1000,reduced)
+  end
+  self.hover=boardControlsBlocked and 0 or self:hit(mx,my)
+  local overPeek=peeking and self.overlay:hasPeek() and self.overlay.peekHovered
+  local hovered=(not blocked and self.hover==0 and not overPeek) and self:cardHit(mx,my) or nil
   if self.drag then
     local d=self.drag
     if not d.moved and (mx-d.x)^2+(my-d.y)^2>36 then d.moved=true;d.card.dragging=true;self.callbacks.feedback('cardSlide1',0.95);self.highlight=nil;self:build() end
@@ -130,8 +136,8 @@ function Simulator:update(dt,time,mx,my,reduced)
   self.hoverCard=hovered
   -- Keyboard focus shows only while the pointer is over no control or card.
   local pointed=self.hover>0 or hovered~=nil
-  local focusedControl=not blocked and not pointed and self.controls[self.focus] or nil
-  self.tooltip:update(dt,self:tooltipTarget(blocked,pointed,mx,my),reduced,self.controls,self.cards)
+  local focusedControl=not boardControlsBlocked and not pointed and self.controls[self.focus] or nil
+  self.tooltip:update(dt,self:tooltipTarget(boardControlsBlocked,pointed,mx,my),reduced,self.controls,self.cards)
   for _,c in ipairs(self.cards) do
     local focused=not blocked and not pointed and self.focusCard==c
     local active=(not blocked and c==hovered) or focused
@@ -204,7 +210,7 @@ function Simulator:update(dt,time,mx,my,reduced)
   end
   local control=self.controls[self.hover]
   for _,p in ipairs(self.piles) do
-    local active=not blocked and not self.drag and not hovered and (
+    local active=not boardControlsBlocked and not self.drag and not hovered and (
       (self.hover==0 and p:hit(mx,my)) or
       (control and control.action=='pile' and control.owner==p.owner and p.item.kind=='discard') or
       (focusedControl and focusedControl.action=='pile' and focusedControl.owner==p.owner and p.item.kind=='discard'))
@@ -215,7 +221,7 @@ function Simulator:update(dt,time,mx,my,reduced)
     p:update(dt,time,active,reduced,self.boardW)
   end
   local _,_,prizeStop=self:stopAt(self.focus)
-  self:updatePrizes(dt,time,mx,my,reduced,blocked,not pointed and prizeStop and prizeStop.slot)
+  self:updatePrizes(dt,time,mx,my,reduced,boardControlsBlocked,not pointed and prizeStop and prizeStop.slot)
   -- Hover popup (card_h_popup) for face-up cards with catalogue info, and for
   -- the keyboard's card while the pointer rests elsewhere.
   self.popup=nil

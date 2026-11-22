@@ -31,6 +31,36 @@ function Labels.counter(count,limit,scale)
   for _,node in ipairs(nodes) do node.x,node.y=x,y; x=x+node.w+0.03 end
   return nodes,y+nodes[1].h+0.03
 end
+local function layoutCounter(values,scale)
+  scale=scale or 0.3
+  local nodes={}
+  local width=0.2+(#values+3)*0.03
+  for _,text in ipairs(values) do
+    local w,h=metric(text,scale)
+    nodes[#nodes+1]={text=text,w=w,h=h,scale=scale}
+    width=width+w
+  end
+  local areaWidth=1.1*CARD_W
+  local rowWidth=math.max(areaWidth,width)
+  local x=-rowWidth/2+rowWidth-width+0.03+0.1+0.03
+  local y=0.95*CARD_H/2+0.03
+  for _,node in ipairs(nodes) do node.x,node.y=x,y; x=x+node.w+0.03 end
+  return nodes,y+nodes[1].h+0.03
+end
+function Labels.scaleFor(unit,cssPerUnit,minScale)
+  local scale=Display.phone() and math.max(0.3,Display.MIN_TEXT_CSS/(unit*(cssPerUnit or Display.collection))) or 0.3
+  if minScale then scale=math.max(scale,minScale) end
+  return scale
+end
+function Labels.stackCounter(count,scale)
+  return layoutCounter({'x'..tostring(count)},scale)
+end
+function Labels.stackDrop(unit,gapTiles,cssPerUnit)
+  local scale=Labels.scaleFor(unit,cssPerUnit or Display.scale)
+  local _,h=metric('x4',scale)
+  h=math.max(h,scale*0.83)
+  return ((gapTiles or 0.08)+0.03+h+0.03)*unit
+end
 function Labels.hover()
   local nodes={}
   local width,height=0,0
@@ -47,7 +77,7 @@ function Labels.hover()
   for _,node in ipairs(nodes) do node.x,node.y=-node.w/2,y; y=y+node.h+0.05 end
   return nodes,width,height
 end
-local function text(node,unit,shadow,parallax)
+local function text(node,unit,shadow,parallax,colour)
   local factor=node.scale*0.1/20*unit
   local x,y=node.x*unit,node.y*unit
   g.setFont(T.font(200))
@@ -59,7 +89,7 @@ local function text(node,unit,shadow,parallax)
       -node.h*unit/2-20*factor+1.5*unit/40,0,factor,factor)
     g.pop()
   end
-  g.setColor(T.white)
+  g.setColor(colour or T.white)
   g.print(node.text,x+10*factor,y-20*factor,0,factor,factor)
 end
 local function drawCounter(card,count,limit)
@@ -80,6 +110,18 @@ function Labels.drawCounter(card)
 end
 function Labels.drawQuantity(card)
   return drawCounter(card,card.item.quantity,card.item.copyLimit or 4)
+end
+function Labels.drawStackCount(card,opts)
+  opts=opts or {}
+  local count=opts.count or (card.item and card.item.count) or 1
+  if count<=1 then return end
+  local scale=Labels.scaleFor(card.unit,opts.cssPerUnit or Display.scale,opts.minScale or card.counterScale)
+  local nodes,bottom=Labels.stackCounter(count,scale)
+  local gap=(opts.gapTiles or 0.08)*card.unit
+  g.push(); g.translate(card.homeX,card.homeY+gap)
+  for _,node in ipairs(nodes) do text(node,card.unit,false,nil,opts.colour) end
+  g.pop()
+  return card.homeY+gap+bottom*card.unit
 end
 function Labels.drawHover(card)
   if not card.hovered or card.dragging then return end

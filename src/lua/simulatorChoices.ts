@@ -1,5 +1,6 @@
 import type { EffectChoice, GameAction, PokemonRef } from "@colorless/engine";
 import type { RedactedEffectPrompt, RedactedCard, RedactedGame } from "@colorless/schema";
+import { applyTrayView, defaultTrayView, type TrayViewState } from "./simulatorTray";
 import type { SimMenu, SimOption, ThemeColour } from "./simulatorTypes";
 
 /** What an effect menu reads and rewrites as its picks change. */
@@ -8,6 +9,8 @@ export interface MenuHost {
   action(label: string, action: GameAction, colour?: ThemeColour): SimOption;
   menu: SimMenu | null;
   emit(): void;
+  trayView?: TrayViewState;
+  energyTypeOf?: (cardId: string) => string | null | undefined;
 }
 
 type PromptKind = RedactedEffectPrompt["kind"];
@@ -24,6 +27,8 @@ interface MenuState {
 
 interface MenuContext {
   state: MenuState;
+  trayView: TrayViewState;
+  energyTypeOf?: (cardId: string) => string | null | undefined;
   placingCounters: boolean;
   invokedBy: string | undefined;
   abilityName: string | undefined;
@@ -195,7 +200,7 @@ const chooseCards: MenuBuilder<PromptOf<"chooseCards" | "orderCards">> = (menu, 
   menu.kind = "cards";
   menu.title = prompt.kind === "orderCards" ? "Choose card order" : "";
   if (prompt.kind === "chooseCards") menu.note = undefined;
-  menu.options = prompt.candidates.map((c) =>
+  const options = prompt.candidates.map((c) =>
     ctx.pick(
       c.id,
       `${prompt.kind === "orderCards" && selected.includes(c.id) ? `${selected.indexOf(c.id) + 1}. ` : ""}${c.name}`,
@@ -203,6 +208,18 @@ const chooseCards: MenuBuilder<PromptOf<"chooseCards" | "orderCards">> = (menu, 
       c.id,
     ),
   );
+  if (prompt.kind === "chooseCards") {
+    const view = applyTrayView(options, {
+      view: ctx.trayView,
+      pool: prompt.pool,
+      onChange: ctx.refresh,
+      energyTypeOf: ctx.energyTypeOf,
+    });
+    menu.header = view.header;
+    menu.options = view.options;
+  } else {
+    menu.options = options;
+  }
   menu.footer = [
     ctx.confirm(
       {
@@ -222,9 +239,17 @@ const discardAttached: MenuBuilder<PromptOf<"discardEnergy" | "discardTools">> =
   const { card, refName } = ctx;
   menu.kind = "cards";
   menu.title = prompt.kind === "discardTools" ? "Discard Tools" : "Discard Energy";
-  menu.options = prompt.discardable.map((c) =>
+  const options = prompt.discardable.map((c) =>
     ctx.pick(c.uid, `${card(c.uid)?.name ?? "Card"} — ${refName(c.from)}`, card(c.uid), c.uid),
   );
+  const view = applyTrayView(options, {
+    view: ctx.trayView,
+    onChange: ctx.refresh,
+    energyTypeOf: ctx.energyTypeOf,
+    groupKeyOf: (o) => o.label,
+  });
+  menu.header = view.header;
+  menu.options = view.options;
   menu.footer = [ctx.confirm({ kind: prompt.kind, uids: [...ctx.state.selected] })];
 };
 
@@ -238,7 +263,7 @@ const assignCards: MenuBuilder<PromptOf<"attachCards" | "moveEnergy">> = (menu, 
   menu.kind = "cards";
   menu.title = prompt.kind === "attachCards" ? "Attach cards" : "Move Energy";
   menu.note = `${prompt.note ?? ""}\nClick each card to cycle its destination; unselected cards stay put.`;
-  menu.options = cards.map((c) => {
+  const options = cards.map((c) => {
     const to = targets[assignments.get(c.id) ?? -1];
     return {
       label: `${c.name}: ${to ? ctx.refName(to) : "stays"}`,
@@ -262,6 +287,19 @@ const assignCards: MenuBuilder<PromptOf<"attachCards" | "moveEnergy">> = (menu, 
       },
     };
   });
+  const sourceByUid =
+    prompt.kind === "moveEnergy"
+      ? new Map(prompt.movable.map((m) => [m.uid, ctx.refUid(m.from)]))
+      : undefined;
+  const view = applyTrayView(options, {
+    view: ctx.trayView,
+    pool: prompt.kind === "attachCards" ? prompt.pool : undefined,
+    onChange: ctx.refresh,
+    energyTypeOf: ctx.energyTypeOf,
+    groupKeyOf: sourceByUid ? (o) => sourceByUid.get(o.uid ?? "") ?? "" : undefined,
+  });
+  menu.header = view.header;
+  menu.options = view.options;
   const pairs = [...assignments].flatMap(([uid, i]) => {
     const to = targets[i];
     return to ? [{ uid, to }] : [];
@@ -371,8 +409,11 @@ export function effectMenu(
     }
     return next;
   };
+  const trayView = sim.trayView ?? defaultTrayView();
   const ctx: MenuContext = {
     state,
+    trayView,
+    energyTypeOf: sim.energyTypeOf,
     placingCounters,
     invokedBy: phase?.invokedBy,
     abilityName: phase?.abilityName,

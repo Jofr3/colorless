@@ -63,13 +63,14 @@ function parse.K(m,r) local k=W.cardAction
 end
 function parse.M(m,r) local n=W.menu
   m.menu={kind=r[n.kind],title=r[n.title],note=r[n.note],mandatory=r[n.mandatory]=='true',id=r[n.id] or r[n.title],hideTargetOutline=r[n.hideTargetOutline]=='true',
-    counterSourceUid=r[n.counterSourceUid] or '',counterTransfer=r[n.counterTransfer]=='true',options={},footer={}}
+    counterSourceUid=r[n.counterSourceUid] or '',counterTransfer=r[n.counterTransfer]=='true',header={},options={},footer={}}
 end
--- Options and footer buttons belong to the menu row before them.
+-- Header, option and footer rows belong to the menu row before them.
 local function option(list,r) local o=W.option
   list[#list+1]={token=r[o.token],label=r[o.label],colour=colour(r[o.colour]),disabled=r[o.disabled]=='true',selected=r[o.selected]=='true',
-    cardId=r[o.cardId] or '',uid=r[o.uid] or '',dimmed=r[o.dimmed]=='true'}
+    cardId=r[o.cardId] or '',uid=r[o.uid] or '',dimmed=r[o.dimmed]=='true',count=tonumber(r[o.count]) or 1}
 end
+function parse.H(m,r) if m.menu then option(m.menu.header,r) end end
 function parse.O(m,r) if m.menu then option(m.menu.options,r) end end
 function parse.F(m,r) if m.menu then option(m.menu.footer,r) end end
 -- Card text rows repeat in every snapshot, so their decoded fields are kept

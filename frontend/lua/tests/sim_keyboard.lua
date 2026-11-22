@@ -186,6 +186,36 @@ sim:sync(snapshot(10,{gamePhase='effect:choose',rows={row('M','cards','','','tru
 check(sim.overlay==tray and last()=='Fuecoco, selected, 1 of 2','A pick says its selection and count, got '..last())
 tray:keypressed('tab')
 check(last()=='Fuecoco, selected','Focus on a picked card says it is selected, got '..last())
+-- A tray with top actions places them above the viewport, keeps minimum width for 1 grouped
+-- card, isolates card hover from header hover, and announces grouped counts and header toggles.
+said={}
+sim:sync(snapshot(101,{gamePhase='effect:choose',hint='Search your deck.',rows={row('M','cards','','','true','search-hdr'),
+  row('H','40','Show all cards','profile','false','false','','','false','1'),
+  row('H','41','Group cards','green','false','true','','','false','1'),
+  row('H','42','Order: None','profile','false','false','','','false','1'),
+  row('O','43','Fuecoco','blue','false','false','sv01-036','d1','false','3'),
+  row('F','44','0/2','blue','true','false','','','false','1')}}));frames(1)
+local htray=sim.overlay
+check(htray.viewport.y==htray.y+66,'Header actions reserve 66px above the card viewport')
+check(htray.w>=460,'Three header actions keep a readable minimum modal width even with 1 grouped card')
+check(last()=='Search your deck. 3 cards.','Opening announcement sums grouped card counts, got '..last())
+local hdr1=htray.controls[1]
+check(hdr1.label=='Show all cards' and hdr1.y+hdr1.h<htray.viewport.y,'Header buttons sit above the card viewport')
+frames(30)
+htray:update(1/60,time+0.05,hdr1.x+hdr1.w/2,hdr1.y+hdr1.h/2,false)
+check(htray.hover==1 and not htray.cards[1].hovered,'Hovering header button 1 does not hover card 1')
+htray:keypressed('tab');check(last()=='Show all cards','Tab focuses header button 1, got '..last())
+htray:keypressed('tab');check(last()=='Group cards, selected','Tab focuses header button 2 with selected state, got '..last())
+htray:keypressed('tab');check(last()=='Order: None','Tab focuses header button 3, got '..last())
+htray:keypressed('tab');check(last()=='Fuecoco, 3 cards','Tab reaches the grouped card and reads its count, got '..last())
+htray:activate(3)
+sim:sync(snapshot(102,{gamePhase='effect:choose',hint='Search your deck.',rows={row('M','cards','','','true','search-hdr'),
+  row('H','40','Show all cards','profile','false','false','','','false','1'),
+  row('H','41','Group cards','green','false','true','','','false','1'),
+  row('H','42','Order: Card type','blue','false','false','','','false','1'),
+  row('O','43','Fuecoco','blue','false','false','sv01-036','d1','false','3'),
+  row('F','44','0/2','blue','true','false','','','false','1')}}));frames(1)
+check(last()=='Order: Card type','Activating a header button announces its refreshed state, got '..last())
 sim:sync(snapshot(11));frames(1)
 print('PASS: card trays print and say their instruction, and picks say what is selected')
 

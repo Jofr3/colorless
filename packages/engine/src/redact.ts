@@ -54,7 +54,13 @@ import {
   providedEnergy,
   retreatLocked,
 } from "./continuous";
-import type { DiscardScope, EffectContext, EffectPrompt, PokemonRef } from "./effectPrompt";
+import type {
+  DiscardScope,
+  EffectContext,
+  EffectContinuation,
+  EffectPrompt,
+  PokemonRef,
+} from "./effectPrompt";
 import {
   attackAgainBarred,
   attackBarredByAbility,
@@ -63,7 +69,8 @@ import {
   conditionNote,
 } from "./boardCondition";
 import { handCostAction } from "./promptText";
-import { handCostUnmet } from "./ops/cards";
+import { handCostUnmet, lookWindow } from "./ops/cards";
+import { attachSeat } from "./ops/energy";
 import { inSetup, phaseViewOf } from "./phaseView";
 import { discardableTargets, evolutionTargetUids } from "./turn";
 import { programFor } from "./registry";
@@ -216,13 +223,76 @@ function redactedPromptOf(
 ): RedactedEffectPrompt | null {
   const answerer = answererOf(phase);
   if (answerer !== viewerSeat) return null;
-  return redactPrompt(state, phase.prompt);
+  return redactPrompt(state, phase.prompt, phase.cont);
+}
+
+/**
+ * The full searched zone in zone order when the pending op lets the answerer inspect non-matching
+ * cards alongside the legal candidates (e.g. deck searches for prize-checking, top-N looks,
+ * filtered discard or hand picks). Absent when every card in the zone is already a candidate.
+ */
+function promptPool(
+  state: GameState,
+  cont: EffectContinuation,
+  candidates: readonly string[],
+): RedactedCard[] | undefined {
+  const op = cont.pendingOp;
+  const seat = cont.ctx.seat;
+  let uids: readonly string[] | undefined;
+  switch (op.op) {
+    case "searchDeck":
+    case "switchWithDeckChosen":
+    case "attachFromDeck":
+      uids = state.players[seat].deck;
+      break;
+    case "evolveFromDeck":
+      uids = op.fromHand === true ? state.players[seat].hand : state.players[seat].deck;
+      break;
+    case "switchWithDiscardNamed":
+    case "discardPileRetrieval":
+    case "attachFromDiscard":
+      uids = state.players[seat].discard;
+      break;
+    case "lookAtTopN": {
+      const owner = op.whose === "opponent" ? otherSeat(seat) : seat;
+      uids = lookWindow(state.players[owner].deck, op);
+      break;
+    }
+    case "attachFromTop":
+      uids = state.players[seat].deck.slice(0, Math.max(0, op.n));
+      break;
+    case "attachFromHand": {
+      const owner = op.whose === "opponent" ? otherSeat(seat) : seat;
+      uids = state.players[owner].hand;
+      break;
+    }
+    case "attachEnergyFrom":
+      uids = state.players[attachSeat(op, seat)][op.source];
+      break;
+    case "revealFromHand":
+    case "payFromHand":
+    case "opponentGuessesHp":
+      uids = state.players[seat].hand;
+      break;
+    case "bottomFromOpponentHand":
+    case "useOpponentSupporterEffect":
+      uids = state.players[otherSeat(seat)].hand;
+      break;
+  }
+  if (uids === undefined || uids.length <= candidates.length) return undefined;
+  const inPool = new Set(uids);
+  if (candidates.some((uid) => !inPool.has(uid))) return undefined;
+  return uids.map((uid) => redactedCardOf(state, uid));
 }
 
 /**
  * Map the engine's `EffectPrompt` to the neutral wire shape, deciding only what identity crosses.
  */
-function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPrompt {
+function redactPrompt(
+  state: GameState,
+  prompt: EffectPrompt,
+  cont: EffectContinuation,
+): RedactedEffectPrompt {
   switch (prompt.kind) {
     case "mayDraw":
       return { kind: "mayDraw", count: prompt.count, note: prompt.note };
@@ -315,12 +385,14 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
         scope: redactedScopeOf(prompt.scope),
         note: prompt.note,
       };
-    case "chooseCards":
+    case "chooseCards": {
+      const pool = promptPool(state, cont, prompt.candidates);
       return {
         kind: "chooseCards",
         // The reveal: each candidate uid resolved to its identity (the deck
         // cards this search turned face-up), keyed by the uid the answer sends.
         candidates: prompt.candidates.map((uid) => redactedCardOf(state, uid)),
+        ...(pool === undefined ? {} : { pool }),
         min: prompt.min,
         max: prompt.max,
         dest: prompt.dest,
@@ -340,10 +412,13 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
             }),
         note: prompt.note,
       };
-    case "attachCards":
+    }
+    case "attachCards": {
+      const pool = promptPool(state, cont, prompt.candidates);
       return {
         kind: "attachCards",
         candidates: prompt.candidates.map((uid) => redactedCardOf(state, uid)),
+        ...(pool === undefined ? {} : { pool }),
         targets: prompt.targets.map(redactedRefOf),
         max: prompt.max,
         // Absent = "in any way you like" (no per-target cap); passed through as
@@ -354,6 +429,7 @@ function redactPrompt(state: GameState, prompt: EffectPrompt): RedactedEffectPro
         oneTarget: prompt.oneTarget,
         note: prompt.note,
       };
+    }
     case "chooseAttack":
       // Attack candidates are public, but the wire has no board projection of attack rows, so the
       // server resolves a label.

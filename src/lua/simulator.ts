@@ -5,6 +5,7 @@ import type { HostState, LocalGameSetup } from "../game/localHost";
 import { moveToAction } from "../game/moveToAction";
 import { loadSimulatorSave, clearSimulatorSave } from "../game/simulatorSave";
 import { effectMenu } from "./simulatorChoices";
+import { applyTrayView, defaultTrayView } from "./simulatorTray";
 import { usedTrainersForTurn } from "../game/usedTrainers";
 import { SimulatorOrder } from "./simulatorOrder";
 import { hotSeatSidebar, remoteSidebar, withHistory } from "./simulatorSidebar";
@@ -52,6 +53,8 @@ const HISTORY_COMMANDS = new Map<string, HistoryStep>([
 export class LuaSimulator {
   source: TableSource | null = null;
   menu: SimMenu | null = null;
+  trayView = defaultTrayView();
+  readonly energyTypeOf = (cardId: string) => this.source?.card(cardId)?.energyType;
   message = "";
   revision = 0;
   private messageSerial = 0;
@@ -172,6 +175,7 @@ export class LuaSimulator {
     this.pendingRareCandy = null;
     this.shuffled = "";
     this.menu = null;
+    this.trayView = defaultTrayView();
     this.message = "";
     // A table opened on a standing warning shows it without popping it.
     this.warned = src?.lifecycle().warning ?? "";
@@ -312,12 +316,25 @@ export class LuaSimulator {
     }
     const cost = v.phase.retreat?.cost ?? 0;
     const picked = new Set<string>();
+    const refresh = () => {
+      this.menu = build();
+      this.emit();
+    };
     const toggle = (uid: string) => {
       if (picked.has(uid)) picked.delete(uid);
       else if (picked.size < cost) picked.add(uid);
-      this.show(retreatEnergyMenu(v, bench, picked, toggle, this));
+      refresh();
     };
-    this.show(retreatEnergyMenu(v, bench, picked, toggle, this));
+    const build = (): SimMenu => {
+      const base = retreatEnergyMenu(v, bench, picked, toggle, this);
+      const view = applyTrayView(base.options, {
+        view: this.trayView,
+        onChange: refresh,
+        energyTypeOf: this.energyTypeOf,
+      });
+      return { ...base, header: view.header, options: view.options };
+    };
+    this.show(build());
   }
   history(type: HistoryStep) {
     const history = this.source?.history;
@@ -520,16 +537,33 @@ export class LuaSimulator {
     if (!v) return;
     const piles = this.tablePiles(v);
     const side = args[0] === "opponent" ? piles.opponent : piles.you;
-    this.choose(
-      "",
-      side.discard
-        .slice()
-        .reverse()
-        .map((card) => ({ label: card.name, card, uid: card.id, run: () => {}, disabled: true })),
-      "",
-      false,
-      "pile",
-    );
+    const baseOptions: SimOption[] = side.discard
+      .slice()
+      .reverse()
+      .map((card) => ({ label: card.name, card, uid: card.id, run: () => {}, disabled: true }));
+    if (baseOptions.length === 0) {
+      this.choose("", [], "", false, "pile");
+      return;
+    }
+    const build = (): SimMenu => {
+      const view = applyTrayView(baseOptions, {
+        view: this.trayView,
+        onChange: () => {
+          this.menu = build();
+          this.emit();
+        },
+        energyTypeOf: this.energyTypeOf,
+      });
+      return {
+        kind: "pile",
+        title: "",
+        note: "",
+        mandatory: false,
+        header: view.header,
+        options: view.options,
+      };
+    };
+    this.show(build());
   }
   private onRetreat(args: string[]) {
     if (!this.source || this.menu) return;

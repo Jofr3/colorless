@@ -104,7 +104,7 @@ export class EmitFrame {
     this.infoIds.add(c.cardId);
     if (c.hasImage) this.art.set(c.cardId, cardImageUrl(c.cardId, "high"));
   }
-  option(kind: "O" | "F", o: SimOption) {
+  option(kind: "O" | "F" | "H", o: SimOption) {
     this.row(
       W.option,
       {
@@ -116,6 +116,7 @@ export class EmitFrame {
         cardId: o.card?.cardId ?? "",
         uid: o.uid ?? "",
         dimmed: !!o.dimmed,
+        count: o.count ?? 1,
       },
       kind,
     );
@@ -565,7 +566,7 @@ export function sidebarRows(f: EmitFrame, options: SimOption[], menuOpen: boolea
     });
 }
 
-/** `M` and its `O` options and `F` footer. */
+/** `M` and its `H` header, `O` options and `F` footer. */
 export function menuRows(f: EmitFrame, menu: SimMenu, menuId: number) {
   f.row(W.menu, {
     kind: menu.kind,
@@ -577,6 +578,7 @@ export function menuRows(f: EmitFrame, menu: SimMenu, menuId: number) {
     counterSourceUid: menu.counterSourceUid ?? "",
     counterTransfer: !!menu.counterTransfer,
   });
+  for (const o of menu.header ?? []) f.option("H", o);
   for (const o of menu.options) f.option("O", o);
   for (const o of menu.footer ?? []) f.option("F", o);
 }

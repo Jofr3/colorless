@@ -21,6 +21,13 @@ local Pager=require('ui.pager')
 local Speech=require('ui.sim_speech')
 local Display=require('ui.display')
 local Size=require('ui.interface_size')
+local Fit=require('ui.text_fit')
+local DeckLabels=require('ui.deck_labels')
+local STACK_MAX_LAYERS,STACK_STEP_X,STACK_STEP_Y,STACK_SHADE_STEP=3,-0.055,0.065,0.14
+local DIM_TINT={0.5,0.5,0.5,1}
+local function cardTint(kind,o)
+  return (kind=='cards' and (o.disabled or o.dimmed)) and DIM_TINT or nil
+end
 local Overlay={};Overlay.__index=Overlay
 local g=love.graphics
 local function lines(text)
@@ -53,7 +60,8 @@ function Overlay:opening()
     if (d.title or '')~='' then parts[#parts+1]=d.title end
     local line=(self.instructionText or '')~='' and self.instructionText or (d.note or ''):gsub('%s*\n%s*',' ')
     if line~='' then parts[#parts+1]=line end
-    local n=#(d.options or {})
+    local n=0
+    for _,o in ipairs(d.options or {}) do n=n+(o.count or 1) end
     parts[#parts+1]=n==0 and (self.kind=='pile' and 'Discard pile is empty' or 'No cards') or n..(n==1 and ' card' or ' cards')
     return Speech.sentences(parts)
   elseif self.kind=='log' then
@@ -80,6 +88,7 @@ function Overlay:instruction()
   return ''
 end
 function Overlay:offset() return self.motion.VT.y*60 end
+function Overlay:hasPeek() return self.kind=='cards' end
 function Overlay:release()
   for _,c in ipairs(self.cards) do c.texture:release() end
   self.cards={}
@@ -87,23 +96,25 @@ end
 -- Keep the overlay when the same menu re-emits (selection toggles).
 function Overlay:refresh(data)
   local cardGrid=self.kind=='cards' or self.kind=='pile'
-  local keepCards=cardGrid and #self.data.options==#data.options
+  local keepCards=cardGrid and #self.data.options==#data.options and #(self.data.header or {})==#(data.header or {})
   if keepCards then
     for i,o in ipairs(data.options) do
       local previous=self.data.options[i]
-      if not previous or previous.uid~=o.uid or previous.cardId~=o.cardId then keepCards=false;break end
+      if not previous or previous.uid~=o.uid or previous.cardId~=o.cardId or (previous.count or 1)~=(o.count or 1) then keepCards=false;break end
     end
   end
   self.data=data
   self.titleText:set(data.title or '',self.sim.time)
   local toggled=self.toggled and data.options[self.toggled]
-  if toggled then self.pendingAnnounce=self:selection(toggled,data) end
-  self.toggled=nil
+  local toggledHeader=self.toggledHeader and (data.header or {})[self.toggledHeader]
+  if toggled then self.pendingAnnounce=self:selection(toggled,data)
+  elseif toggledHeader then self.pendingAnnounce=self:describe(toggledHeader) end
+  self.toggled=nil;self.toggledHeader=nil
   if keepCards then
     for _,c in ipairs(self.cards) do
       local o=data.options[c.option]
-      c.item.selected=o.selected;c.item.disabled=o.disabled;c.item.name=o.label
-      c.greyed=self.kind=='cards' and (o.disabled or o.dimmed) or false
+      c.item.selected=o.selected;c.item.disabled=o.disabled;c.item.name=o.label;c.item.count=o.count or 1
+      c.tint=cardTint(self.kind,o)
     end
   end
   if cardGrid and not keepCards then self:layout() else self:build(keepCards) end
@@ -130,26 +141,40 @@ function Overlay:layout()
     self.instructionText=self:instruction()
     local maxColumns=5
     self.cardColumns=math.max(1,math.min(maxColumns,#(self.data.options or {})))
-    self.cardHeader=24
+    local header=self.data.header or {}
+    self.cardHeader=#header>0 and 66 or 24
+    local maxW=p and 456 or W-40
     w=p and 456 or math.min(W-40,maxColumns*D.W*sim.L.zones.you_hand.scale+(maxColumns-1)*self.cardGap+2*self.cardPadding+48)
     local unitBounds=CollectionMotion.bounds(maxColumns,1,0)
     self.cardScale=math.min(sim.L.zones.you_hand.scale,(w-48-(maxColumns-1)*self.cardGap-2*self.cardPadding)/unitBounds.width)
     local bounds=CollectionMotion.bounds(self.cardColumns,self.cardScale,self.cardGap)
-    w=bounds.width+2*self.cardPadding+48
+    local minHeaderW=#header>=3 and 460 or (#header==2 and 340 or 0)
+    w=math.min(maxW,math.max(bounds.width+2*self.cardPadding+48,minHeaderW))
     self.cardRowHeight=bounds.height
+    local hasGrouped=false
+    for _,o in ipairs(self.data.options or {}) do
+      if (o.count or 1)>1 then hasGrouped=true;break end
+    end
+    local counterDrop=0
+    if hasGrouped then
+      local unit=D.W*self.cardScale/D.TILE_W
+      counterDrop=math.ceil(DeckLabels.stackDrop(unit,0.10+STACK_MAX_LAYERS*STACK_STEP_Y,Display.scale)+0.03*unit)
+    end
+    self.cardRowGap=self.cardGap+counterDrop
+    self.cardBottomPadding=math.max(self.cardPadding,hasGrouped and (counterDrop+8) or self.cardPadding)
     local count=#(self.data.options or {})
     local rows=math.max(1,math.ceil(count/self.cardColumns))
     local fixed=self.cardHeader+(#(self.data.footer or {})>0 and 64 or 0)+(self.data.mandatory and 0 or 64)+24
     local available=math.min(H-40,p and 760 or 700)-fixed
     local function fittingRows(room)
-      return math.max(1,math.floor((room-2*self.cardPadding+self.cardGap)/(self.cardRowHeight+self.cardGap)))
+      return math.max(1,math.floor((room-self.cardPadding-self.cardBottomPadding+self.cardRowGap)/(self.cardRowHeight+self.cardRowGap)))
     end
     local pageBand=rows>fittingRows(available) and 39 or 0
     self.cardRows=math.min(rows,fittingRows(available-pageBand))
     self.perPage=self.cardRows*self.cardColumns
     self.pages=math.max(1,math.ceil(count/self.perPage))
     self.page=math.min(self.page,self.pages)
-    self.contentHeight=self.cardRows*self.cardRowHeight+(self.cardRows-1)*self.cardGap+2*self.cardPadding
+    self.contentHeight=self.cardRows*self.cardRowHeight+(self.cardRows-1)*self.cardRowGap+self.cardPadding+self.cardBottomPadding
     h=fixed+self.contentHeight+pageBand
   elseif self.kind=='inspect' then w,h=p and 456 or 900,p and 780 or 640
   elseif self.kind=='gameover' then w,h=p and 456 or 720,p and 620 or 560
@@ -170,6 +195,24 @@ function Overlay:layout()
     h=math.min(p and 780 or 700,h)
   end
   self.x,self.y,self.w,self.h=(W-w)/2,(H-h)/2,w,h
+  if self:hasPeek() then
+    local wrapperW,wrapperH=68,68
+    local fx,fy
+    if not p then
+      fx,fy=self.x+self.w+10,self.y
+      if fx+wrapperW>W-8 then
+        if self.y<wrapperH+16 then self.y=math.min(H-self.h-10,wrapperH+16) end
+        fx,fy=self.x+self.w-wrapperW,self.y-wrapperH-8
+      end
+    else
+      if self.y<wrapperH+16 then self.y=math.min(H-self.h-10,wrapperH+16) end
+      fx,fy=self.x+self.w-wrapperW,self.y-wrapperH-8
+    end
+    self.peekFrame={x=fx,y=fy,w=wrapperW,h=wrapperH}
+    self.peekControl={label='Hide cards',x=fx+9,y=fy+9,w=50,h=50,action='peek',colour=T.profile,icon='eye_open'}
+  else
+    self.peekFrame=nil;self.peekControl=nil
+  end
   -- Fit the heading inside the same padded content area as the description.
   local titleWidth=math.min(self.kind=='gameover' and 520 or 600,w-64)
   if self.titleText.cfg.maxw~=titleWidth then
@@ -203,11 +246,11 @@ function Overlay:makeCards(options,scale,top)
     local rowCount=math.min(self.cardColumns,count-row*self.cardColumns)
     local x=self.x+self.w/2+(col-(rowCount-1)/2)*spacing
     local rowBounds=CollectionMotion.bounds(rowCount,scale,self.cardGap)
-    local rowTop=top+row*(self.cardRowHeight+self.cardGap)-rowBounds.top
+    local rowTop=top+row*(self.cardRowHeight+self.cardRowGap)-rowBounds.top
     local y=rowTop+D.HALF_H*scale
-    local item={id=o.uid~='' and o.uid or ('opt'..i),cardId=o.cardId,name=o.label,hidden=o.cardId=='' or o.cardId=='hidden',selected=o.selected,disabled=o.disabled,edition='dissolve',scan=true}
+    local item={id=o.uid~='' and o.uid or ('opt'..i),cardId=o.cardId,name=o.label,hidden=o.cardId=='' or o.cardId=='hidden',selected=o.selected,disabled=o.disabled,count=o.count or 1,edition='dissolve',scan=true}
     local card=sim:newCard(item,i,x,y,scale)
-    card.greyed=self.kind=='cards' and (o.disabled or o.dimmed) or false
+    card.tint=cardTint(self.kind,o)
     CollectionMotion.place(card,x,rowTop,rowCount,col,self.x+self.w/2,sim.time,sim.reduced,sim.boardW)
     card.option=i
     card.optionIndex=i
@@ -255,6 +298,15 @@ function Overlay:build(keepCards)
     footer(d.footer,fy)
     if not d.mandatory then back() end
   elseif kind=='cards' or kind=='pile' then
+    local header=d.header or {}
+    if #header>0 then
+      local n=#header
+      local hw=(bw-(n-1)*8)/n
+      for i,o in ipairs(header) do
+        local display,size=Fit.fit(o.label,20,hw-12)
+        self:add(o.label,x+24+(i-1)*(hw+8),y+18,hw,34,'invoke',o.colour,{token=o.token,disabled=o.disabled,selected=o.selected,fontSize=size,displayLabel=display,headerIndex=i})
+      end
+    end
     local fy=bottom-(d.mandatory and 0 or 64)
     local gridBottom=#(d.footer or {})>0 and fy-24 or (d.mandatory and y+h-24 or bottom-24)
     if self.pages>1 then gridBottom=gridBottom-39 end
@@ -470,20 +522,31 @@ function Overlay:hit(x,y)
   end
   return 0
 end
+function Overlay:hitPeek(x,y)
+  return self.peekControl~=nil and Button.hit(self.peekControl,x,y-self:offset())
+end
+function Overlay:togglePeek()
+  self.sim.peek=not self.sim.peek
+  self.hover=0
+  self.sim.callbacks.feedback('button')
+  self.sim.callbacks.announce(self.sim.peek and 'Showing board' or 'Showing cards')
+end
 function Overlay:update(dt,time,mx,my,reduced)
   self.time=time
   if self.pendingAnnounce then self.sim.callbacks.announce(self.pendingAnnounce);self.pendingAnnounce=nil end
   self.motion:update(dt,time,false,false,reduced)
   self.titleText:update(time,reduced)
   self.leaveJuice:update(dt,time,false,false,reduced)
+  self.peekHovered=self:hitPeek(mx,my)
+  if self.sim.peek then self.hover=0;return end
   if self.echo and time>=self.echo then self.echo=nil;self.sim.callbacks.feedback('tarot2',0.76,0.4) end
   if self.armed and time-self.armed>3 then self:disarm() end
-  self.hover=self:hit(mx,my)
+  self.hover=self.peekHovered and 0 or self:hit(mx,my)
   local ly=my-self:offset()
-  for i,c in ipairs(self.cards) do
+  for _,c in ipairs(self.cards) do
     local pointed,focused,held=false,false,nil
     for _,b in ipairs(self.controls) do
-      if b.card==c and (self.hover==i or self.controls[self.hover]==b) then pointed=true end
+      if b.card==c and self.controls[self.hover]==b then pointed=true end
       if b.card==c and self.hover==0 and self.controls[self.focus]==b then focused=true end
     end
     local active=pointed or focused
@@ -519,7 +582,10 @@ function Overlay:activate(i)
     self.toggled=b.card.option
     b.card:juiceUp(self.time,0.05,0.03,sim.reduced)
     sim.callbacks.feedback(item.selected and 'cardSlide1' or 'cardSlide2',1,item.selected and 1 or 0.3)
-  else sim.callbacks.feedback('button') end
+  else
+    if b.headerIndex then self.toggledHeader=b.headerIndex end
+    sim.callbacks.feedback('button')
+  end
   if a=='invoke' or a=='card' then sim:invoke(b.token)
   elseif a=='back' then sim:closeOverlay(true)
   elseif a=='prev' or a=='next' then
@@ -571,8 +637,9 @@ end
 -- arrow with its page.
 function Overlay:describe(b)
   if b.speech then return b.speech end
+  local count=b.card and (b.card.item.count or 1) or 1
   local selected=b.card and b.card.item.selected or (not b.card and b.selected)
-  return b.label..(selected and ', selected' or '')
+  return b.label..(count>1 and ', '..count..' cards' or '')..(selected and ', selected' or '')
 end
 -- Up and down step through the log's entries, newest last, turning the page
 -- to the one that shows the entry. After a page turn they start from the page
@@ -625,6 +692,38 @@ function Overlay:popupRect()
   local py=p and y+40+D.H*(c and c.baseScale or 1.2)+12 or y+36
   return {x=px,y=py,w=pw,h=self.popup.h*k,scale=k}
 end
+local function drawGroupBack(c)
+  local n=c.item.count or 1
+  if n<=1 or not c.texture then return end
+  local layers=math.min(n-1,STACK_MAX_LAYERS)
+  local res=c.resolution or 1
+  local unit=c.unit or (D.W*c.baseScale/D.TILE_W)
+  local vscale=c.motion and c.motion.VT.scale or 1
+  local sx=D.TILE_W*unit/D.W*vscale/res*(c.flipScale or 1)
+  local sy=D.TILE_H*unit/D.H*vscale/res
+  local ox,oy=D.W*res/2,D.H*res/2
+  local stepX,stepY=STACK_STEP_X*unit*vscale,STACK_STEP_Y*unit*vscale
+  local dim=c.tint and c.tint[1] or 1
+  g.setShader()
+  g.setColor(0,0,0,0.3)
+  g.draw(c.texture,c.x+layers*stepX,c.y+layers*stepY+0.08*unit,c.angle,sx,sy,ox,oy)
+  for layer=layers,1,-1 do
+    local shade=(1-STACK_SHADE_STEP*layer)*dim
+    g.setColor(shade,shade,shade,1)
+    g.draw(c.texture,c.x+layer*stepX,c.y+layer*stepY,c.angle,sx,sy,ox,oy)
+  end
+  g.setColor(1,1,1,1)
+end
+local function drawGroupCount(c)
+  local n=c.item.count or 1
+  if n<=1 then return end
+  local layers=math.min(n-1,STACK_MAX_LAYERS)
+  DeckLabels.drawStackCount(c,{
+    gapTiles=0.10+layers*STACK_STEP_Y,
+    cssPerUnit=Display.scale,
+    colour=c.tint and T.jokerGrey or T.white,
+  })
+end
 function Overlay:draw(shaders)
   local sim=self.sim
   local p=sim.portrait
@@ -652,7 +751,9 @@ function Overlay:draw(shaders)
     for layer=0,2 do
       for _,c in ipairs(self.cards) do
         if cardLayer(c)==layer then
+          drawGroupBack(c)
           c:draw(shaders,self.time or 0,sim.mx or 0,(sim.my or 0)-self:offset(),sim.reduced,rw)
+          drawGroupCount(c)
         end
       end
     end
@@ -746,9 +847,20 @@ function Overlay:draw(shaders)
       end
       Button.draw(b,not b.disabled and Controls.lit(self.hover,self.focus,i),self.sim.pressedOverlay==i and self.hover==i,self.hover==0 and self.focus==i,rw)
       if juice then g.pop() end
-      if b.selected then g.setLineWidth(1.5);Button.outline(b.x-2,b.y-2,b.w+4,b.h+4,T.white,1.2) end
+      if b.selected and not b.headerIndex then g.setLineWidth(1.5);Button.outline(b.x-2,b.y-2,b.w+4,b.h+4,T.white,1.2) end
     end
   end
+  g.pop()
+end
+function Overlay:drawPeek()
+  local f,b=self.peekFrame,self.peekControl
+  if not f or not b then return end
+  b.icon=self.sim.peek and 'eye_closed' or 'eye_open'
+  b.colour=self.sim.peek and T.orange or T.profile
+  b.label=self.sim.peek and 'Show cards' or 'Hide cards'
+  g.push();g.translate(0,self:offset())
+  Button.modalFrameRaised(f.x,f.y,f.w,f.h)
+  Button.draw(b,self.peekHovered,self.sim.pressedOverlay=='peek' and self.peekHovered,false,self.sim.boardW)
   g.pop()
 end
 return Overlay

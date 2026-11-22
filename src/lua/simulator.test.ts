@@ -866,6 +866,83 @@ describe("Lua simulator", () => {
     sim.emit();
     expect(rows(publish)[0][19]).toBe("");
   });
+  it("toggles Show all, Group and Order on search and pile modals, keeping choices across the match", () => {
+    const { sim, publish } = setup();
+    const h = sim.host;
+    if (!h) throw Error("Missing host");
+    const uid = "nest-ball";
+    h.game = {
+      ...h.game,
+      cardPool: {
+        ...h.game.cardPool,
+        "sv01-181": trainerCard(
+          "sv01-181",
+          "Item",
+          "Search your deck for a Basic Pokémon and put it onto your Bench. Then, shuffle your deck.",
+        ),
+      },
+      cardIdByUid: { ...h.game.cardIdByUid, [uid]: "sv01-181" },
+      players: {
+        ...h.game.players,
+        [h.viewerSeat]: {
+          ...h.game.players[h.viewerSeat],
+          hand: [...h.game.players[h.viewerSeat].hand, uid],
+          discard: h.game.players[h.viewerSeat].deck.slice(0, 3),
+        },
+      },
+    };
+    sim.emit();
+    const play = rows(publish).find(
+      (r: string[]) => r[0] === "K" && r[2] === uid && r[3] === "Play",
+    );
+    sim.command(`invoke\t${sim.revision}\t${play?.[1]}`);
+    const initialMenuId = rows(publish).find((r: string[]) => r[0] === "M")?.[5];
+    const headerRows = () => rows(publish).filter((r: string[]) => r[0] === "H");
+    const optionRows = () => rows(publish).filter((r: string[]) => r[0] === "O");
+    expect(headerRows().map((r: string[]) => r[2])).toEqual([
+      "Show all cards",
+      "Group cards",
+      "Order: None",
+    ]);
+    const validCount = optionRows().length;
+    const deckCount = h.game.players[h.viewerSeat].deck.length;
+    expect(validCount).toBeLessThan(deckCount);
+
+    // Show all cards reveals the full deck in place without changing menuId.
+    sim.command(`invoke\t${sim.revision}\t${headerRows()[0]?.[1]}`);
+    expect(rows(publish).find((r: string[]) => r[0] === "M")?.[5]).toBe(initialMenuId);
+    expect(optionRows()).toHaveLength(deckCount);
+    expect(optionRows().some((r: string[]) => r[4] === "true")).toBe(true);
+
+    // Group cards collapses duplicates with counts > 1, and Order cycles to Card type.
+    sim.command(`invoke\t${sim.revision}\t${headerRows()[1]?.[1]}`);
+    expect(optionRows().length).toBeLessThan(deckCount);
+    expect(optionRows().some((r: string[]) => Number(r[9]) > 1)).toBe(true);
+    sim.command(`invoke\t${sim.revision}\t${headerRows()[2]?.[1]}`);
+    expect(headerRows()[2]?.[2]).toBe("Order: Card type");
+
+    // Clicking a grouped selectable card selects it and expands its group in place.
+    const groupedBefore = optionRows().length;
+    const groupedSelectable = optionRows().find(
+      (r: string[]) => r[4] === "false" && Number(r[9]) > 1,
+    );
+    expect(groupedSelectable).toBeDefined();
+    const groupSize = Number(groupedSelectable?.[9]);
+    sim.command(`invoke\t${sim.revision}\t${groupedSelectable?.[1]}`);
+    expect(optionRows()).toHaveLength(groupedBefore + groupSize - 1);
+    expect(optionRows().filter((r: string[]) => r[5] === "true")).toHaveLength(1);
+
+    // Confirm closes the search; opening the discard pile remembers Group + Order: Card type
+    // while omitting Show all cards.
+    const confirm = rows(publish).find((r: string[]) => r[0] === "F" && r[2] === "1/1");
+    sim.command(`invoke\t${sim.revision}\t${confirm?.[1]}`);
+    expect(sim.menu).toBeNull();
+    sim.command("pile\tyou");
+    expect(headerRows().map((r: string[]) => [r[2], r[5]])).toEqual([
+      ["Group cards", "true"],
+      ["Order: Card type", "false"],
+    ]);
+  });
   it("stages played Trainers, sends Ultra Ball costs straight to discard, and preserves order across turns and history", () => {
     const { sim, publish } = setup();
     const h = sim.host;

@@ -393,6 +393,8 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("chooseCards"),
     candidates: z.array(redactedCardSchema),
+    /** Full searched zone in zone order when non-candidate cards are also visible to the answerer. */
+    pool: z.array(redactedCardSchema).optional(),
     min: z.number(),
     max: z.number(),
     // "attach": a searched Tool attached to the searching Pokémon. "swap": a discard-pile card
@@ -433,6 +435,8 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("attachCards"),
     candidates: z.array(redactedCardSchema),
+    /** Full searched zone in zone order when non-candidate cards are also visible to the answerer. */
+    pool: z.array(redactedCardSchema).optional(),
     targets: z.array(redactedPokemonRefSchema),
     max: z.number(),
     maxPerTarget: z.number().optional(),

@@ -31,6 +31,8 @@ export interface SimOption {
   colour?: ThemeColour;
   /** Board/prize menus: the top-card uid or `prize:<index>` Lua highlights. */
   uid?: string;
+  /** Grouped card count on a collapsed card tray option; absent or 1 for a single card. */
+  count?: number;
   /** Sidebar placement: primary (blue, big), danger (red), minor. */
   slot?: "primary" | "danger" | "minor";
 }
@@ -47,6 +49,7 @@ export interface SimMenu {
   kind: SimMenuKind;
   title: string;
   note?: string;
+  header?: SimOption[];
   options: SimOption[];
   footer?: SimOption[];
   mandatory?: boolean;

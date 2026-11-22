@@ -26,6 +26,7 @@ describe("Lua wire fields", () => {
         cardId: "",
         uid: "",
         dimmed: false,
+        count: 1,
       },
       "F",
     );

@@ -11,7 +11,7 @@ return {
     cardAction={token=2,uid=3,label=4,colour=5,disabled=6,targetUid=7,group=8,cost=9,damage=10,hasCost=11},
     sidebar={token=2,label=3,colour=4,disabled=5,slot=6},
     menu={kind=2,title=3,note=4,mandatory=5,id=6,hideTargetOutline=7,counterSourceUid=8,counterTransfer=9},
-    option={token=2,label=3,colour=4,disabled=5,selected=6,cardId=7,uid=8,dimmed=9},
+    option={token=2,label=3,colour=4,disabled=5,selected=6,cardId=7,uid=8,dimmed=9,count=10},
     info={cardId=2,category=3,trainerType=4,stage=5,hp=6,types=7,retreat=8,weakness=9,resistance=10,effect=11,abilities=12,attacks=13,energyType=14,name=15},
   },
   library={

@@ -55,9 +55,10 @@ check(endTurn.slot=='primary' and not endTurn.disabled and endTurn.colour==T.red
 local p=Model.parse(fixture('sim_prompt.txt'))
 check(p.revision==2 and p.gamePhase=='effect:choose' and p.hint:find('Search your deck'),'Prompt header parsed')
 check(p.menu.kind=='cards' and p.menu.mandatory and p.menu.id~='' and p.menu.counterSourceUid=='' and not p.menu.counterTransfer,'Search prompt is a mandatory card menu')
+check(#p.menu.header==3 and p.menu.header[1].label=='Show all cards' and p.menu.header[2].label=='Group cards' and p.menu.header[3].label=='Order: None','Prompt header actions parsed')
 check(#p.menu.options>0 and #p.menu.footer==2 and p.menu.footer[2].label=='0/1','Prompt options and footer parsed')
 check(p.menu.footer[1].label=='Undo' and not p.menu.footer[1].disabled,'Hot-seat prompts keep Undo, left of the confirm button')
-for _,o in ipairs(p.menu.options) do check(o.uid~='' and o.cardId~='' and o.label~='' and not o.disabled and not o.selected,'Option '..o.token..' names a card') end
+for _,o in ipairs(p.menu.options) do check(o.uid~='' and o.cardId~='' and o.label~='' and o.count==1 and not o.disabled and not o.selected,'Option '..o.token..' names a card') end
 check(next(p.cardActions)==nil,'Card buttons hide behind the prompt')
 
 -- Rows the fixtures do not carry.
@@ -67,8 +68,9 @@ local raw=table.concat({header,
   row('D','x'),row('D','y'),row('D','x'),
   row('R','candy'),
   row('M','board','Pick','Note','false','pick-1','true','src','true'),
-  row('O','1','Target','nope','true','true','c1','u1','true'),
-  row('F','2','Done','green','false','false','','',''),
+  row('H','0','Group cards','green','false','true','','','false','1'),
+  row('O','1','Target','nope','true','true','c1','u1','true','3'),
+  row('F','2','Done','green','false','false','','','false','1'),
   row('Z','unknown tag'),
 },'\n')
 local x=Model.parse(raw)
@@ -78,7 +80,8 @@ check(x.outcome=='win' and x.outcomeDetail=='Prizes' and x.shuffled=='both' and 
 check(#x.knockedOut==2 and x.knockedOut[1]=='x' and x.knockedOut[2]=='y','Knock Outs keep engine order, once each')
 check(x.rareCandy=='candy','Rare Candy pending')
 check(x.menu.kind=='board' and x.menu.id=='pick-1' and x.menu.title=='Pick' and x.menu.note=='Note' and not x.menu.mandatory and x.menu.hideTargetOutline and x.menu.counterSourceUid=='src' and x.menu.counterTransfer,'Board menu parsed')
-check(#x.menu.options==1 and x.menu.options[1].colour==T.blue and x.menu.options[1].disabled and x.menu.options[1].selected and x.menu.options[1].dimmed,'Options before the menu row are dropped; unknown colours are blue')
+check(#x.menu.header==1 and x.menu.header[1].label=='Group cards' and x.menu.header[1].colour==T.green and x.menu.header[1].selected,'Header row parsed')
+check(#x.menu.options==1 and x.menu.options[1].colour==T.blue and x.menu.options[1].disabled and x.menu.options[1].selected and x.menu.options[1].dimmed and x.menu.options[1].count==3,'Options before the menu row are dropped; unknown colours are blue; grouped count parsed')
 check(#x.menu.footer==1 and x.menu.footer[1].colour==T.green,'Footer row parsed')
 -- Card text rows repeat across snapshots; each parse still reads its own text.
 local function textOf(name)

@@ -255,7 +255,7 @@ function Simulator:hit(x,y)
   return 0
 end
 function Simulator:cardHit(x,y)
-  if self.overlay then return nil end
+  if self.overlay and not self.peek then return nil end
   if self.attachedPopup and Button.hit(self.attachedPopup,x,y-popupOffset(self.attachedPopup)) then return nil end
   -- Raised cards are painted last, so they also receive the pointer first.
   if self.hoverCard and self.hoverCard:hit(x,y) then return self.hoverCard end

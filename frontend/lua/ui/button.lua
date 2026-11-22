@@ -273,6 +273,44 @@ local historyPixels={
     '...#########...',
     '.....#####.....',
   },
+  eye_open={
+    '.....................',
+    '.....................',
+    '......#########......',
+    '....#############....',
+    '...###.........###...',
+    '..##....#####....##..',
+    '.##....##..###....##.',
+    '##.....##..###.....##',
+    '##.....#######.....##',
+    '##.....#######.....##',
+    '.##....#######....##.',
+    '..##....#####....##..',
+    '...###.........###...',
+    '....#############....',
+    '......#########......',
+    '.....................',
+    '.....................',
+  },
+  eye_closed={
+    '.....................',
+    '.....................',
+    '.....................',
+    '.....................',
+    '.....................',
+    '##.................##',
+    '.###.............###.',
+    '..####.........####..',
+    '....#############....',
+    '.....###########.....',
+    '....##...###...##....',
+    '...##....###....##...',
+    '..##.....###.....##..',
+    '.....................',
+    '.....................',
+    '.....................',
+    '.....................',
+  },
 }
 -- Each glyph colour's horizontal runs of cells, as {x,y,w} rectangles, built
 -- on first use: one rectangle per run instead of one per pixel. A run covers
@@ -300,9 +338,9 @@ local function fillRuns(list,dy)
 end
 local function historyIcon(icon)
   if icon=='fast_forward' or icon=='redo' then g.scale(-1,1) end
-  local name=icon=='restart' and 'restart' or ((icon=='rewind' or icon=='fast_forward') and 'rewind' or 'undo')
+  local name=(icon=='rewind' or icon=='fast_forward') and 'rewind' or (icon=='undo' or icon=='redo') and 'undo' or icon
   local pixels=historyPixels[name]
-  fillRuns(pixelRuns(name,pixels,'#',-7.5,-#pixels/2),0)
+  fillRuns(pixelRuns(name,pixels,'#',-#pixels[1]/2,-#pixels/2),0)
 end
 
 -- A white pixel glyph over a button's face, following the face's parallax and press: 'info',
@@ -359,8 +397,10 @@ function Button.draw(b,active,pressed,focused,roomWidth)
     g.pop();g.pop()
     return
   end
-  if b.icon=='rewind' or b.icon=='fast_forward' or b.icon=='undo' or b.icon=='redo' or b.icon=='restart' then
-    local scale=math.min(b.w,b.h)*0.48/(b.icon=='restart' and #historyPixels.restart or 15)*(pressed and 0.985 or 1)
+  if b.icon=='rewind' or b.icon=='fast_forward' or b.icon=='undo' or b.icon=='redo' or b.icon=='restart' or b.icon=='eye_open' or b.icon=='eye_closed' then
+    local pixels=historyPixels[(b.icon=='rewind' or b.icon=='fast_forward') and 'rewind' or (b.icon=='undo' or b.icon=='redo') and 'undo' or b.icon]
+    local fill=(b.icon=='eye_open' or b.icon=='eye_closed') and 0.66 or 0.48
+    local scale=math.min(b.w,b.h)*fill/math.max(#pixels,#pixels[1])*(pressed and 0.985 or 1)
     g.push('all');g.translate(b.w/2,b.h/2+1.5);g.scale(scale)
     g.setColor(0,0,0,0.3);historyIcon(b.icon);g.pop()
     g.push('all');g.translate(b.w/2,b.h/2);g.scale(scale)

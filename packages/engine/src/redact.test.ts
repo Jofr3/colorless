@@ -821,6 +821,97 @@ describe("redactGame — the effect:choose prompt (answerer-only)", () => {
     for (const uid of deckUids) expect(ids.has(uid)).toBe(false);
   });
 
+  it("exposes the full deck as pool on searchDeck to the controller only, and limits lookAtTopN pool to the looked-at window", () => {
+    const base = turnOneState();
+    const deck = base.players.p1.deck;
+    const candidates = deck.slice(0, 2);
+    const searchState: GameState = {
+      ...base,
+      phase: {
+        kind: "effect:choose",
+        seat: "p1",
+        prompt: {
+          kind: "chooseCards",
+          candidates,
+          min: 0,
+          max: 1,
+          dest: "hand",
+          note: "Search your deck.",
+        },
+        cont: {
+          pendingOp: { op: "searchDeck", filter: { kind: "anyPokemon" }, max: 1, dest: "hand" },
+          rest: [],
+          ctx: { seat: "p1" },
+        },
+      },
+    };
+    const p1Phase = redactGame(searchState, "p1").phase;
+    if (p1Phase.kind !== "effect:choose" || p1Phase.prompt?.kind !== "chooseCards") {
+      throw new Error("expected a chooseCards prompt");
+    }
+    expect(p1Phase.prompt.pool?.map((c) => c.id)).toEqual(deck);
+    const p2Game = redactGame(searchState, "p2");
+    if (p2Game.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
+    expect(p2Game.phase.prompt).toBeNull();
+    const p2Ids = new Set(allIds(p2Game));
+    for (const uid of deck) expect(p2Ids.has(uid)).toBe(false);
+
+    const lookState: GameState = {
+      ...base,
+      phase: {
+        kind: "effect:choose",
+        seat: "p1",
+        prompt: {
+          kind: "chooseCards",
+          candidates: deck.slice(0, 1),
+          min: 0,
+          max: 1,
+          dest: "hand",
+          note: "Look at the top 4 cards.",
+        },
+        cont: {
+          pendingOp: { op: "lookAtTopN", n: 4, filter: { kind: "anyPokemon" }, max: 1 },
+          rest: [],
+          ctx: { seat: "p1" },
+        },
+      },
+    };
+    const lookPhase = redactGame(lookState, "p1").phase;
+    if (lookPhase.kind !== "effect:choose" || lookPhase.prompt?.kind !== "chooseCards") {
+      throw new Error("expected a chooseCards prompt");
+    }
+    expect(lookPhase.prompt.pool?.map((c) => c.id)).toEqual(deck.slice(0, 4));
+
+    const unfilteredState: GameState = {
+      ...base,
+      phase: {
+        kind: "effect:choose",
+        seat: "p1",
+        prompt: {
+          kind: "chooseCards",
+          candidates: [...deck],
+          min: 0,
+          max: 1,
+          dest: "hand",
+          note: "Search your deck for any card.",
+        },
+        cont: {
+          pendingOp: { op: "searchDeck", filter: { kind: "anyCard" }, max: 1, dest: "hand" },
+          rest: [],
+          ctx: { seat: "p1" },
+        },
+      },
+    };
+    const unfilteredPhase = redactGame(unfilteredState, "p1").phase;
+    if (
+      unfilteredPhase.kind !== "effect:choose" ||
+      unfilteredPhase.prompt?.kind !== "chooseCards"
+    ) {
+      throw new Error("expected a chooseCards prompt");
+    }
+    expect(unfilteredPhase.prompt.pool).toBeUndefined();
+  });
+
   it("REVEALS attachCards candidates to the controller and maps targets to refs", () => {
     const base = turnOneState();
     const deckUids = base.players.p1.deck.slice(0, 2);

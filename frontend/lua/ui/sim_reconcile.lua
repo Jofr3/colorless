@@ -70,6 +70,7 @@ function Simulator:sync(raw,finishKo)
     if #cards>0 then
       if self.drag then self.drag.card.dragging=false;self.drag=nil end
       if self.overlay then self.overlay:release();self.overlay=nil end
+      self.peek=false
       self.highlight=nil;self.hoverCard=nil;self.focusCard=nil;self.popup=nil;self.targeting=nil;self.luaTargeting=nil
       self.fx:clear()
       self.koPresentation=Ko.begin(self,raw,m,cards)
@@ -484,20 +485,25 @@ function Simulator:applyMenu(previous)
   if not menu then
     if self.overlay and self.overlay.kind~='options' and self.overlay.kind~='inspect' and self.overlay.kind~='gameover' then
       local kind=self.overlay.kind
-      self.overlay:release();self.overlay=nil
+      self.overlay:release();self.overlay=nil;self.peek=false
     end
     self.targeting=nil
     return
   end
   if menu.kind=='board' or menu.kind=='prizes' then
-    if self.overlay and self.overlay.kind~='gameover' then self.overlay:release();self.overlay=nil end
+    if self.overlay and self.overlay.kind~='gameover' then self.overlay:release();self.overlay=nil;self.peek=false end
     self.targeting={menu=menu}
     return
   end
   self.targeting=nil
-  if menu.kind=='pile' and (menu.title or '')=='' then menu.title=self:pileTitle(#menu.options) end
+  if menu.kind=='pile' and (menu.title or '')=='' then
+    local total=0
+    for _,o in ipairs(menu.options or {}) do total=total+(o.count or 1) end
+    menu.title=self:pileTitle(total)
+  end
   if self.overlay and self.overlay.data and self.overlay.data.id==menu.id and self.overlay.kind==menu.kind then self.overlay:refresh(menu);return end
   if self.overlay then self.overlay:release() end
+  self.peek=false
   self.overlay=Overlay.new(self,menu.kind,menu)
   if self.callbacks.jiggle then self.callbacks.jiggle(1) end
 end

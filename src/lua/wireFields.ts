@@ -108,10 +108,20 @@ export const WIRE_ROWS = {
         "counterTransfer",
       ],
     },
-    /** `O` is a menu option, `F` a menu footer button. */
+    /** `O` is a menu option, `F` a menu footer button, `H` a menu header button. */
     option: {
-      tags: ["O", "F"],
-      fields: ["token", "label", "colour", "disabled", "selected", "cardId", "uid", "dimmed"],
+      tags: ["O", "F", "H"],
+      fields: [
+        "token",
+        "label",
+        "colour",
+        "disabled",
+        "selected",
+        "cardId",
+        "uid",
+        "dimmed",
+        "count",
+      ],
     },
     info: {
       tags: ["I"],
