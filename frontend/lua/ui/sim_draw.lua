@@ -131,13 +131,7 @@ function Simulator:drawCard(c,shaders,rw)
   -- Board choices (such as Boss's Orders) use candidate motion without a
   -- border. Keep outlines for local attachment choices and Prize selection.
   local hideOutline=self.targeting and (self.targeting.menu.kind=='board' or self.targeting.menu.hideTargetOutline)
-  if self:isCandidate(c) and not hideOutline then
-    local scale=c.baseScale*c.motion.VT.scale
-    g.setLineWidth(2)
-    g.push();g.translate(c.x,c.y);g.rotate(c.angle)
-    Button.outline(-D.HALF_W*scale-3,-D.HALF_H*scale-3,D.W*scale+6,D.H*scale+6,T.white,1.2)
-    g.pop()
-  end
+  if self:isCandidate(c) and not hideOutline then c:drawOutline(T.white,3) end
   self:drawBadges(c,rw)
 end
 function Simulator:drawPrizes(owner,rw)

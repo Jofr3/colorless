@@ -2,6 +2,7 @@ local T = require('ui.theme')
 local Motion = require('ui.motion')
 local D = require('ui.card_dimensions')
 local Bridge = require('ui.bridge')
+local Button = require('ui.button')
 local Card = {}
 Card.__index = Card
 local g = love.graphics
@@ -260,8 +261,18 @@ function Card:draw(shaders,time,mx,my,reduced,roomWidth)
   -- The face pass differs from the shadow pass only in these two uniforms.
   values.shadow=false; values.hovering=reduced and 0 or 1
   sendOne(dissolve,'shadow',false);sendOne(dissolve,'hovering',values.hovering)
-  g.setColor(self.tint or WHITE)
+  g.setColor(WHITE)
   g.draw(self.texture,self.x,self.y,self.angle,sx,sy,W*resolution/2,H*resolution/2)
+  -- dissolve.fs ignores the vertex colour, so a settled tinted face greys out under two half-opaque
+  -- played.fs passes, which share its vertex warp and keep the card opaque.
+  if self.tint and (self.dissolve or 0)<0.001 and shaders.played then
+    values.played=edition
+    send(shaders.played,values)
+    values.played=nil
+    g.setShader(shaders.played);g.setColor(self.tint)
+    for _=1,2 do g.draw(self.texture,self.x,self.y,self.angle,sx,sy,W*resolution/2,H*resolution/2) end
+    g.setShader(dissolve);g.setColor(WHITE)
+  end
   -- Balatro draws every edition ON TOP of the ordinary card, with identical
   -- geometry; foil's partially transparent pass must never have its own tilt.
   -- An edition whose shader is not compiled (foil, holo and polychrome are packaged for later
@@ -273,6 +284,51 @@ function Card:draw(shaders,time,mx,my,reduced,roomWidth)
     values[self.item.edition]=nil
     g.draw(self.texture,self.x,self.y,self.angle,sx,sy,W*resolution/2,H*resolution/2)
   end
+  g.setShader()
+end
+-- dissolve.fs's hover warp, for shapes drawn over a card: the same perspective offset per vertex.
+local WARP=[[
+#if defined(VERTEX) || __VERSION__ > 100 || defined(GL_FRAGMENT_PRECISION_HIGH)
+	#define MY_HIGHP_OR_MEDIUMP highp
+#else
+	#define MY_HIGHP_OR_MEDIUMP mediump
+#endif
+extern MY_HIGHP_OR_MEDIUMP vec2 mouse_screen_pos;
+extern MY_HIGHP_OR_MEDIUMP float hovering;
+extern MY_HIGHP_OR_MEDIUMP float screen_scale;
+#ifdef VERTEX
+vec4 position(mat4 transform_projection, vec4 vertex_position)
+{
+    if (hovering <= 0.) return transform_projection * vertex_position;
+    MY_HIGHP_OR_MEDIUMP float mid_dist = length(vertex_position.xy - 0.5*love_ScreenSize.xy)/length(love_ScreenSize.xy);
+    MY_HIGHP_OR_MEDIUMP vec2 mouse_offset = (vertex_position.xy - mouse_screen_pos.xy)/screen_scale;
+    MY_HIGHP_OR_MEDIUMP float scale = 0.2*(-0.03 - 0.3*max(0., 0.3-mid_dist))
+                *hovering*(length(mouse_offset)*length(mouse_offset))/(2. -mid_dist);
+    return transform_projection * vertex_position + vec4(0,0,0,scale);
+}
+#endif
+#ifdef PIXEL
+vec4 effect(vec4 colour, Image texture, vec2 texture_coords, vec2 screen_coords)
+{
+    return Texel(texture, texture_coords)*colour;
+}
+#endif
+]]
+local warp
+-- An outline `pad` px outside the face as Card:draw last drew it, warped with it.
+function Card:drawOutline(colour,pad,lineWidth)
+  local v=self.shaderState
+  if warp==nil then warp=g.newShader and g.newShader(WARP) or false end
+  if warp and v then
+    send(warp,{mouse_screen_pos=v.mouse_screen_pos,hovering=v.hovering,screen_scale=v.screen_scale})
+    g.setShader(warp)
+  end
+  local scale=self.motion.VT.scale
+  local w,h=CARD_W*self.unit*scale,CARD_H*self.unit*scale
+  g.setLineWidth(lineWidth or 2)
+  g.push();g.translate(self.x,self.y);g.rotate(self.angle)
+  Button.outline(-w/2-pad,-h/2-pad,w+2*pad,h+2*pad,colour,1.2)
+  g.pop()
   g.setShader()
 end
 return Card

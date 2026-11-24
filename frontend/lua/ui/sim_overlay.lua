@@ -753,6 +753,7 @@ function Overlay:draw(shaders)
         if cardLayer(c)==layer then
           drawGroupBack(c)
           c:draw(shaders,self.time or 0,sim.mx or 0,(sim.my or 0)-self:offset(),sim.reduced,rw)
+          if kind=='cards' and c.item.selected then c:drawOutline(T.white,3) end
           drawGroupCount(c)
         end
       end

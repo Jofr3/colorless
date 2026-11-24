@@ -338,7 +338,7 @@ do
     {label='Switch',cardId='sv01-194',disabled=true,count=3},
     {label='Nest Ball',cardId='sv01-181',disabled=false,count=2},
     {label='Beach Court',cardId='sv01-167',disabled=false,count=4},
-    {label='Quaxly',cardId='sv01-052',disabled=false,count=1},
+    {label='Quaxly',cardId='sv01-052',disabled=false,count=1,selected=true},
     {label='Professor\'s Research',cardId='sv01-189',disabled=false,count=3},
     {label='Psychic Energy',cardId='sve-005',disabled=false,count=4},
   }
@@ -356,7 +356,7 @@ do
       row('F','gf1','Confirm','blue','false','false','','','false','1'),
     }
     for i,opt in ipairs(groupOptions) do
-      rows[#rows+1]=row('O','go'..i,opt.label,'blue',opt.disabled and 'true' or 'false','false',opt.cardId,'gu'..i,'false',tostring(opt.count))
+      rows[#rows+1]=row('O','go'..i,opt.label,'blue',opt.disabled and 'true' or 'false',opt.selected and 'true' or 'false',opt.cardId,'gu'..i,'false',tostring(opt.count))
     end
     sim:sync(snapshot(50+layoutIdx,rows))
     sim.reduced=true;frames(5,50+layoutIdx)
@@ -453,7 +453,7 @@ do
     for _,k in ipairs(wrappedKeys) do g[k]=savedG[k] end
     Button.outline,Button.panel=origOutline,origPanel
 
-    assert(header1.selected==true and outlineCalls==0,tag..' draws no outline on active header buttons')
+    assert(header1.selected==true and outlineCalls==1,tag..' outlines only the selected card, never the active header button')
     assert(panelCalls==5,tag..' draws only 5 panels (modal frame + viewport inset), got '..panelCalls)
     for _,s in ipairs(printfs) do
       assert(s~='x2' and s~='x3' and s~='x4',tag..' never draws stack counts via g.printf: '..s)
@@ -465,8 +465,9 @@ do
       local count=c.item.count or 1
       local cd=draws[c.texture] or {}
       assert(not c.greyed,tag..' card '..idx..' stays opaque (not translucent greyed)')
-      assert(#cd==expectedNormalDraws[count],
-        tag..' card '..idx..' (count '..count..') draws '..expectedNormalDraws[count]..' times, got '..#cd)
+      local expected=expectedNormalDraws[count]+(c.tint and 2 or 0)
+      assert(#cd==expected,
+        tag..' card '..idx..' (count '..count..') draws '..expected..' times, got '..#cd)
       if c.tint then
         assert(c.tint[4]==1,tag..' disabled card '..idx..' uses opaque tint')
         for layer=2,3 do
@@ -475,6 +476,7 @@ do
         end
         assert(math.abs(cd[#cd].x-c.x)<0.01 and math.abs(cd[#cd].y-c.y)<0.01,
           tag..' disabled face draws at card centre')
+        assert(cd[#cd].color[1]==c.tint[1],tag..' disabled face greys out with its tint')
       end
 
       local cp=printsByCard[c] or {}
