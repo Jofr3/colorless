@@ -27,6 +27,12 @@ describe("apiOrigin", () => {
     expect(apiOrigin()).toBe("http://localhost:8787");
   });
 
+  it("follows a dev page on a Tailscale .ts.net host", () => {
+    vi.stubGlobal("location", { hostname: "box.tail123.ts.net", protocol: "https:" });
+    expect(apiOrigin()).toBe("https://box.tail123.ts.net:8787");
+    expect(apiWebSocketUrl("/lobby/ABCD/ws")).toBe("wss://box.tail123.ts.net:8787/lobby/ABCD/ws");
+  });
+
   it("uses localhost for a dev page on any other host", () => {
     pageHost("192.168.1.20");
     expect(apiOrigin()).toBe("http://localhost:8787");

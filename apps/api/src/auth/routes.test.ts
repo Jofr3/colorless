@@ -443,6 +443,7 @@ describe("CORS for the credentialed web app", () => {
     ["https://web.example", "http://localhost:5175"],
     ["https://web.example", "http://127.0.0.1:5175"],
     ["https://web.example", "https://evil.example"],
+    ["https://web.example", "https://box.tail123.ts.net:5175"],
   ])("does not allow %s to grant access to %s", async (configured, origin) => {
     const res = await app.request(
       "/auth/me",
@@ -450,6 +451,18 @@ describe("CORS for the credentialed web app", () => {
       envWith({ APP_ORIGIN: configured }),
     );
     expect(res.headers.get("Access-Control-Allow-Origin")).toBeNull();
+  });
+
+  it("allows Tailscale .ts.net origins when APP_ORIGIN is local dev", async () => {
+    const origin = "https://box.tail123.ts.net:5175";
+    const res = await app.request(
+      "/auth/me",
+      { headers: { Origin: origin } },
+      envWith({ APP_ORIGIN: "http://localhost:5175" }),
+    );
+    expect(res.status).toBe(401);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe(origin);
+    expect(res.headers.get("Access-Control-Allow-Credentials")).toBe("true");
   });
 
   it("echoes APP_ORIGIN with credentials on auth responses", async () => {

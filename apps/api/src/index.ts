@@ -18,7 +18,7 @@ import { sweepExpired } from "./auth/sweep";
 import { cardIndexRoutes } from "./catalog/cardIndex";
 import { catalogRoutes } from "./catalog/routes";
 import { deckRoutes } from "./decks/routes";
-import { appCorsOrigins, type Env } from "./env";
+import { isAllowedAppOrigin, type Env } from "./env";
 import { errorFields, unhandledErrorFields } from "./http/errors";
 import { logError, logEventThrottled, logInfo } from "./http/log";
 import { lobbyRoutes, lobbySocketRoutes } from "./lobby/routes";
@@ -67,7 +67,7 @@ app.use("*", async (c, next) => {
 // an explicit list stops hono echoing whatever a preflight asks for.
 app.use("*", (c, next) =>
   cors({
-    origin: appCorsOrigins(c.env),
+    origin: (origin) => (isAllowedAppOrigin(c.env, origin) ? origin : null),
     credentials: true,
     maxAge: 86400,
     allowHeaders: ["Content-Type"],
@@ -86,7 +86,7 @@ const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 app.use("*", async (c, next) => {
   if (UNSAFE_METHODS.has(c.req.method)) {
     const origin = c.req.header("Origin");
-    const foreignOrigin = origin !== undefined && !appCorsOrigins(c.env).includes(origin);
+    const foreignOrigin = origin !== undefined && !isAllowedAppOrigin(c.env, origin);
     if (foreignOrigin || c.req.header("Sec-Fetch-Site") === "cross-site") {
       // The route pattern, as on every other line, not the path a foreign page chose.
       logEventThrottled("http", "cross_site_refused", {

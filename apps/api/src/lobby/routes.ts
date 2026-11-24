@@ -15,7 +15,7 @@
 
 import { generateLobbyCode, isValidLobbyCode } from "@colorless/schema";
 import { type Context, Hono } from "hono";
-import { appCorsOrigins, type Env } from "../env";
+import { isAllowedAppOrigin, type Env } from "../env";
 import { BINDING_PERIOD_SECONDS } from "../http/bindingLimit";
 import { clientIpKey } from "../http/clientIp";
 import { logEventThrottled } from "../http/log";
@@ -97,7 +97,7 @@ lobbySocketRoutes.get("/:code/ws", async (c) => {
   // site must not open a socket as its visitor. A client that sends no Origin is not a
   // browser and cannot carry a visitor's cookie.
   const origin = c.req.header("Origin");
-  if (origin !== undefined && !appCorsOrigins(c.env).includes(origin)) {
+  if (origin !== undefined && !isAllowedAppOrigin(c.env, origin)) {
     return c.json({ error: "forbidden origin" }, 403);
   }
   // Counted only here: a malformed, non-upgrade or foreign request never reaches a DO.

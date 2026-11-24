@@ -84,3 +84,30 @@ export function appCorsOrigins(env: Pick<Env, "APP_ORIGIN"> | undefined): string
   }
   return [configured];
 }
+
+/** True when `origin` is permitted for CORS and state-changing requests.
+    In local dev (APP_ORIGIN on HTTP loopback), also permits Tailscale `.ts.net`
+    origins so `tailscale serve` works without overriding APP_ORIGIN. */
+export function isAllowedAppOrigin(
+  env: Pick<Env, "APP_ORIGIN"> | undefined,
+  origin: string,
+): boolean {
+  if (appCorsOrigins(env).includes(origin)) return true;
+  const configured = new URL(appOrigin(env));
+  if (
+    configured.protocol !== "http:" ||
+    (configured.hostname !== "localhost" && configured.hostname !== "127.0.0.1")
+  ) {
+    return false;
+  }
+  try {
+    const candidate = new URL(origin);
+    return (
+      (candidate.protocol === "https:" || candidate.protocol === "http:") &&
+      candidate.hostname.endsWith(".ts.net") &&
+      candidate.origin === origin
+    );
+  } catch {
+    return false;
+  }
+}

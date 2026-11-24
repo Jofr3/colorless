@@ -16,8 +16,14 @@ export function apiOrigin(): string {
 
 function defaultApiOrigin(): string {
   const host = typeof location === "undefined" ? undefined : location.hostname;
-  if (import.meta.env.DEV && host !== undefined && LOOPBACK_HOSTS.has(host)) {
-    return `http://${host}:${DEV_API_PORT}`;
+  if (import.meta.env.DEV && host !== undefined) {
+    if (LOOPBACK_HOSTS.has(host)) {
+      return `http://${host}:${DEV_API_PORT}`;
+    }
+    if (host.endsWith(".ts.net")) {
+      const proto = location.protocol === "http:" ? "http:" : "https:";
+      return `${proto}//${host}:${DEV_API_PORT}`;
+    }
   }
   return `http://localhost:${DEV_API_PORT}`;
 }
