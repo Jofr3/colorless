@@ -156,7 +156,9 @@ end
 assert(sim:isCandidate(cardOf('active1')) and sim:isCandidate(cardOf('bench1')),'Attach targets are candidates')
 do
   local energy=cardOf('energy1')
-  sim:mousepressed(energy.x,energy.y);sim:update(1/60,22,activeZone.x,activeZone.y,false);sim:mousereleased(activeZone.x,activeZone.y)
+  sim:mousepressed(energy.x,energy.y);sim:update(1/60,22,activeZone.x,activeZone.y,false)
+  assert(sim:dropTargetCard()==cardOf('active1'),'A drag over a Pokémon outlines that Pokémon, not its well')
+  sim:mousereleased(activeZone.x,activeZone.y)
   assert(commands[#commands]=='move\tenergy1\thand\t1\tactive\t0','A hand card drags onto a target, got '..tostring(commands[#commands]))
   for i=1,60 do sim:update(1/60,23+i/60,-100,-100,false) end
   local issued=#commands

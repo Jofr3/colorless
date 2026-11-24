@@ -123,6 +123,21 @@ end
 function Simulator:drawAttached(c)
   self:eachAttached(c,drawAttachedCard)
 end
+-- The Pokémon a drag would land on, outlined in place of its well: an Energy, Tool or evolution
+-- onto a Pokémon, any attach-stage drop, or the Active retreating onto a Benched Pokémon.
+function Simulator:dropTargetCard()
+  local z,d=self.dropZone,self.drag
+  if not z or not d or not d.moved then return nil end
+  if z.zone=='retreat' then return z.card end
+  local item=d.card.item
+  local onto=self:attaching() or item.category=='Energy' or (item.category=='Trainer' and item.trainerType~='Item' and item.trainerType~='Supporter' and item.trainerType~='Stadium')
+    or (item.category=='Pokemon' and item.stage~='' and item.stage~='Basic')
+  if not onto then return nil end
+  if z.card then return z.card end
+  local owner=(z.zone=='active' and 'you') or (z.zone=='oppActive' and 'opponent')
+  if not owner then return nil end
+  for _,c in ipairs(self.cards) do if c.item.owner==owner and c.item.zone=='active' then return c end end
+end
 function Simulator:drawCard(c,shaders,rw)
   if c.koHidden or c.koAnimating or c.drawAfterPromotion then return end
   if c.item.zone=='prize' and self:koPrizeTaken(c.item.owner,c.item.index) then return end
@@ -131,7 +146,7 @@ function Simulator:drawCard(c,shaders,rw)
   -- Board choices (such as Boss's Orders) use candidate motion without a
   -- border. Keep outlines for local attachment choices and Prize selection.
   local hideOutline=self.targeting and (self.targeting.menu.kind=='board' or self.targeting.menu.kind=='attach' or self.targeting.menu.hideTargetOutline)
-  if self:isCandidate(c) and not hideOutline then c:drawOutline(T.white,3) end
+  if (self:isCandidate(c) and not hideOutline) or c==self.dropTarget then c:drawOutline(T.white,3) end
   self:drawBadges(c,rw)
 end
 function Simulator:drawPrizes(owner,rw)
@@ -222,7 +237,8 @@ function Simulator:draw(shaders)
   local dragged=self.drag and self.drag.card.item
   local trainerPlay=dragged and (dragged.trainerType=='Item' or dragged.trainerType=='Supporter')
   local sameSlot=dragged and self.dropZone and self.dropZone.zone==dragged.zone and self.dropZone.index==dragged.index
-  if self.drag and self.drag.moved and self.dropZone and self.dropZone.well and not trainerPlay and not sameSlot then
+  self.dropTarget=not sameSlot and self:dropTargetCard() or nil
+  if self.drag and self.drag.moved and self.dropZone and self.dropZone.well and not trainerPlay and not sameSlot and not self.dropTarget then
     local w=self.dropZone.well
     g.setLineWidth(2.5);Button.outline(w.x-2,w.y-2,w.w+4,w.h+4,T.white,1.2)
     g.setColor(1,1,1,0.08);Button.panel(w.x,w.y,w.w,w.h,{1,1,1,0.08},1.2)
