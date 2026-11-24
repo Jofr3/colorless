@@ -1810,6 +1810,7 @@ function stepOp(
           max,
           // The prompt names the place; the body is re-derived from the program on resolve.
           dest: op.dest === "attachToSelf" ? "attach" : op.dest,
+          ...(op.dest === "attachToSelf" ? ontoSelf(state, ctx) : {}),
           // Conditional spread, not `caps: undefined`: prompts are compared by value and an absent
           // key differs from an undefined one.
           ...(caps.length === 0 ? {} : { caps }),
@@ -2261,6 +2262,7 @@ function stepOp(
           targets,
           max,
           ...(perTarget === undefined ? {} : { maxPerTarget: perTarget }),
+          ...(op.each === true ? { mandatory: true as const } : {}),
           note:
             op.each === true ? attachEachFromDiscardNote(op) : attachFromDiscardNote(op, ceiling),
         },
@@ -2284,7 +2286,14 @@ function stepOp(
         return { done: state };
       }
       return {
-        park: { kind: "attachCards", candidates, targets, max, note: attachFromHandNote(op) },
+        park: {
+          kind: "attachCards",
+          candidates,
+          targets,
+          max,
+          ...(op.one === true ? { mandatory: true as const } : {}),
+          note: attachFromHandNote(op),
+        },
       };
     }
     case "moveEnergy": {
@@ -3085,6 +3094,7 @@ function stepOp(
             min: offer.take,
             max: offer.take,
             dest: "attach",
+            onto: { seat: op.pickOnto.ref.seat, spot: { ...op.pickOnto.ref.spot } },
             note: energyPickNote(state, op.pickOnto.ref, offer.take),
           },
         };
@@ -3113,7 +3123,7 @@ function stepOp(
         // A pile shorter than the target set lets the controller choose which bodies get a card:
         // park exactly the pile size over the targets. A pile that covers every body asks nothing.
         const spreadTargets = attachEnergyTargets(state, ctx.seat, op);
-        const spreadPile = attachableEnergies(
+        const spreadUids = attachableEnergies(
           state,
           attachSeat(op, ctx.seat),
           op.source,
@@ -3121,7 +3131,8 @@ function stepOp(
           spreadTargets.length,
           op.anyEnergy,
           op.energyName,
-        ).length;
+        );
+        const spreadPile = spreadUids.length;
         if (spreadPile < spreadTargets.length) {
           return {
             park: {
@@ -3130,6 +3141,7 @@ function stepOp(
               min: spreadPile,
               max: spreadPile,
               declinable: false,
+              ...attachPileOf(op, ctx.seat, spreadUids),
               note: `Not enough Energy for all your ${attachTargetNoun(op)} — attach ${spreadPile === 1 ? "it to which one" : `1 each to which ${spreadPile}`}?`,
             },
           };
@@ -3155,7 +3167,7 @@ function stepOp(
           return { done: state, schedule: [{ ...op, pickOnto: { ref: onlyTarget, take: 1 } }] };
         }
       }
-      return parkOrForce(
+      const parked = parkOrForce(
         state,
         op.toSelf === true ? sourceRef(state, ctx) : attachEnergyTargets(state, ctx.seat, op),
         (ref) => attachEnergyFrom(state, op, ref, ctx, record, undefined, undefined, events),
@@ -3169,8 +3181,39 @@ function stepOp(
         undefined,
         upTo,
       );
+      if (!("park" in parked) || parked.park.kind !== "choosePokemon") return parked;
+      const owner = attachSeat(op, ctx.seat);
+      const pile = attachableEnergies(
+        state,
+        owner,
+        op.source,
+        op.energyType,
+        state.players[owner][op.source].length,
+        op.anyEnergy,
+        op.energyName,
+      );
+      return { ...parked, park: { ...parked.park, ...attachPileOf(op, ctx.seat, pile) } };
     }
   }
+}
+
+/**
+ * The `attachPile` an Energy attach's park may carry: only a pile public to the answerer (a
+ * discard, or the answerer's own hand), never another seat's hand.
+ */
+function attachPileOf(
+  op: OpOf<"attachEnergyFrom">,
+  seat: Seat,
+  pile: string[],
+): { attachPile?: string[] } {
+  if (pile.length === 0) return {};
+  return op.source === "discard" || attachSeat(op, seat) === seat ? { attachPile: [...pile] } : {};
+}
+
+/** The program's own body as a `chooseCards` `onto`, when it is in play. */
+function ontoSelf(state: GameState, ctx: EffectContext): { onto?: PokemonRef } {
+  const [self] = sourceRef(state, ctx);
+  return self === undefined ? {} : { onto: self };
 }
 
 /**

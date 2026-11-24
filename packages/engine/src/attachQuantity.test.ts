@@ -487,7 +487,7 @@ describe("D359 §4 — the redacted prompt, and the leak a clamp would have been
     if (plainView.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const plain = plainView.phase.prompt;
     if (plain === null || plain.kind !== "choosePokemon") throw new Error("expected choosePokemon");
-    expect(Object.keys(plain).sort()).toEqual(["candidates", "kind", "note"]);
+    expect(Object.keys(plain).sort()).toEqual(["attachPile", "candidates", "kind", "note"]);
   });
 
   it("THE CEILING IS THE PRINTED NUMBER, AND `note` IS WHAT PROVES IT MUST BE", () => {

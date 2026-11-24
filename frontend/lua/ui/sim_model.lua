@@ -33,7 +33,7 @@ function parse.C(m,r) local c=W.card
   m.items[#m.items+1]={id=r[c.uid],cardId=r[c.cardId],name=r[c.name],owner=r[c.owner],zone=r[c.zone],index=tonumber(r[c.index]) or 0,hidden=r[c.hidden]=='true',
     category=r[c.category] or '',trainerType=r[c.trainerType] or '',stage=r[c.stage] or '',hp=tonumber(r[c.hp]),damage=tonumber(r[c.damage]) or 0,
     energies=kinds,energyCards=energyCards,tools=#toolCards,toolCards=toolCards,status=r[c.status] or '',types=r[c.types] or '',
-    draggable=r[c.draggable]=='true',displayIndex=tonumber(r[c.displayIndex]) or 0}
+    draggable=r[c.draggable]=='true',displayIndex=tonumber(r[c.displayIndex]) or 0,attachFrom=r[c.attachFrom] or ''}
 end
 function parse.D(m,r)
   local uid=r[W.knockedOut.uid]
@@ -63,7 +63,7 @@ function parse.K(m,r) local k=W.cardAction
 end
 function parse.M(m,r) local n=W.menu
   m.menu={kind=r[n.kind],title=r[n.title],note=r[n.note],mandatory=r[n.mandatory]=='true',id=r[n.id] or r[n.title],hideTargetOutline=r[n.hideTargetOutline]=='true',
-    counterSourceUid=r[n.counterSourceUid] or '',counterTransfer=r[n.counterTransfer]=='true',header={},options={},footer={}}
+    counterSourceUid=r[n.counterSourceUid] or '',counterTransfer=r[n.counterTransfer]=='true',attachHand=r[n.attachHand]=='true',header={},options={},footer={}}
 end
 -- Header, option and footer rows belong to the menu row before them.
 local function option(list,r) local o=W.option

@@ -21,6 +21,8 @@ import {
   typedEnergy,
   ONE_BASIC_DECK,
   finishOpeningSetup,
+  ATTACH_DECK,
+  handToDeck,
 } from "@colorless/engine/testing";
 import { LuaSimulator } from "./simulator";
 import { LocalTableSource } from "./tableSource";
@@ -828,9 +830,9 @@ describe("Lua simulator", () => {
     const field = (r: string[] | undefined, name: (typeof SIDE.fields)[number]) =>
       r?.[wireColumn(SIDE, name)];
     const button = (label: string) => side.find((r: string[]) => field(r, "label") === label);
-    expect(side.slice(0, 2).map((r: string[]) => field(r, "label"))).toEqual(["Done", "End turn"]);
+    expect(side.slice(0, 2).map((r: string[]) => field(r, "label"))).toEqual(["Skip", "End turn"]);
     expect(field(button("End turn"), "disabled")).toBe("true");
-    expect(field(button("Done"), "token")).not.toBe("");
+    expect(field(button("Skip"), "token")).not.toBe("");
     expect(field(button("Undo action"), "slot")).toBe("minor");
     expect(rows(publish).filter((r: string[]) => r[0] === "F")).toEqual([]);
     sim.command("move\tdeck-energy\thand\t0\tplaymat\t0");
@@ -839,6 +841,21 @@ describe("Lua simulator", () => {
     expect(sim.message).toBe("");
     expect(own("hand").map((r: string[]) => col(r, "uid"))).toEqual(["deck-energy-2"]);
     expect(col(own("active")[0] ?? [], "energies")).toContain("deck-energy");
+    // The eye shows the rest of the hand beside the offered card, which alone drags.
+    const MENU = WIRE_ROWS.sim.menu;
+    const shown = () =>
+      rows(publish).find((r: string[]) => r[0] === "M")?.[wireColumn(MENU, "attachHand")];
+    expect(shown()).toBe("false");
+    const hand = v.board.you.hand.map((c) => [c.id, "false"]);
+    sim.command("attachHand");
+    expect(shown()).toBe("true");
+    expect(
+      own("hand")
+        .map((r: string[]) => [col(r, "uid"), col(r, "draggable")])
+        .sort(),
+    ).toEqual([["deck-energy-2", "true"], ...hand].sort());
+    sim.command("attachHand");
+    expect(own("hand").map((r: string[]) => col(r, "uid"))).toEqual(["deck-energy-2"]);
   });
   it("keeps the board unchanged on invalid drags and surfaces the engine reason", () => {
     const { sim, publish } = setup();
@@ -862,6 +879,112 @@ describe("Lua simulator", () => {
       (r: string[]) => r[0] === "C" && r[5] === "active" && r[4] === "you",
     );
     expect(energyRow?.[13]).not.toBe("");
+  });
+  describe("drag-to-attach on engine prompts", () => {
+    /** Quaquaval Active, a Basic on the Bench, and only `energy` in hand, on P1's turn. */
+    function carnival(energy: Record<string, number>) {
+      let state = driveSetup(1, { p1: ATTACH_DECK, p2: ATTACH_DECK }, { first: "p2" });
+      state = must(applyAction(state, { type: "endTurn", seat: "p2" }));
+      state = setActiveFromDeck(state, "p1", "sv01-054");
+      for (const id of ["fix-energy", "fix-water-energy", "fix-fire-energy"])
+        state = handToDeck(state, "p1", id);
+      state = benchFromDeck(state, "p1", "fix-basic-1");
+      for (const [id, n] of Object.entries(energy)) state = handFromDeck(state, "p1", id, n);
+      const publish = vi.fn();
+      const sim = new LuaSimulator(publish, vi.fn());
+      sim.open({ state, events: [], names: { p1: "Player 1", p2: "Player 2" }, startedAt: 100 });
+      sim.dispatch({
+        type: "useAbility",
+        seat: "p1",
+        target: { spot: "active" },
+        abilityName: "Energy Carnival",
+      });
+      return { sim, publish, state };
+    }
+    const CARD = WIRE_ROWS.sim.card;
+    const col = (r: string[], field: (typeof CARD.fields)[number]) => r[wireColumn(CARD, field)];
+    const hand = (publish: ReturnType<typeof vi.fn>) =>
+      rows(publish)
+        .filter(
+          (r: string[]) => r[0] === "C" && col(r, "owner") === "you" && col(r, "zone") === "hand",
+        )
+        .map((r: string[]) => col(r, "cardId"));
+    const uidOf = (sim: LuaSimulator, cardId: string) =>
+      sim.host?.game.players.p1.hand.find((u) => sim.host?.game.cardIdByUid[u] === cardId) ?? "";
+
+    it("one drop answers a mixed pile's target and its card question", () => {
+      const { sim, publish } = carnival({ "fix-water-energy": 2, "fix-fire-energy": 1 });
+      expect(sim.menu?.kind).toBe("attach");
+      expect(hand(publish).sort()).toEqual(["fix-fire-energy", "fix-water-energy"]);
+      // No Skip: the attach is mandatory, so the sidebar holds only the turn's controls.
+      const side = rows(publish).filter((r: string[]) => r[0] === "A");
+      expect(side[0]?.[wireColumn(WIRE_ROWS.sim.sidebar, "label")]).toBe("End turn");
+      const fire = uidOf(sim, "fix-fire-energy");
+      sim.command(`move\t${fire}\thand\t0\toppActive\t0`);
+      expect(sim.message).toMatch(/can take it/);
+      sim.command(`move\t${fire}\thand\t0\tbench\t0`);
+      expect(sim.message).toBe("");
+      expect(sim.host?.game.phase.kind).toBe("turn:action");
+      expect(sim.host?.game.players.p1.bench[0]?.energy).toEqual([fire]);
+      expect(sim.menu).toBeNull();
+    });
+
+    it("an interchangeable pile asks only the target, and the drop attaches", () => {
+      const { sim, publish } = carnival({ "fix-water-energy": 2 });
+      expect(hand(publish)).toEqual(["fix-water-energy"]);
+      const water = sim.menu?.attach?.cards[0]?.id ?? "";
+      sim.command(`move\t${water}\thand\t0\tactive\t0`);
+      expect(sim.host?.game.phase.kind).toBe("turn:action");
+      expect(sim.host?.game.players.p1.active?.energy).toHaveLength(1);
+      expect(hand(publish)).toContain("fix-water-energy");
+    });
+
+    it("moves Energy by dragging it from the strip onto another Pokémon", () => {
+      const { sim, publish, state } = carnival({ "fix-water-energy": 1 });
+      const h = sim.host;
+      if (!h) throw Error("Missing host");
+      const switchUid = "energy-switch";
+      const water = state.players.p1.hand.find((u) => state.cardIdByUid[u] === "fix-water-energy");
+      if (!water) throw Error("Water expected in fixture");
+      const active = state.players.p1.active;
+      if (!active) throw Error("Active expected in fixture");
+      h.game = {
+        ...state,
+        cardPool: {
+          ...state.cardPool,
+          "sv01-173": trainerCard(
+            "sv01-173",
+            "Item",
+            "Move a Basic Energy from 1 of your Pokémon to another of your Pokémon.",
+          ),
+        },
+        cardIdByUid: { ...state.cardIdByUid, [switchUid]: "sv01-173" },
+        players: {
+          ...state.players,
+          p1: {
+            ...state.players.p1,
+            hand: [switchUid],
+            active: { ...active, energy: [water] },
+          },
+        },
+      };
+      sim.dispatch({ type: "playTrainer", seat: "p1", uid: switchUid });
+      expect(sim.menu?.kind).toBe("attach");
+      expect(sim.menu?.title).toBe("Move Energy");
+      expect(sim.menu?.counterSourceUid).toBe(active.stack.at(-1));
+      const strip = rows(publish).filter(
+        (r: string[]) => r[0] === "C" && col(r, "owner") === "you" && col(r, "zone") === "hand",
+      );
+      expect(strip.map((r: string[]) => [col(r, "uid"), col(r, "attachFrom")])).toEqual([
+        [water, active.stack.at(-1)],
+      ]);
+      sim.command(`move\t${water}\thand\t0\toppActive\t0`);
+      expect(sim.message).toMatch(/this effect allows/);
+      sim.command(`move\t${water}\thand\t0\tbench\t0`);
+      expect(sim.host?.game.phase.kind).toBe("turn:action");
+      expect(sim.host?.game.players.p1.bench[0]?.energy).toEqual([water]);
+      expect(sim.host?.game.players.p1.active?.energy).toEqual([]);
+    });
   });
   it("resolves an engine search prompt as a card row without losing the running game", () => {
     const { sim, publish } = setup();

@@ -341,6 +341,7 @@ describe("Magmortar me06-021 / -107 Buddy Boost", () => {
       kind: "choosePokemon",
       candidates: [ACTIVE, benchRef(0)],
       upTo: 1,
+      attachPile: [expect.any(String)],
       note: "Attach the Energy to which of your Electivire and Magmortar?",
     });
     const second = mustApply(

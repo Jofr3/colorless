@@ -18,7 +18,9 @@ const view = {
         name: "Pikachu",
         attached: { energies: [{ id: "e1", name: "Grass" }], tools: [] },
       },
-      bench: [{ id: "b", name: "Eevee" }],
+      bench: [
+        { id: "b", name: "Eevee", attached: { energies: [{ id: "e2", name: "Fire" }], tools: [] } },
+      ],
     },
     opponent: { active: { id: "o", name: "Snorlax" }, bench: [] },
   },
@@ -31,6 +33,8 @@ function open(
   const sim = {
     menu: null as SimMenu | null,
     sent: [] as unknown[],
+    staged: [] as unknown[],
+    stageAttach: (staged: unknown) => sim.staged.push(staged),
     view: () => ({ ...view, phase: { kind: "effect:choose", prompt, ...source } }),
     action: (label: string, action: { choice: unknown }, colour: string) => ({
       label,
@@ -44,12 +48,18 @@ function open(
   return sim;
 }
 const choiceOf = (option: unknown) => (option as { action: { choice: unknown } }).action.choice;
+const energy = (id: string, cardId: string) =>
+  ({ id, cardId, name: cardId, category: "Energy" }) as never;
+const labels = (sim: ReturnType<typeof open>) => sim.menu?.footer?.map((o) => o.label);
 
 describe("effect menus", () => {
-  it("cycles each moved Energy through the destinations and back to staying put", () => {
+  it("falls back to the cycling tray when a movable Energy is not on the board", () => {
     const sim = open({
       kind: "moveEnergy",
-      movable: [{ uid: "e1", from: you("active") }],
+      movable: [
+        { uid: "e1", from: you("active") },
+        { uid: "gone", from: you("active") },
+      ],
       destinations: [you("active"), you(0)],
       max: 1,
       note: "",
@@ -83,9 +93,11 @@ describe("effect menus", () => {
     expect(sim.menu?.kind).toBe("attach");
     expect(sim.menu?.options.map((o) => o.uid)).toEqual(["a", "b"]);
     expect(sim.menu?.attach?.cards.map((c) => c.id)).toEqual(["x", "y", "z"]);
-    expect(sim.menu?.footer?.map((o) => o.label)).toEqual(["Done"]);
+    expect(sim.menu?.footer?.map((o) => o.label)).toEqual(["Skip"]);
+    expect(choiceOf(sim.menu?.footer?.[0])).toEqual({ kind: "attachCards", assignments: [] });
     expect(sim.menu?.attach?.assign("x", "o")).toMatch(/can take it/);
     expect(sim.menu?.attach?.assign("x", "a")).toBe("");
+    expect(sim.menu?.footer?.map((o) => o.label)).toEqual(["Done"]);
     expect([...(sim.menu?.attach?.assigned ?? [])]).toEqual([["x", "a"]]);
     expect(choiceOf(sim.menu?.footer?.[0])).toEqual({
       kind: "attachCards",
@@ -189,5 +201,176 @@ describe("effect menus", () => {
       options: [],
       mandatory: true,
     });
+  });
+
+  it("offers no Skip on a mandatory attach, and Done once a card is dropped", () => {
+    const sim = open({
+      kind: "attachCards",
+      candidates: [energy("x", "w"), energy("y", "w")],
+      targets: [you("active"), you(0)],
+      max: 1,
+      mandatory: true,
+      note: "",
+    });
+    expect(labels(sim)).toEqual([]);
+    expect(sim.menu?.attach?.assign("x", "a")).toBe("");
+    expect(sim.sent).toEqual([
+      { kind: "attachCards", assignments: [{ uid: "x", to: you("active") }] },
+    ]);
+  });
+
+  it("answers an Energy attach's target by the drop, showing one card per print", () => {
+    const sim = open({
+      kind: "choosePokemon",
+      candidates: [you("active"), you(0)],
+      attachPile: [energy("w1", "water"), energy("w2", "water"), energy("f1", "fire")],
+      note: "",
+    });
+    expect(sim.menu?.kind).toBe("attach");
+    expect(sim.menu?.note).toBe("");
+    expect(sim.menu?.attach?.cards.map((c) => c.id)).toEqual(["w1", "f1"]);
+    expect(labels(sim)).toBeUndefined();
+    expect(sim.menu?.attach?.assign("f1", "o")).toMatch(/can take it/);
+    expect(sim.menu?.attach?.assign("f1", "b")).toBe("");
+    expect(sim.sent).toEqual([{ kind: "pokemon", ref: you(0) }]);
+    expect(sim.staged).toEqual([{ cards: [energy("f1", "fire")], targetUid: "b" }]);
+  });
+
+  it("takes as many as are dropped on one Pokémon, up to the ceiling, or skips", () => {
+    const sim = open({
+      kind: "choosePokemon",
+      candidates: [you("active"), you(0)],
+      upTo: 2,
+      attachPile: [energy("w1", "water"), energy("w2", "water"), energy("w3", "water")],
+      note: "",
+    });
+    expect(sim.menu?.attach?.cards.map((c) => c.id)).toEqual(["w1", "w2"]);
+    expect(labels(sim)).toEqual(["Skip"]);
+    expect(choiceOf(sim.menu?.footer?.[0])).toEqual({ kind: "pokemon" });
+    expect(sim.menu?.attach?.assign("w1", "a")).toBe("");
+    expect(labels(sim)).toEqual(["Done"]);
+    expect(choiceOf(sim.menu?.footer?.[0])).toEqual({
+      kind: "pokemon",
+      ref: you("active"),
+      take: 1,
+    });
+    expect(sim.menu?.attach?.assign("w2", "b")).toMatch(/same Pokémon/);
+    expect(sim.menu?.attach?.assign("w2", "a")).toBe("");
+    expect(sim.sent).toEqual([{ kind: "pokemon", ref: you("active"), take: 2 }]);
+    expect(sim.staged).toEqual([
+      { cards: [energy("w1", "water"), energy("w2", "water")], targetUid: "a" },
+    ]);
+  });
+
+  it("picks the card for a known Pokémon by dropping it there, or skips an optional one", () => {
+    const sim = open({
+      kind: "chooseCards",
+      candidates: [{ id: "t1", cardId: "tool", name: "Tool", category: "Trainer" }] as never,
+      min: 0,
+      max: 1,
+      dest: "attach",
+      onto: you(0),
+      note: "",
+    });
+    expect(sim.menu?.kind).toBe("attach");
+    expect(sim.menu?.options.map((o) => o.uid)).toEqual(["b"]);
+    expect(labels(sim)).toEqual(["Skip"]);
+    expect(choiceOf(sim.menu?.footer?.[0])).toEqual({ kind: "cards", uids: [] });
+    expect(sim.menu?.attach?.assign("t1", "a")).toMatch(/can take it/);
+    expect(sim.menu?.attach?.assign("t1", "b")).toBe("");
+    expect(sim.sent).toEqual([{ kind: "cards", uids: ["t1"] }]);
+  });
+
+  it("spreads a short pile one card per Pokémon, naming them in drop order", () => {
+    const sim = open({
+      kind: "choosePokemonMulti",
+      candidates: [you("active"), you(0)],
+      min: 1,
+      max: 1,
+      declinable: false,
+      attachPile: [energy("w1", "water")],
+      note: "",
+    });
+    expect(sim.menu?.kind).toBe("attach");
+    expect(sim.menu?.attach?.assign("w1", "b")).toBe("");
+    expect(sim.sent).toEqual([{ kind: "pokemonMulti", refs: [you(0)] }]);
+  });
+
+  it("moves Energy by dropping it on a destination; back on its own Pokémon it stays", () => {
+    const sim = open({
+      kind: "moveEnergy",
+      movable: [{ uid: "e1", from: you("active") }],
+      destinations: [you(0)],
+      max: 1,
+      note: "",
+    });
+    expect(sim.menu?.kind).toBe("attach");
+    expect(sim.menu?.attach?.cards.map((c) => c.id)).toEqual(["e1"]);
+    expect(sim.menu?.counterSourceUid).toBe("a");
+    expect(labels(sim)).toEqual(["Skip"]);
+    expect(choiceOf(sim.menu?.footer?.[0])).toEqual({ kind: "moveEnergy", picks: [] });
+    expect(sim.menu?.attach?.assign("e1", "o")).toMatch(/this effect allows/);
+    expect(sim.menu?.attach?.assign("e1", "a")).toBe("");
+    expect(sim.sent).toEqual([]);
+    expect(sim.menu?.attach?.assign("e1", "b")).toBe("");
+    expect(sim.sent).toEqual([{ kind: "moveEnergy", picks: [{ uid: "e1", dest: you(0) }] }]);
+  });
+
+  it("keeps a move to one source, one destination and its ceiling, and holds Done below its floor", () => {
+    const sim = open({
+      kind: "moveEnergy",
+      movable: [
+        { uid: "e1", from: you("active") },
+        { uid: "e2", from: you(0) },
+      ],
+      destinations: [you("active"), you(0), { seat: "p2", spot: { spot: "active" } }],
+      max: 2,
+      min: 2,
+      anyDest: true,
+      note: "",
+    });
+    expect(sim.menu?.counterSourceUid).toBeUndefined();
+    expect([...(sim.menu?.attach?.from ?? [])]).toEqual([
+      ["e1", "a"],
+      ["e2", "b"],
+    ]);
+    expect(labels(sim)).toEqual(["Done"]);
+    expect(sim.menu?.footer?.[0]?.disabled).toBe(true);
+    expect(sim.menu?.attach?.assign("e1", "b")).toBe("");
+    expect([...(sim.menu?.attach?.assigned ?? [])]).toEqual([["e1", "b"]]);
+    expect(sim.menu?.footer?.[0]?.disabled).toBe(true);
+    expect(sim.menu?.attach?.assign("e2", "o")).toMatch(/same Pokémon/);
+    const single = open({
+      kind: "moveEnergy",
+      movable: [{ uid: "e1", from: you("active") }],
+      destinations: [you(0), { seat: "p2", spot: { spot: "active" } }],
+      max: 3,
+      note: "",
+    });
+    expect(single.menu?.attach?.assign("e1", "b")).toBe("");
+    expect(single.sent).toEqual([{ kind: "moveEnergy", picks: [{ uid: "e1", dest: you(0) }] }]);
+  });
+
+  it("offers one copy of each Basic Energy type, as the engine treats prints of one type alike", () => {
+    const sim = {
+      menu: null as SimMenu | null,
+      sent: [] as unknown[],
+      view: () => ({ ...view, phase: { kind: "effect:choose", prompt } }),
+      action: (label: string, action: { choice: unknown }) => ({
+        label,
+        run: () => sim.sent.push(action.choice),
+      }),
+      emit: () => {},
+      stageAttach: () => {},
+      pileKeyOf: (cardId: string) => (cardId.startsWith("psy") ? "basic:Psychic" : cardId),
+    };
+    const prompt: RedactedEffectPrompt = {
+      kind: "choosePokemon",
+      candidates: [you("active")],
+      attachPile: [energy("p1", "psyA"), energy("p2", "psyB"), energy("x1", "special")],
+      note: "",
+    } as never;
+    sim.menu = effectMenu(sim as unknown as MenuHost, prompt);
+    expect(sim.menu.attach?.cards.map((c) => c.id)).toEqual(["p1", "x1"]);
   });
 });

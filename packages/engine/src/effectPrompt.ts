@@ -88,6 +88,8 @@ export type EffectPrompt =
         | "name"
         | "use"
         | "reveal";
+      /** The fixed body a `dest: "attach"` pick lands on, when the engine already knows it. */
+      onto?: PokemonRef;
       /**
        * Per-kind caps over the same candidate list ("a Pokémon and a Trainer card"). Each entry
        * caps picks from its `uids`; `max` stays the total. Lives on the prompt because
@@ -118,6 +120,11 @@ export type EffectPrompt =
       upTo?: number;
       takeVerb?: "move" | "put";
       counterTransfer?: { upTo: number; abilitySourceUid?: string; from?: PokemonRef };
+      /**
+       * An Energy attach's whole matching pile, so a client can show the cards beside the targets.
+       * Set only when the pile is public to the answerer (a discard, or the answerer's own hand).
+       */
+      attachPile?: string[];
       note: string;
     }
   /**
@@ -133,6 +140,8 @@ export type EffectPrompt =
       max: number;
       declinable: boolean;
       unit?: "counters";
+      /** The short pile of interchangeable Energy a `toEach` attach spreads over the picks. */
+      attachPile?: string[];
       note: string;
     }
   /**
@@ -188,6 +197,8 @@ export type EffectPrompt =
       max: number;
       maxPerTarget?: number;
       oneTarget?: true;
+      /** The empty answer is topped up rather than declined (Lethargic Charge, Reboot Pod). */
+      mandatory?: true;
       note: string;
     }
   /**

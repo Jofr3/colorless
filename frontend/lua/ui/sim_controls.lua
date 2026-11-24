@@ -121,6 +121,15 @@ function Simulator:build(quiet)
     local count=(self.sides[owner] or {}).discard or 0
     if z then self:add('',z.well.x,z.well.y,z.well.w,z.well.h,'pile',nil,{owner=owner,invisible=true,disabled=self.phase~='ready' or count==0}) end
   end
+  -- During a drag-to-attach the eye beside the hand shows or hides the rest of it.
+  if self:attaching() then
+    local shown=self.targeting.menu.attachHand
+    local size=L.portrait and 44 or 50
+    local x=L.zones.you_discard.x-size/2
+    if L.portrait then x=L.w-8-size end
+    self:add(shown and 'Hide hand' or 'Show hand',x,L.zones.you_hand.y-size/2,size,size,'attachHand',shown and T.orange or T.profile,
+      {icon=shown and 'eye_closed' or 'eye_open',tooltip=true})
+  end
   -- Targeting instructions live in the HUD; choices remain on the table.
   local target=self.targeting and self.targeting.menu or self.luaTargeting
   if target then

@@ -32801,9 +32801,9 @@ export const MUTANTS: Mutant[] = [
     what: "C8 — **THE DEAD END STOPS FILING AN EMPTY ANSWER**, `attachFromDeck`'s rule dropped at the hand arm: a stale `moved` from an earlier writer survives into the count. Unreachable off `:569`'s program (nothing writes `moved` before it), so it is killed by the CONSTRUCTED dead-end rung (`runProgram` with a stale slot and no source body).",
     file: "packages/engine/src/interpreter.ts",
     symbol: "stepOp",
-    find: '      if (candidates.length === 0 || targets.length === 0 || max <= 0) {\n        recordMoved(record, op.recordAs, []);\n        return { done: state };\n      }\n      return {\n        park: { kind: "attachCards", candidates, targets, max, note: attachFromHandNote(op) },',
+    find: '      if (candidates.length === 0 || targets.length === 0 || max <= 0) {\n        recordMoved(record, op.recordAs, []);\n        return { done: state };\n      }\n      return {\n        park: {\n          kind: "attachCards",\n          candidates,\n          targets,\n          max,\n          ...(op.one === true',
     replace:
-      '      if (candidates.length === 0 || targets.length === 0 || max <= 0) {\n        return { done: state };\n      }\n      return {\n        park: { kind: "attachCards", candidates, targets, max, note: attachFromHandNote(op) },',
+      '      if (candidates.length === 0 || targets.length === 0 || max <= 0) {\n        return { done: state };\n      }\n      return {\n        park: {\n          kind: "attachCards",\n          candidates,\n          targets,\n          max,\n          ...(op.one === true',
     expectKilledBy: ["packages/engine/src/selfHandAttachBoost.test.ts"],
   },
   {
@@ -39982,9 +39982,8 @@ export const MUTANTS: Mutant[] = [
     what: "\"to EACH of them\" lost on the prompt: two Energy can land on one body. Killed by §5's validator rung. (🆕🆕🆕 D624: re-pointed onto `ceiling` / `perBody`, `discardAttachCeiling`'s resolved `max`; same mutation.)",
     file: "packages/engine/src/interpreter.ts",
     symbol: "stepOp",
-    find: "...(perTarget === undefined ? {} : { maxPerTarget: perTarget }),\n          note:\n            op.each === true ? attachEachFromDiscardNote(op) : attachFromDiscardNote(op, ceiling),",
-    replace:
-      "          note: op.each === true ? attachEachFromDiscardNote(op) : attachFromDiscardNote(op, ceiling),",
+    find: "...(perTarget === undefined ? {} : { maxPerTarget: perTarget }),\n          ...(op.each === true ? { mandatory: true as const } : {}),",
+    replace: "...(op.each === true ? { mandatory: true as const } : {}),",
     expectKilledBy: ["packages/engine/src/teraBannerD568.test.ts"],
   },
   {

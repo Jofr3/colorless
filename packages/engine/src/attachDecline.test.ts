@@ -543,7 +543,7 @@ describe("D358 §4 — the validator, the redaction, and the refuted map-prompt 
     if (plainView.phase.kind !== "effect:choose") throw new Error("expected effect:choose");
     const plain = plainView.phase.prompt;
     if (plain === null || plain.kind !== "choosePokemon") throw new Error("expected choosePokemon");
-    expect(Object.keys(plain).sort()).toEqual(["candidates", "kind", "note"]);
+    expect(Object.keys(plain).sort()).toEqual(["attachPile", "candidates", "kind", "note"]);
   });
 
   it("refutation (b): NO attach op reads the DISCARD PILE into the map prompt", () => {

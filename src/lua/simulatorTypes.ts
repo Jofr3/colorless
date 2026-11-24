@@ -53,6 +53,16 @@ export interface SimAttach {
   assigned: ReadonlyMap<string, string>;
   /** Assigns a card to the Pokémon whose top card is `targetUid`; returns why not, or "". */
   assign: (uid: string, targetUid: string) => string;
+  /** Whether the rest of the hand shows beside the offered cards (the eye toggle). */
+  showHand: boolean;
+  toggleHand: () => void;
+  /** A move: each offered card's current host (top-card uid); it is drawn there until moved. */
+  from?: ReadonlyMap<string, string>;
+}
+/** Cards dropped on a Pokémon whose attach the engine has yet to finish (its card question). */
+export interface StagedAttach {
+  cards: readonly RedactedCard[];
+  targetUid: string;
 }
 export interface SimMenu {
   kind: SimMenuKind;

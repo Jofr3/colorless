@@ -9,7 +9,13 @@ import type {
 } from "@colorless/schema";
 import { LOBBY_FORFEIT_MS } from "@colorless/schema";
 import { cardImageUrl } from "../lib/api";
-import type { SimCardAction, SimMenu, SimMenuKind, SimOption } from "./simulatorTypes";
+import type {
+  SimCardAction,
+  SimMenu,
+  SimMenuKind,
+  SimOption,
+  StagedAttach,
+} from "./simulatorTypes";
 import type { SimulatorOrder } from "./simulatorOrder";
 import type { TableSource } from "./tableSource";
 import { encodeFields, pixelText } from "./wire";
@@ -63,6 +69,8 @@ export interface EmitState {
   /** What changed since the last emit, for screen readers; "" when nothing did. */
   announce: string;
   pendingRareCandy: string | null;
+  /** Cards dropped on a Pokémon while the engine asks the attach's card question. */
+  stagedAttach?: StagedAttach | null;
   knockedOut: readonly string[];
   menu: SimMenu | null;
   menuId: number;
@@ -422,12 +430,25 @@ export function boardRows(
     const to = attach?.assigned.get(c.id);
     if (to) staged.set(to, [...(staged.get(to) ?? []), c]);
   }
+  // A move draws its Energy on the new host only; an answered drop stays drawn on its target.
+  const moved = new Set([...(attach?.assigned.keys() ?? [])]);
+  const pending = attach ? null : s.stagedAttach;
+  if (pending) {
+    staged.set(pending.targetUid, [...(staged.get(pending.targetUid) ?? []), ...pending.cards]);
+    for (const c of pending.cards) moved.add(c.id);
+  }
   for (const owner of ["you", "opponent"] as const) {
     const side = v.board[owner];
     const hand =
       owner === "you" && attach
-        ? attach.cards.filter((c) => !attach.assigned.has(c.id))
-        : side.hand.filter((c) => owner !== "you" || c.id !== candy);
+        ? [
+            ...attach.cards.filter((c) => !attach.assigned.has(c.id)),
+            ...(attach.showHand
+              ? side.hand.filter((c) => !attach.cards.some((a) => a.id === c.id))
+              : []),
+          ]
+        : side.hand.filter((c) => (owner !== "you" || c.id !== candy) && !moved.has(c.id));
+    const discard = piles[owner].discard.filter((c) => !moved.has(c.id));
     const seat = owner === "you" ? v.seat : otherSeat(v.seat);
     const benchKeys = side.bench.map((c, i) => src.benchKey(owner, i) || c.id);
     const handOrder = s.cardOrder.sorted(
@@ -441,7 +462,7 @@ export function boardRows(
       deck: side.deckCount,
       prizes: side.prizesRemaining,
       hand: owner === "you" && attach ? side.hand.length : hand.length,
-      discard: piles[owner].discard.length,
+      discard: discard.length,
       mulligans: side.mulliganCount ?? 0,
     });
     const cardRow = (c: RedactedCard, zone: string, index: number) => {
@@ -450,9 +471,10 @@ export function boardRows(
       const full = c.cardId === "hidden" ? undefined : src.face(c);
       // Attached cards travel as "type|uid|cardId" so Lua can draw the
       // real Energy card tucked behind the Pokémon.
-      const extra = owner === "you" ? (staged.get(c.id) ?? []) : [];
+      const extra = zone === "active" || zone === "bench" ? (staged.get(c.id) ?? []) : [];
       const extraEnergy = extra.filter((e) => e.category === "Energy");
-      const energies = [...(a?.energies ?? []), ...extraEnergy].map((e) => {
+      const kept = (a?.energies ?? []).filter((e) => !moved.has(e.id));
+      const energies = [...kept, ...extraEnergy].map((e) => {
         const ec = src.face(e);
         // Catalog basic energies carry no `types`; the name is the datum.
         const type = !ec
@@ -473,7 +495,7 @@ export function boardRows(
           ].filter(Boolean)
         : [];
       const draggable = attach
-        ? owner === "you" && zone === "hand"
+        ? owner === "you" && zone === "hand" && attach.cards.some((a) => a.id === c.id)
         : owner === "you" &&
           c.cardId !== "hidden" &&
           (!candy || (zone === "hand" && candyEvolutions.has(c.id))) &&
@@ -498,6 +520,7 @@ export function boardRows(
         status: status.join(","),
         types: (full?.types ?? []).join(","),
         draggable,
+        attachFrom: zone === "hand" ? (attach?.from?.get(c.id) ?? "") : "",
         displayIndex:
           zone === "hand"
             ? handOrder.indexOf(c.id)
@@ -522,7 +545,7 @@ export function boardRows(
     });
     // Send every public discard in its authoritative order so simultaneous
     // cost discards and turn cleanup can animate without guessing the top.
-    piles[owner].discard.forEach((c, i) => {
+    discard.forEach((c, i) => {
       cardRow(c, "discard", i);
     });
   }
@@ -546,6 +569,7 @@ export function boardRows(
       status: "",
       types: "",
       draggable: false,
+      attachFrom: "",
       displayIndex: 0,
     });
     f.noteArt(c);
@@ -593,6 +617,7 @@ export function menuRows(f: EmitFrame, menu: SimMenu, menuId: number) {
     hideTargetOutline: !!menu.hideTargetOutline,
     counterSourceUid: menu.counterSourceUid ?? "",
     counterTransfer: !!menu.counterTransfer,
+    attachHand: !!menu.attach?.showHand,
   });
   for (const o of menu.header ?? []) f.option("H", o);
   for (const o of menu.options) f.option("O", o);

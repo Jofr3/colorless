@@ -147,6 +147,11 @@ do
   local shown=false
   for _,b in ipairs(sim.controls) do if b.label=='End turn' and b.token=='6' then shown=true end end
   assert(shown,'An attach prompt keeps the turn controls in the sidebar')
+  local eye
+  for i,b in ipairs(sim.controls) do if b.action=='attachHand' then eye=i end end
+  assert(eye and sim.controls[eye].icon=='eye_open','An attach prompt offers the eye beside the hand')
+  sim:activate(eye)
+  assert(commands[#commands]=='attachHand','The eye asks the host for the rest of the hand')
 end
 assert(sim:isCandidate(cardOf('active1')) and sim:isCandidate(cardOf('bench1')),'Attach targets are candidates')
 do
@@ -167,6 +172,30 @@ do
   sim:mousepressed(bench.x,bench.y);sim:mousereleased(bench.x,bench.y)
   assert(commands[#commands]=='move\tenergy1\thand\t1\tbench\t0','Picking a card, then a target, moves it there, got '..tostring(commands[#commands]))
   assert(sim.highlight==nil,'The pick clears once sent')
+  local well=sim.L.zones.you_bench.well
+  local gap=sim:dropZoneAt(well.x+well.w-2,well.y+well.h/2,cardOf('energy1'))
+  assert(gap.zone=='bench' and gap.index==cardOf('bench1').item.index and gap.card==cardOf('bench1'),'A drop in a Bench gap lands on the nearest drawn Pokémon, not a layout slot')
+end
+-- An attach or a move may land on the opponent's Pokémon, and a moved Energy raises its host.
+sim:sync(snapshot(5,{row('M','attach','Move Energy','','true','m-move','true','','true'),
+  row('O','8','Quaxly','blue','false','false','','opp1'),
+  row('C','moved1','sv03-230','Fire Energy','you','hand',2,'false','Energy','','','',0,'','','','Fire','true',2,'active1')}))
+for i=1,60 do sim:update(1/60,26+i/60,-100,-100,false) end
+do
+  local oppZone=sim.L.zones.opp_active
+  local energy=cardOf('energy1')
+  sim:mousepressed(energy.x,energy.y);sim:update(1/60,27,oppZone.x,oppZone.y,false);sim:mousereleased(oppZone.x,oppZone.y)
+  assert(commands[#commands]=='move\tenergy1\thand\t1\toppActive\t0','A hand card drags onto the opponent\'s Active, got '..tostring(commands[#commands]))
+  for i=1,60 do sim:update(1/60,28+i/60,-100,-100,false) end
+  local moved=cardOf('moved1')
+  assert(moved.item.attachFrom=='active1','A strip card names its host')
+  sim:mousepressed(moved.x,moved.y);sim:mousereleased(moved.x,moved.y)
+  assert(sim.highlight==moved and sim:isCounterSelected(cardOf('active1')),'A held moved Energy raises its host')
+  assert(not sim:isCounterSelected(cardOf('bench1')),'Only the host is raised')
+  local opp=sim.byUid['opponent:opp1']
+  sim:mousepressed(opp.x,opp.y);sim:mousereleased(opp.x,opp.y)
+  assert(commands[#commands]=='move\tmoved1\thand\t2\toppActive\t0','Picking a card, then an opposing target, moves it there, got '..tostring(commands[#commands]))
+  assert(not sim:isCounterSelected(cardOf('active1')),'The host lowers once the pick is sent')
 end
 sim:sync(snapshot(4));sim:update(1/60,25,-100,-100,false)
 -- Host board prompt: candidates on the table, footer in the HUD action area.

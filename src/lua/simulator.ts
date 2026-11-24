@@ -1,5 +1,12 @@
-import { otherSeat, type GameAction, type PokemonRef } from "@colorless/engine";
-import type { RedactedGame } from "@colorless/schema";
+import {
+  energyProvidesOf,
+  isBasicEnergy,
+  otherSeat,
+  type EffectChoice,
+  type GameAction,
+  type PokemonRef,
+} from "@colorless/engine";
+import type { RedactedEffectPrompt, RedactedGame } from "@colorless/schema";
 import { decodeFields } from "./wire";
 import type { HostState, LocalGameSetup } from "../game/localHost";
 import { moveToAction } from "../game/moveToAction";
@@ -21,7 +28,14 @@ import {
   retreatBenchMenu,
   retreatEnergyMenu,
 } from "./simulatorActions";
-import type { SimAttach, SimMenu, SimMenuKind, SimOption, ThemeColour } from "./simulatorTypes";
+import type {
+  SimAttach,
+  SimMenu,
+  SimMenuKind,
+  SimOption,
+  StagedAttach,
+  ThemeColour,
+} from "./simulatorTypes";
 import {
   announcement,
   boardRows,
@@ -55,6 +69,10 @@ export class LuaSimulator {
   menu: SimMenu | null = null;
   trayView = defaultTrayView();
   readonly energyTypeOf = (cardId: string) => this.source?.card(cardId)?.energyType;
+  readonly pileKeyOf = (cardId: string) => {
+    const face = this.source?.card(cardId);
+    return face && isBasicEnergy(face) ? `basic:${energyProvidesOf(face)}` : `card:${cardId}`;
+  };
   message = "";
   revision = 0;
   private messageSerial = 0;
@@ -70,6 +88,8 @@ export class LuaSimulator {
   private active = false;
   private handlers = new Map<string, () => void>();
   private pendingRareCandy: string | null = null;
+  // Cards dropped on a target whose card question the engine may ask next; that drop answers it.
+  private stagedAttach: StagedAttach | null = null;
   private knockedOut: readonly string[] = [];
   private cardOrder = new SimulatorOrder(0);
   private unsubscribe = () => {};
@@ -173,6 +193,7 @@ export class LuaSimulator {
     const src = this.source;
     this.knockedOut = [];
     this.pendingRareCandy = null;
+    this.stagedAttach = null;
     this.shuffled = "";
     this.menu = null;
     this.trayView = defaultTrayView();
@@ -288,13 +309,30 @@ export class LuaSimulator {
     this.menu = menu;
     this.emit();
   }
+  stageAttach(staged: StagedAttach) {
+    this.stagedAttach = staged;
+  }
   prompt(selectedCounterSource?: PokemonRef) {
     this.menuId++;
     const v = this.view();
     this.promptKey = this.key(v);
+    const staged = this.stagedAttach;
+    this.stagedAttach = null;
     // The table answers only its own decisions, and the source takes the automatic ones.
     if (v?.waitingOn !== "you" || autoStepFor(v)) return;
     const p = v.phase;
+    const pick =
+      p.kind === "effect:choose" &&
+      p.prompt &&
+      staged &&
+      !this.sending() &&
+      stagedPick(v, p.prompt, staged);
+    if (pick) {
+      // The drop that chose the target chose the cards too: answer for it, still drawn there.
+      this.stagedAttach = staged;
+      this.dispatch({ type: "resolveEffect", seat: v.seat, choice: pick });
+      return;
+    }
     if (p.kind === "effect:choose" && p.prompt)
       this.menu = effectMenu(this, p.prompt, selectedCounterSource);
     else if (p.kind === "ko:promote") this.menu = promoteMenu(v, this);
@@ -345,6 +383,7 @@ export class LuaSimulator {
     }
     this.knockedOut = [];
     this.menu = null;
+    this.stagedAttach = null;
     this.message = "";
     this.settle(() => history.step(type));
   }
@@ -402,6 +441,7 @@ export class LuaSimulator {
     ["retreat", (args) => this.onRetreat(args)],
     ["reorder", (args) => this.onReorder(args)],
     ["move", (args) => this.onMove(args)],
+    ["attachHand", () => this.menu?.attach?.toggleHand()],
   ]);
   command(raw: string) {
     const fields = decodeFields(raw);
@@ -665,14 +705,18 @@ export class LuaSimulator {
       this.emit();
     }
   }
-  /** A card dropped on the board during a drag-to-attach prompt: only own Pokémon take it. */
+  /** A card dropped on the board during a drag-to-attach prompt, onto either side's Pokémon. */
   private onAttachDrop(attach: SimAttach, uid: string, zone: string, index: number) {
-    const you = this.view()?.board.you;
-    const target = zone === "active" ? you?.active : zone === "bench" ? you?.bench[index] : null;
+    const board = this.view()?.board;
+    const side = zone.startsWith("opp") ? board?.opponent : board?.you;
+    const target =
+      zone === "active" || zone === "oppActive"
+        ? side?.active
+        : zone === "bench" || zone === "oppBench"
+          ? side?.bench[index]
+          : null;
     this.message = "";
-    const why = target
-      ? attach.assign(uid, target.id)
-      : "Drop it on one of your Pokémon that can take it.";
+    const why = target ? attach.assign(uid, target.id) : "Drop it on a Pokémon that can take it.";
     if (why) {
       this.refuse(why);
       this.emit();
@@ -717,6 +761,7 @@ export class LuaSimulator {
       warning,
       announce: said.text,
       pendingRareCandy: this.pendingRareCandy,
+      stagedAttach: this.stagedAttach,
       knockedOut: this.knockedOut,
       menu: this.menu,
       menuId: this.menuId,
@@ -753,4 +798,26 @@ export class LuaSimulator {
     this.publishImages();
     this.publish(f.rows.join("\n"));
   }
+}
+
+/**
+ * The card answer a staged drop already gave: the engine's card question onto the same body, for
+ * exactly the dropped cards, each still on offer. Null when the board changed in between.
+ */
+function stagedPick(
+  v: RedactedGame,
+  prompt: RedactedEffectPrompt,
+  staged: StagedAttach,
+): EffectChoice | null {
+  if (prompt.kind !== "chooseCards" || prompt.dest !== "attach") return null;
+  const uids = staged.cards.map((c) => c.id);
+  if (uids.length !== prompt.min || uids.length !== prompt.max) return null;
+  if (!uids.every((uid) => prompt.candidates.some((c) => c.id === uid))) return null;
+  if (prompt.onto) {
+    const side = prompt.onto.seat === v.seat ? v.board.you : v.board.opponent;
+    const body =
+      prompt.onto.spot.spot === "active" ? side.active : side.bench[prompt.onto.spot.index];
+    if (body?.id !== staged.targetUid) return null;
+  }
+  return { kind: "cards", uids };
 }

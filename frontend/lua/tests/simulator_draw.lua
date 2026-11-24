@@ -546,25 +546,24 @@ do
     local overlay=sim.overlay
     assert(overlay and overlay.kind=='cards',tag..' opens cards overlay')
     assert(overlay:hasPeek(),tag..' cards overlay has peek toggle')
-    local f,b=overlay.peekFrame,overlay.peekControl
-    assert(f and f.w==68 and f.h==68,tag..' peekFrame is 68x68')
-    assert(b and b.w==50 and b.h==50 and b.x==f.x+9 and b.y==f.y+9,tag..' peekControl is 50x50 centered inside peekFrame')
+    local b=overlay.peekControl
+    assert(b and b.w==50 and b.h==50,tag..' peekControl is 50x50')
     if not portrait then
-      assert(f.x==overlay.x+overlay.w+10 and f.y==overlay.y and f.x+f.w<=sim.boardW,
-        tag..' landscape peekFrame sits beside top-right corner on-board')
+      assert(b.x==overlay.x+overlay.w+10 and b.y==overlay.y+1.8 and b.x+b.w<=sim.boardW,
+        tag..' landscape eye sits beside the top-right corner, its face level with the modal top')
     else
-      assert(f.x==overlay.x+overlay.w-f.w and f.y==overlay.y-f.h-8 and f.y>=8,
-        tag..' portrait peekFrame sits directly above top-right corner on-board')
+      assert(b.x==overlay.x+overlay.w-b.w and b.y==overlay.y-10-b.h and b.y>=8,
+        tag..' portrait eye sits above the top-right corner, flush right')
     end
 
     assert(not sim.peek,tag..' starts with peek disabled')
-    local origPanel=Button.panel
-    local panelCalls=0
-    Button.panel=function(...) panelCalls=panelCalls+1;return origPanel(...) end
+    local origFrame=Button.modalFrameRaised
+    local frameCalls=0
+    Button.modalFrameRaised=function(...) frameCalls=frameCalls+1;return origFrame(...) end
     overlay:drawPeek()
-    Button.panel=origPanel
+    Button.modalFrameRaised=origFrame
     assert(b.icon=='eye_open' and b.colour==T.profile,tag..' drawPeek shows eye_open in profile colour when not peeking')
-    assert(panelCalls==3,tag..' drawPeek draws modalFrameRaised via 3 Button.panel calls, got '..panelCalls)
+    assert(frameCalls==0,tag..' drawPeek draws the bare button, without a frame')
 
     local drawCalls,peekDrawCalls=0,0
     local origDraw,origDrawPeek=overlay.draw,overlay.drawPeek
@@ -613,7 +612,7 @@ do
     }))
     frames(5,baseRev+2)
     assert(sim.overlay and sim.overlay.kind=='pile',tag..' opens pile overlay')
-    assert(not sim.overlay:hasPeek() and sim.overlay.peekFrame==nil,tag..' pile overlay has no peek toggle or peekFrame')
+    assert(not sim.overlay:hasPeek() and sim.overlay.peekControl==nil,tag..' pile overlay has no peek toggle')
   end
 
   sim.reduced=false

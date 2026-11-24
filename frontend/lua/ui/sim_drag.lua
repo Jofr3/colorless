@@ -61,12 +61,35 @@ function Simulator:updateReorder(x,y)
   while at<#row and center>row[at+1].homeX do row[at],row[at+1]=row[at+1],row[at];at=at+1 end
   self:alignRow(row)
 end
+-- The Benched Pokémon under x, else the nearest: a Bench is drawn in display order with gaps, so
+-- a slot from Layout.benchIndex is not an engine index.
+function Simulator:nearestBenched(owner,x,y)
+  local best,dist
+  for _,c in ipairs(self.cards) do
+    if c.item.owner==owner and c.item.zone=='bench' then
+      if c:hit(x,y) then return c end
+      local d=math.abs(c.homeX-x)
+      if not dist or d<dist then best,dist=c,d end
+    end
+  end
+  return best
+end
 function Simulator:dropZoneAt(x,y,card)
   local L=self.L;local item=card.item
   local Z=L.zones
   if self:overOwnRow(card,x,y) then return {zone='reorder',index=item.displayIndex} end
   if not item.draggable then return nil end
   if item.zone=='hand' then
+    -- An attach or a move may land on the opponent's Pokémon too.
+    if self:attaching() then
+      if Layout.inside(Z.opp_active.well,x,y) then return {zone='oppActive',index=0,well=Z.opp_active.well} end
+      for _,side in ipairs({{'opponent','oppBench',Z.opp_bench.well},{'you','bench',Z.you_bench.well}}) do
+        if Layout.inside(side[3],x,y) then
+          local onto=self:nearestBenched(side[1],x,y)
+          return {zone=side[2],index=onto and onto.item.index or -1,well=side[3],card=onto}
+        end
+      end
+    end
     if item.category=='Trainer' and (item.trainerType=='Item' or item.trainerType=='Supporter') then
       for _,zone in ipairs({Z.you_bench,Z.opp_bench}) do
         if Layout.inside(zone.well,x,y) then return {zone='playmat',index=0,well=zone.well} end

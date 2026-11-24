@@ -39,13 +39,20 @@ function Simulator:attachPick(card)
   elseif held and self:isCandidate(card) then
     self.callbacks.feedback('card1',1.1)
     self.highlight=nil
-    self:command('move',held.item.id,'hand',held.item.index,card.item.zone,card.item.index)
+    local zone=card.item.zone
+    if card.item.owner=='opponent' then zone=zone=='active' and 'oppActive' or 'oppBench' end
+    self:command('move',held.item.id,'hand',held.item.index,zone,card.item.index)
   else card:juiceUp(self.time,nil,nil,self.reduced) end
 end
 function Simulator:isCounterSelected(card)
   if self.counterMotion then return self.counterMotion.cards[card.item.id]~=nil end
   local menu=self.targeting and self.targeting.menu
-  return menu and menu.counterSourceUid==card.item.id
+  if not menu then return false end
+  if menu.counterSourceUid==card.item.id then return true end
+  -- A move's held Energy raises the Pokémon it comes from.
+  local held=(self.drag and self.drag.card) or self.highlight
+  local from=held and held.item.attachFrom
+  return from~=nil and from~='' and from==card.item.id and card.item.zone~='hand'
 end
 function Simulator:selectTarget(card,target)
   local menu=self.targeting and self.targeting.menu

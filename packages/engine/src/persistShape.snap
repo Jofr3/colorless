@@ -421,7 +421,13 @@
           "kind": "string",
           "max": "number",
           "min": "number",
-          "note": "string"
+          "note": "string",
+          "onto": {
+            "seat": "string",
+            "spot": {
+              "spot": "string"
+            }
+          }
         },
         "seat": "string"
       },

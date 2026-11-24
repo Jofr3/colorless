@@ -77,6 +77,7 @@ export const WIRE_ROWS = {
         "types",
         "draggable",
         "displayIndex",
+        "attachFrom",
       ],
     },
     cardAction: {
@@ -106,6 +107,7 @@ export const WIRE_ROWS = {
         "hideTargetOutline",
         "counterSourceUid",
         "counterTransfer",
+        "attachHand",
       ],
     },
     /** `O` is a menu option, `F` a menu footer button, `H` a menu header button. */

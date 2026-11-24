@@ -195,23 +195,18 @@ function Overlay:layout()
     h=math.min(p and 780 or 700,h)
   end
   self.x,self.y,self.w,self.h=(W-w)/2,(H-h)/2,w,h
+  -- The eye sits beside the modal's top-right corner, its face's top on the modal's top (the face
+  -- rides 1.8 px above its bounds); with no room there, it sits above that corner, flush right.
   if self:hasPeek() then
-    local wrapperW,wrapperH=68,68
-    local fx,fy
-    if not p then
-      fx,fy=self.x+self.w+10,self.y
-      if fx+wrapperW>W-8 then
-        if self.y<wrapperH+16 then self.y=math.min(H-self.h-10,wrapperH+16) end
-        fx,fy=self.x+self.w-wrapperW,self.y-wrapperH-8
-      end
-    else
-      if self.y<wrapperH+16 then self.y=math.min(H-self.h-10,wrapperH+16) end
-      fx,fy=self.x+self.w-wrapperW,self.y-wrapperH-8
+    local size,gap,lift=50,10,1.8
+    local fx,fy=self.x+self.w+gap,self.y+lift
+    if p or fx+size>W-8 then
+      if self.y<size+gap+16 then self.y=math.min(H-self.h-10,size+gap+16) end
+      fx,fy=self.x+self.w-size,self.y-gap-size
     end
-    self.peekFrame={x=fx,y=fy,w=wrapperW,h=wrapperH}
-    self.peekControl={label='Hide cards',x=fx+9,y=fy+9,w=50,h=50,action='peek',colour=T.profile,icon='eye_open'}
+    self.peekControl={label='Hide cards',x=fx,y=fy,w=size,h=size,action='peek',colour=T.profile,icon='eye_open'}
   else
-    self.peekFrame=nil;self.peekControl=nil
+    self.peekControl=nil
   end
   -- Fit the heading inside the same padded content area as the description.
   local titleWidth=math.min(self.kind=='gameover' and 520 or 600,w-64)
@@ -854,13 +849,12 @@ function Overlay:draw(shaders)
   g.pop()
 end
 function Overlay:drawPeek()
-  local f,b=self.peekFrame,self.peekControl
-  if not f or not b then return end
+  local b=self.peekControl
+  if not b then return end
   b.icon=self.sim.peek and 'eye_closed' or 'eye_open'
   b.colour=self.sim.peek and T.orange or T.profile
   b.label=self.sim.peek and 'Show cards' or 'Hide cards'
   g.push();g.translate(0,self:offset())
-  Button.modalFrameRaised(f.x,f.y,f.w,f.h)
   Button.draw(b,self.peekHovered,self.sim.pressedOverlay=='peek' and self.peekHovered,false,self.sim.boardW)
   g.pop()
 end

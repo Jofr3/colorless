@@ -335,6 +335,8 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
         from: redactedPokemonRefSchema.optional(),
       })
       .optional(),
+    /** An Energy attach's matching pile, public to the answerer; absent on other choices. */
+    attachPile: z.array(redactedCardSchema).optional(),
     note: z.string(),
   }),
   /** Pick `min`..`max` in-play Pokémon — the multi-target snipe. `declinable`
@@ -349,6 +351,8 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     declinable: z.boolean(),
     /** Each pick receives damage counters rather than damage; absent otherwise. */
     unit: z.literal("counters").optional(),
+    /** The short Energy pile a spread attach puts one card each from. */
+    attachPile: z.array(redactedCardSchema).optional(),
     note: z.string(),
   }),
   /**
@@ -415,6 +419,8 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
       "use",
       "reveal",
     ]),
+    /** The fixed body an "attach" pick lands on, when the engine knows it already. */
+    onto: redactedPokemonRefSchema.optional(),
     /**
      * Per-kind caps ("a Pokémon and a Trainer card"): each entry caps picks from its `uids`, while
      * `max` stays the total. Absent means the total is the only cap.
@@ -441,6 +447,8 @@ export const redactedEffectPromptSchema = z.discriminatedUnion("kind", [
     max: z.number(),
     maxPerTarget: z.number().optional(),
     oneTarget: z.literal(true).optional(),
+    /** The empty answer is topped up by the engine, not declined. */
+    mandatory: z.literal(true).optional(),
     note: z.string(),
   }),
   /**

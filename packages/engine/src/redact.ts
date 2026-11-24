@@ -342,6 +342,10 @@ function redactPrompt(
         ...(prompt.counterTransfer === undefined
           ? {}
           : { counterTransfer: redactedTransferOf(prompt.counterTransfer) }),
+        // The interpreter sets the pile only when the answerer may see it (a discard or own hand).
+        ...(prompt.attachPile === undefined
+          ? {}
+          : { attachPile: prompt.attachPile.map((uid) => redactedCardOf(state, uid)) }),
       };
     case "choosePokemonMulti":
       return {
@@ -351,6 +355,9 @@ function redactPrompt(
         max: prompt.max,
         declinable: prompt.declinable,
         ...(prompt.unit === undefined ? {} : { unit: prompt.unit }),
+        ...(prompt.attachPile === undefined
+          ? {}
+          : { attachPile: prompt.attachPile.map((uid) => redactedCardOf(state, uid)) }),
         note: prompt.note,
       };
     case "moveEnergy":
@@ -396,6 +403,7 @@ function redactPrompt(
         min: prompt.min,
         max: prompt.max,
         dest: prompt.dest,
+        ...(prompt.onto === undefined ? {} : { onto: redactedRefOf(prompt.onto) }),
         // Per-kind caps (Drayton), spread when present; fresh objects and arrays so the wire never
         // aliases game state.
         ...(prompt.caps === undefined
@@ -427,6 +435,7 @@ function redactPrompt(
         // The printed "1 of your Pokémon", so the client does not offer a second body the server
         // would refuse. `true` or absent.
         oneTarget: prompt.oneTarget,
+        ...(prompt.mandatory === undefined ? {} : { mandatory: prompt.mandatory }),
         note: prompt.note,
       };
     }

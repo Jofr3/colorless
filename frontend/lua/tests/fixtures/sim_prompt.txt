@@ -1,26 +1,26 @@
 2	ready	Ash	Misty	1	effect%3Achoose		Choose%20your%20next%20move	Search%20your%20deck%20for%20a%20Basic%20Pok%C3%A9mon%20onto%20your%20Bench.	0	1	you	you	p1	0	0	0				100	Ash%3A%20played%20Nest%20Ball.	0	
 L	local			undo%2Cnewgame%2Cchoosedecks%2Cconcede%2Cleave	full
 S	you	42	6	7	1	0
-C	p1%2331	sv01-167	Beach%20Court	you	hand	0	false	Trainer	Stadium			0					false	0
-C	p1%2311	fix-attacker	fix-attacker	you	hand	1	false	Pokemon		Basic		0				Fire	false	1
-C	p1%234	fix-attacker	fix-attacker	you	hand	2	false	Pokemon		Basic		0				Fire	false	2
-C	p1%2332	sv01-167	Beach%20Court	you	hand	3	false	Trainer	Stadium			0					false	3
-C	p1%2338	sv01-197	sv01-197	you	hand	4	false	Trainer	Tool			0					false	4
-C	p1%2330	sv01-167	Beach%20Court	you	hand	5	false	Trainer	Stadium			0					false	5
-C	p1%2314	fix-basic-1	fix-basic-1	you	hand	6	false	Pokemon		Basic		0				Colorless	false	6
-C	p1%236	fix-attacker	fix-attacker	you	active	0	false	Pokemon		Basic	120	0	Colorless%7Cp1%2350%7Cfix-energy%2CColorless%7Cp1%2358%7Cfix-energy	p1%2343%7Cfix-tool		Fire	false	0
-C	p1%2315	fix-basic-1	fix-basic-1	you	bench	0	false	Pokemon		Basic	60	0				Colorless	false	0
-C	nest-ball	sv01-181	Nest%20Ball	you	discard	0	false	Trainer	Item			0					false	0
+C	p1%2331	sv01-167	Beach%20Court	you	hand	0	false	Trainer	Stadium			0					false	0	
+C	p1%2311	fix-attacker	fix-attacker	you	hand	1	false	Pokemon		Basic		0				Fire	false	1	
+C	p1%234	fix-attacker	fix-attacker	you	hand	2	false	Pokemon		Basic		0				Fire	false	2	
+C	p1%2332	sv01-167	Beach%20Court	you	hand	3	false	Trainer	Stadium			0					false	3	
+C	p1%2338	sv01-197	sv01-197	you	hand	4	false	Trainer	Tool			0					false	4	
+C	p1%2330	sv01-167	Beach%20Court	you	hand	5	false	Trainer	Stadium			0					false	5	
+C	p1%2314	fix-basic-1	fix-basic-1	you	hand	6	false	Pokemon		Basic		0				Colorless	false	6	
+C	p1%236	fix-attacker	fix-attacker	you	active	0	false	Pokemon		Basic	120	0	Colorless%7Cp1%2350%7Cfix-energy%2CColorless%7Cp1%2358%7Cfix-energy	p1%2343%7Cfix-tool		Fire	false	0	
+C	p1%2315	fix-basic-1	fix-basic-1	you	bench	0	false	Pokemon		Basic	60	0				Colorless	false	0	
+C	nest-ball	sv01-181	Nest%20Ball	you	discard	0	false	Trainer	Item			0					false	0	
 S	opponent	46	6	6	0	0
-C	opponent-hand-0	hidden	Face-down%20card	opponent	hand	0	true	Trainer				0					false	0
-C	opponent-hand-1	hidden	Face-down%20card	opponent	hand	1	true	Trainer				0					false	1
-C	opponent-hand-2	hidden	Face-down%20card	opponent	hand	2	true	Trainer				0					false	2
-C	opponent-hand-3	hidden	Face-down%20card	opponent	hand	3	true	Trainer				0					false	3
-C	opponent-hand-4	hidden	Face-down%20card	opponent	hand	4	true	Trainer				0					false	4
-C	opponent-hand-5	hidden	Face-down%20card	opponent	hand	5	true	Trainer				0					false	5
-C	p2%237	fix-attacker	fix-attacker	opponent	active	0	false	Pokemon		Basic	120	40				Fire	false	0
-C	p2%2332	sv01-167	Beach%20Court	global	stadium	0	false	Trainer	Stadium			0					false	0
-M	cards			true	2	false		false
+C	opponent-hand-0	hidden	Face-down%20card	opponent	hand	0	true	Trainer				0					false	0	
+C	opponent-hand-1	hidden	Face-down%20card	opponent	hand	1	true	Trainer				0					false	1	
+C	opponent-hand-2	hidden	Face-down%20card	opponent	hand	2	true	Trainer				0					false	2	
+C	opponent-hand-3	hidden	Face-down%20card	opponent	hand	3	true	Trainer				0					false	3	
+C	opponent-hand-4	hidden	Face-down%20card	opponent	hand	4	true	Trainer				0					false	4	
+C	opponent-hand-5	hidden	Face-down%20card	opponent	hand	5	true	Trainer				0					false	5	
+C	p2%237	fix-attacker	fix-attacker	opponent	active	0	false	Pokemon		Basic	120	40				Fire	false	0	
+C	p2%2332	sv01-167	Beach%20Court	global	stadium	0	false	Trainer	Stadium			0					false	0	
+M	cards			true	2	false		false	false
 H	1	Show%20all%20cards	profile	false	false			false	1
 H	2	Group%20cards	profile	false	false			false	1
 H	3	Order%3A%20None	profile	false	false			false	1

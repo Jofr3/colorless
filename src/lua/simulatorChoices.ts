@@ -1,7 +1,7 @@
 import type { EffectChoice, GameAction, PokemonRef } from "@colorless/engine";
 import type { RedactedEffectPrompt, RedactedCard, RedactedGame } from "@colorless/schema";
 import { applyTrayView, defaultTrayView, type TrayViewState } from "./simulatorTray";
-import type { SimAttach, SimMenu, SimOption, ThemeColour } from "./simulatorTypes";
+import type { SimAttach, SimMenu, SimOption, StagedAttach, ThemeColour } from "./simulatorTypes";
 
 /** What an effect menu reads and rewrites as its picks change. */
 export interface MenuHost {
@@ -11,6 +11,10 @@ export interface MenuHost {
   emit(): void;
   trayView?: TrayViewState;
   energyTypeOf?: (cardId: string) => string | null | undefined;
+  /** What makes copies interchangeable to the engine: a Basic Energy's type, else its print. */
+  pileKeyOf?: (cardId: string) => string;
+  /** Remembers cards dropped on a target whose card question the engine asks next. */
+  stageAttach?: (staged: StagedAttach) => void;
 }
 
 type PromptKind = RedactedEffectPrompt["kind"];
@@ -23,12 +27,14 @@ interface MenuState {
   amount: number;
   target: number;
   sourceSelected: boolean;
+  showHand: boolean;
 }
 
 interface MenuContext {
   state: MenuState;
   trayView: TrayViewState;
   energyTypeOf?: (cardId: string) => string | null | undefined;
+  pileKeyOf: (cardId: string) => string;
   placingCounters: boolean;
   invokedBy: string | undefined;
   abilityName: string | undefined;
@@ -39,6 +45,7 @@ interface MenuContext {
   confirm: (choice: EffectChoice, label?: string, colour?: ThemeColour) => SimOption;
   pick: (id: string, label: string, face?: RedactedCard, uid?: string) => SimOption;
   refresh: () => void;
+  stageAttach: (staged: StagedAttach) => void;
 }
 
 type MenuBuilder<P extends RedactedEffectPrompt> = (
@@ -76,9 +83,14 @@ function attachStage(
   return {
     cards,
     assigned,
+    showHand: ctx.state.showHand,
+    toggleHand: () => {
+      ctx.state.showHand = !ctx.state.showHand;
+      ctx.refresh();
+    },
     assign: (uid, targetUid) => {
       const to = targets.findIndex((t) => ctx.refUid(t) === targetUid);
-      if (to < 0) return "Drop it on one of your Pokémon that can take it.";
+      if (to < 0) return "Drop it on a Pokémon that can take it.";
       if (!cards.some((c) => c.id === uid)) return "That card is not part of this attach.";
       let next = new Map(assignments).set(uid, to);
       if (next.size > limits.max) {
@@ -102,6 +114,35 @@ function attachStage(
 /** Board options naming the targets, so Lua marks them; a drop, not a click, assigns. */
 function attachTargets(targets: readonly PokemonRef[], ctx: MenuContext): SimOption[] {
   return targets.map((ref) => ({ label: ctx.refName(ref), uid: ctx.refUid(ref), run: () => {} }));
+}
+
+/**
+ * At most `max` interchangeable copies (`pileKeyOf`), so a pile reads as its choices: the engine
+ * asks no card question between them and takes the first.
+ */
+function collapsePile(
+  cards: readonly RedactedCard[],
+  max: number,
+  pileKeyOf: (cardId: string) => string,
+): RedactedCard[] {
+  const seen = new Map<string, number>();
+  return cards.filter((c) => {
+    const key = pileKeyOf(c.cardId);
+    const n = seen.get(key) ?? 0;
+    seen.set(key, n + 1);
+    return n < max;
+  });
+}
+
+/** `option` with `before` run first, as when a footer button stages its drops. */
+function first(option: SimOption, before: () => void): SimOption {
+  return {
+    ...option,
+    run: () => {
+      before();
+      option.run();
+    },
+  };
 }
 
 /** The attachCards answer for `assignments`, each card paired with its target. */
@@ -224,8 +265,59 @@ const choosePrize: MenuBuilder<PromptOf<"choosePrize">> = (menu, prompt, { confi
   }));
 };
 
+/**
+ * An Energy attach's target question with its pile shown: one drop answers which Pokémon and, with
+ * `upTo`, how many (the cards dropped on it). The dropped cards are staged, so the card question
+ * that may follow is answered by the same drop.
+ */
+const attachPokemon = (
+  menu: SimMenu,
+  prompt: PromptOf<"choosePokemon">,
+  pile: readonly RedactedCard[],
+  ctx: MenuContext,
+) => {
+  const { confirm } = ctx;
+  const targets = prompt.candidates;
+  const upTo = prompt.upTo;
+  const cards = collapsePile(pile, upTo ?? 1, ctx.pileKeyOf);
+  menu.kind = "attach";
+  menu.title = "Attach Energy";
+  menu.note = "";
+  menu.options = attachTargets(targets, ctx);
+  const answer = (assignments: ReadonlyMap<string, number>): EffectChoice => {
+    const [picked] = assignments.values();
+    const ref = picked === undefined ? undefined : targets[picked];
+    if (!ref) return { kind: "pokemon" };
+    return { kind: "pokemon", ref, ...(upTo ? { take: assignments.size } : {}) };
+  };
+  const stage = (assignments: ReadonlyMap<string, number>) => {
+    const [picked] = assignments.values();
+    const ref = picked === undefined ? undefined : targets[picked];
+    if (!ref) return;
+    ctx.stageAttach({
+      cards: cards.filter((c) => assignments.has(c.id)),
+      targetUid: ctx.refUid(ref),
+    });
+  };
+  const limits = upTo ? { max: upTo, oneTarget: true as const } : { max: 1 };
+  menu.attach = attachStage(cards, targets, limits, ctx, (assignments) =>
+    first(confirm(answer(assignments)), () => stage(assignments)).run(),
+  );
+  const { assignments } = ctx.state;
+  if (upTo)
+    menu.footer = [
+      assignments.size === 0
+        ? confirm({ kind: "pokemon" }, "Skip", "red")
+        : first(confirm(answer(assignments), "Done", "green"), () => stage(assignments)),
+    ];
+};
+
 const choosePokemon: MenuBuilder<PromptOf<"choosePokemon">> = (menu, prompt, ctx) => {
   const { state, transfer, confirm, refName, refUid } = ctx;
+  if (prompt.attachPile && !transfer) {
+    attachPokemon(menu, prompt, prompt.attachPile, ctx);
+    return;
+  }
   menu.kind = "board";
   menu.title = "Choose a Pokémon";
   if (transfer) {
@@ -270,6 +362,29 @@ const choosePokemon: MenuBuilder<PromptOf<"choosePokemon">> = (menu, prompt, ctx
 
 const choosePokemonMulti: MenuBuilder<PromptOf<"choosePokemonMulti">> = (menu, prompt, ctx) => {
   const { state, confirm, refName, refUid } = ctx;
+  if (prompt.attachPile) {
+    // A short spread: one card each onto the Pokémon it is dropped on.
+    const targets = prompt.candidates;
+    menu.kind = "attach";
+    menu.title = "Attach Energy";
+    menu.note = "";
+    menu.options = attachTargets(targets, ctx);
+    menu.attach = attachStage(
+      prompt.attachPile,
+      targets,
+      { max: prompt.max, maxPerTarget: 1 },
+      ctx,
+      (assignments) =>
+        confirm({
+          kind: "pokemonMulti",
+          refs: [...assignments.values()].flatMap((i) => {
+            const ref = targets[i];
+            return ref ? [ref] : [];
+          }),
+        }).run(),
+    );
+    return;
+  }
   menu.kind = "board";
   if (ctx.placingCounters && prompt.max === 1) {
     menu.title = "Place damage counters";
@@ -297,7 +412,48 @@ const choosePokemonMulti: MenuBuilder<PromptOf<"choosePokemonMulti">> = (menu, p
   ];
 };
 
+/** A card pick onto one known Pokémon (the Energy for a picked target, a Tool onto itself). */
+const attachOnto = (
+  menu: SimMenu,
+  prompt: PromptOf<"chooseCards">,
+  onto: PokemonRef,
+  ctx: MenuContext,
+) => {
+  const { confirm } = ctx;
+  const targets = [onto];
+  const answer = (assignments: ReadonlyMap<string, number>): EffectChoice => ({
+    kind: "cards",
+    uids: [...assignments.keys()],
+  });
+  menu.kind = "attach";
+  menu.title = "Attach cards";
+  menu.note = "";
+  menu.options = attachTargets(targets, ctx);
+  menu.attach = attachStage(
+    collapsePile(prompt.candidates, prompt.max, ctx.pileKeyOf),
+    targets,
+    { max: prompt.max },
+    ctx,
+    (assignments) => confirm(answer(assignments)).run(),
+  );
+  const { assignments } = ctx.state;
+  menu.footer =
+    assignments.size === 0
+      ? prompt.min === 0
+        ? [confirm({ kind: "cards", uids: [] }, "Skip", "red")]
+        : []
+      : [
+          ...(assignments.size >= prompt.min
+            ? [confirm(answer(assignments), "Done", "green")]
+            : []),
+        ];
+};
+
 const chooseCards: MenuBuilder<PromptOf<"chooseCards" | "orderCards">> = (menu, prompt, ctx) => {
+  if (prompt.kind === "chooseCards" && prompt.dest === "attach" && prompt.onto) {
+    attachOnto(menu, prompt, prompt.onto, ctx);
+    return;
+  }
   const { selected } = ctx.state;
   menu.kind = "cards";
   menu.title = prompt.kind === "orderCards" ? "Choose card order" : "";
@@ -364,11 +520,108 @@ const attachCards: MenuBuilder<PromptOf<"attachCards">> = (menu, prompt, ctx) =>
   menu.attach = attachStage(prompt.candidates, prompt.targets, prompt, ctx, (assignments) =>
     ctx.confirm(attachChoice(assignments, prompt.targets)).run(),
   );
-  // Short of a full attach, "Done" attaches what was dropped (none declines).
-  menu.footer = [ctx.confirm(attachChoice(ctx.state.assignments, prompt.targets), "Done", "green")];
+  // Short of a full attach, "Done" attaches what was dropped. A mandatory attach cannot be
+  // skipped, since the engine would attach a card anyway.
+  const { assignments } = ctx.state;
+  menu.footer =
+    assignments.size > 0
+      ? [ctx.confirm(attachChoice(assignments, prompt.targets), "Done", "green")]
+      : prompt.mandatory
+        ? []
+        : [ctx.confirm(attachChoice(assignments, prompt.targets), "Skip", "red")];
 };
 
+/**
+ * The drag-to-move stage: the movable Energy is lifted into the hand strip, and dropping one on a
+ * destination moves it there; dropped on its own Pokémon, it stays. The prompt's couplings
+ * (one source, one destination, `max`) refuse a drop with a message.
+ */
+function moveStage(
+  menu: SimMenu,
+  prompt: PromptOf<"moveEnergy">,
+  cards: readonly RedactedCard[],
+  ctx: MenuContext,
+) {
+  const { assignments } = ctx.state;
+  const targets = prompt.destinations;
+  const from = new Map(prompt.movable.map((m) => [m.uid, ctx.refUid(m.from)]));
+  const assigned = new Map<string, string>();
+  for (const [uid, i] of assignments) {
+    const to = targets[i];
+    if (to) assigned.set(uid, ctx.refUid(to));
+  }
+  const answer = (moves: ReadonlyMap<string, number>): EffectChoice => ({
+    kind: "moveEnergy",
+    picks: [...moves].flatMap(([uid, i]) => {
+      const dest = targets[i];
+      return dest ? [{ uid, dest }] : [];
+    }),
+  });
+  const { max } = prompt;
+  menu.kind = "attach";
+  menu.title = "Move Energy";
+  menu.note = "";
+  menu.options = attachTargets(targets, ctx);
+  const sources = new Set(from.values());
+  if (sources.size === 1) menu.counterSourceUid = [...sources][0];
+  menu.attach = {
+    cards,
+    assigned,
+    from,
+    showHand: ctx.state.showHand,
+    toggleHand: () => {
+      ctx.state.showHand = !ctx.state.showHand;
+      ctx.refresh();
+    },
+    assign: (uid, targetUid) => {
+      const source = from.get(uid);
+      if (source === undefined) return "That card is not part of this move.";
+      if (targetUid === source) {
+        assignments.delete(uid);
+        ctx.refresh();
+        return "";
+      }
+      const to = targets.findIndex((t) => ctx.refUid(t) === targetUid);
+      if (to < 0) return "Move it onto one of the Pokémon this effect allows.";
+      let next = new Map(assignments).set(uid, to);
+      if (next.size > max) {
+        if (max !== 1) return `You can move up to ${max} Energy.`;
+        next = new Map([[uid, to]]);
+      }
+      if (!prompt.anySource && new Set([...next.keys()].map((u) => from.get(u))).size > 1)
+        return "Move them all from the same Pokémon.";
+      if (!prompt.anyDest && new Set(next.values()).size > 1)
+        return "Move them all to the same Pokémon.";
+      assignments.clear();
+      for (const [k, v] of next) assignments.set(k, v);
+      if (next.size >= Math.min(max, cards.length)) ctx.confirm(answer(next)).run();
+      else ctx.refresh();
+      return "";
+    },
+  };
+  const floor = prompt.min ?? 0;
+  menu.footer =
+    assignments.size === 0 && floor === 0
+      ? [ctx.confirm({ kind: "moveEnergy", picks: [] }, "Skip", "red")]
+      : [
+          {
+            ...ctx.confirm(answer(assignments), "Done", "green"),
+            ...(assignments.size < Math.max(floor, 1) ? { disabled: true } : {}),
+          },
+        ];
+}
+
 const moveEnergy: MenuBuilder<PromptOf<"moveEnergy">> = (menu, prompt, ctx) => {
+  const cards = prompt.movable.map((c) => ctx.card(c.uid));
+  if (cards.length > 0 && cards.every((c) => c !== undefined)) {
+    moveStage(menu, prompt, cards as RedactedCard[], ctx);
+    return;
+  }
+  moveTray(menu, prompt, ctx);
+};
+
+/** The card tray a move falls back to when a movable card is not on the board (mid-KO). */
+const moveTray: MenuBuilder<PromptOf<"moveEnergy">> = (menu, prompt, ctx) => {
   const { assignments } = ctx.state;
   const targets = prompt.destinations;
   const cards = prompt.movable.map((c) => ctx.card(c.uid)).filter((c): c is RedactedCard => !!c);
@@ -466,6 +719,7 @@ export function effectMenu(
     assignments: new Map(),
     amount: prompt.kind === "choosePokemon" ? (prompt.upTo ?? 1) : 100,
     target: 0,
+    showHand: false,
     // The engine forces a lone damaged source. Still let the player identify it
     // before presenting destinations, just as when several sources are eligible.
     sourceSelected:
@@ -518,6 +772,7 @@ export function effectMenu(
     state,
     trayView,
     energyTypeOf: sim.energyTypeOf,
+    pileKeyOf: sim.pileKeyOf ?? ((cardId) => cardId),
     placingCounters,
     invokedBy: phase?.invokedBy,
     abilityName: phase?.abilityName,
@@ -545,6 +800,7 @@ export function effectMenu(
       sim.menu = build();
       sim.emit();
     },
+    stageAttach: (staged) => sim.stageAttach?.(staged),
   };
   const build = (): SimMenu => {
     const menu: SimMenu = {
