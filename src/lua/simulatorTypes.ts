@@ -44,7 +44,16 @@ export type SimMenuKind =
   | "prizes"
   | "coin"
   | "log"
-  | "pile";
+  | "pile"
+  | "attach";
+/** A drag-to-attach prompt: the hand shows only `cards`, and dropping one on a Pokémon assigns it. */
+export interface SimAttach {
+  cards: readonly RedactedCard[];
+  /** Assigned card uid → the target's top-card uid; these draw attached instead of in hand. */
+  assigned: ReadonlyMap<string, string>;
+  /** Assigns a card to the Pokémon whose top card is `targetUid`; returns why not, or "". */
+  assign: (uid: string, targetUid: string) => string;
+}
 export interface SimMenu {
   kind: SimMenuKind;
   title: string;
@@ -57,6 +66,7 @@ export interface SimMenu {
   /** Selected Adrena-Brain source stays raised while choosing its destination. */
   counterSourceUid?: string;
   counterTransfer?: boolean;
+  attach?: SimAttach;
 }
 /** An action attached to a card (Balatro's use/sell buttons). Targeted actions
  * share a `group` and name their `targetUid`; Lua collapses them into one

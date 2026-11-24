@@ -38,7 +38,7 @@ function Simulator:build(quiet)
   -- its horizontal strip under the table.
   local cl=(not L.portrait and hb.cluster) or L.cluster
   local primaries,dangers,minors={},{},{}
-  for _,a in ipairs((self.targeting or self.luaTargeting) and {} or self.actions) do
+  for _,a in ipairs((self.luaTargeting or (self.targeting and not self:attaching())) and {} or self.actions) do
     if a.slot=='primary' then primaries[#primaries+1]=a elseif a.slot=='danger' then dangers[#dangers+1]=a else minors[#minors+1]=a end
   end
   -- The hot-seat history row: the turn's End turn, setup's Ready or its

@@ -19,12 +19,29 @@ function Simulator:targetFor(card)
   if self.targeting then
     local m=self.targeting.menu
     for _,o in ipairs(m.options) do
-      if not o.disabled and ((m.kind=='board' and o.uid==card.item.id) or (m.kind=='prizes' and card.prizeSlot and o.uid=='prize:'..card.prizeSlot)) then return o end
+      if not o.disabled and (((m.kind=='board' or m.kind=='attach') and o.uid==card.item.id) or (m.kind=='prizes' and card.prizeSlot and o.uid=='prize:'..card.prizeSlot)) then return o end
     end
   end
   return nil
 end
 function Simulator:isCandidate(card) return self:targetFor(card)~=nil end
+-- A drag-to-attach prompt: the hand holds only the offered cards, and dropping one on a target
+-- Pokémon (or picking it, then the Pokémon) sends the same move a drag on the turn does.
+function Simulator:attaching() return self.targeting~=nil and self.targeting.menu.kind=='attach' end
+function Simulator:attachPick(card)
+  local held=self.highlight
+  if card.item.owner=='you' and card.item.zone=='hand' then
+    local selecting=held~=card
+    card:juiceUp(self.time,0.05,0.03,self.reduced)
+    self.callbacks.feedback(selecting and 'cardSlide1' or 'cardSlide2',1,selecting and 1 or 0.3)
+    self.highlight=selecting and card or nil
+    self:build()
+  elseif held and self:isCandidate(card) then
+    self.callbacks.feedback('card1',1.1)
+    self.highlight=nil
+    self:command('move',held.item.id,'hand',held.item.index,card.item.zone,card.item.index)
+  else card:juiceUp(self.time,nil,nil,self.reduced) end
+end
 function Simulator:isCounterSelected(card)
   if self.counterMotion then return self.counterMotion.cards[card.item.id]~=nil end
   local menu=self.targeting and self.targeting.menu

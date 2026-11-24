@@ -414,9 +414,20 @@ export function boardRows(
       ? v.phase.rareCandy.flatMap((option) => option.stage2.map((e) => e.uid))
       : [],
   );
+  // A drag-to-attach prompt swaps the hand for the offered cards and draws each assigned one
+  // attached to its target already.
+  const attach = s.menu?.attach;
+  const staged = new Map<string, RedactedCard[]>();
+  for (const c of attach?.cards ?? []) {
+    const to = attach?.assigned.get(c.id);
+    if (to) staged.set(to, [...(staged.get(to) ?? []), c]);
+  }
   for (const owner of ["you", "opponent"] as const) {
     const side = v.board[owner];
-    const hand = side.hand.filter((c) => owner !== "you" || c.id !== candy);
+    const hand =
+      owner === "you" && attach
+        ? attach.cards.filter((c) => !attach.assigned.has(c.id))
+        : side.hand.filter((c) => owner !== "you" || c.id !== candy);
     const seat = owner === "you" ? v.seat : otherSeat(v.seat);
     const benchKeys = side.bench.map((c, i) => src.benchKey(owner, i) || c.id);
     const handOrder = s.cardOrder.sorted(
@@ -429,7 +440,7 @@ export function boardRows(
       owner,
       deck: side.deckCount,
       prizes: side.prizesRemaining,
-      hand: hand.length,
+      hand: owner === "you" && attach ? side.hand.length : hand.length,
       discard: piles[owner].discard.length,
       mulligans: side.mulliganCount ?? 0,
     });
@@ -439,7 +450,9 @@ export function boardRows(
       const full = c.cardId === "hidden" ? undefined : src.face(c);
       // Attached cards travel as "type|uid|cardId" so Lua can draw the
       // real Energy card tucked behind the Pokémon.
-      const energies = (a?.energies ?? []).map((e) => {
+      const extra = owner === "you" ? (staged.get(c.id) ?? []) : [];
+      const extraEnergy = extra.filter((e) => e.category === "Energy");
+      const energies = [...(a?.energies ?? []), ...extraEnergy].map((e) => {
         const ec = src.face(e);
         // Catalog basic energies carry no `types`; the name is the datum.
         const type = !ec
@@ -449,7 +462,9 @@ export function boardRows(
             : energyProvidesOf(ec);
         return [type, e.id, e.cardId].join("|");
       });
-      const tools = (a?.tools ?? []).map((t) => [t.id, t.cardId].join("|"));
+      const tools = [...(a?.tools ?? []), ...extra.filter((e) => e.category !== "Energy")].map(
+        (t) => [t.id, t.cardId].join("|"),
+      );
       const status = b
         ? [
             b.conditions.rotation !== "none" ? b.conditions.rotation : "",
@@ -457,13 +472,14 @@ export function boardRows(
             b.conditions.burned ? "burned" : "",
           ].filter(Boolean)
         : [];
-      const draggable =
-        owner === "you" &&
-        c.cardId !== "hidden" &&
-        (!candy || (zone === "hand" && candyEvolutions.has(c.id))) &&
-        ((zone === "hand" && canDragHand) ||
-          (zone === "bench" && (v.phase.kind === "setup:place" || isViewerTurn)) ||
-          (zone === "active" && isViewerTurn));
+      const draggable = attach
+        ? owner === "you" && zone === "hand"
+        : owner === "you" &&
+          c.cardId !== "hidden" &&
+          (!candy || (zone === "hand" && candyEvolutions.has(c.id))) &&
+          ((zone === "hand" && canDragHand) ||
+            (zone === "bench" && (v.phase.kind === "setup:place" || isViewerTurn)) ||
+            (zone === "active" && isViewerTurn));
       f.row(W.card, {
         uid: c.id,
         cardId: c.cardId,

@@ -12,7 +12,14 @@ const you = (spot: "active" | number) =>
 const view = {
   seat: "p1",
   board: {
-    you: { active: { id: "a", name: "Pikachu" }, bench: [{ id: "b", name: "Eevee" }] },
+    you: {
+      active: {
+        id: "a",
+        name: "Pikachu",
+        attached: { energies: [{ id: "e1", name: "Grass" }], tools: [] },
+      },
+      bench: [{ id: "b", name: "Eevee" }],
+    },
     opponent: { active: { id: "o", name: "Snorlax" }, bench: [] },
   },
 };
@@ -23,12 +30,13 @@ function open(
 ) {
   const sim = {
     menu: null as SimMenu | null,
+    sent: [] as unknown[],
     view: () => ({ ...view, phase: { kind: "effect:choose", prompt, ...source } }),
-    action: (label: string, action: unknown, colour: string) => ({
+    action: (label: string, action: { choice: unknown }, colour: string) => ({
       label,
       colour,
       action,
-      run: () => {},
+      run: () => sim.sent.push(action.choice),
     }),
     emit: () => {},
   };
@@ -38,14 +46,14 @@ function open(
 const choiceOf = (option: unknown) => (option as { action: { choice: unknown } }).action.choice;
 
 describe("effect menus", () => {
-  it("cycles each attached card through the targets and back to staying put", () => {
+  it("cycles each moved Energy through the destinations and back to staying put", () => {
     const sim = open({
-      kind: "attachCards",
-      candidates: [{ id: "x", name: "Grass" }] as never,
-      targets: [you("active"), you(0)],
+      kind: "moveEnergy",
+      movable: [{ uid: "e1", from: you("active") }],
+      destinations: [you("active"), you(0)],
       max: 1,
       note: "",
-    });
+    } as never);
     const labels = [sim.menu?.options[0]?.label];
     for (let i = 0; i < 3; i++) {
       sim.menu?.options[0]?.run();
@@ -57,6 +65,75 @@ describe("effect menus", () => {
       "Grass: You: Eevee",
       "Grass: stays",
     ]);
+  });
+
+  it("attaches by dropping offered cards, within the prompt's limits, and sends the full attach", () => {
+    const sim = open({
+      kind: "attachCards",
+      candidates: [
+        { id: "x", name: "Grass", category: "Energy" },
+        { id: "y", name: "Fire", category: "Energy" },
+        { id: "z", name: "Water", category: "Energy" },
+      ] as never,
+      targets: [you("active"), you(0)],
+      max: 2,
+      maxPerTarget: 1,
+      note: "",
+    });
+    expect(sim.menu?.kind).toBe("attach");
+    expect(sim.menu?.options.map((o) => o.uid)).toEqual(["a", "b"]);
+    expect(sim.menu?.attach?.cards.map((c) => c.id)).toEqual(["x", "y", "z"]);
+    expect(sim.menu?.footer?.map((o) => o.label)).toEqual(["Done"]);
+    expect(sim.menu?.attach?.assign("x", "o")).toMatch(/can take it/);
+    expect(sim.menu?.attach?.assign("x", "a")).toBe("");
+    expect([...(sim.menu?.attach?.assigned ?? [])]).toEqual([["x", "a"]]);
+    expect(choiceOf(sim.menu?.footer?.[0])).toEqual({
+      kind: "attachCards",
+      assignments: [{ uid: "x", to: you("active") }],
+    });
+    expect(sim.menu?.attach?.assign("y", "a")).toMatch(/each Pokémon/);
+    expect(sim.sent).toEqual([]);
+    expect(sim.menu?.attach?.assign("y", "b")).toBe("");
+    expect(sim.sent).toEqual([
+      {
+        kind: "attachCards",
+        assignments: [
+          { uid: "x", to: you("active") },
+          { uid: "y", to: you(0) },
+        ],
+      },
+    ]);
+  });
+
+  it("answers Crispin's two-type split by which Energy is dropped, with no buttons", () => {
+    const sim = open({
+      kind: "confirm",
+      note: "Which Energy do you want to attach?",
+      labels: { yes: "Attach Fire Energy", no: "Attach Psychic Energy" },
+      cards: {
+        yes: { id: "f", name: "Fire Energy", category: "Energy" },
+        no: { id: "p", name: "Psychic Energy", category: "Energy" },
+      } as never,
+      targets: [you("active"), you(0)],
+    });
+    expect(sim.menu?.kind).toBe("attach");
+    expect(sim.menu?.footer).toEqual([]);
+    sim.menu?.attach?.assign("p", "b");
+    expect(sim.sent).toEqual([{ kind: "confirm", yes: false, target: you(0) }]);
+  });
+
+  it("lets a one-type Crispin keep its Energy in hand, or attach it on the drop", () => {
+    const sim = open({
+      kind: "confirm",
+      note: "Which Energy do you want to attach?",
+      labels: { yes: "Attach Fire Energy", no: "Keep it in your hand" },
+      cards: { yes: { id: "f", name: "Fire Energy", category: "Energy" } } as never,
+      targets: [you("active")],
+    });
+    expect(sim.menu?.footer?.map((o) => o.label)).toEqual(["Keep it in your hand"]);
+    expect(choiceOf(sim.menu?.footer?.[0])).toEqual({ kind: "confirm", yes: false });
+    sim.menu?.attach?.assign("f", "a");
+    expect(sim.sent).toEqual([{ kind: "confirm", yes: true, target: you("active") }]);
   });
 
   it("wraps the amount picker and sends it with the chosen Pokémon", () => {

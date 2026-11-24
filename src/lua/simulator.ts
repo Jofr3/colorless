@@ -8,7 +8,7 @@ import { effectMenu } from "./simulatorChoices";
 import { applyTrayView, defaultTrayView } from "./simulatorTray";
 import { usedTrainersForTurn } from "../game/usedTrainers";
 import { SimulatorOrder } from "./simulatorOrder";
-import { hotSeatSidebar, remoteSidebar, withHistory } from "./simulatorSidebar";
+import { attachSidebar, hotSeatSidebar, remoteSidebar, withHistory } from "./simulatorSidebar";
 import { LUA_ART_SLOTS } from "./artworkCache";
 import { LocalTableSource, type HistoryStep, type TableSource } from "./tableSource";
 import { autoStepFor, type CoinFlips } from "./tableEvents";
@@ -21,7 +21,7 @@ import {
   retreatBenchMenu,
   retreatEnergyMenu,
 } from "./simulatorActions";
-import type { SimMenu, SimMenuKind, SimOption, ThemeColour } from "./simulatorTypes";
+import type { SimAttach, SimMenu, SimMenuKind, SimOption, ThemeColour } from "./simulatorTypes";
 import {
   announcement,
   boardRows,
@@ -362,6 +362,7 @@ export class LuaSimulator {
           run: () => this.cancelRareCandy(),
         },
       ];
+    if (this.menu?.kind === "attach") return attachSidebar(this, v, src, this.menu);
     return src.mode === "local" ? hotSeatSidebar(this, v, src) : remoteSidebar(this, v, src);
   }
   /** The open modal's page first, then its neighbours, the board, the rest. */
@@ -451,7 +452,7 @@ export class LuaSimulator {
     this.emit();
   }
   private onHistory(args: string[]) {
-    if (!this.source?.history || this.menu) return;
+    if (!this.source?.history || (this.menu && this.menu.kind !== "attach")) return;
     const type = HISTORY_COMMANDS.get(args[0] ?? "");
     if (type) this.history(type);
   }
@@ -597,8 +598,12 @@ export class LuaSimulator {
     this.emit();
   }
   private onMove(args: string[]) {
-    if (!this.source || this.menu) return;
     const [uid, fromZone, fromIndex, zone, index] = args;
+    if (this.menu?.attach) {
+      this.onAttachDrop(this.menu.attach, uid ?? "", zone ?? "", Number(index));
+      return;
+    }
+    if (!this.source || this.menu) return;
     if (
       !uid ||
       !["hand", "bench", "active"].includes(fromZone ?? "") ||
@@ -657,6 +662,19 @@ export class LuaSimulator {
     if (action) this.dispatch(action);
     else if (fromZone === "hand") {
       this.refuse("That card cannot go there right now.");
+      this.emit();
+    }
+  }
+  /** A card dropped on the board during a drag-to-attach prompt: only own Pokémon take it. */
+  private onAttachDrop(attach: SimAttach, uid: string, zone: string, index: number) {
+    const you = this.view()?.board.you;
+    const target = zone === "active" ? you?.active : zone === "bench" ? you?.bench[index] : null;
+    this.message = "";
+    const why = target
+      ? attach.assign(uid, target.id)
+      : "Drop it on one of your Pokémon that can take it.";
+    if (why) {
+      this.refuse(why);
       this.emit();
     }
   }
@@ -721,8 +739,13 @@ export class LuaSimulator {
       const staged = candy ? { uid: candy, cancel: () => this.cancelRareCandy() } : null;
       if (!s.menu) cardActionRows(f, cardActions(v, this, staged));
     }
-    sidebarRows(f, this.sidebar(), !!s.menu);
-    if (s.menu) menuRows(f, withHistory(this, this.source, s.menu), s.menuId);
+    // An attach prompt's buttons live in the sidebar, live beside the turn's controls.
+    const attaching = s.menu?.kind === "attach";
+    sidebarRows(f, this.sidebar(), !!s.menu && !attaching);
+    if (s.menu) {
+      const menu = attaching ? { ...s.menu, footer: [] } : withHistory(this, this.source, s.menu);
+      menuRows(f, menu, s.menuId);
+    }
     if (src) infoRows(f, src);
     this.handlers = f.handlers;
     this.boardArt = f.art;

@@ -490,7 +490,7 @@ function Simulator:applyMenu(previous)
     self.targeting=nil
     return
   end
-  if menu.kind=='board' or menu.kind=='prizes' then
+  if menu.kind=='board' or menu.kind=='prizes' or menu.kind=='attach' then
     if self.overlay and self.overlay.kind~='gameover' then self.overlay:release();self.overlay=nil;self.peek=false end
     self.targeting={menu=menu}
     return

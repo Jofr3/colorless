@@ -123,7 +123,7 @@ function Simulator:mousepressed(x,y)
   if c then
     self.clicked=c
     local reorderable=not c.item.hidden and (c.item.zone=='hand' or c.item.zone=='bench')
-    if c.item.owner=='you' and (c.item.draggable or reorderable) and not self.targeting and not self.luaTargeting then
+    if c.item.owner=='you' and (c.item.draggable or reorderable) and (not self.targeting or (self:attaching() and c.item.zone=='hand')) and not self.luaTargeting then
       self.drag={card=c,x=x,y=y,dx=x-c.x,dy=y-c.y,moved=false}
       if reorderable then self.drag.originalRow=self:rowCards(c) end
     end
@@ -163,7 +163,8 @@ function Simulator:mousereleased(x,y)
   elseif self.clicked and self.clicked==self:cardHit(x,y) then
     local c=self.clicked
     local target=self:targetFor(c)
-    if target then
+    if self:attaching() then self:attachPick(c)
+    elseif target then
       self.callbacks.feedback('card1',1.1)
       self:selectTarget(c,target)
       self:build()
@@ -219,7 +220,8 @@ function Simulator:keypressed(key)
     if self.focusCard then
       local c=self.focusCard
       local target=self:targetFor(c)
-      if target then self:selectTarget(c,target)
+      if self:attaching() then self:attachPick(c)
+      elseif target then self:selectTarget(c,target)
       elseif self.highlight==c then self.highlight=nil;self:build();self.callbacks.announce(self:describeCard(c))
       else self.highlight=c;self:build();self:focusAttached(c) end
     elseif prize then self.callbacks.feedback('card1',1.1);self:invoke(prize.option.token)

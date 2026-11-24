@@ -282,7 +282,7 @@ local STRIP_COLOUR={BOSS_DARK[1],BOSS_DARK[2],BOSS_DARK[3],0.92}
 -- the strip.
 function Hud:drawPrompt(sim,L,x,y,w,h)
   local prompt=sim.targeting and sim.targeting.menu or sim.luaTargeting
-  if not prompt then return end
+  if not prompt or prompt.kind=='attach' then return end
   local title=prompt.title or ''
   local note=prompt.note and prompt.note~='' and prompt.note or Hud.TARGET_NOTE
   local scale=L.portrait and 0.27 or 0.4

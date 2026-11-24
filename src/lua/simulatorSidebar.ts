@@ -25,15 +25,14 @@ export function withHistory(host: SidebarHost, src: TableSource | null, menu: Si
   return { ...menu, footer: [undo, ...(menu.footer ?? [])] };
 }
 
-/** Both seats at one table: either player's choices, plus the game's history. */
-export function hotSeatSidebar(host: SidebarHost, v: RedactedGame, src: TableSource): SimOption[] {
-  const seat = v.seat;
-  const p = v.phase;
-  const flags = src.lifecycle().flags;
-  const newGame = (slot: SimOption["slot"]): SimOption[] =>
-    flags.includes("newgame")
-      ? [{ label: "New game", colour: "red", slot, run: () => host.command("newgame") }]
-      : [];
+function newGameOption(host: SidebarHost, src: TableSource, slot: SimOption["slot"]): SimOption[] {
+  return src.lifecycle().flags.includes("newgame")
+    ? [{ label: "New game", colour: "red", slot, run: () => host.command("newgame") }]
+    : [];
+}
+
+/** The hot-seat undo/redo row, on the setup screens as well as the turn. */
+function historyRow(host: SidebarHost, src: TableSource): SimOption[] {
   const step = (
     label: string,
     type: "undoAction" | "redoAction" | "undoTurn" | "redoTurn",
@@ -44,16 +43,42 @@ export function hotSeatSidebar(host: SidebarHost, v: RedactedGame, src: TableSou
     disabled: !src.history?.canStep(type),
     run: () => host.history(type),
   });
-  // The undo/redo row, on the setup screens as well as the turn.
-  const history: SimOption[] = flags.includes("undo")
+  return src.lifecycle().flags.includes("undo")
     ? [
         step("Undo turn", "undoTurn"),
         step("Undo action", "undoAction"),
-        ...newGame("minor"),
+        ...newGameOption(host, src, "minor"),
         step("Redo action", "redoAction"),
         step("Redo turn", "redoTurn"),
       ]
     : [];
+}
+
+/**
+ * A drag-to-attach prompt keeps the turn's controls: its own button (Done, Keep it in your hand)
+ * beside a disabled End turn, and in hot-seat the history row, which steps out of the prompt.
+ */
+export function attachSidebar(
+  host: SidebarHost,
+  v: RedactedGame,
+  src: TableSource,
+  menu: SimMenu,
+): SimOption[] {
+  const endTurn: SimOption = {
+    ...host.action("End turn", { type: "endTurn", seat: v.seat }, "red"),
+    slot: "primary",
+    disabled: true,
+  };
+  const own = (menu.footer ?? []).map((o): SimOption => ({ ...o, slot: "primary" }));
+  return [...own, endTurn, ...(src.mode === "local" ? historyRow(host, src) : [])];
+}
+
+/** Both seats at one table: either player's choices, plus the game's history. */
+export function hotSeatSidebar(host: SidebarHost, v: RedactedGame, src: TableSource): SimOption[] {
+  const seat = v.seat;
+  const p = v.phase;
+  const newGame = (slot: SimOption["slot"]) => newGameOption(host, src, slot);
+  const history = historyRow(host, src);
   if (p.kind === "setup:chooseFirst")
     return [
       {

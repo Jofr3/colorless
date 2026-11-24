@@ -792,6 +792,54 @@ describe("Lua simulator", () => {
         .map((r: string[]) => r.slice(2)),
     ).toEqual(beforeDialog);
   });
+  it("swaps the hand for an attach prompt's cards and draws a dropped one attached", () => {
+    const { sim, publish } = setup();
+    const v = sim.view();
+    if (!v?.board.you.active) throw Error("Active expected in fixture");
+    const offered = {
+      id: "deck-energy",
+      cardId: "sve-002",
+      name: "Fire Energy",
+      category: "Energy" as const,
+      trainerType: null,
+      hasImage: false,
+    };
+    sim.menu = effectMenu(sim, {
+      kind: "attachCards",
+      candidates: [offered, { ...offered, id: "deck-energy-2" }],
+      targets: [{ seat: v.seat, spot: { spot: "active" } }],
+      max: 2,
+      note: "",
+    });
+    sim.emit();
+    const CARD = WIRE_ROWS.sim.card;
+    const col = (r: string[], field: (typeof CARD.fields)[number]) => r[wireColumn(CARD, field)];
+    const own = (zone: string) =>
+      rows(publish).filter(
+        (r: string[]) => r[0] === "C" && col(r, "owner") === "you" && col(r, "zone") === zone,
+      );
+    expect(own("hand").map((r: string[]) => [col(r, "uid"), col(r, "draggable")])).toEqual([
+      ["deck-energy", "true"],
+      ["deck-energy-2", "true"],
+    ]);
+    // The turn's controls stay live in the sidebar, with End turn disabled and Done beside it.
+    const SIDE = WIRE_ROWS.sim.sidebar;
+    const side = rows(publish).filter((r: string[]) => r[0] === "A");
+    const field = (r: string[] | undefined, name: (typeof SIDE.fields)[number]) =>
+      r?.[wireColumn(SIDE, name)];
+    const button = (label: string) => side.find((r: string[]) => field(r, "label") === label);
+    expect(side.slice(0, 2).map((r: string[]) => field(r, "label"))).toEqual(["Done", "End turn"]);
+    expect(field(button("End turn"), "disabled")).toBe("true");
+    expect(field(button("Done"), "token")).not.toBe("");
+    expect(field(button("Undo action"), "slot")).toBe("minor");
+    expect(rows(publish).filter((r: string[]) => r[0] === "F")).toEqual([]);
+    sim.command("move\tdeck-energy\thand\t0\tplaymat\t0");
+    expect(sim.message).toMatch(/can take it/);
+    sim.command("move\tdeck-energy\thand\t0\tactive\t0");
+    expect(sim.message).toBe("");
+    expect(own("hand").map((r: string[]) => col(r, "uid"))).toEqual(["deck-energy-2"]);
+    expect(col(own("active")[0] ?? [], "energies")).toContain("deck-energy");
+  });
   it("keeps the board unchanged on invalid drags and surfaces the engine reason", () => {
     const { sim, publish } = setup();
     const before = sim.host?.game;

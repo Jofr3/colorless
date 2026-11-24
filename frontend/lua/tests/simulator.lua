@@ -136,6 +136,39 @@ for _=1,40 do sim:update(1/60,10+_/60,0,0,false) end
 local benchCard=cardOf('bench1');local activeZone=sim.L.zones.you_active
 sim:mousepressed(benchCard.x,benchCard.y);sim:update(1/60,11,activeZone.x,activeZone.y,false);sim:mousereleased(activeZone.x,activeZone.y)
 assert(commands[#commands]=='retreat\t0','Benched Pokémon dropped on the Active spot retreats to it, got '..tostring(commands[#commands]))
+-- Drag-to-attach prompt: the targets bob, a hand card drags onto one, or is picked and
+-- then the Pokémon clicked; both send the move a turn's drag sends. The Bench does not drag.
+sim:sync(snapshot(3,{row('M','attach','Attach cards','Drag','true','m-attach','true','','true'),
+  row('O','8','Houndour','blue','false','false','','active1'),row('O','9','Growlithe','blue','false','false','','bench1'),
+  row('F','10','Confirm','green','false','false','','')}))
+for i=1,60 do sim:update(1/60,20+i/60,-100,-100,false) end
+assert(sim:attaching() and sim.overlay==nil,'An attach prompt keeps the table, without an overlay')
+do
+  local shown=false
+  for _,b in ipairs(sim.controls) do if b.label=='End turn' and b.token=='6' then shown=true end end
+  assert(shown,'An attach prompt keeps the turn controls in the sidebar')
+end
+assert(sim:isCandidate(cardOf('active1')) and sim:isCandidate(cardOf('bench1')),'Attach targets are candidates')
+do
+  local energy=cardOf('energy1')
+  sim:mousepressed(energy.x,energy.y);sim:update(1/60,22,activeZone.x,activeZone.y,false);sim:mousereleased(activeZone.x,activeZone.y)
+  assert(commands[#commands]=='move\tenergy1\thand\t1\tactive\t0','A hand card drags onto a target, got '..tostring(commands[#commands]))
+  for i=1,60 do sim:update(1/60,23+i/60,-100,-100,false) end
+  local issued=#commands
+  local bench=cardOf('bench1')
+  sim:mousepressed(bench.x,bench.y)
+  assert(sim.drag==nil,'A Benched Pokémon does not drag during an attach prompt')
+  sim:mousereleased(bench.x,bench.y)
+  assert(#commands==issued and sim.highlight==nil,'Clicking a target with no card picked sends nothing')
+  energy=cardOf('energy1')
+  sim:mousepressed(energy.x,energy.y);sim:mousereleased(energy.x,energy.y)
+  assert(sim.highlight==energy,'Clicking a hand card picks it')
+  bench=cardOf('bench1')
+  sim:mousepressed(bench.x,bench.y);sim:mousereleased(bench.x,bench.y)
+  assert(commands[#commands]=='move\tenergy1\thand\t1\tbench\t0','Picking a card, then a target, moves it there, got '..tostring(commands[#commands]))
+  assert(sim.highlight==nil,'The pick clears once sent')
+end
+sim:sync(snapshot(4));sim:update(1/60,25,-100,-100,false)
 -- Host board prompt: candidates on the table, footer in the HUD action area.
 sim:sync(snapshot(2,{row('M','board','Choose a Pokémon','Pick one','true','m1','true','','true'),row('O','8','Houndour','blue','false','false','sv01-033','active1'),row('F','9','Confirm','blue','true','false','','')}))
 assert(sim.targeting and sim.overlay==nil,'Board prompts do not open an overlay')
