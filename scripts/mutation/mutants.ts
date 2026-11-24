@@ -70946,8 +70946,8 @@ export const MUTANTS: Mutant[] = [
     what: "A build without VITE_API_ORIGIN follows the page's loopback name outside dev too, so the production default changes.",
     file: "src/lib/apiOrigin.ts",
     symbol: "defaultApiOrigin",
-    find: "  if (import.meta.env.DEV && host !== undefined && LOOPBACK_HOSTS.has(host)) {",
-    replace: "  if (host !== undefined && LOOPBACK_HOSTS.has(host)) {",
+    find: "  if (import.meta.env.DEV && host !== undefined) {",
+    replace: "  if (host !== undefined) {",
     expectKilledBy: ["src/lib/apiOrigin.test.ts"],
   },
   {
@@ -70966,8 +70966,8 @@ export const MUTANTS: Mutant[] = [
     what: "Any dev page host is used, so a page opened on a LAN name calls port 8787 on that name, where no API listens.",
     file: "src/lib/apiOrigin.ts",
     symbol: "defaultApiOrigin",
-    find: " && LOOPBACK_HOSTS.has(host)) {",
-    replace: ") {",
+    find: "    if (LOOPBACK_HOSTS.has(host)) {",
+    replace: "    if (host) {",
     expectKilledBy: ["src/lib/apiOrigin.test.ts"],
   },
   {
