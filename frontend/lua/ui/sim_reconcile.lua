@@ -9,6 +9,7 @@ local Pile=require('ui.deck_pile')
 local Codec=require('ui.codec')
 local Layout=require('ui.sim_layout')
 local Overlay=require('ui.sim_overlay')
+local Dissolve=require('ui.dissolve')
 local Model=require('ui.sim_model')
 local Ko=require('ui.sim_ko')
 local Simulator={}
@@ -206,7 +207,7 @@ function Simulator:placeCards(resize,previous)
   -- same card from its visible position instead of leaving a duplicate ghost.
   for i=#self.ghosts,1,-1 do
     local c=self.ghosts[i]
-    if c.ghost.target then
+    if c.ghost.target and not c.ghost.burning then
       local item=nowById[c.item.id]
       if not item or item.zone~='discard' then
         table.remove(self.ghosts,i);c.ghost=nil
@@ -273,6 +274,9 @@ function Simulator:placeCards(resize,previous)
   local dropped=self.editLanding
   if dropped and self.time-dropped.at>2 then dropped=nil end
   self.editLanding=nil
+  local removed=self.editRemoved
+  if removed and self.time-removed.at>2 then removed=nil end
+  self.editRemoved=nil
   for i,item in ipairs(self.items) do
     item.edition='dissolve';item.scan=true;item.drawFace=function(w,h) self:face(item,w,h) end
     local zone=(item.zone=='played' and L.zones.played) or L.zones[prefix(item.owner)..(item.zone=='prize' and 'prizes' or item.zone)] or L.zones.playmat
@@ -373,6 +377,20 @@ function Simulator:placeCards(resize,previous)
     if item.zone=='prize' and samePrizes[item.owner] and not prizeUpNow[item.owner..':'..item.index] and not resize and not flipped and not self.reduced then
       old[key]=nil
       self:startPrizeFlip(item.owner,item.index,false,c)
+    end
+  end
+  -- A card dropped on the edit-mode gallery leaves the game: it burns away where it was dropped
+  -- rather than sliding to the discard pile.
+  for key,c in pairs(old) do
+    if removed and c.item.id==removed.uid and not resize and not flipped then
+      old[key]=nil
+      if self.reduced then c.texture:release()
+      else
+        c.dragging=false;c.lift=0
+        c.ghost={start=self.time,target={x=c.x,y=c.y},burning=true}
+        c.disintegration=Dissolve.new(c,self.time,nil,self.reduced)
+        self.ghosts[#self.ghosts+1]=c
+      end
     end
   end
   -- Other cards that left the table slide to their owner's discard pile.

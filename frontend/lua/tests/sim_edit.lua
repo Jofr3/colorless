@@ -118,6 +118,26 @@ assert(last()==cmd('edit','move','p1#3','onto','-1'),'Bench onto the Active swap
 local hand=sim.byUid['you:p1#1']
 drag(hand.x,hand.y,sim.L.gallery.x+40,300,5)
 assert(last()==cmd('edit','remove','p1#1'),'Table card onto the gallery removes it, got '..tostring(last()))
+-- The host's answer takes the card out: it burns away where it was dropped, not toward the discard.
+do
+  local removedCard=hand
+  local at={x=removedCard.x,y=removedCard.y}
+  sim.reduced=false
+  local rows={}
+  for line in snapshot(5.5,'on',gallery):gmatch('[^\n]+') do if not line:find('p1%%231',1) then rows[#rows+1]=line end end
+  sim:sync(table.concat(rows,'\n'))
+  local ghost
+  for _,c in ipairs(sim.ghosts) do if c.item.id=='p1#1' then ghost=c end end
+  assert(ghost and ghost.disintegration and ghost.ghost.burning,'The removed card burns away')
+  assert(math.abs(ghost.ghost.target.x-at.x)<1 and math.abs(ghost.ghost.target.y-at.y)<1,'where it was dropped')
+  for i=1,60 do sim:update(1/60,5.5+i/60,-100,-100,false) end
+  local left=false
+  for _,c in ipairs(sim.ghosts) do if c.item.id=='p1#1' then left=true end end
+  assert(not left,'and is gone once burnt')
+  sim:sync(snapshot(5.6,'on',gallery))
+  for i=1,30 do sim:update(1/60,6.6+i/60,-100,-100,true) end
+  hand=sim.byUid['you:p1#1']
+end
 local dw=sim.L.zones.you_discard.well
 drag(hand.x,hand.y,dw.x+dw.w/2,dw.y+dw.h/2,6)
 assert(last()==cmd('edit','move','p1#1','discard',''),'Hand to discard moves it, got '..tostring(last()))

@@ -276,7 +276,10 @@ function Simulator:draw(shaders)
   end
   for _,p in ipairs(self.piles) do p:draw() end
   self:drawPrizes('opponent',rw,shaders);self:drawPrizes('you',rw,shaders)
-  for _,c in ipairs(self.ghosts) do c:draw(shaders,self.time,self.mx or 0,self.my or 0,self.reduced,rw) end
+  for _,c in ipairs(self.ghosts) do
+    c:draw(shaders,self.time,self.mx or 0,self.my or 0,self.reduced,rw)
+    if c.disintegration then c.disintegration:draw(c) end
+  end
   local hideHand=false
   local order={'opponent_hand','opponent_discard','opponent_bench','opponent_active','global_stadium','you_discard','you_bench','you_active','you_prize','opponent_prize','you_played','opponent_played','you_hand'}
   for _,zoneKey in ipairs(order) do

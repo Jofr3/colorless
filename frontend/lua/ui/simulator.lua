@@ -202,7 +202,9 @@ function Simulator:update(dt,time,mx,my,reduced)
     local age=time-c.ghost.start
     if c.ghost.target then c.homeX,c.homeY=c.ghost.target.x,c.ghost.target.y;c.motion.T.r=0 end
     c:update(dt,time,false,reduced)
-    if age>0.7 then
+    -- A card taken out of the game burns away where it was dropped (Card:start_dissolve).
+    local gone=c.disintegration and c.disintegration:update(c,dt,time)
+    if (c.disintegration and gone) or (not c.disintegration and age>0.7) then
       c.texture:release();table.remove(self.ghosts,i)
     end
   end
