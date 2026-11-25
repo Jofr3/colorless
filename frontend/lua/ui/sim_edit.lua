@@ -433,7 +433,8 @@ function Simulator:editReleased(x,y)
     if self.clickedPrize==self:editPrizeHit(x,y) then self.callbacks.feedback('card1',1.1);self:command('edit','flip',self.clickedPrize) end
   elseif self.editDrag and self.editDrag.table and not self.editDrag.moved then
     local c=self.editDrag.card
-    if c.item.zone=='discard' then self.callbacks.feedback('cardSlide2',1);self:openPile('you') end
+    if c.item.zone=='discard' then self.callbacks.feedback('cardSlide2',1);self:openPile('you')
+    elseif c.item.zone=='prize' then self.callbacks.feedback('card1',1.1);self:command('edit','flip',c.item.index) end
   end
   if self.editDrag then self:dropEditDrag() end
   self.pressed=nil;self.clickedPrize=nil

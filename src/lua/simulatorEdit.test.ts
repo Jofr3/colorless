@@ -84,6 +84,18 @@ describe("edit mode on the hot-seat table", () => {
     sim.command("edit\tflip\t2");
     expect(sim.host?.game.players[seat].faceUpPrizes).toEqual([prize]);
   });
+  it("turns every revealed Prize back face down as edit mode closes", () => {
+    const { sim } = setup();
+    sim.command("edit-mode\ton");
+    const seat = sim.view()?.seat ?? "p1";
+    sim.command("edit\tflip\t0");
+    sim.command("edit\tflip\t3");
+    expect(sim.host?.game.players[seat].faceUpPrizes).toHaveLength(2);
+    sim.command("edit-mode\toff");
+    expect(sim.host?.game.players[seat].faceUpPrizes).toEqual([]);
+    sim.command("history\tundoAction");
+    expect(sim.host?.game.players[seat].faceUpPrizes).toHaveLength(2);
+  });
   it("shows the seated player's deck top first only while editing", () => {
     const { sim } = setup();
     sim.command("pile\tdeck");

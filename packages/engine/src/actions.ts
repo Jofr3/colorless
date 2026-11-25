@@ -216,7 +216,9 @@ export type SandboxEdit =
   /** The card, or the whole in-play Pokémon, leaves the game. */
   | { kind: "remove"; uid: string }
   /** Toggle a Prize card face up or down. */
-  | { kind: "flipPrize"; uid: string };
+  | { kind: "flipPrize"; uid: string }
+  /** Turn every one of the seat's face-up Prize cards face down. */
+  | { kind: "hidePrizes" };
 
 /**
  * The local table's edit mode: a free rewrite of the acting seat's side outside the rules, legal in

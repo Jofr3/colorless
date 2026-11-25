@@ -640,6 +640,10 @@ export class LuaSimulator {
   private onEditMode(args: string[]) {
     if (args[0] === "on" && this.editAvailable() && !this.menu) this.edit.open();
     else if (args[0] === "off") {
+      // Prizes turned face up while editing go back face down as edit mode closes.
+      const v = this.view();
+      if (this.edit.on && v && this.host?.game.players[v.seat].faceUpPrizes.length)
+        this.dispatch({ type: "sandboxEdit", seat: v.seat, edit: { kind: "hidePrizes" } });
       this.edit.close();
       if (this.editPile) {
         this.editPile = null;

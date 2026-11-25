@@ -78,6 +78,8 @@ export function sandboxEdit(state: GameState, action: SandboxEditAction): ApplyR
       return removeCard(state, seat, edit.uid);
     case "flipPrize":
       return flipPrize(state, seat, edit.uid);
+    case "hidePrizes":
+      return hidePrizes(state, seat);
   }
 }
 
@@ -98,6 +100,8 @@ function parseEdit(value: unknown): SandboxEdit | null {
     case "remove":
     case "flipPrize":
       return typeof value.uid === "string" ? { kind: value.kind, uid: value.uid } : null;
+    case "hidePrizes":
+      return { kind: "hidePrizes" };
     default:
       return null;
   }
@@ -278,6 +282,25 @@ function flipPrize(state: GameState, seat: Seat, uid: string): ApplyResult {
       from: "prizes",
       to: "prizes",
       faceUp,
+    },
+  ]);
+}
+
+function hidePrizes(state: GameState, seat: Seat): ApplyResult {
+  const side = state.players[seat];
+  const uids = side.faceUpPrizes;
+  const first = uids[0];
+  if (first === undefined) return err("EDIT_NO_OP", "no Prize card is face up");
+  return ok(withSide(state, seat, { ...side, faceUpPrizes: [] }), [
+    {
+      type: "SANDBOX_EDIT",
+      seat,
+      edit: "hidePrizes",
+      uid: first,
+      uids: [...uids],
+      from: "prizes",
+      to: "prizes",
+      faceUp: false,
     },
   ]);
 }

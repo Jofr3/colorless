@@ -92,6 +92,22 @@ describe("sandboxEdit", () => {
     );
   });
 
+  it("hidePrizes turns every face-up Prize face down in one edit", () => {
+    const state = start();
+    const [a, b] = state.players.p1.prizes as [string, string];
+    expectErr(state, edit({ kind: "hidePrizes" }), "EDIT_NO_OP");
+    const up = apply(apply(state, { kind: "flipPrize", uid: a }).state, {
+      kind: "flipPrize",
+      uid: b,
+    });
+    const down = apply(up.state, { kind: "hidePrizes" });
+    expect(down.state.players.p1.faceUpPrizes).toEqual([]);
+    expect(down.state.players.p1.prizes).toEqual(state.players.p1.prizes);
+    expect(logText(down.state, down.events)).toEqual([
+      "turned 2 Prize cards face down (edit mode)",
+    ]);
+  });
+
   it("puts a Pokémon into an empty Active Spot or onto the Bench as a fresh body", () => {
     const state = start();
     const uid = firstOf(state, "p1", "fix-basic-1", "deck");

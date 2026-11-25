@@ -41,7 +41,7 @@ export type GameEvent =
   | {
       type: "SANDBOX_EDIT";
       seat: Seat;
-      edit: "add" | "move" | "remove" | "flipPrize";
+      edit: "add" | "move" | "remove" | "flipPrize" | "hidePrizes";
       uid: string;
       uids: string[];
       from: SandboxZone | null;

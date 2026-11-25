@@ -437,6 +437,13 @@ const EDIT_ZONE_WHERE: Record<SandboxZone, string> = {
 function formatSandboxEditEvent(event: EventOf<"SANDBOX_EDIT">, fmt: LogFormat): SeatLogEntry[] {
   const { names, state, row } = fmt;
   const tail = plain(" (edit mode)");
+  if (event.edit === "hidePrizes") {
+    const n = event.uids.length;
+    return row(event.seat, [
+      plain(n === 1 ? "turned a Prize card face down" : `turned ${n} Prize cards face down`),
+      tail,
+    ]);
+  }
   if (event.edit === "flipPrize") {
     return event.faceUp === true
       ? row(event.seat, [

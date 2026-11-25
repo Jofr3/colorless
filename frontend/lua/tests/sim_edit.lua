@@ -116,6 +116,15 @@ local Layout=require('ui.sim_layout')
 local px,py=Layout.prize(pz,1)
 click(px,py)
 assert(last()=='edit\tflip\t1','A Prize click flips that slot, got '..tostring(last()))
+-- A revealed Prize click turns it back face down.
+sim:sync(snapshot(2.5,'on',gallery)..'\n'..row('C','p1#30','sv01-030','Growlithe','you','prize',1,'false','Pokemon','','Basic',70,0,'','','','Fire','true',1))
+for i=1,60 do sim:update(1/60,7.2+i/60,-100,-100,true) end
+local revealed=sim.byUid['you:p1#30']
+assert(revealed,'The revealed Prize is on the table')
+click(revealed.x,revealed.y)
+assert(last()=='edit\tflip\t1','A revealed Prize click flips it back, got '..tostring(last()))
+sim:sync(snapshot(2.6,'on',gallery))
+for i=1,30 do sim:update(1/60,8.3+i/60,-100,-100,true) end
 -- The deck well opens the deck tray.
 local kw=sim.L.zones.you_deck.well
 click(kw.x+kw.w/2,kw.y+kw.h/2)
