@@ -128,12 +128,7 @@ end
 function Simulator:dropTargetCard()
   local z,d=self.dropZone,self.drag
   if not z or not d or not d.moved then return nil end
-  if z.zone=='retreat' then return z.card end
-  if not self:landsOnPokemon(d.card.item) then return nil end
-  if z.card then return z.card end
-  local owner=(z.zone=='active' and 'you') or (z.zone=='oppActive' and 'opponent')
-  if not owner then return nil end
-  for _,c in ipairs(self.cards) do if c.item.owner==owner and c.item.zone=='active' then return c end end
+  return (self:dropOnto(z,d.card.item))
 end
 function Simulator:drawCard(c,shaders,rw)
   if c.koHidden or c.koAnimating or c.drawAfterPromotion then return end
@@ -234,8 +229,9 @@ function Simulator:draw(shaders)
   local dragged=self.drag and self.drag.card.item
   local trainerPlay=dragged and (dragged.trainerType=='Item' or dragged.trainerType=='Supporter')
   local sameSlot=dragged and self.dropZone and self.dropZone.zone==dragged.zone and self.dropZone.index==dragged.index
-  self.dropTarget=not sameSlot and self:dropTargetCard() or nil
-  if self.drag and self.drag.moved and self.dropZone and self.dropZone.well and not trainerPlay and not sameSlot and not self.dropTarget then
+  local blocked=false
+  if not sameSlot and self.drag and self.drag.moved and self.dropZone then self.dropTarget,blocked=self:dropOnto(self.dropZone,dragged) else self.dropTarget=nil end
+  if self.drag and self.drag.moved and self.dropZone and self.dropZone.well and not trainerPlay and not sameSlot and not self.dropTarget and not blocked then
     local w=self.dropZone.well
     g.setLineWidth(2.5);Button.outline(w.x-2,w.y-2,w.w+4,w.h+4,T.white,1.2)
     g.setColor(1,1,1,0.08);Button.panel(w.x,w.y,w.w,w.h,{1,1,1,0.08},1.2)

@@ -152,6 +152,7 @@ function Simulator:mousereleased(x,y)
     local d=self.drag;d.card.dragging=false
     self:updateReorder(x,y)
     local zone=self:dropZoneAt(x,y,d.card)
+    if zone and select(2,self:dropOnto(zone,d.card.item)) then zone=nil end
     if zone then
       local item=d.card.item
       if zone.zone=='reorder' then

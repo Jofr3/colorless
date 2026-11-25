@@ -78,6 +78,37 @@ function Simulator:landsOnPokemon(item)
   return self:attaching() or item.category=='Energy' or (item.category=='Trainer' and item.trainerType~='Item' and item.trainerType~='Supporter' and item.trainerType~='Stadium')
     or (item.category=='Pokemon' and item.stage~='' and item.stage~='Basic')
 end
+function Simulator:dropOccupant(z)
+  if z.card then return z.card end
+  local owner=(z.zone=='active' and 'you') or (z.zone=='oppActive' and 'opponent')
+  if not owner then return nil end
+  for _,c in ipairs(self.cards) do if c.item.owner==owner and c.item.zone=='active' then return c end end
+end
+function Simulator:canEvolve(item,target)
+  for _,a in ipairs(self.cardActions[item.id] or {}) do
+    if a.group=='evolve' and a.targetUid==target.item.id and not a.disabled then return true end
+  end
+  return false
+end
+-- The Pokémon a drop in zone z lands on, and whether the drop is refused outright (no outline,
+-- nothing sent): only a Stadium lands on the Stadium slot and only an Item or Supporter on the
+-- board, and a Pokémon from the hand onto an occupied spot lands only as a legal evolution (a
+-- Basic onto the Bench still benches).
+function Simulator:dropOnto(z,item)
+  if z.zone=='retreat' then return z.card,false end
+  if z.zone=='stadium' then return nil,item.trainerType~='Stadium' end
+  if z.zone=='playmat' then return nil,not (item.category=='Trainer' and (item.trainerType=='Item' or item.trainerType=='Supporter')) end
+  if item.category=='Pokemon' and item.zone=='hand' and not self:attaching() then
+    local evolution=item.stage~='' and item.stage~='Basic'
+    if not evolution and z.zone~='active' then return nil,false end
+    local t=self:dropOccupant(z)
+    if not t then return nil,false end
+    if self:canEvolve(item,t) then return t,false end
+    return nil,true
+  end
+  if not self:landsOnPokemon(item) then return nil,false end
+  return self:dropOccupant(z),false
+end
 function Simulator:dropZoneAt(x,y,card)
   local L=self.L;local item=card.item
   local Z=L.zones

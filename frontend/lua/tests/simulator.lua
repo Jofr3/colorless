@@ -77,8 +77,30 @@ sim:mousereleased(card.x+50,card.y-50)
 assert(#commands==issued,'A release after the cancel plays nothing')
 for i=1,120 do sim:update(1/60,6+i/60,-100,-100,true) end
 local aw=sim.L.zones.you_active.well
-sim:mousepressed(card.x,card.y);sim:update(1/60,7,aw.x+aw.w/2,aw.y+aw.h/2,false);sim:mousereleased(aw.x+aw.w/2,aw.y+aw.h/2)
-assert(commands[#commands]=='move\tcard1\thand\t0\tactive\t0','Drop uses the engine zone and UID, got '..tostring(commands[#commands]))
+sim:mousepressed(card.x,card.y);sim:update(1/60,7,aw.x+aw.w/2,aw.y+aw.h/2,false)
+assert(sim:dropTargetCard()==nil and select(2,sim:dropOnto(sim.dropZone,card.item)),'A Basic over the occupied Active outlines nothing')
+issued=#commands
+sim:mousereleased(aw.x+aw.w/2,aw.y+aw.h/2)
+assert(#commands==issued,'A Basic dropped on the occupied Active sends nothing, so the host shows no error')
+do
+  local evo={id='evo1',category='Pokemon',zone='hand',stage='Stage1'}
+  local onto,blocked=sim:dropOnto({zone='active',index=0},evo)
+  assert(onto==nil and blocked,'An evolution with no legal Evolve onto the Active outlines nothing')
+  sim.cardActions.evo1={{group='evolve',targetUid='active1',disabled=false}}
+  onto,blocked=sim:dropOnto({zone='active',index=0},evo)
+  assert(onto==cardOf('active1') and not blocked,'A legal evolution outlines the Pokémon it evolves')
+  sim.cardActions.evo1=nil
+  local function refused(zone,item) local onto,blocked=sim:dropOnto({zone=zone,index=0},item);return onto==nil and blocked end
+  assert(refused('playmat',card.item) and refused('stadium',card.item),'A Pokémon over the board or the Stadium slot outlines nothing')
+  assert(refused('playmat',cardOf('energy1').item) and refused('stadium',cardOf('energy1').item),'An Energy over the board or the Stadium slot outlines nothing')
+  assert(refused('stadium',{category='Trainer',trainerType='Item'}) and refused('stadium',{category='Trainer',trainerType='Supporter'}),'Only a Stadium outlines the Stadium slot')
+  assert(not refused('stadium',{category='Trainer',trainerType='Stadium'}) and not refused('playmat',{category='Trainer',trainerType='Item'}),'A Stadium and an Item still play')
+  issued=#commands
+  local pm=sim.L.zones.playmat.well
+  sim:mousepressed(card.x,card.y);sim:update(1/60,7.5,pm.x+pm.w/2,pm.y+pm.h/2,false);sim:mousereleased(pm.x+pm.w/2,pm.y+pm.h/2)
+  assert(#commands==issued,'A Pokémon dropped on the board sends nothing')
+  for i=1,120 do sim:update(1/60,7.5+i/240,-100,-100,true) end
+end
 for i=1,120 do sim:update(1/60,7+i/60,-100,-100,true) end
 -- Drop onto a bench Pokémon names its index.
 local bench=cardOf('bench1')
@@ -504,6 +526,8 @@ for _,size in ipairs({{1280,800},{390,844}}) do
       row('R','candy'),
       row('C','candy','sv01-191','Rare Candy','you','played',0,'false','Trainer','Item','','',0,'','','','','false',0),
       row('C','stage2','stage2','Stage 2','you','hand',2,'false','Pokemon','','Stage2',180,0,'','','','Fire','true',2),
+      row('K','c1','stage2','Evolve Houndour','green','false','active1','evolve',''),
+      row('K','c2','stage2','Evolve Growlithe','green','false','bench1','evolve',''),
     }))
     assert(sim.rareCandy=='candy' and sim.byUid['you:candy'].item.zone=='played','Pending Candy is on the table')
     for _=1,90 do sim:update(1/60,sim.time+1/60,-100,-100,true) end
