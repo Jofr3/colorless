@@ -296,6 +296,7 @@ function Simulator:draw(shaders)
     self.drag.card:draw(shaders,self.time,self.mx,self.my,self.reduced,rw)
   end
   -- HUD.
+  if self.editing then self:drawEditHints() end
   self.hud:draw(self,L,self.time,self.reduced,self.hover)
   if self.editing then self:drawEditColumn(shaders,rw) end
   -- Controls.

@@ -119,6 +119,9 @@ local Layout=require('ui.sim_layout')
 local px,py=Layout.prize(pz,1)
 click(px,py)
 assert(last()=='edit\tflip\t1','A Prize click flips that slot, got '..tostring(last()))
+-- The "View Prize" badge names the Prize under the pointer.
+sim.mx,sim.my=px,py
+assert(sim:editPrizeHit(sim.mx,sim.my)==1,'The pointer is over the Prize the badge names')
 -- A revealed Prize click turns it back face down.
 sim.reduced=false
 sim:sync(snapshot(2.5,'on',gallery)..'\n'..row('C','p1#30','sv01-030','Growlithe','you','prize',1,'false','Pokemon','','Basic',70,0,'','','','Fire','true',1))

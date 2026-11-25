@@ -13,6 +13,7 @@ local TextRecord=require('ui.text_record')
 local Mailbox=require('ui.mailbox')
 local Dyna=require('ui.dynatext')
 local Collection=require('ui.collection_motion')
+local DeckLabels=require('ui.deck_labels')
 local WheelPager=require('ui.wheel_pager')
 local Card=require('ui.card')
 local FaceCache=require('ui.face_cache')
@@ -477,6 +478,26 @@ function Simulator:drawEditColumn(shaders,rw)
   if p and self.galleryText then
     Button.cycleFace(p.x,p.y,p.w,p.h,false)
     self.galleryText:draw(self.time,self.reduced,p.x,p.y,p.w,p.h,rw,0.4)
+  end
+end
+-- The decks page's "View Deck" badge over the seated player's deck pile, and "View Prize" (or
+-- "Hide Prize") over the Prize under the pointer, while no drag or tray is in the way.
+function Simulator:drawEditHints()
+  if self.editDrag and self.editDrag.moved or self:editTray() or self.overlay then return end
+  local mx,my=self.mx or -1,self.my or -1
+  local deckZone=self.L.zones.you_deck
+  for _,p in ipairs(self.piles) do
+    if p.owner=='you' and p.item.kind=='deck' and (p.item.count or 0)>0 and Layout.inside(deckZone.well,mx,my) then
+      DeckLabels.drawHover({hovered=true,x=p.x,y=p.y,angle=p.angle or 0,unit=p.unit})
+    end
+  end
+  local slot=self:editPrizeHit(mx,my)
+  if slot then
+    local up=false
+    for _,c in ipairs(self.cards) do if c.item.owner=='you' and c.item.zone=='prize' and c.item.index==slot then up=true end end
+    local px,py=Layout.prize(self.L.zones.you_prizes,slot)
+    local unit=D.W*deckZone.scale/D.TILE_W
+    DeckLabels.drawHover({hovered=true,x=px,y=py,angle=0,unit=unit},{up and 'Hide' or 'View','Prize'})
   end
 end
 function Simulator:drawEditDrag(shaders,rw)

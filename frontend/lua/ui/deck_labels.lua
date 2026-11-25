@@ -61,10 +61,11 @@ function Labels.stackDrop(unit,gapTiles,cssPerUnit)
   h=math.max(h,scale*0.83)
   return ((gapTiles or 0.08)+0.03+h+0.03)*unit
 end
-function Labels.hover()
+-- `lines`: the badge's two words, 'View' over 'Deck' unless given.
+function Labels.hover(lines)
   local nodes={}
   local width,height=0,0
-  for i,text in ipairs({'View','Deck'}) do
+  for i,text in ipairs(lines or {'View','Deck'}) do
     local scale=i==1 and 0.48 or 0.38
     local w,h=metric(text,scale)
     if w>2 then scale=scale*2/w; w,h=metric(text,scale) end
@@ -123,14 +124,16 @@ function Labels.drawStackCount(card,opts)
   g.pop()
   return card.homeY+gap+bottom*card.unit
 end
-function Labels.drawHover(card)
+-- `unit`: draws the badge at that size rather than the card's (a Prize miniature's is too small).
+function Labels.drawHover(card,lines,unit)
   if not card.hovered or card.dragging then return end
-  local nodes,w,h=Labels.hover()
+  local nodes,w,h=Labels.hover(lines)
+  local u=unit or card.unit
   -- UIBox: strong position/rotation bond, weak scale bond to the top card.
   g.push(); g.translate(card.x,card.y); g.rotate(card.angle)
-  Button.panel(-w*card.unit/2,-h*card.unit/2,w*card.unit,h*card.unit,
-    {55/255,66/255,68/255,0.5},0.6*card.unit/20)
-  for _,node in ipairs(nodes) do text(node,card.unit,true,Pile.parallax(node.x+node.w/2)) end
+  Button.panel(-w*u/2,-h*u/2,w*u,h*u,
+    {55/255,66/255,68/255,0.5},0.6*u/20)
+  for _,node in ipairs(nodes) do text(node,u,true,Pile.parallax(node.x+node.w/2)) end
   g.pop()
 end
 return Labels

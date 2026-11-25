@@ -85,6 +85,8 @@ if source then
 end
 local card={item={count=52},unit=60,homeX=100,homeY=100,x=110,y=90,angle=0}
 Labels.drawCounter(card); assert(#prints==3,'Counter draws each text exactly once, without shadow')
+local prizeNodes=Labels.hover({'View','Prize'})
+assert(prizeNodes[1].text=='View' and prizeNodes[2].text=='Prize','The badge takes its two words')
 prints={}; Labels.drawHover(card); assert(#prints==0)
 card.hovered=true; Labels.drawHover(card); assert(#prints==4,'Hover badge includes two shadowed text nodes')
 prints={}; card.dragging=true; Labels.drawHover(card); assert(#prints==0,'Hover badge must disappear when dragging')
