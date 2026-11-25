@@ -127,6 +127,28 @@ describe("edit mode on the hot-seat table", () => {
     expect(id(menuRow())).toBe(id(before));
     expect(sim.menu?.options.map((o) => o.uid)).toEqual(sim.host?.game.players[seat].deck);
   });
+  it("reopens edit mode, with its search, on a reload of the same game, until it is closed", () => {
+    const { sim } = setup();
+    sim.command("edit-mode\ton");
+    sim.command("edit-search\tpika");
+    const save = sim.host;
+    if (!save) throw Error("Missing local table");
+    const reloaded = setup().sim;
+    reloaded.open(save);
+    expect(reloaded.edit.on).toBe(true);
+    expect(reloaded.edit.query).toBe("pika");
+    reloaded.command("edit-mode\toff");
+    const again = setup().sim;
+    again.open(save);
+    expect(again.edit.on).toBe(false);
+  });
+  it("does not reopen edit mode on another game", () => {
+    const { sim } = setup();
+    sim.command("edit-mode\ton");
+    const other = new LuaSimulator(vi.fn(), vi.fn());
+    other.open({ state: driveSetup(9), events: [], names: { p1: "A", p2: "B" }, startedAt: 999 });
+    expect(other.edit.on).toBe(false);
+  });
   it("ignores an edit while edit mode is off", () => {
     const { sim } = setup();
     const seat = sim.view()?.seat ?? "p1";

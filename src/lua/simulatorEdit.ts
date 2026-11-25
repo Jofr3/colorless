@@ -8,7 +8,31 @@ import { cachedCard, fetchCard, fetchCardPool } from "../game/cardPool";
 import { loadCardIndex, searchCards } from "../decks/catalog";
 import type { BuilderCard } from "../decks/cards";
 import { cardImageUrl } from "../lib/api";
+import { readPersisted, removePersisted, writePersisted } from "../lib/persistedState";
 import { reportError } from "../lib/reportError";
+
+/** The match edit mode was left open in, and its search, so a reload reopens it there. */
+export const EDIT_MODE_KEY = "colorless:simulator:edit";
+
+interface StoredEditMode {
+  match: string;
+  query: string;
+  page: number;
+}
+
+function readEditMode(): StoredEditMode | null {
+  return readPersisted<StoredEditMode | null>(
+    EDIT_MODE_KEY,
+    (raw) => {
+      const value: unknown = JSON.parse(raw);
+      if (typeof value !== "object" || value === null) return undefined;
+      const { match, query, page } = value as Record<string, unknown>;
+      if (typeof match !== "string" || typeof query !== "string") return undefined;
+      return { match, query, page: typeof page === "number" && page >= 1 ? page : 1 };
+    },
+    null,
+  );
+}
 
 /** Pages prefetched on each side of the visible one, as the builder does, so paging never waits. */
 export const GALLERY_PREFETCH_PAGES = 2;
@@ -37,7 +61,38 @@ export class SimulatorEdit {
   failed = false;
   private results: BuilderCard[] = [];
   private searches = 0;
+  /** The match edit mode belongs to; empty while none is remembered. */
+  private match = "";
   constructor(private changed: () => void) {}
+
+  /** Edit mode opened by the player on `match`: remembered until they close it. */
+  openFor(match: string) {
+    this.match = match;
+    this.open();
+    this.remember();
+  }
+  /** Closed by the player: forgotten, so a reload opens the plain table. */
+  closeAndForget() {
+    this.close();
+    this.match = "";
+    removePersisted(EDIT_MODE_KEY);
+  }
+  /** Reopens edit mode, with its search and page, when it was left open on `match`. */
+  restore(match: string): boolean {
+    const stored = readEditMode();
+    if (!stored || stored.match !== match) return false;
+    this.match = match;
+    this.query = stored.query;
+    this.page = stored.page;
+    this.results = [];
+    this.open();
+    return true;
+  }
+  private remember() {
+    if (!this.match) return;
+    const stored: StoredEditMode = { match: this.match, query: this.query, page: this.page };
+    writePersisted(EDIT_MODE_KEY, JSON.stringify(stored));
+  }
 
   get pages() {
     return Math.max(1, Math.ceil(this.results.length / this.perPage));
@@ -56,6 +111,7 @@ export class SimulatorEdit {
     if (query === this.query) return;
     this.query = query;
     this.page = 1;
+    this.remember();
     void this.search();
   }
   setPage(page: number, perPage: number) {
@@ -63,6 +119,7 @@ export class SimulatorEdit {
     const next = Math.max(1, Math.min(this.pages, Number.isInteger(page) ? page : 1));
     if (next === this.page && !this.missingCards()) return;
     this.page = next;
+    this.remember();
     void this.loadPage(this.searches);
   }
   /** The cards on the page Lua shows. */

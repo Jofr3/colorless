@@ -189,6 +189,9 @@ export class LuaSimulator {
     this.heard = NOTHING_HEARD;
     this.unsubscribe = source?.subscribe(() => this.changed()) ?? (() => {});
     if (source) this.prompt();
+    // A reload reopens edit mode where the player left it open.
+    if (source?.mode === "local" && this.editAvailable() && !this.menu)
+      this.edit.restore(source.matchId());
     this.emit();
   }
   /** Let the bound table go (an online one hands the lobby back). */
@@ -638,13 +641,14 @@ export class LuaSimulator {
     return this.source?.mode === "local" && !!this.host && v?.phase.kind === "turn:action";
   }
   private onEditMode(args: string[]) {
-    if (args[0] === "on" && this.editAvailable() && !this.menu) this.edit.open();
+    if (args[0] === "on" && this.editAvailable() && !this.menu)
+      this.edit.openFor(this.source?.matchId() ?? "");
     else if (args[0] === "off") {
       // Prizes turned face up while editing go back face down as edit mode closes.
       const v = this.view();
       if (this.edit.on && v && this.host?.game.players[v.seat].faceUpPrizes.length)
         this.dispatch({ type: "sandboxEdit", seat: v.seat, edit: { kind: "hidePrizes" } });
-      this.edit.close();
+      this.edit.closeAndForget();
       if (this.editPile) {
         this.editPile = null;
         this.menu = null;
