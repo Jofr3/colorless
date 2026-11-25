@@ -161,7 +161,7 @@ local o=sim.overlay
 drag(g.x,g.y,o.x+o.w/2,o.y+o.h/2,10)
 assert(last()=='edit\tadd\tsv01-001\tdeck\t','Gallery card onto the deck tray adds it to the deck, got '..tostring(last()))
 
--- Return closes edit mode; the host's off snapshot restores the column.
+-- Back closes edit mode; the host's off snapshot restores the column.
 click(control('edit-return').x+5,control('edit-return').y+5)
 assert(last()=='edit-mode\toff','Return asks the host to close, got '..tostring(last()))
 sim:sync(snapshot(4,'off'))

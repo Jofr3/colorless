@@ -1,6 +1,6 @@
 local D=require('ui.card_dimensions')
 -- Edit mode on the hot-seat table, mixed into ui/simulator.lua's Simulator: the HUD column turns
--- into a catalog gallery (search, pages, Return), and any of the seated player's cards drags
+-- into a catalog gallery (search, pages, Back), and any of the seated player's cards drags
 -- freely between the gallery, the board, the hand, the piles and an open pile tray. The host
 -- turns each drop into a rules-free board edit (src/lua/simulatorEdit.ts).
 local T=require('ui.theme')
@@ -24,7 +24,11 @@ local GAP=10
 -- The gallery's tray: the card modals' and the builder's dark inset, with room inside it for the
 -- cards' fan, bob and hover lift.
 local TRAY_PAD=14
-local SEARCH_H,PAGER_H,RETURN_H=44,36,48
+local SEARCH_H=44
+-- The pager and Back button match the card modals' (sim_overlay.lua): a 224 px page face with
+-- 34 px arrows, 36 px tall, 12 px under the tray and 15 px above a 40 px Back button.
+local PAGER_H,PAGER_FACE,PAGER_ARROW,RETURN_H=36,224,34,40
+local PAGER_TOP_GAP,BACK_GAP=12,15
 local SEARCH_DELAY=0.25
 -- The gallery grid inside the widened column: as many columns of at least three as fit, cards
 -- no larger than the table's, and as many rows as the column's height holds.
@@ -32,7 +36,7 @@ function Simulator:galleryGrid()
   local G=self.L.gallery
   if not G then return nil end
   local trayTop=G.y+SEARCH_H+GAP+6
-  local trayBottom=G.bottom-RETURN_H-GAP-PAGER_H-GAP
+  local trayBottom=G.bottom-RETURN_H-BACK_GAP-PAGER_H-PAGER_TOP_GAP
   local top,bottom=trayTop+TRAY_PAD,trayBottom-TRAY_PAD
   local w=G.w-2*TRAY_PAD
   local cols=3
@@ -43,7 +47,7 @@ function Simulator:galleryGrid()
   local tighter=(bottom-top-rows*GAP)/((rows+1)*D.H)
   if tighter>=0.85*scale then rows,scale=rows+1,tighter end
   local gridH=rows*D.H*scale+(rows-1)*GAP
-  return {cols=cols,rows=rows,scale=scale,top=top+(bottom-top-gridH)/2,x=G.x+TRAY_PAD,w=w,pagerY=trayBottom+GAP,returnY=G.bottom-RETURN_H,
+  return {cols=cols,rows=rows,scale=scale,top=top+(bottom-top-gridH)/2,x=G.x+TRAY_PAD,w=w,pagerY=trayBottom+PAGER_TOP_GAP,returnY=G.bottom-RETURN_H,
     tray={x=G.x,y=trayTop,w=G.w,h=trayBottom-trayTop}}
 end
 function Simulator:galleryPosition(grid,i)
@@ -180,7 +184,7 @@ function Simulator:buildGallery(items,force,settle)
   if entering and count>0 and not self.reduced then self.callbacks.feedback('cardSlide1',0.95+love.math.random()*0.1) end
 end
 -- The Edit mode button under the HUD's counters, and while editing, the gallery's controls (the
--- search field draws itself; the page arrows and Return are ordinary buttons).
+-- search field draws itself; the page arrows and Back are ordinary buttons).
 function Simulator:buildEditButton(L)
   if L.portrait or not self.editState then return end
   local b=self.hud:bottomLayout(L)
@@ -195,10 +199,11 @@ function Simulator:buildEdit()
   self.searchControl=self:add('',G.x,G.y,G.w,SEARCH_H,'edit-search',T.ink,{input=true,invisible=true,placeholder='Search cards'})
   local e=self.editState
   local cx=G.x+G.w/2
-  Pager.arrow(self:add('<',G.x,grid.pagerY,40,PAGER_H,'edit-prev',T.red,{disabled=e.page<=1}),-1,e.page,e.pages)
-  Pager.arrow(self:add('>',G.x+G.w-40,grid.pagerY,40,PAGER_H,'edit-next',T.red,{disabled=e.page>=e.pages}),1,e.page,e.pages)
-  self.galleryPager={x=G.x+46,y=grid.pagerY,w=G.w-92,h=PAGER_H,cx=cx}
-  self:add('Return',G.x,grid.returnY,G.w,RETURN_H,'edit-return',T.orange,{fontSize=26})
+  local face=math.min(PAGER_FACE,G.w-2*(PAGER_ARROW+4))
+  Pager.arrow(self:add('<',cx-face/2-4-PAGER_ARROW,grid.pagerY,PAGER_ARROW,PAGER_H,'edit-prev',T.red,{disabled=e.page<=1}),-1,e.page,e.pages)
+  Pager.arrow(self:add('>',cx+face/2+4,grid.pagerY,PAGER_ARROW,PAGER_H,'edit-next',T.red,{disabled=e.page>=e.pages}),1,e.page,e.pages)
+  self.galleryPager={x=cx-face/2,y=grid.pagerY,w=face,h=PAGER_H,cx=cx}
+  self:add('Back',G.x,grid.returnY,G.w,RETURN_H,'edit-return',T.orange,{fontSize=26})
   for _,owner in ipairs({'you'}) do
     local dz=L.zones.you_discard
     self:add('',dz.well.x,dz.well.y,dz.well.w,dz.well.h,'pile',nil,{owner=owner,invisible=true,disabled=((self.sides.you or {}).discard or 0)==0})
@@ -464,7 +469,7 @@ function Simulator:drawEditColumn(shaders,rw)
   local p=self.galleryPager
   if p and self.galleryText then
     Button.cycleFace(p.x,p.y,p.w,p.h,false)
-    self.galleryText:draw(self.time,self.reduced,p.x,p.y,p.w,p.h,rw)
+    self.galleryText:draw(self.time,self.reduced,p.x,p.y,p.w,p.h,rw,0.4)
   end
 end
 function Simulator:drawEditDrag(shaders,rw)
