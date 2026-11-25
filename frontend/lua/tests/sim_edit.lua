@@ -32,10 +32,10 @@ local function last() return commands[#commands] end
 local function cmd(...) local f={...};for i,v in ipairs(f) do f[i]=enc(v) end;return table.concat(f,'\t') end
 local function control(action) for _,b in ipairs(sim.controls) do if b.action==action then return b end end end
 local function click(x,y) sim:mousepressed(x,y);sim:mousereleased(x,y) end
-local function drag(x,y,tx,ty,t)
+local function drag(x,y,tx,ty,t,motion)
   sim:mousepressed(x,y)
-  sim:update(1/60,t,x+20,y+20,true)
-  sim:update(1/60,t+0.02,tx,ty,true)
+  sim:update(1/60,t,x+20,y+20,not motion)
+  sim:update(1/60,t+0.02,tx,ty,not motion)
   sim:mousereleased(tx,ty)
 end
 
@@ -88,8 +88,11 @@ assert(#commands==turned,'The wheel does not turn before page one')
 -- A gallery card dropped on the Bench well adds it there.
 local g=sim.galleryCards[1]
 local bw=sim.L.zones.you_bench.well
-drag(g.x,g.y,bw.x+20,bw.y+bw.h/2,2)
+drag(g.x,g.y,bw.x+20,bw.y+bw.h/2,2,true)
 assert(last()=='edit\tadd\tsv01-001\tbench\t','Gallery to Bench adds the card, got '..tostring(last()))
+local dealt=sim.galleryCards[1]
+assert(math.abs(dealt.x-dealt.homeX)>1,'Taking a card from the gallery deals its page again')
+for i=1,60 do sim:update(1/60,2.1+i/60,-100,-100,true) end
 assert(sim.editDrag==nil,'The drag ends on release')
 -- A Stage 2 dropped on the Active evolves it, no rules asked.
 local active=sim.byUid['you:p1#2']

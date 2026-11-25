@@ -289,6 +289,10 @@ function Simulator:updateEdit(dt,time,mx,my,reduced)
     end
   end
 end
+function Simulator:redealGallery()
+  self.galleryIds=nil
+  self:buildGallery(self.galleryItems or {},true)
+end
 -- The wheel over the column turns the gallery's page, as it turns the builder's.
 function Simulator:galleryWheel(y)
   if not self.editing or y==0 or not Layout.inside(self.L.hud,self.mx or -1,self.my or -1) then return false end
@@ -395,6 +399,9 @@ function Simulator:finishEditDrag(x,y)
     if zone.zone=='gallery' then self:command('edit','remove',d.uid)
     elseif d.kind=='add' then self:command('edit','add',d.cardId,zone.zone,zone.index or '')
     else self:command('edit','move',d.uid,zone.zone,zone.index or '') end
+    -- A card taken from or given to the gallery deals its page again, as a pile tray deals its
+    -- cards again when one comes or goes.
+    if zone.zone=='gallery' or d.kind=='add' then self:redealGallery() end
   elseif d.card and not d.own then d.card:juiceUp(self.time,nil,nil,self.reduced) end
   self:dropEditDrag()
   return true
