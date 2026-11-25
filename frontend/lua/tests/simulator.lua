@@ -86,8 +86,13 @@ sim:mousepressed(card.x,card.y);sim:update(1/60,8,bench.x,bench.y,false);sim:mou
 assert(commands[#commands]=='move\tcard1\thand\t0\tbench\t0','Bench drop targets the hovered slot, got '..tostring(commands[#commands]))
 for i=1,120 do sim:update(1/60,8+i/60,-100,-100,true) end
 assert(sim:cardHit(bench.x,bench.y)==bench,'The dropped card springs back before the Bench is clickable again')
--- Click to highlight: attached buttons appear, Attach enters targeting mode.
 local energy=cardOf('energy1')
+do
+  local well=sim.L.zones.you_bench.well
+  local gap=sim:dropZoneAt(well.x+well.w-2,well.y+well.h/2,energy)
+  assert(gap.card==bench,'An Energy dragged into a Bench gap keeps the nearest Pokémon, so the well never flickers in')
+end
+-- Click to highlight: attached buttons appear, Attach enters targeting mode.
 sim:mousepressed(energy.x,energy.y);sim:mousereleased(energy.x,energy.y)
 assert(sim.highlight==energy,'Click highlights a hand card')
 local attach

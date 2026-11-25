@@ -129,10 +129,7 @@ function Simulator:dropTargetCard()
   local z,d=self.dropZone,self.drag
   if not z or not d or not d.moved then return nil end
   if z.zone=='retreat' then return z.card end
-  local item=d.card.item
-  local onto=self:attaching() or item.category=='Energy' or (item.category=='Trainer' and item.trainerType~='Item' and item.trainerType~='Supporter' and item.trainerType~='Stadium')
-    or (item.category=='Pokemon' and item.stage~='' and item.stage~='Basic')
-  if not onto then return nil end
+  if not self:landsOnPokemon(d.card.item) then return nil end
   if z.card then return z.card end
   local owner=(z.zone=='active' and 'you') or (z.zone=='oppActive' and 'opponent')
   if not owner then return nil end

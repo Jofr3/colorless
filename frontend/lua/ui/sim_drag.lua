@@ -74,6 +74,10 @@ function Simulator:nearestBenched(owner,x,y)
   end
   return best
 end
+function Simulator:landsOnPokemon(item)
+  return self:attaching() or item.category=='Energy' or (item.category=='Trainer' and item.trainerType~='Item' and item.trainerType~='Supporter' and item.trainerType~='Stadium')
+    or (item.category=='Pokemon' and item.stage~='' and item.stage~='Basic')
+end
 function Simulator:dropZoneAt(x,y,card)
   local L=self.L;local item=card.item
   local Z=L.zones
@@ -99,6 +103,8 @@ function Simulator:dropZoneAt(x,y,card)
     if Layout.inside(Z.you_bench.well,x,y) then
       local count=0;local onto
       for _,c in ipairs(self.cards) do if c.item.owner=='you' and c.item.zone=='bench' then count=count+1;if c~=card and c:hit(x,y) then onto=c end end end
+      -- A card that lands on a Pokémon keeps the nearest one across the gaps between Benched cards.
+      if not onto and self:landsOnPokemon(item) then onto=self:nearestBenched('you',x,y) end
       local index=onto and onto.item.index or Layout.benchIndex(Z.you_bench,count,x)
       return {zone='bench',index=index,well=Z.you_bench.well,card=onto}
     end
