@@ -40,6 +40,7 @@ function Simulator:open(reduced,skipCommand,mode,code)
   self:cancelKoPresentation()
   self.attachedPopup=nil;self.closingPopup=nil
   self.prizeMotion={}
+  for _,f in pairs(self.prizeFlips or {}) do if f.card then f.card.texture:release() end end;self.prizeFlips={}
   self.rareCandy=nil
   self.counterMotion=nil;self.completedCounterTransfer=nil
   self.reduced=reduced;self.drag=nil;self.focus=0;self.focusKey=nil;self.focusCard=nil;self.raw=nil;self.previous=nil;self.highlight=nil;self.hoverCard=nil;self.targeting=nil;self.luaTargeting=nil;self.peek=false

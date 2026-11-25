@@ -130,8 +130,37 @@ function Simulator:dropTargetCard()
   if not z or not d or not d.moved then return nil end
   return (self:dropOnto(z,d.card.item))
 end
+-- A Prize turning over in its slot: the side it leaves narrows to nothing, then the side it shows
+-- widens back, over PRIZE_FLIP seconds.
+local PRIZE_FLIP=0.3
+function Simulator:startPrizeFlip(owner,slot,faceUp,card)
+  local key=owner..':'..slot
+  local was=self.prizeFlips[key]
+  if was and was.card then was.card.texture:release() end
+  self.prizeFlips[key]=not self.reduced and {start=self.time,faceUp=faceUp,card=card} or nil
+  if card and self.reduced then card.texture:release() end
+end
+-- How far the flip at a slot has turned (0..1), or nil once it is over; ends the finished ones.
+function Simulator:prizeFlip(owner,slot)
+  local key=owner..':'..slot
+  local f=self.prizeFlips and self.prizeFlips[key]
+  if not f then return nil end
+  local t=(self.time-f.start)/PRIZE_FLIP
+  if t>=1 then
+    if f.card then f.card.texture:release() end
+    self.prizeFlips[key]=nil
+    return nil
+  end
+  return math.max(0,t),f
+end
 function Simulator:drawCard(c,shaders,rw)
   if c.koHidden or c.koAnimating or c.drawAfterPromotion then return end
+  if c.item.zone=='prize' then
+    local t=self:prizeFlip(c.item.owner,c.item.index)
+    -- Face up: the back shows first (drawPrizes), the face only in the second half.
+    if t and t<0.5 then return end
+    c.flipScale=t and (2*t-1) or nil
+  end
   if c.item.zone=='prize' and self:koPrizeTaken(c.item.owner,c.item.index) then return end
   self:drawAttached(c)
   c:draw(shaders,self.time,self.mx or 0,self.my or 0,self.reduced,rw)
@@ -141,7 +170,7 @@ function Simulator:drawCard(c,shaders,rw)
   if (self:isCandidate(c) and not hideOutline) or c==self.dropTarget then c:drawOutline(T.white,3) end
   self:drawBadges(c,rw)
 end
-function Simulator:drawPrizes(owner,rw)
+function Simulator:drawPrizes(owner,rw,shaders)
   local L=self.L
   local z=L.zones[(owner=='you' and 'you' or 'opp')..'_prizes']
   local side=self.sides[owner] or {prizes=0}
@@ -150,10 +179,19 @@ function Simulator:drawPrizes(owner,rw)
   local w,h=D.W*z.scale,D.H*z.scale
   for i=0,side.prizes-1 do
     local px,py=self:prizePosition(owner,i)
-    if not faceUp[i] and not self:koPrizeTaken(owner,i) then
+    local t,flip=self:prizeFlip(owner,i)
+    if flip and not flip.faceUp and t<0.5 and flip.card then
+      -- Turning face down: the face narrows first, where the Prize was.
+      local c=flip.card
+      c.flipScale=1-2*t
+      c:draw(shaders,self.time,self.mx or 0,self.my or 0,self.reduced,rw)
+    end
+    local backScale=flip and (flip.faceUp and (t<0.5 and 1-2*t or 0) or (t>=0.5 and 2*t-1 or 0)) or 1
+    if (not faceUp[i] or (flip and flip.faceUp and t<0.5)) and not self:koPrizeTaken(owner,i) and backScale>0 then
       local p=self.prizeMotion and self.prizeMotion[owner..':'..i]
       g.push();g.translate(px,py)
       if p then g.rotate(p.motion.VT.r);g.scale(p.motion.VT.scale) end
+      g.scale(backScale,1)
       g.translate(-w/2,-h/2)
       g.setColor(0,0,0,0.3);g.push();g.translate(0,3);self:drawBack(owner,w,h);g.pop()
       self:drawBack(owner,w,h)
@@ -237,7 +275,7 @@ function Simulator:draw(shaders)
     g.setColor(1,1,1,0.08);Button.panel(w.x,w.y,w.w,w.h,{1,1,1,0.08},1.2)
   end
   for _,p in ipairs(self.piles) do p:draw() end
-  self:drawPrizes('opponent',rw);self:drawPrizes('you',rw)
+  self:drawPrizes('opponent',rw,shaders);self:drawPrizes('you',rw,shaders)
   for _,c in ipairs(self.ghosts) do c:draw(shaders,self.time,self.mx or 0,self.my or 0,self.reduced,rw) end
   local hideHand=false
   local order={'opponent_hand','opponent_discard','opponent_bench','opponent_active','global_stadium','you_discard','you_bench','you_active','you_prize','opponent_prize','you_played','opponent_played','you_hand'}

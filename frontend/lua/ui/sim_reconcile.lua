@@ -229,6 +229,16 @@ function Simulator:placeCards(resize,previous)
       end
     end
   end
+  -- A Prize turned face up or down in its slot flips there rather than sliding in or leaving.
+  local samePrizes={}
+  for _,owner in ipairs({'you','opponent'}) do
+    local was=previous and previous.sides and previous.sides[owner]
+    samePrizes[owner]=was and self.sides[owner] and was.prizes==self.sides[owner].prizes
+  end
+  local prizeUpBefore,prizeUpNow={},{}
+  if previous and previous.items then for _,it in ipairs(previous.items) do if it.zone=='prize' then prizeUpBefore[it.owner..':'..it.index]=it end end end
+  for _,it in ipairs(self.items) do if it.zone=='prize' then prizeUpNow[it.owner..':'..it.index]=it end end
+  self.prizeFlips=self.prizeFlips or {}
   local youPrizesTaken=previous and previous.sides and previous.sides.you and self.sides.you and self.sides.you.prizes<previous.sides.you.prizes
   -- A hot-seat flip mirrors the whole table: every card is re-created in
   -- place, with no entrance slide and no ghosts. A public card keeps its uid
@@ -324,6 +334,8 @@ function Simulator:placeCards(resize,previous)
             end
           elseif item.zone=='discard' then from=prev and L.zones[prefix(item.owner)..prev.zone] or L.zones[prefix(item.owner)..'hand']
           elseif item.zone=='played' then from=L.zones[prefix(item.owner)..'hand']
+          elseif item.zone=='prize' and samePrizes[item.owner] and not prizeUpBefore[item.owner..':'..item.index] then
+            from=nil;self:startPrizeFlip(item.owner,item.index,true)
           elseif (item.zone=='active' or item.zone=='bench') and occupied[item.owner..':'..item.zone..':'..item.index] then
             -- A Pokémon reappearing on an occupied spot (an undone evolution
             -- putting the Basic back) was there all along: no entrance.
@@ -349,6 +361,15 @@ function Simulator:placeCards(resize,previous)
       c.zoneKey=item.owner..'_'..item.zone
       self.cards[#self.cards+1]=c
       self.byUid[key]=c
+    end
+  end
+  -- A face-up Prize gone from a slot that still holds a Prize was turned face down: its face
+  -- flips over in place.
+  for key,c in pairs(old) do
+    local item=c.item
+    if item.zone=='prize' and samePrizes[item.owner] and not prizeUpNow[item.owner..':'..item.index] and not resize and not flipped and not self.reduced then
+      old[key]=nil
+      self:startPrizeFlip(item.owner,item.index,false,c)
     end
   end
   -- Other cards that left the table slide to their owner's discard pile.
