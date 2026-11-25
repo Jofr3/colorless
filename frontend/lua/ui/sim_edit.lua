@@ -280,6 +280,9 @@ function Simulator:updateEdit(dt,time,mx,my,reduced)
     if not d.moved and (mx-d.x)^2+(my-d.y)^2>36 then
       d.moved=true
       if not d.card then d.card=d.make() end
+      -- A card lifted out of a tray leaves its place there empty while it is held; a grouped
+      -- stack keeps showing the copies left in it.
+      if d.trayCard and (d.trayCard.item.count or 1)<=1 then d.trayCard.editHidden=true end
       d.card.dragging=true;self.highlight=nil
       self.callbacks.feedback('cardSlide1',0.95)
     end
@@ -325,7 +328,7 @@ function Simulator:startEditDrag(x,y)
       local c=tray.cards[i]
       local uid=c.item.id
       if c:hit(x,y) and self.pileOwner~='opponent' and uid and not uid:match('^opt') then
-        self.editDrag={kind='move',uid=uid,from=self.pileOwner=='deck' and 'deck' or 'discard',x=x,y=y,dx=0,dy=0,own=true,
+        self.editDrag={kind='move',uid=uid,from=self.pileOwner=='deck' and 'deck' or 'discard',x=x,y=y,dx=0,dy=0,own=true,trayCard=c,
           make=function() return self:newCard({id='drag',cardId=c.item.cardId,name=c.item.name,owner='you',zone='tray',hidden=false,scan=true},1,c.x,c.y,self.L.zones.you_hand.scale) end}
         return true
       end
@@ -344,6 +347,7 @@ function Simulator:dropEditDrag()
   if not d then return end
   if d.card then d.card.dragging=false end
   if d.own and d.card then d.card.texture:release() end
+  if d.trayCard then d.trayCard.editHidden=nil end
   self.editDrag=nil;self.editDrop=nil
 end
 -- The seated player's Pokémon under the pointer, other than the one held.

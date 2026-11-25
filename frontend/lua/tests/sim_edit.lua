@@ -185,6 +185,12 @@ for i=1,40 do sim:update(1/60,8+i/60,-100,-100,true) end
 -- Behind the tray the table is inert: its cards and controls take nothing, and a drop there lands nowhere.
 local tc=sim.overlay.cards[1]
 local sent=#commands
+sim:mousepressed(tc.x,tc.y)
+sim:update(1/60,8.9,tc.x+30,tc.y+30,true)
+assert(tc.editHidden,'A card lifted out of the tray leaves its place empty')
+sim:mousereleased(tc.x+30,tc.y+30)
+assert(not tc.editHidden,'and fills it again once dropped back')
+sent=#commands
 drag(tc.x,tc.y,hand.x,hand.y,9)
 assert(#commands==sent,'A tray card dropped on the table sends nothing')
 drag(hand.x,hand.y,sim.L.gallery.x+40,300,9.5)

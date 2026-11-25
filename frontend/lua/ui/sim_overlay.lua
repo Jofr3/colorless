@@ -750,7 +750,7 @@ function Overlay:draw(shaders)
     g.intersectScissor(vx,vy,ex-vx,ey-vy)
     for layer=0,2 do
       for _,c in ipairs(self.cards) do
-        if cardLayer(c)==layer then
+        if cardLayer(c)==layer and not c.editHidden then
           drawGroupBack(c)
           c:draw(shaders,self.time or 0,sim.mx or 0,(sim.my or 0)-self:offset(),sim.reduced,rw)
           if kind=='cards' and c.item.selected then c:drawOutline(T.white,3) end
