@@ -90,6 +90,18 @@ local g=sim.galleryCards[1]
 local bw=sim.L.zones.you_bench.well
 drag(g.x,g.y,bw.x+20,bw.y+bw.h/2,2,true)
 assert(last()=='edit\tadd\tsv01-001\tbench\t','Gallery to Bench adds the card, got '..tostring(last()))
+assert(sim.editLanding,'The drop point is kept for the card it adds')
+do
+  local drop=sim.editLanding
+  sim.reduced=false
+  sim:sync(snapshot(2.2,'on',gallery)..'\n'..row('C','p1#e0','sv01-001','Pineco','you','hand',1,'false','Pokemon','','Basic',50,0,'','','','Grass','true',1))
+  local added=sim.byUid['you:p1#e0']
+  local deck=sim.L.zones.you_deck
+  assert(math.abs(added.x-drop.x)<1 and math.abs(added.y-drop.y)<1,'A card added from the gallery enters from its drop point')
+  assert(math.abs(added.x-deck.x)>50,'not from the deck')
+  assert(sim.editLanding==nil,'The drop point is used once')
+  sim:sync(snapshot(2.3,'on',gallery))
+end
 local dealt=sim.galleryCards[1]
 assert(math.abs(dealt.x-dealt.homeX)>1,'Taking a card from the gallery deals its page again')
 for i=1,60 do sim:update(1/60,2.1+i/60,-100,-100,true) end

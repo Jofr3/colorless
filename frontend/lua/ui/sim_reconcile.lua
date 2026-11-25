@@ -270,6 +270,9 @@ function Simulator:placeCards(resize,previous)
     old[key]=nil
     return c
   end
+  local dropped=self.editLanding
+  if dropped and self.time-dropped.at>2 then dropped=nil end
+  self.editLanding=nil
   for i,item in ipairs(self.items) do
     item.edition='dissolve';item.scan=true;item.drawFace=function(w,h) self:face(item,w,h) end
     local zone=(item.zone=='played' and L.zones.played) or L.zones[prefix(item.owner)..(item.zone=='prize' and 'prizes' or item.zone)] or L.zones.playmat
@@ -282,7 +285,7 @@ function Simulator:placeCards(resize,previous)
       if c then old[c.item.owner..':'..c.item.id]=nil end
       if not staged and not dissolving[item.id] and not fresh and previous.items and not resize and not flipped and not self.reduced and (not prev or prev.zone~='discard') then
         if not c then
-          local from=attachedFrom[item.owner..':'..item.id] or L.zones[prefix(item.owner)..'hand']
+          local from=attachedFrom[item.owner..':'..item.id] or (item.owner=='you' and dropped) or L.zones[prefix(item.owner)..'hand']
           c=self:newCard(item,i,from.x,from.y,zone.scale)
         end
         c.item=item;c.dragging=false;c.lift=0
@@ -330,7 +333,7 @@ function Simulator:placeCards(resize,previous)
           local from
           if item.zone=='hand' then
             if not (self.completedPrizes and youPrizesTaken and item.owner=='you') then
-              from=attachedFrom[key] or (youPrizesTaken and item.owner=='you' and L.zones.you_prizes or L.zones[prefix(item.owner)..'deck'])
+              from=attachedFrom[key] or (item.owner=='you' and dropped) or (youPrizesTaken and item.owner=='you' and L.zones.you_prizes or L.zones[prefix(item.owner)..'deck'])
             end
           elseif item.zone=='discard' then from=prev and L.zones[prefix(item.owner)..prev.zone] or L.zones[prefix(item.owner)..'hand']
           elseif item.zone=='played' then from=L.zones[prefix(item.owner)..'hand']
@@ -341,7 +344,7 @@ function Simulator:placeCards(resize,previous)
             -- putting the Basic back) was there all along: no entrance.
             from=nil
           elseif item.owner=='opponent' then from=L.zones.opp_hand
-          else from=L.zones.you_deck end
+          else from=dropped or L.zones.you_deck end
           if from then c.motion.VT.x=from.x/c.unit;c.motion.VT.y=from.y/c.unit;c.x,c.y=from.x,from.y end
         end
       else

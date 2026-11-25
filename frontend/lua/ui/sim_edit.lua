@@ -397,6 +397,8 @@ function Simulator:finishEditDrag(x,y)
   local zone=self:editDropAt(x,y)
   if zone and not samePlace(d,zone) then
     self.callbacks.feedback('card1',1)
+    -- A card new to the table (from the gallery or a tray) enters from where it was dropped.
+    if d.own then self.editLanding={x=d.card and d.card.x or x,y=d.card and d.card.y or y,at=self.time} end
     if zone.zone=='gallery' then self:command('edit','remove',d.uid)
     elseif d.kind=='add' then self:command('edit','add',d.cardId,zone.zone,zone.index or '')
     else self:command('edit','move',d.uid,zone.zone,zone.index or '') end
