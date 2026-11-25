@@ -723,7 +723,7 @@ describe("D580 Look-Alike Show §6 — THE POPULATION LOOP: all 51 Supporter nam
       "Clemont's Quick Wit": [],
       "Colress's Tenacity": ["chooseCards"],
       Cook: [],
-      Crispin: ["chooseCards", "confirm", "choosePokemon"],
+      Crispin: ["chooseCards"],
       Cyrano: [],
       Drasna: [],
       Drayton: ["chooseCards"],

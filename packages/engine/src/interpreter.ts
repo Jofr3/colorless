@@ -877,8 +877,8 @@ function ruffianBodyAnswered(state: GameState, ref: PokemonRef): EffectOp[] {
 }
 
 /**
- * Crispin's split: one branch per distinct Basic Energy type filed (at most 2). With one type the
- * branches are "attach it" or "keep it in your hand"; with two, attach either.
+ * Crispin's split: with two Basic Energy types filed, attach either and the other stays in hand.
+ * With one, "put 1 of them into your hand" takes it and there is no other to attach.
  */
 function oneOfRecordedChoice(
   state: GameState,
@@ -897,7 +897,7 @@ function oneOfRecordedChoice(
     }
   }
   const [first, second] = choices.slice(0, 2);
-  if (first === undefined) return [];
+  if (first === undefined || second === undefined) return [];
   const targets = attachEnergyTargets(state, seat, op);
   if (targets.length === 0) return [];
   const { oneOfRecorded: _dropped, ...plain } = op;
@@ -907,14 +907,11 @@ function oneOfRecordedChoice(
     {
       op: "optional",
       note,
-      labels: {
-        yes: `Attach ${first.type} Energy`,
-        no: second === undefined ? "Keep it in your hand" : `Attach ${second.type} Energy`,
-      },
-      cards: { yes: first.uid, ...(second === undefined ? {} : { no: second.uid }) },
+      labels: { yes: `Attach ${first.type} Energy`, no: `Attach ${second.type} Energy` },
+      cards: { yes: first.uid, no: second.uid },
       targets,
       ops: attach(first.type),
-      ...(second === undefined ? {} : { otherwise: attach(second.type) }),
+      otherwise: attach(second.type),
     },
   ];
 }

@@ -553,16 +553,13 @@ describe("D561 §3 — Crispin: ONE search, then the split as a labelled choice 
     expect(done.players.p1.hand).toContain(luminous);
   });
 
-  it('R-CR1 (UNRULED) — ONE found: *"Attach Fire Energy"* or *"Keep it in your hand"*', () => {
+  it("R-CR1 — ONE found: it is the card put into the hand; nothing is attached and nothing is asked", () => {
     const { state, fire } = searched(table());
-    const { state: asked } = mustApply(state, cards([fire]));
-    expect(effectPrompt(asked)).toMatchObject({
-      labels: { yes: "Attach Fire Energy", no: "Keep it in your hand" },
-    });
-    expect(mustApply(asked, confirm(true)).state.players.p1.active?.energy).toEqual([fire]);
-    const kept = mustApply(asked, confirm(false)).state;
-    expect(kept.players.p1.active?.energy).toEqual([]);
-    expect(kept.players.p1.hand).toEqual([fire]);
+    const { state: done, events } = mustApply(state, cards([fire]));
+    expect(done.phase.kind).toBe("turn:action");
+    expect(done.players.p1.active?.energy).toEqual([]);
+    expect(done.players.p1.hand).toEqual([fire]);
+    expect(types(events as GameEvent[])).toContain("SHUFFLE");
   });
 
   it("NONE found (the declined search) asks nothing more and still shuffles", () => {

@@ -824,17 +824,21 @@ describe("Lua simulator", () => {
       ["deck-energy", "true"],
       ["deck-energy-2", "true"],
     ]);
-    // The turn's controls stay live in the sidebar, with End turn disabled and Done beside it.
+    // The turn's controls stay live in the sidebar, with End turn disabled; Skip is not there.
     const SIDE = WIRE_ROWS.sim.sidebar;
     const side = rows(publish).filter((r: string[]) => r[0] === "A");
     const field = (r: string[] | undefined, name: (typeof SIDE.fields)[number]) =>
       r?.[wireColumn(SIDE, name)];
     const button = (label: string) => side.find((r: string[]) => field(r, "label") === label);
-    expect(side.slice(0, 2).map((r: string[]) => field(r, "label"))).toEqual(["Skip", "End turn"]);
+    expect(side[0] && field(side[0], "label")).toBe("End turn");
+    expect(button("Skip")).toBeUndefined();
     expect(field(button("End turn"), "disabled")).toBe("true");
-    expect(field(button("Skip"), "token")).not.toBe("");
     expect(field(button("Undo action"), "slot")).toBe("minor");
-    expect(rows(publish).filter((r: string[]) => r[0] === "F")).toEqual([]);
+    // Skip travels in the footer, for the button beside the hand's eye.
+    const footer = rows(publish).filter((r: string[]) => r[0] === "F");
+    expect(footer.map((r: string[]) => r[wireColumn(WIRE_ROWS.sim.option, "label")])).toEqual([
+      "Skip",
+    ]);
     sim.command("move\tdeck-energy\thand\t0\tplaymat\t0");
     expect(sim.message).toMatch(/can take it/);
     sim.command("move\tdeck-energy\thand\t0\tactive\t0");

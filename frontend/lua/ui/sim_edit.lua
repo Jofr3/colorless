@@ -190,7 +190,9 @@ function Simulator:buildEditButton(L)
   if L.portrait or not self.editState then return end
   local b=self.hud:bottomLayout(L)
   local x,w=L.hud.x+L.hud.inset+8,L.hud.w-2*L.hud.inset-16
-  self:add('Edit mode',x,b.bottom+14,w,48,'edit-open',T.green,{fontSize=26,disabled=not self.editState.available})
+  -- One button gap under Options, the gap between Game log and Options.
+  local y=b.buttonY+2*b.buttonH+2*b.buttonGap
+  self:add('Edit mode',x,y,w,48,'edit-open',T.orange,{fontSize=26,disabled=not self.editState.available})
 end
 function Simulator:buildEdit()
   local L=self.L

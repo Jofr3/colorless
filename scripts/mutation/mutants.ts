@@ -35936,11 +35936,11 @@ export const MUTANTS: Mutant[] = [
   {
     id: "D561-crispin-lone-card-forced",
     decision: "D561",
-    what: "⚠️ R-CR1 reversed in one direction: with ONE card the decline is labelled as a second type that does not exist. Killed by §3's R-CR1 rung.",
+    what: "R-CR1 reversed: with ONE card found it is still offered for the attach instead of staying in the hand. Killed by §3's R-CR1 rung.",
     file: "packages/engine/src/interpreter.ts",
     symbol: "oneOfRecordedChoice",
-    find: '        no: second === undefined ? "Keep it in your hand" : `Attach ${second.type} Energy`,',
-    replace: "        no: `Attach ${second?.type} Energy`,",
+    find: "  if (first === undefined || second === undefined) return [];",
+    replace: "  if (first === undefined) return [];",
     expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
   },
   {
@@ -35949,7 +35949,7 @@ export const MUTANTS: Mutant[] = [
     what: '🛑 R-CR2 half-lost: the "Attach B" answer attaches nothing. Killed by §3\'s R-CR2 no-rung.',
     file: "packages/engine/src/interpreter.ts",
     symbol: "oneOfRecordedChoice",
-    find: "      ...(second === undefined ? {} : { otherwise: attach(second.type) }),\n",
+    find: "      otherwise: attach(second.type),\n",
     replace: "",
     expectKilledBy: ["packages/engine/src/trainersD561.test.ts"],
   },

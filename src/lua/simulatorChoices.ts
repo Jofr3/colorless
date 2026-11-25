@@ -160,8 +160,8 @@ function attachChoice(
 }
 
 /**
- * Crispin's split: both Energy wait in the hand, and the drop answers. With two types the dropped
- * card says yes or no; with one, a button keeps it in the hand instead.
+ * Crispin's split: both Energy wait in the hand, and the dropped card says yes or no. A prompt with
+ * one card (the wire allows it; Crispin no longer asks one) gets a button that declines instead.
  */
 const confirmAttach = (
   menu: SimMenu,

@@ -55,22 +55,16 @@ function historyRow(host: SidebarHost, src: TableSource): SimOption[] {
 }
 
 /**
- * A drag-to-attach prompt keeps the turn's controls: its own button (Done, Keep it in your hand)
- * beside a disabled End turn, and in hot-seat the history row, which steps out of the prompt.
+ * A drag-to-attach prompt keeps the turn's controls: a disabled End turn and in hot-seat the
+ * history row, which steps out of the prompt. Its own buttons sit beside the hand's eye.
  */
-export function attachSidebar(
-  host: SidebarHost,
-  v: RedactedGame,
-  src: TableSource,
-  menu: SimMenu,
-): SimOption[] {
+export function attachSidebar(host: SidebarHost, v: RedactedGame, src: TableSource): SimOption[] {
   const endTurn: SimOption = {
     ...host.action("End turn", { type: "endTurn", seat: v.seat }, "red"),
     slot: "primary",
     disabled: true,
   };
-  const own = (menu.footer ?? []).map((o): SimOption => ({ ...o, slot: "primary" }));
-  return [...own, endTurn, ...(src.mode === "local" ? historyRow(host, src) : [])];
+  return [endTurn, ...(src.mode === "local" ? historyRow(host, src) : [])];
 }
 
 /** Both seats at one table: either player's choices, plus the game's history. */

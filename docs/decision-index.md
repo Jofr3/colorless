@@ -86,6 +86,7 @@ fails when it is stale, so rerun the script after adding a decision.
 | 2026-11-12 | Correctness audit decisions and Phase 0: a decided game ends at once, Knock Outs swept on both boards, legacy… | decisions.md:1770 |
 | 2026-11-12 | Correctness audit Phases 1-4: scheduled and counted wins, Tera and Paradox banners in Expanded, an invariant-… | decisions.md:1806 |
 | 2026-11-25 | Sandbox edit mode: a rules-free sandboxEdit action and a catalog gallery in the HUD column | decisions.md:1837 |
+| 2026-11-25 | Crispin with one Energy found keeps it in the hand; an attach prompt's buttons beside the eye | decisions.md:1843 |
 
 ## Numbered decisions
 

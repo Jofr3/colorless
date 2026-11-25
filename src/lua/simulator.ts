@@ -414,7 +414,7 @@ export class LuaSimulator {
           run: () => this.cancelRareCandy(),
         },
       ];
-    if (this.menu?.kind === "attach") return attachSidebar(this, v, src, this.menu);
+    if (this.menu?.kind === "attach") return attachSidebar(this, v, src);
     return src.mode === "local" ? hotSeatSidebar(this, v, src) : remoteSidebar(this, v, src);
   }
   /** The open modal's page first, then its neighbours, the board, the rest. */
@@ -863,11 +863,12 @@ export class LuaSimulator {
       const staged = candy ? { uid: candy, cancel: () => this.cancelRareCandy() } : null;
       if (!s.menu) cardActionRows(f, cardActions(v, this, staged));
     }
-    // An attach prompt's buttons live in the sidebar, live beside the turn's controls.
+    // An attach prompt keeps the turn's controls live in the sidebar; its own buttons, in its
+    // footer, sit beside the hand's eye.
     const attaching = s.menu?.kind === "attach";
     sidebarRows(f, this.sidebar(), !!s.menu && !attaching);
     if (s.menu) {
-      const menu = attaching ? { ...s.menu, footer: [] } : withHistory(this, this.source, s.menu);
+      const menu = attaching ? s.menu : withHistory(this, this.source, s.menu);
       menuRows(f, menu, s.menuId);
     }
     if (src) infoRows(f, src);

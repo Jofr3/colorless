@@ -1801,7 +1801,8 @@ export type EffectOp =
       toEach?: true;
       /**
        * Crispin: "put 1 of them into your hand. Attach the other to 1 of your Pokémon." The Energy
-       * to attach is one of the cards filed under this slot, and the player chooses which type.
+       * to attach is one of the cards filed under this slot, and the player chooses which type. A
+       * lone card filed is the one put into the hand, so nothing is attached.
        */
       oneOfRecorded?: EffectSlot;
       /**

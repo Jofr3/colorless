@@ -135,10 +135,21 @@ function Simulator:build(quiet)
     if L.portrait then x=L.w-8-size end
     self:add(shown and 'Hide hand' or 'Show hand',x,L.zones.you_hand.y-size/2,size,size,'attachHand',shown and T.orange or T.profile,
       {icon=shown and 'eye_closed' or 'eye_open',tooltip=true})
+    -- The prompt's own buttons (Skip, Done) sit beside the eye too: left of it on desktop, where
+    -- the hand ends short of it, and above it on portrait, where the eye hugs the table's edge.
+    local hand=L.zones.you_hand
+    local gap=6
+    local bw=L.portrait and 96 or math.max(80,math.min(120,x-gap-(hand.x+hand.span/2)))
+    local y=L.zones.you_hand.y-size/2
+    for i,o in ipairs(self.targeting.menu.footer or {}) do
+      local bx,by=x-i*(bw+gap),y
+      if L.portrait then bx,by=x+size-bw,y-i*(size+gap) end
+      self:add(o.label,bx,by,bw,size,'invoke',o.colour,{token=o.token,disabled=o.disabled,fontSize=20})
+    end
   end
   -- Targeting instructions live in the HUD; choices remain on the table.
   local target=self.targeting and self.targeting.menu or self.luaTargeting
-  if target then
+  if target and not self:attaching() then
     local footer={}
     for _,o in ipairs(target.footer or {}) do footer[#footer+1]={label=o.label,action='invoke',colour=o.colour,token=o.token,disabled=o.disabled} end
     if self.luaTargeting or not target.mandatory then

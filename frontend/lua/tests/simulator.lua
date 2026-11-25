@@ -177,6 +177,10 @@ do
   local eye
   for i,b in ipairs(sim.controls) do if b.action=='attachHand' then eye=i end end
   assert(eye and sim.controls[eye].icon=='eye_open','An attach prompt offers the eye beside the hand')
+  local confirm
+  for _,b in ipairs(sim.controls) do if b.token=='10' then assert(not confirm,'The prompt button is drawn once');confirm=b end end
+  local e=sim.controls[eye]
+  assert(confirm and confirm.label=='Confirm' and confirm.x+confirm.w<=e.x and confirm.y==e.y,'The prompt button sits left of the eye')
   sim:activate(eye)
   assert(commands[#commands]=='attachHand','The eye asks the host for the rest of the hand')
 end

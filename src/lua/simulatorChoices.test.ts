@@ -134,7 +134,7 @@ describe("effect menus", () => {
     expect(sim.sent).toEqual([{ kind: "confirm", yes: false, target: you(0) }]);
   });
 
-  it("lets a one-type Crispin keep its Energy in hand, or attach it on the drop", () => {
+  it("lets a one-card attach confirm decline with a button, or attach on the drop", () => {
     const sim = open({
       kind: "confirm",
       note: "Which Energy do you want to attach?",
