@@ -121,7 +121,7 @@ function Simulator:syncEdit(m)
     if not editing then
       if self.searchEditing then self:command('finish-input') end
       self.searchEditing=false;self.pendingSearch=nil
-      self:dropGalleryFaces();self.galleryIds=nil
+      self:dropGalleryFaces();self.galleryIds=nil;self:clearEditReturns()
     else
       self.searchText=m.edit.query
       self.highlight=nil;self.luaTargeting=nil
@@ -264,6 +264,7 @@ function Simulator:drawEditBackdrop()
 end
 function Simulator:updateEdit(dt,time,mx,my,reduced)
   if not self.editing then return end
+  self:updateEditReturns(dt,time,reduced)
   self:readSearch()
   if self.pendingSearch then
     self.searchDelay=(self.searchDelay or 0)-dt
@@ -342,13 +343,44 @@ function Simulator:startEditDrag(x,y)
   end
   return false
 end
-function Simulator:dropEditDrag()
+-- `returning`: a drop that landed nowhere. The copy held from the gallery or a tray flies back to
+-- the card it was lifted from, which stays empty in its tray until the copy arrives.
+function Simulator:dropEditDrag(returning)
   local d=self.editDrag
   if not d then return end
   if d.card then d.card.dragging=false end
-  if d.own and d.card then d.card.texture:release() end
-  if d.trayCard then d.trayCard.editHidden=nil end
+  local source=d.trayCard or d.source
+  if returning and d.own and d.card and d.moved and source and not self.reduced then
+    self.editReturns=self.editReturns or {}
+    self.editReturns[#self.editReturns+1]={card=d.card,source=source,start=self.time,trayCard=d.trayCard}
+  else
+    if d.own and d.card then d.card.texture:release() end
+    if d.trayCard then d.trayCard.editHidden=nil end
+  end
   self.editDrag=nil;self.editDrop=nil
+end
+-- Each returning copy springs back to its card and goes once there; any left are dropped with
+-- the gallery or tray they were going to.
+function Simulator:updateEditReturns(dt,time,reduced)
+  for i=#(self.editReturns or {}),1,-1 do
+    local r=self.editReturns[i]
+    local c,s=r.card,r.source
+    c.homeX,c.homeY=s.x,s.y;c.motion.T.r=s.motion and s.motion.T.r or 0
+    c:update(dt,time,false,reduced)
+    local landed=math.abs(c.x-s.x)<3 and math.abs(c.y-s.y)<3
+    if reduced or landed or time-r.start>0.8 then
+      c.texture:release()
+      if r.trayCard then r.trayCard.editHidden=nil end
+      table.remove(self.editReturns,i)
+    end
+  end
+end
+function Simulator:clearEditReturns()
+  for _,r in ipairs(self.editReturns or {}) do
+    r.card.texture:release()
+    if r.trayCard then r.trayCard.editHidden=nil end
+  end
+  self.editReturns={}
 end
 -- The seated player's Pokémon under the pointer, other than the one held.
 local function bodyAt(self,x,y,held)
@@ -411,8 +443,11 @@ function Simulator:finishEditDrag(x,y)
     -- A card taken from or given to the gallery deals its page again, as a pile tray deals its
     -- cards again when one comes or goes.
     if zone.zone=='gallery' or d.kind=='add' then self:redealGallery() end
-  elseif d.card and not d.own then d.card:juiceUp(self.time,nil,nil,self.reduced) end
-  self:dropEditDrag()
+    self:dropEditDrag()
+  else
+    if d.card and not d.own then d.card:juiceUp(self.time,nil,nil,self.reduced) end
+    self:dropEditDrag(true)
+  end
   return true
 end
 -- Any of the seated player's Prizes under the pointer, face down or up.
@@ -521,5 +556,6 @@ function Simulator:drawEditDrag(shaders,rw)
     if d.table then self:drawAttached(d.card) end
     d.card:draw(shaders,self.time,self.mx,self.my,self.reduced,rw)
   end
+  for _,r in ipairs(self.editReturns or {}) do r.card:draw(shaders,self.time,self.mx,self.my,self.reduced,rw) end
 end
 return Simulator

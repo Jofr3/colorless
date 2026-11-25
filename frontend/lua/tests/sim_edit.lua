@@ -188,8 +188,11 @@ local sent=#commands
 sim:mousepressed(tc.x,tc.y)
 sim:update(1/60,8.9,tc.x+30,tc.y+30,true)
 assert(tc.editHidden,'A card lifted out of the tray leaves its place empty')
+sim.reduced=false
 sim:mousereleased(tc.x+30,tc.y+30)
-assert(not tc.editHidden,'and fills it again once dropped back')
+assert(#sim.editReturns==1 and tc.editHidden,'A drop that lands nowhere flies the card back to its place')
+for i=1,60 do sim:update(1/60,9+i/60,-100,-100,false) end
+assert(#sim.editReturns==0 and not tc.editHidden,'and fills it again once back')
 sent=#commands
 drag(tc.x,tc.y,hand.x,hand.y,9)
 assert(#commands==sent,'A tray card dropped on the table sends nothing')

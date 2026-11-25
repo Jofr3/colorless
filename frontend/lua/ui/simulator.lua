@@ -53,6 +53,7 @@ function Simulator:open(reduced,skipCommand,mode,code)
   self.phase='empty';self.viewerSeat='';self.outcome='';self.menu=nil;self.menuId=nil;self.message='';self.turn=0
   self.matchId=nil;self.shuffleAt=nil
   if self.editDrag then self:dropEditDrag() end
+  self:clearEditReturns()
   self:dropGalleryFaces();self.editing=false;self.editState=nil;self.galleryItems=nil;self.searchEditing=false;self.pendingSearch=nil
   self.fx:clear();self.fx:background('setup',true)
   self.hud:cancelEntrance()
