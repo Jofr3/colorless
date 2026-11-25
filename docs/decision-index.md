@@ -85,6 +85,7 @@ fails when it is stale, so rerun the script after adding a decision.
 | 2026-11-12 | Evolution backfill and tab-free card text (ME06-EVO) | decisions.md:1761 |
 | 2026-11-12 | Correctness audit decisions and Phase 0: a decided game ends at once, Knock Outs swept on both boards, legacy… | decisions.md:1770 |
 | 2026-11-12 | Correctness audit Phases 1-4: scheduled and counted wins, Tera and Paradox banners in Expanded, an invariant-… | decisions.md:1806 |
+| 2026-11-25 | Sandbox edit mode: a rules-free sandboxEdit action and a catalog gallery in the HUD column | decisions.md:1837 |
 
 ## Numbered decisions
 

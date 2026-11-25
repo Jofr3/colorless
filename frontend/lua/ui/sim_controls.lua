@@ -29,6 +29,12 @@ function Simulator:build(quiet)
   self.attachedPopup=nil
   if not self.L then return end
   local L=self.L
+  if self.editing then
+    self:buildEdit()
+    if self.focus>#self.controls then self.focus=0 end
+    return
+  end
+  self:buildEditButton(L)
   -- HUD buttons: Run Info -> Game log, Options.
   local hb=self.hud:buttons(L)
   self:add(hb.log.label or 'Log',hb.log.x,hb.log.y,hb.log.w,hb.log.h,'log',T.red,{lines=hb.log.lines,lineScales=hb.log.lineScales,lineWidth=hb.log.lineWidth,fontSize=hb.log.fontSize or 24,disabled=self.phase~='ready'})
@@ -264,7 +270,9 @@ function Simulator:hit(x,y)
   return 0
 end
 function Simulator:cardHit(x,y)
-  if self.overlay and not self.peek then return nil end
+  local gallery=self:galleryHit(x,y)
+  if gallery then return gallery end
+  if self.overlay and not self.peek and not self:editTray() then return nil end
   if self.attachedPopup and Button.hit(self.attachedPopup,x,y-popupOffset(self.attachedPopup)) then return nil end
   -- Raised cards are painted last, so they also receive the pointer first.
   if self.hoverCard and self.hoverCard:hit(x,y) then return self.hoverCard end

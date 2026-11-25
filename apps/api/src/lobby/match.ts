@@ -370,6 +370,8 @@ export const MATCH_ACTION_DISPOSITION = {
   endTurn: "supported",
   // An Antique Fossil's "discard this card from play".
   discardFromPlay: "supported",
+  // The local table's edit mode rewrites the board outside the rules, so a match never runs it.
+  sandboxEdit: "withheld",
 } as const satisfies Record<GameAction["type"], "supported" | "withheld">;
 
 /**

@@ -24,18 +24,26 @@ local function tight(z,slots,width)
   end
   return z
 end
-function Layout.desktop(width,height)
-  local L={portrait=false,w=1280,h=800,unit=60}
+-- Edit mode widens the HUD column to hold the card gallery, into the room's margin beside the
+-- board; only what the margin cannot hold narrows the table.
+local EDIT_WIDEN=1.4
+-- `margin`: the room beside the board on each side, in board pixels, which edit mode's column
+-- may grow into.
+function Layout.desktop(width,height,edit,margin)
+  local L={portrait=false,w=1280,h=800,unit=60,edit=edit or nil}
   width,height=width or L.w,height or L.h
   local zoom=math.min(width/L.w,height/L.h)
   -- create_UIBox_HUD is 4.93 tiles of content plus 0.08 + 0.05 padding
   -- on each side. Convert Balatro's viewport tile size into board coordinates.
   local hudUnit=Screen.unit(width,height)/zoom
   local hudInset=(0.08+0.05)*hudUnit
-  local hudWidth=(4.93+2*(0.08+0.05))*hudUnit
+  local baseWidth=(4.93+2*(0.08+0.05))*hudUnit
+  local hudWidth=baseWidth*(edit and EDIT_WIDEN or 1)
+  margin=math.max(0,margin or 0,(width/zoom-L.w)/2)
+  local hudX=math.max(10-(hudWidth-baseWidth),4-margin)
   -- The HUD column overflows the room top and bottom like Balatro's (minh 30
   -- tiles), so only its two side lines show.
-  L.hud={x=10,y=-400,w=hudWidth,h=1600,unit=hudUnit,inset=hudInset}
+  L.hud={x=hudX,y=-400,w=hudWidth,h=1600,unit=hudUnit,inset=hudInset}
   local tableX=L.hud.x+L.hud.w+10
   local tableScale=(L.w-tableX)/980
   local function tablePos(x) return tableX+(x-300)*tableScale end
@@ -87,6 +95,24 @@ function Layout.desktop(width,height)
   L.cluster={x=tablePos(308),y=rowsEnd+6,w=164*tableScale,h=136}
   L.message={x=tableX,y=772,w=760*tableScale,h=26}
   L.banner={x=midC,y=(rowC(2)+rowC(3))/2}
+  if edit then
+    -- The column and the table beside it move as one, centred in the room: as much room left of
+    -- the column as right of the table's wells.
+    local right=-math.huge
+    for _,z in pairs(L.zones) do
+      if z.well and not z.hidden then right=math.max(right,z.well.x+z.well.w) end
+    end
+    local dx=math.max(4-margin-L.hud.x,(L.w-right-L.hud.x)/2)
+    L.hud.x=L.hud.x+dx
+    for _,z in pairs(L.zones) do
+      z.x=z.x+dx
+      if z.well then z.well.x=z.well.x+dx end
+    end
+    for _,r in ipairs({L.table,L.cluster,L.message,L.banner}) do r.x=r.x+dx end
+    L.table.cx=L.table.cx+dx
+    local gx=L.hud.x+hudInset+10
+    L.gallery={x=gx,y=16,w=hudWidth-2*hudInset-20,bottom=L.h-16}
+  end
   return L
 end
 function Layout.portrait()
@@ -116,8 +142,8 @@ function Layout.portrait()
   L.banner={x=240,y=250}
   return L
 end
-function Layout.for_size(w,h)
-  return (w<600) and Layout.portrait() or Layout.desktop(w,h)
+function Layout.for_size(w,h,edit,margin)
+  return (w<600) and Layout.portrait() or Layout.desktop(w,h,edit,margin)
 end
 -- Hand fan: CardArea:align_cards for type 'hand'. Cards spread across the span
 -- (narrowing when few), rotate by 0.2*(k - n/2 - 0.5)/n, and sit on a shallow arc.

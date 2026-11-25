@@ -51,16 +51,19 @@ function Simulator:open(reduced,skipCommand,mode,code)
   self.cards={};self.byUid={};self.ghosts={};self.items={};self.sides={};self.actions={};self.cardActions={}
   self.phase='empty';self.viewerSeat='';self.outcome='';self.menu=nil;self.menuId=nil;self.message='';self.turn=0
   self.matchId=nil;self.shuffleAt=nil
+  if self.editDrag then self:dropEditDrag() end
+  self:dropGalleryFaces();self.editing=false;self.editState=nil;self.galleryItems=nil;self.searchEditing=false;self.pendingSearch=nil
   self.fx:clear();self.fx:background('setup',true)
   self.hud:cancelEntrance()
   if skipCommand then return end
   if self.mode=='online' then self:command('open','online',self.code) else self:command('open') end
 end
-function Simulator:layout(w,h,viewportUnit)
+-- `margin`: how far the room reaches past the board's left and right edges, in board pixels.
+function Simulator:layout(w,h,viewportUnit,margin)
   self.attachedPopup=nil;self.closingPopup=nil
-  self.width,self.height=w,h
+  self.width,self.height,self.sideMargin=w,h,margin or 0
   self.portrait=w<600
-  self.L=Layout.for_size(w,h)
+  self.L=Layout.for_size(w,h,self.editing,self.sideMargin)
   self.boardW,self.boardH=self.L.w,self.L.h
   self.zoom=math.min(w/self.boardW,h/self.boardH)
   self.viewportUnit=(viewportUnit or Screen.unit(w,h))/self.zoom
@@ -73,6 +76,7 @@ function Simulator:layout(w,h,viewportUnit)
   for _,c in ipairs(self.ghosts) do c:rebuild() end
   for _,c in pairs(self.attached or {}) do c:rebuild() end
   self:placeCards(true)
+  if self.editing then self:dropGalleryFaces();self:buildGallery(self.galleryItems or {},true,true) end
   if self.koPresentation then self.koPresentation:layout() end
   if self.overlay then self.overlay:layout() end
   CardFrame.close()
@@ -95,10 +99,13 @@ function Simulator:update(dt,time,mx,my,reduced)
     -- Discard piles paint their top card's scan, which can arrive after a reload.
     for _,p in ipairs(self.piles) do if p.topItem and old[p.topItem.cardId]~=art[p.topItem.cardId] then p:rebuild();p.faceKey=self:pileFace(p.item.kind,p.owner,p.topItem) end end
     for _,c in pairs(self.attached or {}) do if old[c.item.cardId]~=art[c.item.cardId] then c:rebuild() end end
+    for _,c in ipairs(self.galleryCards or {}) do if old[c.item.cardId]~=art[c.item.cardId] then self:repaintGallery(c) end end
     if self.overlay then for _,c in ipairs(self.overlay.cards) do if Card.scanPath(old,c.item,c.item.cardId)~=Card.scanPath(art,c.item,c.item.cardId) then c:rebuild() end end end
   end
+  if self.editing then self:preloadGallery() end
   CardFrame.close()
   mx,my=self:point(mx,my);self.mx,self.my=mx,my
+  self:updateEdit(dt,time,mx,my,reduced)
   -- Table juice waits behind an open coin flip, like Balatro's event queue.
   self.fx:update(dt,time,reduced,self.overlay and self.overlay.kind=='coin')
   local away=self.away
@@ -115,10 +122,11 @@ function Simulator:update(dt,time,mx,my,reduced)
   end
   self:updateCounterMotion(time,reduced)
   local peeking=self.overlay and self.peek
-  local blocked=self.koPresentation or self.counterMotion or (self.overlay and not self.peek)
+  local tray=self:editTray()
+  local blocked=self.koPresentation or self.counterMotion or (self.overlay and not self.peek and not tray)
   local boardControlsBlocked=blocked or peeking
   if self.overlay then
-    local overlayPointer=blocked or (peeking and self.overlay:hasPeek())
+    local overlayPointer=blocked or tray or (peeking and self.overlay:hasPeek())
     self.overlay:update(dt,time,overlayPointer and mx or -1000,overlayPointer and my or -1000,reduced)
   end
   self.hover=boardControlsBlocked and 0 or self:hit(mx,my)
@@ -227,7 +235,7 @@ function Simulator:update(dt,time,mx,my,reduced)
   self.popup=nil
   local assigningCounters=self.targeting and self.targeting.menu.hideTargetOutline
   local shown=hovered or (not pointed and self.focusCard) or nil
-  if shown and shown~=self.highlight and not shown.item.hidden and not self.drag and self.info[shown.item.cardId] and not blocked and not assigningCounters then
+  if shown and shown~=self.highlight and not shown.item.hidden and not self.drag and not (self.editDrag and self.editDrag.moved) and self.info[shown.item.cardId] and not blocked and not assigningCounters then
     local key=shown.item.owner..':'..shown.item.id..':'..(shown.item.damage or 0)..':'..(shown.item.status or '')
     if self.popupKey~=key then self.popupKey=key;self.popupBox=Popup.build(self.info[shown.item.cardId],shown.item,self.portrait and 236 or 270,self.boardW,true) end
     self.popup=shown
@@ -247,6 +255,7 @@ for _,part in ipairs({
   require('ui.sim_presence'),
   require('ui.sim_input'),
   require('ui.sim_reconcile'),
+  require('ui.sim_edit'),
 }) do
   for name,method in pairs(part) do
     assert(Simulator[name]==nil,'Simulator.'..name..' is defined twice')

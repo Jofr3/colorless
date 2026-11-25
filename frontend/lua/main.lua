@@ -226,7 +226,7 @@ local function layout(w,h,pixelDensity)
   if builder then builder:layout(virtualWidth,virtualHeight) end
   if sandbox then sandbox:layout(virtualWidth,virtualHeight) end
   if online then fitOnline(portrait);online:layout(onlineLayer.w,onlineLayer.h) end
-  if simulator then simulator:layout(virtualWidth,virtualHeight,Screen.unit(w,h)/layoutScale) end
+  if simulator then simulator:layout(virtualWidth,virtualHeight,Screen.unit(w,h)/layoutScale,offsetX/layoutScale) end
   if wipe then wipe:layout(virtualWidth,virtualHeight,Screen.unit(w,h)/layoutScale,w/layoutScale,h/layoutScale) end
 end
 local function pointer(x,y)
@@ -254,6 +254,7 @@ local function editBox(screen)
   g.push(); g.origin(); g.translate(offsetX,offsetY); g.scale(layoutScale)
   if screen==popup then applyLayer(popupLayer)
   elseif screen==online then applyLayer(onlineLayer)
+  elseif screen==simulator then applyLayer(tableLayer)
   elseif isCollection(state.page) and screen==collection() then libraryTransform() end
   local left,top=g.transformPoint(x,y)
   local right,bottom=g.transformPoint(x+w,y+h)
@@ -264,7 +265,7 @@ local function editBox(screen)
 end
 -- The screen whose fields take the keys: Settings over any page, else the lobby or a collection.
 local function editingScreen()
-  return popup or state.page=='online' and online or isCollection(state.page) and collection() or nil
+  return popup or state.page=='online' and online or isCollection(state.page) and collection() or isTable(state.page) and simulator or nil
 end
 -- A command that opens an edit (`action` first: input, or Settings' edit) carries its field's box
 -- after its own fields (src/host/shell.ts reads them), and syncEditBox remembers it.
@@ -478,7 +479,7 @@ end
 local function callbacksFor(channel,extra)
   local callbacks={
     command=function(command)
-      local screen=({library=library,builder=builder,sandbox=sandbox,online=online})[channel]
+      local screen=({library=library,builder=builder,sandbox=sandbox,online=online,simulator=simulator})[channel]
       Bridge.send(channel,withEditBox(command,'input',screen))
     end,
     feedback=function(name,pitch,volume) sound(name,pitch,volume) end,

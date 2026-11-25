@@ -1,3 +1,4 @@
+import type { Card } from "@colorless/schema";
 import type { GameEvent } from "./events";
 import type { EffectChoice } from "./effectPrompt";
 import type { GameState, PokemonTarget, Seat } from "./types";
@@ -190,6 +191,43 @@ export interface DiscardFromPlayAction {
   target: PokemonTarget;
 }
 
+/** Where an edit-mode card lands on the acting seat's side (or the shared Stadium spot). */
+export type SandboxDestination =
+  /** The top of the deck (index 0). */
+  | { zone: "deck" }
+  | { zone: "hand" }
+  | { zone: "discard" }
+  /** Appended face down. */
+  | { zone: "prizes" }
+  | { zone: "active" }
+  /** A new Benched body at the end of the Bench. */
+  | { zone: "bench" }
+  | { zone: "stadium" }
+  /** One of the seat's own in-play Pokémon: a Pokémon card goes on top of its stack, an Energy or a
+      Pokémon Tool is attached. */
+  | { zone: "onto"; target: PokemonTarget };
+
+export type SandboxEdit =
+  /** A catalog card not yet in the game. */
+  | { kind: "add"; card: Card; to: SandboxDestination }
+  /** A loose card, or an in-play Pokémon with everything under and attached to it (`uid` is the
+      top card of its stack). */
+  | { kind: "move"; uid: string; to: SandboxDestination }
+  /** The card, or the whole in-play Pokémon, leaves the game. */
+  | { kind: "remove"; uid: string }
+  /** Toggle a Prize card face up or down. */
+  | { kind: "flipPrize"; uid: string };
+
+/**
+ * The local table's edit mode: a free rewrite of the acting seat's side outside the rules, legal in
+ * that seat's own main phase. The online match withholds it.
+ */
+export interface SandboxEditAction {
+  type: "sandboxEdit";
+  seat: Seat;
+  edit: SandboxEdit;
+}
+
 export type GameAction =
   | ChooseFirstPlayerAction
   | SetupDrawExtraAction
@@ -212,7 +250,8 @@ export type GameAction =
   | TakePrizesAction
   | PromoteAction
   | EndTurnAction
-  | DiscardFromPlayAction;
+  | DiscardFromPlayAction
+  | SandboxEditAction;
 
 export type ErrorCode =
   | "GAME_OVER"
@@ -369,6 +408,24 @@ export type ErrorCode =
       unreachable through the engine's own transitions (parking writes both
       together); a crafted or corrupted snapshot (attack.ts). */
   | "PHASE_DESYNC"
+  // — sandboxEdit refusals. —
+  /** The edit is not a well-formed `SandboxEdit` (a missing field, a wrong type, a bad card). */
+  | "EDIT_BAD_SHAPE"
+  /** The uid is not on the acting seat's side or the Stadium spot. */
+  | "EDIT_UNKNOWN_UID"
+  /** The uid is under the top of an in-play stack; only the top card moves the Pokémon. */
+  | "EDIT_NOT_TOP"
+  /** The card cannot go there (a non-Pokémon to a spot, a non-Stadium to the Stadium spot, an Item
+      onto a Pokémon, an in-play Pokémon to the Stadium spot). */
+  | "EDIT_BAD_DESTINATION"
+  /** The Active Spot already holds a Pokémon; swap by moving onto it instead. */
+  | "EDIT_SPOT_OCCUPIED"
+  /** The move would leave everything where it is (a Pokémon onto itself, the Active to Active). */
+  | "EDIT_NO_OP"
+  /** flipPrize on a card that is not one of the seat's Prize cards. */
+  | "EDIT_NOT_A_PRIZE"
+  /** The opponent's Stadium may only be discarded (to its owner's pile) or removed. */
+  | "EDIT_NOT_YOURS"
   // createGame rejections. They live in the SAME union as the action codes so
   // a host (the lobby Worker above all) has one `switch (error.code)` to write,
   // not two disjoint ones over two identical-looking envelopes.

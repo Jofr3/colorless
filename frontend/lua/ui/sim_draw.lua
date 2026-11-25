@@ -259,6 +259,7 @@ function Simulator:draw(shaders)
   end
   -- HUD.
   self.hud:draw(self,L,self.time,self.reduced,self.hover)
+  if self.editing then self:drawEditColumn(shaders,rw) end
   -- Controls.
   if self.closingPopup then
     local p=self.closingPopup
@@ -313,7 +314,7 @@ function Simulator:draw(shaders)
   end
   self.tooltip:draw(self.boardW,self.boardH,rw)
   -- Hover popup.
-  if self.popup and self.popupBox and (not self.overlay or self.peek) then
+  if self.popup and self.popupBox and (not self.overlay or self.peek or self:editTray()) then
     local hover=self:hoverPopup()
     if hover.scale==1 then self.popupBox.draw(hover.x,hover.y)
     else
@@ -337,11 +338,12 @@ function Simulator:draw(shaders)
   self.fx:draw(rw)
   if self.overlay then
     if not self.peek then
-      Modal.backdrop(self.boardW,self.boardH)
+      if not self:editTray() then Modal.backdrop(self.boardW,self.boardH) end
       self.overlay:draw(shaders)
     end
     if self.overlay:hasPeek() then self.overlay:drawPeek() end
   end
+  self:drawEditDrag(shaders,rw)
   g.pop()
 end
 return Simulator

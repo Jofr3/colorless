@@ -25,6 +25,7 @@ import {
   setupPlaceBench,
   setupReady,
 } from "./setup";
+import { sandboxEdit } from "./sandboxEdit";
 import { attachEnergy, discardFromPlay, endTurn, evolve, playBasicToBench, retreat } from "./turn";
 import type { GameState } from "./types";
 import { isSeat } from "./types";
@@ -52,6 +53,9 @@ export type {
   ReorderBenchAction,
   ResolveEffectAction,
   RetreatAction,
+  SandboxDestination,
+  SandboxEdit,
+  SandboxEditAction,
   SetupDrawExtraAction,
   SetupPlaceActiveAction,
   SetupPlaceBenchAction,
@@ -188,10 +192,10 @@ export type {
 export { programFor } from "./registry";
 export { simulationGaps } from "./simulationGaps";
 export type { SimulationGap } from "./simulationGaps";
-export type { DrawReason, GameEvent, StatusName } from "./events";
+export type { DrawReason, GameEvent, SandboxZone, StatusName } from "./events";
 export { inSetup, phaseViewOf } from "./phaseView";
 export type { PendingDecision, PhaseView } from "./phaseView";
-export { redactGame } from "./redact";
+export { redactGame, redactedCardOf } from "./redact";
 export { formatElapsed, logFromEvents } from "./log";
 export type { LogContext } from "./log";
 export type { CoinFace, DrbgState, RngState } from "./rng";
@@ -322,6 +326,8 @@ function dispatchAction(state: GameState, action: GameAction): ApplyResult {
       return concede(state, action);
     case "discardFromPlay":
       return discardFromPlay(state, action);
+    case "sandboxEdit":
+      return sandboxEdit(state, action);
     default:
       return err("UNKNOWN_ACTION", `unknown action type "${(action as { type: string }).type}"`);
   }

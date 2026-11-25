@@ -51,6 +51,17 @@ export const WIRE_ROWS = {
       fields: ["mode", "awayName", "awayMs", "flags", "allow"],
     },
     rareCandy: { tags: ["R"], fields: ["uid"] },
+    /** Edit mode on the hot-seat table: `state` is on or off, `available` whether it can open. */
+    edit: {
+      tags: ["E"],
+      fields: ["state", "available", "query", "page", "pages", "total", "busy", "failed"],
+    },
+    /** `G` a card on the edit-mode gallery's page, `N` one on a prefetched page, nearest first,
+        whose face Lua draws ahead of time. */
+    gallery: {
+      tags: ["G", "N"],
+      fields: ["cardId", "name", "category", "trainerType", "stage", "hasImage"],
+    },
     knockedOut: { tags: ["D"], fields: ["uid"] },
     side: {
       tags: ["S"],

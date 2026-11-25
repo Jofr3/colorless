@@ -15,6 +15,7 @@ export const MAILBOXES = {
   sandbox: "__sandbox.txt",
   sandboxInput: "__sandbox_input.txt",
   simulator: "__simulator.txt",
+  simulatorInput: "__simulator_input.txt",
   online: "__online.txt",
   onlineInput: "__online_input.txt",
   art: "__art.txt",

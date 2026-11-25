@@ -46,7 +46,7 @@ function Hud:bottomLayout(L)
   local statsH=2*(cellH+2*0.05)+1.15+0.05+2*0.13
   local height=math.max(4.1,statsH)
   local x,y=L.hud.x+L.hud.inset,self:top(L)+246+self:actionPanelHeight()
-  return {unit=unit,scale=scale,x=x,y=y,
+  return {unit=unit,scale=scale,x=x,y=y,bottom=y+height*unit,
     buttonX=x+0.2*unit,buttonY=y+(height-4.1)*unit/2+0.2*unit,
     buttonW=1.5*unit,buttonH=1.75*unit,buttonGap=0.2*unit,
     gridX=x+1.9*unit,gridY=y+(height-statsH)*unit/2,
@@ -422,6 +422,7 @@ function Hud:draw(sim,L,time,reduced,hovered)
   Button.panel(x-2,y-2,w+4,h+4,{34/255,34/255,34/255,34/255/2},2.4)
   Button.panel(x,y,w,h,self.dyn,6)
   Button.panel(x+3,y+3,w-6,h-6,BOSS_DARK,6)
+  if sim.editing then return end
   local ix,iw=x+L.hud.inset,w-2*L.hud.inset
   local cy=self:top(L)
   if Hud.rotateHint() then

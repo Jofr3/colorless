@@ -80,6 +80,7 @@ function Simulator:sync(raw,finishKo)
   self.raw=raw
   local previous={items=self.items,sides=self.sides,turn=self.turn,viewerSeat=self.viewerSeat,outcome=self.outcome,phase=self.phase,activePlayer=self.activePlayer,menuId=self.menuId,revision=self.revision,message=self.message,messageSerial=self.messageSerial,gamePhase=self.gamePhase,rareCandy=self.rareCandy}
   self:apply(m)
+  self:syncEdit(m)
   local menu=self.menu
   if previous.rareCandy and not self.rareCandy then self.luaTargeting=nil end
   self.menuId=menu and menu.id or nil

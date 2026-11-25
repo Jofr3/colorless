@@ -5,6 +5,8 @@ return {
     header={revision=1,phase=2,you=3,opponent=4,turn=5,gamePhase=6,message=7,title=8,hint=9,turnIndex=10,turnCount=11,waitingOn=12,activePlayer=13,seat=14,energyAttached=15,supporterPlayed=16,retreated=17,outcome=18,outcomeDetail=19,shuffled=20,matchId=21,announce=22,messageSerial=23,warning=24},
     lifecycle={mode=2,awayName=3,awayMs=4,flags=5,allow=6},
     rareCandy={uid=2},
+    edit={state=2,available=3,query=4,page=5,pages=6,total=7,busy=8,failed=9},
+    gallery={cardId=2,name=3,category=4,trainerType=5,stage=6,hasImage=7},
     knockedOut={uid=2},
     side={owner=2,deck=3,prizes=4,hand=5,discard=6,mulligans=7},
     card={uid=2,cardId=3,name=4,owner=5,zone=6,index=7,hidden=8,category=9,trainerType=10,stage=11,hp=12,damage=13,energies=14,tools=15,status=16,types=17,draggable=18,displayIndex=19,attachFrom=20},

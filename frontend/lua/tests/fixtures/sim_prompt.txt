@@ -56,3 +56,4 @@ I	sv01-181	Trainer	Item							Search%20your%20deck%20for%20a%20Basic%20Pok%C3%A9
 I	fix-weak	Pokemon		Basic	60	Colorless	1	Fire%3A%C3%972						fix-weak
 I	fix-victim	Pokemon		Basic	30	Colorless	1							fix-victim
 I	fix-wall	Pokemon		Basic	120	Colorless	1							fix-wall
+E	off	false		1	1	0	false	false

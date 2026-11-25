@@ -5,8 +5,10 @@ import {
   type EffectChoice,
   type GameAction,
   type PokemonRef,
+  redactedCardOf,
+  type SandboxEdit,
 } from "@colorless/engine";
-import type { RedactedEffectPrompt, RedactedGame } from "@colorless/schema";
+import type { RedactedCard, RedactedEffectPrompt, RedactedGame } from "@colorless/schema";
 import { decodeFields } from "./wire";
 import type { HostState, LocalGameSetup } from "../game/localHost";
 import { moveToAction } from "../game/moveToAction";
@@ -15,6 +17,7 @@ import { effectMenu } from "./simulatorChoices";
 import { applyTrayView, defaultTrayView } from "./simulatorTray";
 import { usedTrainersForTurn } from "../game/usedTrainers";
 import { SimulatorOrder } from "./simulatorOrder";
+import { editFromCommand, SimulatorEdit } from "./simulatorEdit";
 import { attachSidebar, hotSeatSidebar, remoteSidebar, withHistory } from "./simulatorSidebar";
 import { LUA_ART_SLOTS } from "./artworkCache";
 import { LocalTableSource, type HistoryStep, type TableSource } from "./tableSource";
@@ -47,6 +50,7 @@ import {
   headerRow,
   headerText,
   NOTHING_HEARD,
+  editRows,
   infoRows,
   menuRows,
   sidebarRows,
@@ -92,6 +96,9 @@ export class LuaSimulator {
   private stagedAttach: StagedAttach | null = null;
   private knockedOut: readonly string[] = [];
   private cardOrder = new SimulatorOrder(0);
+  readonly edit = new SimulatorEdit(() => this.emit());
+  /** The pile tray edit mode keeps open across its edits: a seat's discard, or the deck. */
+  private editPile: string | null = null;
   private unsubscribe = () => {};
   // The frame, prompt and refusal last turned into menus.
   private seen: RedactedGame | null = null;
@@ -146,7 +153,8 @@ export class LuaSimulator {
   private sending() {
     return this.source?.lifecycle().flags.includes("pending") ?? false;
   }
-  dispatch(action: GameAction) {
+  /** `keepMenu` leaves an open pile tray up while its edit lands, for the tray to refresh in place. */
+  dispatch(action: GameAction, keepMenu = false) {
     const src = this.source;
     if (!src || this.sending()) return;
     if (
@@ -159,7 +167,7 @@ export class LuaSimulator {
     }
     // No optimism: the table's answer, at once or from the server, rebuilds the prompt.
     this.pendingRareCandy = null;
-    this.menu = null;
+    if (!keepMenu) this.menu = null;
     this.message = "";
     this.settle(() => src.send(action));
   }
@@ -198,6 +206,8 @@ export class LuaSimulator {
     this.menu = null;
     this.trayView = defaultTrayView();
     this.message = "";
+    this.edit.close();
+    this.editPile = null;
     // A table opened on a standing warning shows it without popping it.
     this.warned = src?.lifecycle().warning ?? "";
     this.seen = src?.view() ?? null;
@@ -414,6 +424,7 @@ export class LuaSimulator {
     if (menuId === String(this.menuId) && size > 0)
       for (const d of [0, 1, -1, 2, -2])
         for (let i = first + d * size; i < first + (d + 1) * size; i++) add(this.menuArt[i]);
+    if (this.edit.on) for (const entry of this.edit.art()) add(entry);
     for (const entry of this.boardArt) add(entry);
     for (const entry of this.menuArt) add(entry);
     this.images([...ordered].slice(0, LUA_ART_SLOTS).map(([id, url]) => ({ id, url })));
@@ -442,6 +453,10 @@ export class LuaSimulator {
     ["reorder", (args) => this.onReorder(args)],
     ["move", (args) => this.onMove(args)],
     ["attachHand", () => this.menu?.attach?.toggleHand()],
+    ["edit-mode", (args) => this.onEditMode(args)],
+    ["edit-search", (args) => this.edit.setQuery(args[0] ?? "")],
+    ["edit-page", (args) => this.edit.setPage(Number(args[0]), Number(args[1]))],
+    ["edit", (args) => void this.onEdit(args)],
   ]);
   command(raw: string) {
     const fields = decodeFields(raw);
@@ -487,6 +502,7 @@ export class LuaSimulator {
   private onDismiss() {
     if (this.menu?.mandatory) return;
     this.menu = null;
+    this.editPile = null;
     // A decision may have arrived behind the closed menu.
     this.prompt();
     this.emit();
@@ -572,17 +588,25 @@ export class LuaSimulator {
       "log",
     );
   }
-  private onPile(args: string[]) {
-    if (!this.source || this.menu) return;
+  /** `reopen` rebuilds the tray edit mode holds open under the same menu id, so it refreshes. */
+  private onPile(args: string[], reopen = false) {
+    if (!this.source || (this.menu && !reopen)) return;
     const v = this.view();
     if (!v) return;
     const piles = this.tablePiles(v);
+    if (args[0] === "deck" && !this.edit.on) return;
+    this.editPile = this.edit.on ? (args[0] ?? "you") : null;
     const side = args[0] === "opponent" ? piles.opponent : piles.you;
-    const baseOptions: SimOption[] = side.discard
-      .slice()
-      .reverse()
-      .map((card) => ({ label: card.name, card, uid: card.id, run: () => {}, disabled: true }));
-    if (baseOptions.length === 0) {
+    // The deck reads top first; a discard newest first.
+    const cards = args[0] === "deck" ? this.editDeck() : side.discard.slice().reverse();
+    const baseOptions: SimOption[] = cards.map((card) => ({
+      label: card.name,
+      card,
+      uid: card.id,
+      run: () => {},
+      disabled: true,
+    }));
+    if (baseOptions.length === 0 && !reopen) {
       this.choose("", [], "", false, "pile");
       return;
     }
@@ -604,7 +628,54 @@ export class LuaSimulator {
         options: view.options,
       };
     };
-    this.show(build());
+    if (!reopen) return this.show(build());
+    this.menu = build();
+    this.emit();
+  }
+  /** Edit mode runs on the hot-seat table only, between plays of the turn. */
+  private editAvailable() {
+    const v = this.view();
+    return this.source?.mode === "local" && !!this.host && v?.phase.kind === "turn:action";
+  }
+  private onEditMode(args: string[]) {
+    if (args[0] === "on" && this.editAvailable() && !this.menu) this.edit.open();
+    else if (args[0] === "off") {
+      this.edit.close();
+      if (this.editPile) {
+        this.editPile = null;
+        this.menu = null;
+      }
+    }
+    this.emit();
+  }
+  /** The seated player's deck, top first, as the tray shows cards. */
+  private editDeck(): RedactedCard[] {
+    const host = this.host;
+    const seat = this.view()?.seat;
+    if (!host || !seat) return [];
+    return host.game.players[seat].deck.map((uid) => redactedCardOf(host.game, uid));
+  }
+  private async onEdit(args: string[]) {
+    const seat = this.view()?.seat;
+    if (!this.edit.on || !seat || this.sending()) return;
+    const host = this.host;
+    const parsed = editFromCommand(args, (i) => host?.game.players[seat].prizes[i]);
+    if (!parsed) return;
+    let edit: SandboxEdit;
+    if ("add" in parsed) {
+      try {
+        edit = { kind: "add", card: await this.edit.fullCard(parsed.add), to: parsed.to };
+      } catch {
+        this.refuse("Couldn't load that card. Try again.");
+        this.emit();
+        return;
+      }
+      if (!this.edit.on || this.view()?.seat !== seat) return;
+    } else edit = parsed.edit;
+    // The pile tray stays open across its edits, rebuilt from the new board under the same id.
+    const pile = this.menu?.kind === "pile" ? this.editPile : null;
+    this.dispatch({ type: "sandboxEdit", seat, edit }, !!pile);
+    if (pile && this.edit.on && this.menu?.kind === "pile") this.onPile([pile], true);
   }
   private onRetreat(args: string[]) {
     if (!this.source || this.menu) return;
@@ -792,6 +863,10 @@ export class LuaSimulator {
       menuRows(f, menu, s.menuId);
     }
     if (src) infoRows(f, src);
+    if (src?.mode === "local") {
+      if (this.edit.on && !this.editAvailable()) this.edit.close();
+      editRows(f, this.edit, this.editAvailable());
+    }
     this.handlers = f.handlers;
     this.boardArt = f.art;
     this.menuArt = f.menuArt;

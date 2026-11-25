@@ -8,7 +8,7 @@ import type { LogSegment, SeatLogEntry } from "@colorless/schema";
 import { type DamageModifier, cardOfUid, topCardOf } from "./cards";
 import { cuesFromEvents } from "./cues";
 import type { AttackerClass } from "./effectTypes";
-import type { GameEvent, StatusName } from "./events";
+import type { GameEvent, SandboxZone, StatusName } from "./events";
 // promptText.ts imports nothing from this file, so there is no cycle.
 import { retrieveNoun } from "./promptText";
 import {
@@ -380,12 +380,115 @@ function formatEvent(
     case "ENERGY_MOVED":
     case "ENERGY_DISCARDED":
       return formatEnergyEvent(event, fmt);
+    case "SANDBOX_EDIT":
+      return formatSandboxEditEvent(event, fmt);
     case "EFFECT_PENDING":
       return null;
     default:
       // Fails to compile when an event type has no case; an unknown runtime event logs nothing.
       event satisfies never;
       return null;
+  }
+}
+
+/** Hidden zones: a card moving only between these (or into one from outside the game) is not named. */
+const HIDDEN_EDIT_ZONES: ReadonlySet<SandboxZone | null> = new Set([
+  null,
+  "deck",
+  "hand",
+  "prizes",
+]);
+
+/** An edit-mode zone in log prose; the deck as a destination is its top. */
+function editZonePhrase(zone: SandboxZone, destination: boolean): string {
+  switch (zone) {
+    case "deck":
+      return destination ? "the top of the deck" : "the deck";
+    case "hand":
+      return "the hand";
+    case "discard":
+      return "the discard pile";
+    case "prizes":
+      return "the Prize cards";
+    case "active":
+      return "the Active Spot";
+    case "bench":
+      return "the Bench";
+    case "stadium":
+      return "the Stadium spot";
+    case "attached":
+      return "a Pokémon";
+  }
+}
+
+/** Where an edit-mode card was, for a remove row: "removed Pikachu on the Bench from the game". */
+const EDIT_ZONE_WHERE: Record<SandboxZone, string> = {
+  deck: "in the deck",
+  hand: "in the hand",
+  discard: "in the discard pile",
+  prizes: "among the Prize cards",
+  active: "in the Active Spot",
+  bench: "on the Bench",
+  stadium: "in the Stadium spot",
+  attached: "attached to a Pokémon",
+};
+
+/** One edit-mode row, ending "(edit mode)". A card is named unless it only moved between hidden zones. */
+function formatSandboxEditEvent(event: EventOf<"SANDBOX_EDIT">, fmt: LogFormat): SeatLogEntry[] {
+  const { names, state, row } = fmt;
+  const tail = plain(" (edit mode)");
+  if (event.edit === "flipPrize") {
+    return event.faceUp === true
+      ? row(event.seat, [
+          plain("turned "),
+          strong(cardName(state, event.uid)),
+          plain(" face up (Prize)"),
+          tail,
+        ])
+      : row(event.seat, [plain("turned a Prize card face down"), tail]);
+  }
+  const named = !HIDDEN_EDIT_ZONES.has(event.from) || !HIDDEN_EDIT_ZONES.has(event.to);
+  const extra = event.uids.length - 1;
+  const what: LogSegment[] = named
+    ? [
+        strong(cardName(state, event.uid)),
+        ...(extra > 0 ? [plain(` and ${extra} attached card${extra === 1 ? "" : "s"}`)] : []),
+      ]
+    : [plain(event.uids.length === 1 ? "a card" : `${event.uids.length} cards`)];
+  const dest = (): LogSegment[] => {
+    if (event.to === null) return [];
+    if (event.to === "attached") {
+      return [
+        plain(" onto "),
+        strong(event.host === undefined ? "a Pokémon" : cardName(state, event.host)),
+      ];
+    }
+    const owner = event.owner === undefined ? "" : ` (${names[event.owner]}'s)`;
+    return [plain(` to ${editZonePhrase(event.to, true)}${owner}`)];
+  };
+  const source = event.from === null ? [] : [plain(` from ${editZonePhrase(event.from, false)}`)];
+  switch (event.edit) {
+    case "add":
+      return row(event.seat, [plain("added "), ...what, ...dest(), tail]);
+    case "remove":
+      return row(event.seat, [
+        plain("removed "),
+        ...what,
+        ...(event.from === null ? [] : [plain(` ${EDIT_ZONE_WHERE[event.from]}`)]),
+        plain(" from the game"),
+        tail,
+      ]);
+    case "move":
+      if (event.swappedWith !== undefined) {
+        return row(event.seat, [
+          plain("swapped "),
+          ...what,
+          plain(" with "),
+          strong(cardName(state, event.swappedWith)),
+          tail,
+        ]);
+      }
+      return row(event.seat, [plain("moved "), ...what, ...source, ...dest(), tail]);
   }
 }
 

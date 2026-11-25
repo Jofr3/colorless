@@ -930,8 +930,9 @@ function redactedDiscardableOf(
 
 /** A public card: full identity, keyed by its engine uid. Carries the raw
     category + trainerType (the client derives its render type from them) and
-    `hasImage` (the client builds the asset URL from `cardId`). */
-function redactedCardOf(state: GameState, uid: string): RedactedCard {
+    `hasImage` (the client builds the asset URL from `cardId`). Exported for a client
+    that shows a seat its own hidden zone (edit mode's deck). */
+export function redactedCardOf(state: GameState, uid: string): RedactedCard {
   const card = cardOfUid(state, uid);
   if (card === undefined) {
     // Unreachable in practice (createGame validates every deck id against the

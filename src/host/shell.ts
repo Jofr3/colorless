@@ -90,11 +90,12 @@ export const READY_JOIN_MS = 400;
 const READY_ANNOUNCEMENT = "Colorless is ready";
 
 /** The screens whose single-line fields share one proxy, each with its own mailbox. */
-type LineOwner = "library" | "sandbox" | "online";
+type LineOwner = "library" | "sandbox" | "online" | "simulator";
 const LINE_MAILBOX: Record<LineOwner, string> = {
   library: MAILBOXES.libraryInput,
   sandbox: MAILBOXES.sandboxInput,
   online: MAILBOXES.onlineInput,
+  simulator: MAILBOXES.simulatorInput,
 };
 
 /** The builder's text fields, named as Lua draws them (frontend/lua/ui/builder.lua FIELD_LABELS). */
@@ -498,13 +499,11 @@ export class HostShell {
       case "library":
       case "sandbox":
       case "online":
+      case "simulator":
         this.lineCommand(channel, rest);
         break;
       case "builder":
         this.builderPrint(rest);
-        break;
-      case "simulator":
-        this.ports.command("simulator", rest);
         break;
       case "auth":
         this.authPrint(rest);
@@ -683,7 +682,13 @@ export class HostShell {
       }
       element.setAttribute(
         "aria-label",
-        code ? "Lobby code" : field === "search" ? "Search decks" : "Deck name",
+        code
+          ? "Lobby code"
+          : owner === "simulator"
+            ? "Search cards"
+            : field === "search"
+              ? "Search decks"
+              : "Deck name",
       );
       this.place(element, fields, 3);
       // A code typed before the field opened keeps its caret at the end.

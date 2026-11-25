@@ -16,6 +16,8 @@ import type {
   SimOption,
   StagedAttach,
 } from "./simulatorTypes";
+import type { BuilderCard } from "../decks/cards";
+import type { SimulatorEdit } from "./simulatorEdit";
 import type { SimulatorOrder } from "./simulatorOrder";
 import type { TableSource } from "./tableSource";
 import { encodeFields, pixelText } from "./wire";
@@ -630,6 +632,45 @@ export function infoRows(f: EmitFrame, src: TableSource) {
     const card = src.card(id);
     if (card) f.rows.push(infoRow(card));
   }
+}
+
+/** The edit-mode row, and while it is on, the gallery page with each card's text. */
+export function editRows(f: EmitFrame, edit: SimulatorEdit, available: boolean) {
+  f.row(W.edit, {
+    state: edit.on ? "on" : "off",
+    available,
+    query: edit.query,
+    page: edit.page,
+    pages: edit.pages,
+    total: edit.total,
+    busy: edit.busy,
+    failed: edit.failed,
+  });
+  if (!edit.on) return;
+  const written = new Set(f.infoIds);
+  const rows = (tag: "G" | "N", cards: readonly BuilderCard[]) => {
+    for (const c of cards) {
+      const card = edit.card(c.cardId);
+      f.row(
+        W.gallery,
+        {
+          cardId: c.cardId,
+          name: c.name,
+          category: card?.category ?? "",
+          trainerType: card?.trainerType ?? "",
+          stage: card?.stage ?? "",
+          hasImage: c.hasImage !== false,
+        },
+        tag,
+      );
+      if (card && !written.has(c.cardId)) {
+        written.add(c.cardId);
+        f.rows.push(infoRow(card));
+      }
+    }
+  };
+  rows("G", edit.pageCards());
+  rows("N", edit.nearbyCards());
 }
 
 function infoRow(card: Card): string {

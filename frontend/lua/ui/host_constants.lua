@@ -21,6 +21,7 @@ return {
     sandboxInput='__sandbox_input.txt',
     settings='__settings.txt',
     simulator='__simulator.txt',
+    simulatorInput='__simulator_input.txt',
     transitionArt='__transition_art.txt',
     viewport='__viewport.txt',
   },

@@ -40,6 +40,17 @@ function parse.D(m,r)
   if not m.knockedOutSeen[uid] then m.knockedOutSeen[uid]=true;m.knockedOut[#m.knockedOut+1]=uid end
 end
 function parse.R(m,r) m.rareCandy=r[W.rareCandy.uid] end
+-- Edit mode is absent (nil) on a table that has none: online, or no game.
+function parse.E(m,r) local e=W.edit
+  m.edit={on=r[e.state]=='on',available=r[e.available]=='true',query=r[e.query] or '',page=tonumber(r[e.page]) or 1,pages=tonumber(r[e.pages]) or 1,
+    total=tonumber(r[e.total]) or 0,busy=r[e.busy]=='true',failed=r[e.failed]=='true'}
+end
+local function galleryRow(r) local c=W.gallery
+  return {cardId=r[c.cardId],name=r[c.name] or '',category=r[c.category] or '',trainerType=r[c.trainerType] or '',stage=r[c.stage] or '',hasImage=r[c.hasImage]=='true'}
+end
+function parse.G(m,r) m.gallery[#m.gallery+1]=galleryRow(r) end
+-- A card on a prefetched gallery page, nearest page first.
+function parse.N(m,r) m.galleryNearby[#m.galleryNearby+1]=galleryRow(r) end
 -- Mode, away player and flags are absent (nil) unless an L row sets them.
 function parse.L(m,r) local l=W.lifecycle
   if (r[l.mode] or '')~='' then m.mode=r[l.mode] end
@@ -104,7 +115,7 @@ function Model.parse(raw)
     allow={energy=f[H.energyAttached]=='1',supporter=f[H.supporterPlayed]=='1',retreated=f[H.retreated]=='1'},
     outcome=f[H.outcome] or '',outcomeDetail=f[H.outcomeDetail] or '',shuffled=f[H.shuffled] or '',matchId=f[H.matchId],
     announce=f[H.announce] or '',messageSerial=f[H.messageSerial] or '',warning=f[H.warning] or '',
-    items={},sides={},actions={},cardActions={},info={},knockedOut={},knockedOutSeen={},
+    items={},sides={},actions={},cardActions={},info={},knockedOut={},knockedOutSeen={},gallery={},galleryNearby={},
   }
   for i=2,#rows do
     local r=rows[i]

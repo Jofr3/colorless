@@ -427,7 +427,7 @@ describe("applyMatchAction — the seat-bound apply loop", () => {
     expect([...SUPPORTED_MATCH_ACTIONS].sort()).toEqual([...supported].sort());
     // The table covers the WHOLE engine union, so the two halves partition it.
     expect(supported.length + withheld.length).toBe(Object.keys(MATCH_ACTION_DISPOSITION).length);
-    expect(withheld).toEqual([]);
+    expect(withheld).toEqual(["sandboxEdit"]);
     expect(supported).toContain("useStadiumAbility");
   });
 
@@ -465,6 +465,16 @@ describe("applyMatchAction — the seat-bound apply loop", () => {
     expect(refused.ok).toBe(false);
     if (refused.ok) throw new Error("expected reject");
     expect(refused.reason).toBe("That move isn't available here.");
+    // The local table's edit mode is a real engine action the match withholds.
+    const edit = applyMatchAction(
+      record,
+      winner,
+      { type: "sandboxEdit", seat: winner, edit: { kind: "remove", uid: "p1#0" } },
+      STARTED_AT,
+    );
+    expect(edit.ok).toBe(false);
+    if (edit.ok) throw new Error("expected reject");
+    expect(edit.reason).toBe("That move isn't available here.");
     // And the CONTRAST that makes the line above discriminate: a type that IS on
     // the allowlist but illegal right now (setup:chooseFirst is not a turn:action)
     // is refused by the ENGINE, with the engine's own message — not this one.

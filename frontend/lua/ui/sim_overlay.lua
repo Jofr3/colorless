@@ -29,6 +29,7 @@ local function cardTint(kind,o)
   return (kind=='cards' and (o.disabled or o.dimmed)) and DIM_TINT or nil
 end
 local Overlay={};Overlay.__index=Overlay
+local function kindTray(kind) return kind=='pile' end
 local g=love.graphics
 local function lines(text)
   local out={}
@@ -195,6 +196,10 @@ function Overlay:layout()
     h=math.min(p and 780 or 700,h)
   end
   self.x,self.y,self.w,self.h=(W-w)/2,(H-h)/2,w,h
+  -- Edit mode centres a pile tray over the table, clear of the gallery it trades cards with.
+  if sim.editing and kindTray(self.kind) and sim.L.table then
+    self.x=sim.L.table.x+math.max(10,(sim.L.table.w-w)/2)
+  end
   -- The eye sits beside the modal's top-right corner, its face's top on the modal's top (the face
   -- rides 1.8 px above its bounds); with no room there, it sits above that corner, flush right.
   if self:hasPeek() then

@@ -18,8 +18,40 @@ export type DrawReason = "opening" | "mulligan" | "compensation" | "turnStart" |
     events name them flat, one word per condition. */
 export type StatusName = "asleep" | "paralyzed" | "confused" | "burned" | "poisoned";
 
+/** A zone an edit-mode card leaves or reaches; "attached" is on (or atop) an in-play Pokémon. */
+export type SandboxZone =
+  | "deck"
+  | "hand"
+  | "discard"
+  | "prizes"
+  | "active"
+  | "bench"
+  | "stadium"
+  | "attached";
+
 export type GameEvent =
   | { type: "SHUFFLE"; seat: Seat }
+  /**
+   * An edit-mode rewrite (`sandboxEdit`) by `seat` on its own side. `uid` is the edited card (an
+   * in-play Pokémon's top card), `uids` every card that moved, in pile order. `from` is null for an
+   * add and `to` null for a remove. An "attached" destination names the `target` and the `host`
+   * Pokémon's top card before the edit; a swap names the other Pokémon's top card in
+   * `swappedWith`. `owner` is present when the opponent's Stadium went to its owner's discard pile.
+   */
+  | {
+      type: "SANDBOX_EDIT";
+      seat: Seat;
+      edit: "add" | "move" | "remove" | "flipPrize";
+      uid: string;
+      uids: string[];
+      from: SandboxZone | null;
+      to: SandboxZone | null;
+      target?: PokemonTarget;
+      host?: string;
+      swappedWith?: string;
+      faceUp?: boolean;
+      owner?: Seat;
+    }
   | { type: "COIN_FLIP"; result: CoinFace; winner: Seat }
   | { type: "FIRST_PLAYER_CHOSEN"; first: Seat; chosenBy: Seat }
   | { type: "CARDS_DRAWN"; seat: Seat; uids: string[]; reason: DrawReason }

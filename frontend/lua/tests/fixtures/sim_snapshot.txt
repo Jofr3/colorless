@@ -55,3 +55,4 @@ I	fix-basic-1	Pokemon		Basic	60	Colorless	1							fix-basic-1
 I	sv01-181	Trainer	Item							Search%20your%20deck%20for%20a%20Basic%20Pok%C3%A9mon%20and%20put%20it%20onto%20your%20Bench.%20Then%2C%20shuffle%20your%20deck.				Nest%20Ball
 I	fix-energy	Energy				Colorless							Normal	fix-energy
 I	fix-tool	Trainer	Tool							A%20test%20Tool.				fix-tool
+E	off	true		1	1	0	false	false

@@ -26,6 +26,7 @@ function Simulator:activate(index)
     if not self.reduced and self.callbacks.jiggle then self.callbacks.jiggle(0.5) end
   elseif b.action~='pile' then self.callbacks.feedback('button') end
   local a=b.action
+  if self:activateEdit(a) then return end
   if a=='invoke' then self:invoke(b.token)
   elseif a=='log' then self:command('log')
   elseif a=='options' then self:openOptions()
@@ -95,17 +96,20 @@ function Simulator:whose(owner)
   return (self.opponent or '')~='' and self.opponent.."'s" or "Opponent's"
 end
 function Simulator:pileTitle(count)
+  if self.pileOwner=='deck' then return 'Your deck ('..count..')' end
   if not self.pileOwner then return 'Discard pile ('..count..')' end
   return self:whose(self.pileOwner)..' discard ('..count..')'
 end
 -- Forget any press or drag in progress, as when the window loses focus.
 function Simulator:cancelInteractions()
   if self.drag then self.drag.card.dragging=false end
+  if self.editDrag then self:dropEditDrag() end
   self.drag=nil;self.clicked=nil;self.pressed=nil;self.pressedOverlay=nil;self.clickedPrize=nil
 end
 function Simulator:mousepressed(x,y)
   if self.koPresentation or self.counterMotion then return end
   x,y=self:point(x,y);self.focus=0;self.focusCard=nil;self.focusKey=nil
+  if self.editing and (not self.overlay or self:editTray()) then self:editPressed(x,y);return end
   if self.peek then
     if self.overlay and self.overlay:hasPeek() then
       self.pressedOverlay=self.overlay:hitPeek(x,y) and 'peek' or 0
@@ -133,6 +137,7 @@ end
 function Simulator:mousereleased(x,y)
   if self.koPresentation or self.counterMotion then return end
   x,y=self:point(x,y)
+  if self.editing and (not self.overlay or self:editTray()) then self:editReleased(x,y);return end
   if self.overlay then
     if self.pressedOverlay=='peek' then
       if self.overlay:hasPeek() and self.overlay:hitPeek(x,y) then self.overlay:togglePeek() end
@@ -232,6 +237,7 @@ function Simulator:keypressed(key)
   end
 end
 function Simulator:wheelmoved(y)
+  if self:galleryWheel(y) then return end
   if self.overlay and not self.peek then self.overlay:wheelmoved(y) end
 end
 return Simulator

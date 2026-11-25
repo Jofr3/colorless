@@ -92,4 +92,11 @@ check(Model.parse(textOf('First')).info.c1.effect=='First','Repeated card text p
 check(Model.parse(textOf('Second')).info.c1.effect=='Second','Changed card text replaces the old text')
 for i=1,600 do Model.parse(textOf('Text '..i)) end
 check(Model.parse(textOf('First')).info.c1.effect=='First','Card text still parses after many distinct rows')
+check(m.edit and m.edit.on==false and m.edit.available and m.edit.page==1 and #m.gallery==0,'A local table carries edit mode, off')
+local editing=Model.parse(table.concat({row(1,'ready'),row('E','on','true','pika',2,5,57,'false','false'),
+  row('G','sv1-1','Pikachu','Pokemon','','Basic','true'),row('G','sv1-2','Nest Ball','Trainer','Item','','false')},'\n'))
+check(editing.edit.on and editing.edit.query=='pika' and editing.edit.page==2 and editing.edit.pages==5 and editing.edit.total==57 and not editing.edit.busy,'Edit row parsed')
+check(#editing.gallery==2 and editing.gallery[1].name=='Pikachu' and editing.gallery[1].stage=='Basic' and editing.gallery[1].hasImage,'Gallery rows parsed in order')
+check(editing.gallery[2].trainerType=='Item' and not editing.gallery[2].hasImage,'A gallery card without a scan says so')
+check(Model.parse(row(1,'ready')).edit==nil,'A table without an E row has no edit mode')
 print('PASS: simulator model')

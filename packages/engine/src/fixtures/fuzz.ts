@@ -68,6 +68,7 @@ const TYPES: readonly string[] = [
   "resolveEffect",
   "endTurn",
   "discardFromPlay",
+  "sandboxEdit",
   "bogus",
   "__proto__",
   "constructor",
@@ -87,6 +88,7 @@ const FIELDS: readonly string[] = [
   "discardEnergy",
   "promoteBenchIndex",
   "choice",
+  "edit",
 ];
 
 /** Effect choice kinds, for junk answers to whatever prompt is parked. */
