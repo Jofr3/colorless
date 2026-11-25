@@ -239,9 +239,22 @@ function Simulator:readSearch()
     self.pendingSearch=r.value;self.searchDelay=r.action=='input' and SEARCH_DELAY or 0
   end
 end
--- An open pile tray takes cards in and gives them out while editing; any other overlay stays modal.
+-- An open pile tray trades cards with the gallery while editing: the table behind it is dimmed
+-- and takes no input, and only the column and the tray answer. Any other overlay stays modal.
 function Simulator:editTray()
   return self.editing and self.overlay and self.overlay.kind=='pile' and not self.peek and self.overlay or nil
+end
+-- Whether a table control takes the pointer: while a tray is open only the column's do.
+function Simulator:editControlLive(b)
+  return not self:editTray() or Layout.inside(self.L.hud,b.x+b.w/2,b.y+b.h/2)
+end
+-- The modal backdrop over everything but the column, which stays live beside the tray.
+function Simulator:drawEditBackdrop()
+  local h=self.L.hud
+  local far=4000
+  g.setColor(95/255,115/255,119/255,0.7)
+  g.rectangle('fill',-far,-far,far+h.x,2*far)
+  g.rectangle('fill',h.x+h.w,-far,far,2*far)
 end
 function Simulator:updateEdit(dt,time,mx,my,reduced)
   if not self.editing then return end
@@ -307,7 +320,7 @@ function Simulator:startEditDrag(x,y)
         return true
       end
     end
-    if Button.hit(tray,x,y) then return false end
+    return false
   end
   local c=self:cardHit(x,y)
   if c and not c.item.hidden and (c.item.owner=='you' or c.item.zone=='stadium') and c.item.zone~='gallery' then
@@ -344,6 +357,7 @@ function Simulator:editDropAt(x,y)
     local zone=self.pileOwner=='deck' and 'deck' or 'discard'
     return {zone=zone}
   end
+  if tray then return nil end
   local body=bodyAt(self,x,y,held)
   if body then
     return {zone='onto',index=body.item.zone=='active' and -1 or body.item.index,card=body}
@@ -399,6 +413,7 @@ function Simulator:editPressed(x,y)
   end
   self.pressed=self:hit(x,y)
   if self.pressed>0 then return end
+  if tray then self:startEditDrag(x,y);return end
   local prize=self:editPrizeHit(x,y)
   local faceUp=false
   for _,c in ipairs(self.cards) do if c.item.owner=='you' and c.item.zone=='prize' and c:hit(x,y) then faceUp=true end end

@@ -313,8 +313,9 @@ function Simulator:draw(shaders)
     end
   end
   self.tooltip:draw(self.boardW,self.boardH,rw)
-  -- Hover popup.
-  if self.popup and self.popupBox and (not self.overlay or self.peek or self:editTray()) then
+  -- Hover popup; over an edit-mode tray it draws after the tray's backdrop.
+  local tray=self:editTray()
+  local function hoverPopup()
     local hover=self:hoverPopup()
     if hover.scale==1 then self.popupBox.draw(hover.x,hover.y)
     else
@@ -323,6 +324,7 @@ function Simulator:draw(shaders)
       g.pop()
     end
   end
+  if self.popup and self.popupBox and (not self.overlay or self.peek) then hoverPopup() end
   if self.away then
     local s=self:awayScale()
     if s==1 then
@@ -338,11 +340,12 @@ function Simulator:draw(shaders)
   self.fx:draw(rw)
   if self.overlay then
     if not self.peek then
-      if not self:editTray() then Modal.backdrop(self.boardW,self.boardH) end
+      if tray then self:drawEditBackdrop() else Modal.backdrop(self.boardW,self.boardH) end
       self.overlay:draw(shaders)
     end
     if self.overlay:hasPeek() then self.overlay:drawPeek() end
   end
+  if tray and self.popup and self.popupBox then hoverPopup() end
   self:drawEditDrag(shaders,rw)
   g.pop()
 end

@@ -121,15 +121,25 @@ local kw=sim.L.zones.you_deck.well
 click(kw.x+kw.w/2,kw.y+kw.h/2)
 assert(last()=='pile\tdeck' and sim.pileOwner=='deck','The deck well opens the deck tray, got '..tostring(last()))
 
--- The tray opens beside the gallery, its cards drag out, and gallery cards drop in.
+-- The tray opens beside the gallery, and cards move between the two.
 local tray=table.concat({snapshot(3,'on',gallery),row('M','pile','','',false,'9'),row('O','','Rare Candy','blue',true,false,'sv01-191','p1#9','false',1)},'\n')
 sim:sync(tray)
 assert(sim.overlay and sim.overlay.kind=='pile' and sim:editTray(),'The deck tray is an edit tray')
 assert(sim.overlay.x>sim.L.table.x,'The tray sits over the table, right of the gallery')
 for i=1,40 do sim:update(1/60,8+i/60,-100,-100,true) end
+-- Behind the tray the table is inert: its cards and controls take nothing, and a drop there lands nowhere.
 local tc=sim.overlay.cards[1]
+local sent=#commands
 drag(tc.x,tc.y,hand.x,hand.y,9)
-assert(last()==cmd('edit','move','p1#9','hand',''),'Tray card to the hand moves it, got '..tostring(last()))
+assert(#commands==sent,'A tray card dropped on the table sends nothing')
+drag(hand.x,hand.y,sim.L.gallery.x+40,300,9.5)
+assert(#commands==sent,'A table card does not drag while the tray is open')
+click(kw.x+kw.w/2,kw.y+kw.h/2)
+assert(#commands==sent,'The table\'s wells take no click while the tray is open')
+assert(sim:hit(control('edit-return').x+5,control('edit-return').y+5)>0,'The column stays live')
+-- Between the tray and the gallery cards still move both ways.
+drag(tc.x,tc.y,sim.L.gallery.x+40,300,9.7)
+assert(last()==cmd('edit','remove','p1#9'),'Tray card onto the gallery removes it, got '..tostring(last()))
 local o=sim.overlay
 drag(g.x,g.y,o.x+o.w/2,o.y+o.h/2,10)
 assert(last()=='edit\tadd\tsv01-001\tdeck\t','Gallery card onto the deck tray adds it to the deck, got '..tostring(last()))

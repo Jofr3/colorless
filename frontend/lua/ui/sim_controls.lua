@@ -265,14 +265,14 @@ function Simulator:hit(x,y)
   for i=#self.controls,1,-1 do
     local b=self.controls[i]
     local offset=b.attached and popupOffset(self.attachedPopup) or 0
-    if not b.disabled and Button.hit(b,x,y-offset) then return i end
+    if not b.disabled and Button.hit(b,x,y-offset) and self:editControlLive(b) then return i end
   end
   return 0
 end
 function Simulator:cardHit(x,y)
   local gallery=self:galleryHit(x,y)
   if gallery then return gallery end
-  if self.overlay and not self.peek and not self:editTray() then return nil end
+  if self.overlay and not self.peek then return nil end
   if self.attachedPopup and Button.hit(self.attachedPopup,x,y-popupOffset(self.attachedPopup)) then return nil end
   -- Raised cards are painted last, so they also receive the pointer first.
   if self.hoverCard and self.hoverCard:hit(x,y) then return self.hoverCard end

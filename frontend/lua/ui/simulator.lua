@@ -218,7 +218,7 @@ function Simulator:update(dt,time,mx,my,reduced)
   end
   local control=self.controls[self.hover]
   for _,p in ipairs(self.piles) do
-    local active=not boardControlsBlocked and not self.drag and not hovered and (
+    local active=not boardControlsBlocked and not tray and not self.drag and not hovered and (
       (self.hover==0 and p:hit(mx,my)) or
       (control and control.action=='pile' and control.owner==p.owner and p.item.kind=='discard') or
       (focusedControl and focusedControl.action=='pile' and focusedControl.owner==p.owner and p.item.kind=='discard'))
@@ -229,7 +229,7 @@ function Simulator:update(dt,time,mx,my,reduced)
     p:update(dt,time,active,reduced,self.boardW)
   end
   local _,_,prizeStop=self:stopAt(self.focus)
-  self:updatePrizes(dt,time,mx,my,reduced,boardControlsBlocked,not pointed and prizeStop and prizeStop.slot)
+  self:updatePrizes(dt,time,mx,my,reduced,boardControlsBlocked or tray,not pointed and prizeStop and prizeStop.slot)
   -- Hover popup (card_h_popup) for face-up cards with catalogue info, and for
   -- the keyboard's card while the pointer rests elsewhere.
   self.popup=nil
